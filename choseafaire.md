@@ -3,13 +3,15 @@
 Fichier de suivi de tout ce qui est reporté, à brancher plus tard, ou qui dépend de toi.
 Voir aussi [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## 🔓 À réactiver — auth désactivée temporairement
+## ✅ Auth réactivée
 
-- **Connexion/onboarding désactivés pour la preview** : dans [src/session/bootstrap.ts](src/session/bootstrap.ts), le flag `BYPASS_AUTH = true` fait démarrer l'app directement sur les onglets. **À réactiver** en repassant `BYPASS_AUTH` à `false` (l'app repassera par onboarding → connexion).
+- **Connexion/onboarding réactivés** : `BYPASS_AUTH = false` dans [src/session/bootstrap.ts](src/session/bootstrap.ts). L'app démarre sur onboarding → connexion. (fait)
 
 ## À faire bientôt (V1) — dépend de toi
 
-- [ ] **Supabase** : créer le projet, exécuter [supabase/schema.sql](supabase/schema.sql), me donner l'**URL du projet + la clé anon** → je les mets dans `.env` (jamais commité). ⚠️ Ne jamais partager la *service_role key*.
+- [x] **Supabase créé + schéma exécuté + branché** : client Supabase, auth (login/signUp/logout) branchée, `.env` rempli (clé publishable, jamais commitée). Connectivité vérifiée (REST 200, RLS active).
+- [ ] **Supabase — config à faire de ton côté** : (a) désactiver la confirmation e-mail (Authentication → Providers → Email → *Confirm email* OFF) pour tester l'inscription instantanément ; (b) ⚠️ **faire tourner la clé secret** (`sb_secret_…`) exposée dans le chat.
+- [ ] **Données réelles** : remplacer les données mock des écrans (Accueil/Activité) par de vraies requêtes Supabase (`block_rules`, `block_events`, `daily_stats`). Tables vides pour l'instant → câbler d'abord l'écran Ajout pour qu'il *écrive* les règles.
 - [ ] **Bundle ID** : `cole-lucky.SwiftSupabaseStarter` — confirmer que c'est bien l'ID sur lequel l'approbation Family Controls a été accordée, et que Blocus doit l'utiliser (c'est aussi l'ID de ton app SwiftUI « Monevo »).
 - [ ] **Build dev client signé** sur ton iPhone : nécessite ton compte développeur Apple dans Xcode (signing / provisioning). Étape manuelle de ton côté — je prépare tout le reste.
 - [ ] **Apple Sign-In** : activer la capability dans le portail Apple + configurer le provider dans Supabase Auth.
