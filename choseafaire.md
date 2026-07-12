@@ -25,6 +25,13 @@ Voir aussi [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md), [docs/ARCHITECTURE.
 - [ ] **Inscription / register + mot de passe oublié** — le starter n'a qu'un écran de login.
 - [ ] **Auth sociale** (Google) réellement branchée — boutons décoratifs dans le starter.
 
+## ⚠️ Blocage natif Family Controls (à revoir)
+
+- **RN rétrogradé 0.82.1 → 0.81.6** (commité) pour débloquer Expo — ça a marché (build OK, 44 tests).
+- **Mais** : greffer Expo (`install-expo-modules`) fait **crasher l'app au lancement** : `recreateRootView: does not support when react instance is created` — incompatibilité entre la **New Architecture de RN 0.81.6** et **Expo SDK 54** (`node_modules/expo/ios/AppDelegates/ExpoAppDelegate.swift`, assert l.36/38).
+- Greffe Expo **annulée** (retour au checkpoint RN 0.81 qui marche). `react-native-device-activity` reste donc **non installable**.
+- Pistes quand on y reviendra : (a) épingler RN à la version exacte visée par Expo SDK 54 (ex. 0.81.4), (b) module Swift Family Controls **custom** sans Expo, (c) attendre Expo SDK 55 (RN 0.82) et remonter RN.
+
 ## ⚠️ Blocage preview (à revoir)
 
 - **Expo ne supporte pas encore RN 0.82** (SDK 54 = RN 0.81). Conséquence : ni Expo Go, ni Expo Dev Client, ni EAS dev-client ne marchent pour la vraie app aujourd'hui. `install-expo-modules` échoue (`Unable to find compatible Expo SDK version - reactNativeVersion[0.82.1]`).
