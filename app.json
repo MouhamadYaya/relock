@@ -1,4 +1,19 @@
 {
   "name": "ReactNativeStarter",
-  "displayName": "ReactNativeStarter"
+  "displayName": "Blocus",
+  "expo": {
+    "name": "Blocus",
+    "slug": "blocus",
+    "scheme": "blocus",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "cole-lucky.SwiftSupabaseStarter",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "cole.lucky.blocus"
+    }
+  }
 }

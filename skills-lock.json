@@ -1,10 +1,34 @@
 {
   "version": 1,
   "skills": {
+    "apex": {
+      "source": "melvynx/aiblueprint",
+      "sourceType": "github",
+      "skillPath": "skills/apex/SKILL.md",
+      "computedHash": "112573dd4f7bae0ff0e57c50e66baf6fe170f896623aad4a950ebb42156535b7"
+    },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/grill-me/SKILL.md",
+      "computedHash": "f321507f77702a54af1db66549ec1685fc625390d06c57d7949cdcda8eb1b5c7"
+    },
+    "make-interfaces-feel-better": {
+      "source": "jakubkrehel/make-interfaces-feel-better",
+      "sourceType": "github",
+      "skillPath": "skills/make-interfaces-feel-better/SKILL.md",
+      "computedHash": "8e3423e467eae12f3748ca1a365a668105ac59dbb0fdd50e66b45a40bb581950"
+    },
     "react-native-expert": {
       "source": "jeffallan/claude-skills",
       "sourceType": "github",
       "computedHash": "c8ece49ec9bee77e02ac3ef32bd76c82fb62372b0690928d937d9957381083aa"
+    },
+    "thermo-nuclear-code-quality-review": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
+      "computedHash": "9052b01b46b1d8dbf94c45f9313ec1983443f9a460e83d49cdc7fe0f640ca476"
     },
     "vercel-react-native-skills": {
       "source": "vercel-labs/agent-skills",

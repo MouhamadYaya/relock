@@ -1,201 +1,245 @@
 import { IconName } from '@assets/icons'
-import React, { useCallback, useMemo } from 'react'
-import { StyleSheet, View } from 'react-native'
-import { SettingsRow } from '@/features/settings/components/SettingsRow'
-import { SettingsSection } from '@/features/settings/components/SettingsSection'
-import { useMeQuery } from '@/features/user/hooks/useMeQuery'
-import i18n from '@/i18n/i18n'
-import { useT } from '@/i18n/useT'
+import React from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
-import { performLogout } from '@/session/logout'
-import { ScreenHeader } from '@/shared/components/ui/ScreenHeader'
+import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
-import { Text } from '@/shared/components/ui/Text'
-import { useTheme } from '@/shared/theme/useTheme'
+import { fonts } from '@/shared/theme/tokens/fonts'
 
-const THEME_MODE_KEYS = {
-  light: 'settings.theme_light',
-  dark: 'settings.theme_dark',
-  system: 'settings.theme_system',
+const FW = {
+  400: fonts.regular,
+  500: fonts.medium,
+  600: fonts.semiBold,
+  700: fonts.bold,
+  800: fonts.bold,
 } as const
+const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  en: 'English',
-  ru: 'Русский',
-  de: 'Deutsch',
+const C = {
+  bg: '#0B0C10',
+  surface: '#161821',
+  surface2: '#1C1F2B',
+  ink: '#F0F0F4',
+  ink2: '#A8ABBE',
+  ink3: '#6B6F82',
+  accent: '#A49AFE',
+  green: '#4ADE80',
+  border: 'rgba(148,152,178,0.16)',
+  divider: 'rgba(148,152,178,0.12)',
+  ambient: 'rgba(164,154,254,0.14)',
+}
+
+type RowProps = {
+  icon: IconName
+  label: string
+  value?: string
+  onPress?: () => void
+  right?: React.ReactNode
+  last?: boolean
+}
+
+function Row({ icon, label, value, onPress, right, last }: RowProps) {
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        onPress={onPress}
+        style={styles.row}
+      >
+        <View style={styles.rowIcon}>
+          <IconSvg name={icon} size={16} color={C.accent} />
+        </View>
+        <Text style={[f(500), { flex: 1, fontSize: 15, color: C.ink }]}>
+          {label}
+        </Text>
+        {value ? (
+          <Text style={[f(400), { fontSize: 14, color: C.ink2 }]}>{value}</Text>
+        ) : null}
+        {right}
+        <IconSvg name={IconName.FORWARD} size={18} color={C.ink3} />
+      </Pressable>
+      {last ? null : <View style={styles.rowDivider} />}
+    </View>
+  )
 }
 
 export default function SettingsScreen() {
-  const { theme, mode } = useTheme()
-  const t = useT()
-  const me = useMeQuery()
-  const c = theme.colors
-  const sp = theme.spacing
-  const r = theme.radius
-  const ty = theme.typography
-
-  const themeModeLabel = t(THEME_MODE_KEYS[mode])
-  const currentLang = i18n.language
-  const languageLabel = LANGUAGE_LABELS[currentLang] ?? currentLang
-
-  const openThemePicker = useCallback(
-    () => navigate(ROUTES.MODAL_THEME_PICKER),
-    [],
-  )
-  const openLanguagePicker = useCallback(
-    () => navigate(ROUTES.MODAL_LANGUAGE_PICKER),
-    [],
-  )
-  const handleLogout = useCallback(() => performLogout(), [])
-
-  const userName = me.data?.name ?? '—'
-  const userEmail = me.data?.email ?? undefined
-
-  const initials = useMemo(() => {
-    if (!me.data?.name) return '?'
-    return me.data.name
-      .split(' ')
-      .slice(0, 2)
-      .map(w => w[0]?.toUpperCase())
-      .join('')
-  }, [me.data?.name])
-
-  const themeIcon = mode === 'light' ? IconName.SUN : IconName.MOON
-
   return (
-    <ScreenWrapper scroll header={<ScreenHeader title={t('settings.title')} />}>
-      <View style={{ padding: sp.lg, gap: sp.lg }}>
-        {/* Profile card */}
-        <View
-          style={[
-            styles.profileCard,
-            {
-              backgroundColor: c.surface,
-              borderRadius: r.xxl,
-              padding: sp.lg,
-              borderWidth: 1,
-              borderColor: c.border,
-              gap: sp.md,
-              ...theme.elevation.card,
-            },
-          ]}
-        >
-          <View style={styles.profileRow}>
-            {/* Avatar with ring */}
-            <View
-              style={[
-                styles.avatarRing,
-                {
-                  width: sp.xxxxxl + sp.xs,
-                  height: sp.xxxxxl + sp.xs,
-                  borderRadius: r.rounded,
-                  borderWidth: 2,
-                  borderColor: c.primary,
-                  padding: 2,
-                },
-              ]}
-            >
-              <View
+    <ScreenWrapper>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={{ paddingTop: 8 }}>
+          {/* Titre */}
+          <Text style={[f(800), styles.title]}>Réglages</Text>
+
+          {/* Profil */}
+          <Pressable style={styles.profile}>
+            <View style={styles.avatar}>
+              <Text style={[f(700), { fontSize: 20, color: C.bg }]}>LM</Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[f(700), { fontSize: 17, color: C.ink }]}>
+                Léa Moreau
+              </Text>
+              <Text
                 style={[
-                  styles.avatar,
-                  {
-                    flex: 1,
-                    borderRadius: r.rounded,
-                    backgroundColor: c.primaryAmbient,
-                  },
+                  f(400),
+                  { fontSize: 13.5, color: C.ink2, marginTop: 2 },
                 ]}
               >
-                <Text style={[ty.headlineSmall, { color: c.primary }]}>
-                  {initials}
-                </Text>
-              </View>
-            </View>
-
-            {/* Name + email */}
-            <View style={styles.profileInfo}>
-              <Text style={[ty.titleLarge, { color: c.textPrimary }]}>
-                {userName}
+                lea.moreau@gmail.com
               </Text>
-              {userEmail != null ? (
-                <Text
-                  style={[
-                    ty.bodySmall,
-                    { color: c.textSecondary, marginTop: sp.xxs },
-                  ]}
-                >
-                  {userEmail}
-                </Text>
-              ) : null}
             </View>
+            <IconSvg name={IconName.FORWARD} size={20} color={C.ink3} />
+          </Pressable>
+
+          {/* Préférences */}
+          <Text style={[f(600), styles.groupLabel]}>Préférences</Text>
+          <View style={styles.card}>
+            <Row
+              icon={IconName.MOON}
+              label="Apparence"
+              value="Sombre"
+              onPress={() => {}}
+            />
+            <Row
+              icon={IconName.GLOBE}
+              label="Langue"
+              value="Français"
+              onPress={() => {}}
+            />
+            <Row
+              icon={IconName.BELL}
+              label="Notifications & rappels"
+              onPress={() => {}}
+              last
+            />
           </View>
+
+          {/* Système */}
+          <Text style={[f(600), styles.groupLabel]}>Système</Text>
+          <View style={styles.card}>
+            <Row
+              icon={IconName.MONITOR}
+              label="Permissions · Temps d'écran"
+              right={
+                <View style={styles.statusOn}>
+                  <View style={styles.dot} />
+                  <Text style={[f(600), { fontSize: 13, color: C.green }]}>
+                    Activé
+                  </Text>
+                </View>
+              }
+            />
+            <Row
+              icon={IconName.SHIELD}
+              label="Abonnement"
+              onPress={() => {}}
+              right={
+                <View style={styles.badge}>
+                  <Text style={[f(700), { fontSize: 12, color: C.accent }]}>
+                    Premium
+                  </Text>
+                </View>
+              }
+              last
+            />
+          </View>
+
+          {/* Divers */}
+          <View style={[styles.card, { marginTop: 22 }]}>
+            <Row icon={IconName.INFO} label="À propos" onPress={() => {}} />
+            <Row
+              icon={IconName.LOCK}
+              label="Confidentialité"
+              onPress={() => {}}
+            />
+            <Row
+              icon={IconName.CLOCK}
+              label="Aperçu du rituel de pause"
+              onPress={() => navigate(ROUTES.PAUSE_RITUAL)}
+              last
+            />
+          </View>
+
+          <View style={{ height: 32 }} />
         </View>
-
-        {/* Appearance */}
-        <SettingsSection title={t('settings.appearance')}>
-          <SettingsRow
-            label={t('settings.theme')}
-            value={themeModeLabel}
-            icon={themeIcon}
-            iconBg={c.primaryAmbient}
-            iconColor={c.primary}
-            onPress={openThemePicker}
-          />
-          <SettingsRow
-            label={t('settings.language.label')}
-            value={languageLabel}
-            icon={IconName.GLOBE}
-            iconBg={'rgba(96, 165, 250, 0.14)'}
-            iconColor={c.info}
-            onPress={openLanguagePicker}
-          />
-        </SettingsSection>
-
-        {/* About */}
-        <SettingsSection title={t('settings.about')}>
-          <SettingsRow
-            label={t('settings.version')}
-            value="0.0.1"
-            icon={IconName.INFO}
-            iconBg={c.surfaceSecondary}
-            iconColor={c.textSecondary}
-          />
-        </SettingsSection>
-
-        {/* Logout */}
-        <SettingsSection>
-          <SettingsRow
-            label={t('settings.logout')}
-            icon={IconName.LOGOUT}
-            iconBg={'rgba(251, 113, 133, 0.14)'}
-            iconColor={c.danger}
-            danger
-            onPress={handleLogout}
-          />
-        </SettingsSection>
-      </View>
+      </ScrollView>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  profileCard: {
-    overflow: 'hidden',
+  title: {
+    fontSize: 28,
+    color: C.ink,
+    letterSpacing: -0.7,
+    paddingHorizontal: 20,
   },
-  profileRow: {
+  profile: {
+    marginTop: 18,
+    marginHorizontal: 20,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 18,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-  },
-  avatarRing: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
   },
   avatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: C.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileInfo: {
-    flex: 1,
+  groupLabel: {
+    fontSize: 12.5,
+    color: C.ink3,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    paddingTop: 22,
+    paddingLeft: 24,
+    paddingBottom: 8,
+  },
+  card: {
+    marginHorizontal: 20,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+  },
+  rowIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: C.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowDivider: {
+    height: 1,
+    backgroundColor: C.divider,
+    marginLeft: 58,
+  },
+  statusOn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.green },
+  badge: {
+    backgroundColor: C.ambient,
+    borderRadius: 99,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
   },
 })

@@ -52,10 +52,58 @@ declare module 'i18next' {
           quick_action_schedule: string
           quick_action_report: string
           quick_action_upload: string
+          resisted_lead: string
+          openings: string
+          streak_current: string
+          streak_record: string
+          streak_unit: string
+          time_regained: string
+          today: string
+          interceptions: string
+          scrolls_stopped: string
+          active_blocks: string
+          manage: string
+        }
+        blockType: {
+          progressive_delay: string
+          schedule: string
+          daily_limit: string
+          progressive_delay_desc: string
+          schedule_desc: string
+          daily_limit_desc: string
+        }
+        activity: {
+          title: string
+          seg_month: string
+          seg_week: string
+          seg_day: string
+          summary_today: string
+          regained: string
+          openings: string
+          interceptions: string
+          per_hour: string
+          top_apps: string
+        }
+        add: {
+          title: string
+          new_block: string
+          type_section: string
+          apps_section: string
+          apps_hint: string
+          activate: string
+          placeholder: string
+        }
+        pause: {
+          title: string
+          question: string
+          go_back: string
+          open_anyway: string
+          opening: string
         }
         settings: {
           language: {
             label: string
+            french: string
             english: string
             russian: string
             german: string
@@ -63,6 +111,14 @@ declare module 'i18next' {
           title: string
           appearance: string
           theme: string
+          general: string
+          account: string
+          notifications: string
+          permissions: string
+          screen_time: string
+          subscription: string
+          privacy: string
+          preview_pause: string
           about: string
           version: string
           logout: string

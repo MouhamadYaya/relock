@@ -29,15 +29,22 @@ export const ROUTES = {
   AUTH_LOGIN: 'AUTH_LOGIN',
 
   //
-  // HOME → TABS
+  // HOME → TABS (only two, + central FAB in the bar)
   //
   TAB_HOME: 'TAB_HOME',
-  TAB_SETTINGS: 'TAB_SETTINGS',
+  TAB_ACTIVITY: 'TAB_ACTIVITY',
 
   //
-  // HOME SCREENS (pushed over tabs)
+  // PUSHED SCREENS (over tabs)
   //
+  ADD_BLOCK: 'ADD_BLOCK',
+  SETTINGS: 'SETTINGS',
   HOME_STORY: 'HOME_STORY',
+
+  //
+  // FULLSCREEN FLOWS
+  //
+  PAUSE_RITUAL: 'PAUSE_RITUAL',
 
   //
   // GLOBAL MODALS (bottom sheets, accessible from any screen)

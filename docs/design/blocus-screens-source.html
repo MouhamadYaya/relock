@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  body{margin:0;font-family:Inter,-apple-system,sans-serif;}
+  .tnum{font-variant-numeric:tabular-nums;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(1200px 800px at 50% -10%,#111420 0%,#08090D 60%);padding:64px 72px 96px;display:flex;gap:44px;align-items:flex-start;width:max-content;">
+
+  <!-- ══════════════ ÉCRAN 1 — ACCUEIL ══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;align-items:center;" data-screen-label="Accueil">
+    <div style="font:600 13px Inter;color:#6B6F82;letter-spacing:.4px;">01 · Accueil</div>
+    <div style="width:414px;padding:11px;background:#000;border-radius:58px;box-shadow:0 50px 90px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.05);">
+      <div style="width:392px;height:844px;background:#0B0C10;border-radius:48px;overflow:hidden;position:relative;">
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:33px;background:#000;border-radius:20px;z-index:20;"></div>
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 9px;position:relative;z-index:10;">
+          <div style="font:600 16px Inter;color:#F0F0F4;letter-spacing:.2px;">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#F0F0F4"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#F0F0F4"><path d="M8.5 2C5.4 2 2.6 3.2.5 5.2l1.4 1.5C3.6 5 5.9 4 8.5 4s4.9 1 6.6 2.7l1.4-1.5C14.4 3.2 11.6 2 8.5 2z"/><path d="M8.5 6.5c-1.6 0-3.1.6-4.2 1.7l1.5 1.5c.7-.7 1.7-1.2 2.7-1.2s2 .5 2.7 1.2l1.5-1.5C11.6 7.1 10.1 6.5 8.5 6.5z"/><circle cx="8.5" cy="11" r="1.3"/></svg>
+            <div style="display:flex;align-items:center;gap:2px;"><div style="width:24px;height:12px;border-radius:3.5px;border:1px solid rgba(240,240,244,.4);padding:1.6px;"><div style="width:72%;height:100%;background:#F0F0F4;border-radius:1.5px;"></div></div><div style="width:1.5px;height:4px;background:rgba(240,240,244,.4);border-radius:1px;"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 0;">
+          <div style="font:800 24px Inter;color:#F0F0F4;letter-spacing:-.6px;">Blocus</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:#161821;border:1px solid rgba(148,152,178,.16);display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#A8ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 6.7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></div>
+        </div>
+
+        <div style="padding:16px 20px 0;">
+          <div style="font:500 15px Inter;color:#A8ABBE;">Bonjour, Léa</div>
+          <div style="font:700 22px Inter;color:#F0F0F4;line-height:1.28;margin-top:7px;letter-spacing:-.3px;">Aujourd'hui, tu as résisté à <span style="color:#A49AFE;">7 ouvertures</span>.</div>
+        </div>
+
+        <!-- streak hero -->
+        <div style="margin:16px 20px 0;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:20px;padding:18px 22px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font:500 14px Inter;color:#A8ABBE;">Série en cours</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(164,154,254,.14);border-radius:99px;padding:5px 11px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#A49AFE"><path d="M12 2c1 3-1 5-1 7 0 1.5 1 2.5 2.5 2.5S16 12 16 10c2 2 3 4 3 6.5A7 7 0 1 1 6.4 12c1.6-2.2 4.6-3 5.6-10z"/></svg>
+              <span style="font:700 13px Inter;color:#A49AFE;">Record 18j</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:11px;margin-top:12px;">
+            <div class="tnum" style="font:800 46px Inter;color:#A49AFE;letter-spacing:-2px;line-height:.9;">12</div>
+            <div style="font:600 17px Inter;color:#F0F0F4;">jours de contrôle</div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:16px;">
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;background:#A49AFE;"></div><div style="font:500 11px Inter;color:#6B6F82;margin-top:6px;">L</div></div>
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;background:#A49AFE;"></div><div style="font:500 11px Inter;color:#6B6F82;margin-top:6px;">M</div></div>
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;background:#A49AFE;"></div><div style="font:500 11px Inter;color:#6B6F82;margin-top:6px;">M</div></div>
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;background:#A49AFE;"></div><div style="font:500 11px Inter;color:#6B6F82;margin-top:6px;">J</div></div>
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;background:#A49AFE;"></div><div style="font:500 11px Inter;color:#6B6F82;margin-top:6px;">V</div></div>
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;background:#A49AFE;"></div><div style="font:500 11px Inter;color:#6B6F82;margin-top:6px;">S</div></div>
+            <div style="flex:1;text-align:center;"><div style="height:26px;border-radius:8px;border:1.5px dashed rgba(164,154,254,.55);background:rgba(164,154,254,.1);"></div><div style="font:700 11px Inter;color:#A49AFE;margin-top:6px;">D</div></div>
+          </div>
+        </div>
+
+        <!-- stat row -->
+        <div style="display:flex;gap:12px;padding:12px 20px 0;">
+          <div style="flex:1;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:18px;padding:14px 16px;">
+            <div style="font:500 12.5px Inter;color:#A8ABBE;">Temps regagné</div>
+            <div class="tnum" style="font:800 26px Inter;color:#F0F0F4;letter-spacing:-.8px;margin-top:8px;">1 h 47</div>
+            <div style="font:400 11.5px Inter;color:#6B6F82;margin-top:3px;">aujourd'hui</div>
+          </div>
+          <div style="flex:1;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:18px;padding:14px 16px;">
+            <div style="font:500 12.5px Inter;color:#A8ABBE;">Interceptions</div>
+            <div class="tnum" style="font:800 26px Inter;color:#F0F0F4;letter-spacing:-.8px;margin-top:8px;">9</div>
+            <div style="font:400 11.5px Inter;color:#6B6F82;margin-top:3px;">scrolls stoppés</div>
+          </div>
+        </div>
+
+        <!-- blocages actifs -->
+        <div style="padding:20px 20px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font:700 16px Inter;color:#F0F0F4;letter-spacing:-.2px;">Blocages actifs</div>
+            <div style="font:600 13px Inter;color:#A49AFE;">Gérer</div>
+          </div>
+          <div style="background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:13px;margin-bottom:8px;">
+            <div style="width:40px;height:40px;border-radius:11px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font:600 15px Inter;color:#F0F0F4;">Délai progressif</div>
+              <div style="font:400 13px Inter;color:#A8ABBE;margin-top:2px;">TikTok, Instagram +1</div>
+            </div>
+            <div style="width:44px;height:26px;border-radius:99px;background:#A49AFE;position:relative;flex:none;"><div style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0B0C10;"></div></div>
+          </div>
+          <div style="background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:13px;">
+            <div style="width:40px;height:40px;border-radius:11px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3.5 2"/><path d="M21 5.5 18.5 8"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font:600 15px Inter;color:#F0F0F4;">Plages horaires</div>
+              <div style="font:400 13px Inter;color:#A8ABBE;margin-top:2px;">TikTok · 22h – 8h</div>
+            </div>
+            <div style="width:44px;height:26px;border-radius:99px;background:#A49AFE;position:relative;flex:none;"><div style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0B0C10;"></div></div>
+          </div>
+        </div>
+
+        <div style="padding:14px 20px 0;">
+          <div style="height:54px;border-radius:16px;background:#A49AFE;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 8px 24px -6px rgba(164,154,254,.5);">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12h6"/></svg>
+            <span style="font:700 16px Inter;color:#0B0C10;">Bloquer maintenant</span>
+          </div>
+        </div>
+        <div style="height:120px;"></div>
+
+        <!-- tab bar -->
+        <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(22,24,33,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(148,152,178,.16);border-radius:26px;padding:7px 9px;z-index:15;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;border-radius:18px;background:rgba(164,154,254,.14);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11"/><path d="M12 20V4"/><path d="M19 20v-6"/></svg></div>
+          <div style="width:1px;height:26px;background:rgba(148,152,178,.16);margin:0 6px;"></div>
+          <div style="width:40px;height:40px;border-radius:50%;background:#A49AFE;display:flex;align-items:center;justify-content:center;margin:0 2px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(240,240,244,.5);z-index:16;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ÉCRAN 2 — ACTIVITÉ ══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;align-items:center;" data-screen-label="Activité">
+    <div style="font:600 13px Inter;color:#6B6F82;letter-spacing:.4px;">02 · Activité</div>
+    <div style="width:414px;padding:11px;background:#000;border-radius:58px;box-shadow:0 50px 90px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.05);">
+      <div style="width:392px;height:844px;background:#0B0C10;border-radius:48px;overflow:hidden;position:relative;">
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:33px;background:#000;border-radius:20px;z-index:20;"></div>
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 9px;position:relative;z-index:10;">
+          <div style="font:600 16px Inter;color:#F0F0F4;letter-spacing:.2px;">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#F0F0F4"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#F0F0F4"><path d="M8.5 2C5.4 2 2.6 3.2.5 5.2l1.4 1.5C3.6 5 5.9 4 8.5 4s4.9 1 6.6 2.7l1.4-1.5C14.4 3.2 11.6 2 8.5 2z"/><path d="M8.5 6.5c-1.6 0-3.1.6-4.2 1.7l1.5 1.5c.7-.7 1.7-1.2 2.7-1.2s2 .5 2.7 1.2l1.5-1.5C11.6 7.1 10.1 6.5 8.5 6.5z"/><circle cx="8.5" cy="11" r="1.3"/></svg>
+            <div style="display:flex;align-items:center;gap:2px;"><div style="width:24px;height:12px;border-radius:3.5px;border:1px solid rgba(240,240,244,.4);padding:1.6px;"><div style="width:72%;height:100%;background:#F0F0F4;border-radius:1.5px;"></div></div><div style="width:1.5px;height:4px;background:rgba(240,240,244,.4);border-radius:1px;"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 0;">
+          <div style="font:800 24px Inter;color:#F0F0F4;letter-spacing:-.6px;">Activité</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:#161821;border:1px solid rgba(148,152,178,.16);display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#A8ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 6.7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></div>
+        </div>
+
+        <!-- segmented -->
+        <div style="margin:18px 20px 0;background:#1C1F2B;border-radius:14px;padding:4px;display:flex;">
+          <div style="flex:1;text-align:center;padding:9px 0;font:600 14px Inter;color:#A8ABBE;">Mois</div>
+          <div style="flex:1;text-align:center;padding:9px 0;font:600 14px Inter;color:#A8ABBE;">Semaine</div>
+          <div style="flex:1;text-align:center;padding:9px 0;border-radius:11px;background:#A49AFE;font:700 14px Inter;color:#0B0C10;">Jour</div>
+        </div>
+
+        <!-- date band -->
+        <div style="display:flex;justify-content:space-between;padding:18px 18px 0;">
+          <div style="flex:1;text-align:center;"><div style="font:600 12px Inter;color:#6B6F82;margin-bottom:8px;">D</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 15px Inter;color:#A8ABBE;">5</div></div>
+          <div style="flex:1;text-align:center;"><div style="font:600 12px Inter;color:#6B6F82;margin-bottom:8px;">L</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 15px Inter;color:#A8ABBE;">6</div></div>
+          <div style="flex:1;text-align:center;"><div style="font:600 12px Inter;color:#6B6F82;margin-bottom:8px;">M</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 15px Inter;color:#A8ABBE;">7</div></div>
+          <div style="flex:1;text-align:center;"><div style="font:600 12px Inter;color:#6B6F82;margin-bottom:8px;">M</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 15px Inter;color:#A8ABBE;">8</div></div>
+          <div style="flex:1;text-align:center;"><div style="font:600 12px Inter;color:#6B6F82;margin-bottom:8px;">J</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 15px Inter;color:#A8ABBE;">9</div></div>
+          <div style="flex:1;text-align:center;"><div style="font:600 12px Inter;color:#6B6F82;margin-bottom:8px;">V</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 15px Inter;color:#A8ABBE;">10</div></div>
+          <div style="flex:1;text-align:center;"><div style="font:700 12px Inter;color:#A49AFE;margin-bottom:8px;">S</div><div class="tnum" style="width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 15px Inter;color:#0B0C10;background:#A49AFE;">11</div></div>
+        </div>
+
+        <!-- résumé -->
+        <div style="margin:20px 20px 0;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:20px;padding:20px;">
+          <div style="font:500 13px Inter;color:#6B6F82;">Aujourd'hui, 11 juillet</div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px;">
+            <div class="tnum" style="font:800 40px Inter;color:#F0F0F4;letter-spacing:-1.5px;line-height:1;">1 h 12</div>
+            <div style="font:500 14px Inter;color:#A8ABBE;">de scroll</div>
+          </div>
+          <div style="height:1px;background:rgba(148,152,178,.16);margin:18px 0 16px;"></div>
+          <div style="display:flex;">
+            <div style="flex:1;"><div class="tnum" style="font:700 22px Inter;color:#F0F0F4;">23</div><div style="font:500 13px Inter;color:#A8ABBE;margin-top:2px;">Ouvertures</div></div>
+            <div style="flex:1;"><div class="tnum" style="font:700 22px Inter;color:#A49AFE;">9</div><div style="font:500 13px Inter;color:#A8ABBE;margin-top:2px;">Interceptions</div></div>
+          </div>
+        </div>
+
+        <!-- graph -->
+        <div style="padding:24px 20px 0;">
+          <div style="font:700 16px Inter;color:#F0F0F4;letter-spacing:-.2px;margin-bottom:12px;">Temps d'écran par heure</div>
+          <div style="background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:20px;padding:18px 16px 14px;">
+            <div style="display:flex;align-items:flex-end;gap:3px;height:120px;">
+              <div style="flex:1;background:#A49AFE;height:18%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:8%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:5%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:5%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:12%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:22%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:40%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:58%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:35%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:28%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:20%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:44%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:66%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:52%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:38%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:30%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:48%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:72%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:100%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:64%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:42%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:26%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:14%;border-radius:3px;"></div>
+              <div style="flex:1;background:#A49AFE;height:8%;border-radius:3px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:10px;font:500 11px Inter;color:#6B6F82;"><span>0 h</span><span>06 h</span><span>12 h</span><span>18 h</span></div>
+          </div>
+        </div>
+
+        <!-- app la plus ouverte -->
+        <div style="padding:22px 20px 0;">
+          <div style="font:700 16px Inter;color:#F0F0F4;letter-spacing:-.2px;margin-bottom:14px;">App la plus ouverte</div>
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;">
+            <svg width="40" height="40" viewBox="0 0 48 48" style="flex:none;"><rect width="48" height="48" rx="12" fill="#010101"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#25F4EE" transform="translate(-1.2,-1.2)"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#FE2C55" transform="translate(1.2,1.2)"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#fff"/></svg>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font:600 15px Inter;color:#F0F0F4;">TikTok</span><span class="tnum" style="font:600 14px Inter;color:#A8ABBE;">24 m 54 s</span></div>
+              <div style="height:6px;border-radius:99px;background:#1C1F2B;"><div style="width:100%;height:100%;border-radius:99px;background:#A49AFE;"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;">
+            <svg width="40" height="40" viewBox="0 0 48 48" style="flex:none;"><defs><radialGradient id="igA" cx="30%" cy="107%" r="130%"><stop offset="0" stop-color="#FED576"/><stop offset=".26" stop-color="#F47133"/><stop offset=".61" stop-color="#BC3081"/><stop offset="1" stop-color="#4C63D2"/></radialGradient></defs><rect width="48" height="48" rx="12" fill="url(#igA)"/><rect x="13" y="13" width="22" height="22" rx="7" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="24" cy="24" r="5.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="31.5" cy="16.5" r="1.7" fill="#fff"/></svg>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font:600 15px Inter;color:#F0F0F4;">Instagram</span><span class="tnum" style="font:600 14px Inter;color:#A8ABBE;">18 m 10 s</span></div>
+              <div style="height:6px;border-radius:99px;background:#1C1F2B;"><div style="width:73%;height:100%;border-radius:99px;background:#A49AFE;"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;">
+            <svg width="40" height="40" viewBox="0 0 48 48" style="flex:none;"><rect width="48" height="48" rx="12" fill="#fff"/><rect x="8" y="14" width="32" height="20" rx="6" fill="#FF0000"/><path d="M21 20v8l7-4z" fill="#fff"/></svg>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font:600 15px Inter;color:#F0F0F4;">YouTube</span><span class="tnum" style="font:600 14px Inter;color:#A8ABBE;">8 m 32 s</span></div>
+              <div style="height:6px;border-radius:99px;background:#1C1F2B;"><div style="width:34%;height:100%;border-radius:99px;background:#A49AFE;"></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:120px;"></div>
+
+        <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(22,24,33,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(148,152,178,.16);border-radius:26px;padding:7px 9px;z-index:15;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;border-radius:18px;background:rgba(164,154,254,.14);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11"/><path d="M12 20V4"/><path d="M19 20v-6"/></svg></div>
+          <div style="width:1px;height:26px;background:rgba(148,152,178,.16);margin:0 6px;"></div>
+          <div style="width:40px;height:40px;border-radius:50%;background:#A49AFE;display:flex;align-items:center;justify-content:center;margin:0 2px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(240,240,244,.5);z-index:16;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ÉCRAN 3 — AJOUT ══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;align-items:center;" data-screen-label="Ajout">
+    <div style="font:600 13px Inter;color:#6B6F82;letter-spacing:.4px;">03 · Ajout</div>
+    <div style="width:414px;padding:11px;background:#000;border-radius:58px;box-shadow:0 50px 90px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.05);">
+      <div style="width:392px;height:844px;background:#0B0C10;border-radius:48px;overflow:hidden;position:relative;">
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:33px;background:#000;border-radius:20px;z-index:20;"></div>
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 9px;position:relative;z-index:10;">
+          <div style="font:600 16px Inter;color:#F0F0F4;letter-spacing:.2px;">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#F0F0F4"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#F0F0F4"><path d="M8.5 2C5.4 2 2.6 3.2.5 5.2l1.4 1.5C3.6 5 5.9 4 8.5 4s4.9 1 6.6 2.7l1.4-1.5C14.4 3.2 11.6 2 8.5 2z"/><path d="M8.5 6.5c-1.6 0-3.1.6-4.2 1.7l1.5 1.5c.7-.7 1.7-1.2 2.7-1.2s2 .5 2.7 1.2l1.5-1.5C11.6 7.1 10.1 6.5 8.5 6.5z"/><circle cx="8.5" cy="11" r="1.3"/></svg>
+            <div style="display:flex;align-items:center;gap:2px;"><div style="width:24px;height:12px;border-radius:3.5px;border:1px solid rgba(240,240,244,.4);padding:1.6px;"><div style="width:72%;height:100%;background:#F0F0F4;border-radius:1.5px;"></div></div><div style="width:1.5px;height:4px;background:rgba(240,240,244,.4);border-radius:1px;"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:#161821;border:1px solid rgba(148,152,178,.16);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F0F0F4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+          <div style="font:700 17px Inter;color:#F0F0F4;">Nouveau blocage</div>
+          <div style="width:36px;"></div>
+        </div>
+
+        <!-- type section -->
+        <div style="padding:22px 20px 0;">
+          <div style="font:600 13px Inter;color:#A8ABBE;margin-bottom:12px;">Type de blocage</div>
+          <div style="background:rgba(164,154,254,.08);border:1.5px solid #A49AFE;border-radius:16px;padding:15px;display:flex;align-items:center;gap:13px;margin-bottom:10px;">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(164,154,254,.16);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font:600 15px Inter;color:#F0F0F4;">Délai progressif</div>
+              <div style="font:400 12.5px Inter;color:#A8ABBE;margin-top:2px;line-height:1.35;">Un temps d'attente qui grandit à chaque ouverture</div>
+            </div>
+            <div style="width:24px;height:24px;border-radius:50%;background:#A49AFE;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          </div>
+          <div style="background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:15px;display:flex;align-items:center;gap:13px;margin-bottom:10px;">
+            <div style="width:42px;height:42px;border-radius:12px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#A8ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font:600 15px Inter;color:#F0F0F4;">Plages horaires</div>
+              <div style="font:400 12.5px Inter;color:#A8ABBE;margin-top:2px;line-height:1.35;">Bloque à certaines heures (ex : 22h – 8h)</div>
+            </div>
+            <div style="width:23px;height:23px;border-radius:50%;border:1.5px solid rgba(148,152,178,.4);flex:none;"></div>
+          </div>
+          <div style="background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:15px;display:flex;align-items:center;gap:13px;">
+            <div style="width:42px;height:42px;border-radius:12px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#A8ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-6M22 20h-2M2 20h20"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font:600 15px Inter;color:#F0F0F4;">Limite d'ouvertures / jour</div>
+              <div style="font:400 12.5px Inter;color:#A8ABBE;margin-top:2px;line-height:1.35;">Un nombre max d'ouvertures par jour</div>
+            </div>
+            <div style="width:23px;height:23px;border-radius:50%;border:1.5px solid rgba(148,152,178,.4);flex:none;"></div>
+          </div>
+        </div>
+
+        <!-- apps -->
+        <div style="padding:22px 20px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font:600 13px Inter;color:#A8ABBE;">Applications</div>
+            <div style="font:600 13px Inter;color:#A49AFE;">Toutes les apps</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+            <div style="position:relative;background:rgba(164,154,254,.08);border:1.5px solid #A49AFE;border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div style="position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;background:#A49AFE;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <svg width="38" height="38" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#010101"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#25F4EE" transform="translate(-1.2,-1.2)"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#FE2C55" transform="translate(1.2,1.2)"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#fff"/></svg>
+              <span style="font:600 12px Inter;color:#F0F0F4;">TikTok</span>
+            </div>
+            <div style="position:relative;background:rgba(164,154,254,.08);border:1.5px solid #A49AFE;border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div style="position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;background:#A49AFE;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <svg width="38" height="38" viewBox="0 0 48 48"><defs><radialGradient id="igB" cx="30%" cy="107%" r="130%"><stop offset="0" stop-color="#FED576"/><stop offset=".26" stop-color="#F47133"/><stop offset=".61" stop-color="#BC3081"/><stop offset="1" stop-color="#4C63D2"/></radialGradient></defs><rect width="48" height="48" rx="12" fill="url(#igB)"/><rect x="13" y="13" width="22" height="22" rx="7" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="24" cy="24" r="5.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="31.5" cy="16.5" r="1.7" fill="#fff"/></svg>
+              <span style="font:600 12px Inter;color:#F0F0F4;">Instagram</span>
+            </div>
+            <div style="position:relative;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div style="position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;border:1.5px solid rgba(148,152,178,.4);"></div>
+              <svg width="38" height="38" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#fff"/><rect x="8" y="14" width="32" height="20" rx="6" fill="#FF0000"/><path d="M21 20v8l7-4z" fill="#fff"/></svg>
+              <span style="font:600 12px Inter;color:#F0F0F4;">YouTube</span>
+            </div>
+            <div style="position:relative;background:rgba(164,154,254,.08);border:1.5px solid #A49AFE;border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div style="position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;background:#A49AFE;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <svg width="38" height="38" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#FFFC00"/><path d="M24 11c-4 0-6.5 3-6.5 6.7 0 1.5.1 2.6-.4 3.3-.6.8-2.1.6-2.6 1.4-.4.8.8 1.4 1.9 1.9-.3 1.6-2.4 2-2.3 2.9.1.9 2.3.7 3.9 1.3 1 .4 1.6 2 3.9 2s2.9-1.6 3.9-2c1.6-.6 3.8-.4 3.9-1.3.1-.9-2-1.3-2.3-2.9 1.1-.5 2.3-1.1 1.9-1.9-.5-.8-2-.6-2.6-1.4-.5-.7-.4-1.8-.4-3.3C30.5 14 28 11 24 11z" fill="#fff"/></svg>
+              <span style="font:600 12px Inter;color:#F0F0F4;">Snapchat</span>
+            </div>
+            <div style="position:relative;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div style="position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;border:1.5px solid rgba(148,152,178,.4);"></div>
+              <svg width="38" height="38" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#FF4500"/><circle cx="24" cy="27" r="8.5" fill="#fff"/><circle cx="20.5" cy="26.5" r="1.7" fill="#FF4500"/><circle cx="27.5" cy="26.5" r="1.7" fill="#FF4500"/><path d="M20 31c2.4 1.5 5.6 1.5 8 0" stroke="#FF4500" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="24" cy="14.5" r="1.9" fill="#fff"/><path d="M24 16.4v4" stroke="#fff" stroke-width="1.6"/></svg>
+              <span style="font:600 12px Inter;color:#F0F0F4;">Reddit</span>
+            </div>
+            <div style="position:relative;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div style="position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;border:1.5px solid rgba(148,152,178,.4);"></div>
+              <svg width="38" height="38" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#000"/><path d="M15 14.5l7.3 9.1L15 33.5h2.3l6-6.9 5.5 6.9H34l-7.7-9.6L33.2 14.5h-2.3l-5.5 6.3-5-6.3z" fill="#fff"/></svg>
+              <span style="font:600 12px Inter;color:#F0F0F4;">X</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- aperçu + button -->
+        <div style="padding:20px 20px 0;">
+          <div style="background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;padding:15px 16px;display:flex;gap:12px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <div style="font:400 13.5px Inter;color:#A8ABBE;line-height:1.45;">Délai de <span style="color:#F0F0F4;font-weight:600;">30 s</span> à la 1re ouverture, <span style="color:#F0F0F4;font-weight:600;">+15 s</span> ensuite. Appliqué à TikTok, Instagram, Snapchat.</div>
+          </div>
+        </div>
+
+        <div style="position:absolute;bottom:34px;left:20px;right:20px;">
+          <div style="height:54px;border-radius:16px;background:#A49AFE;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px -6px rgba(164,154,254,.5);">
+            <span style="font:700 16px Inter;color:#0B0C10;">Activer le blocage</span>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(240,240,244,.5);z-index:16;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ÉCRAN 4 — PARAMÈTRES ══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;align-items:center;" data-screen-label="Paramètres">
+    <div style="font:600 13px Inter;color:#6B6F82;letter-spacing:.4px;">04 · Paramètres</div>
+    <div style="width:414px;padding:11px;background:#000;border-radius:58px;box-shadow:0 50px 90px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.05);">
+      <div style="width:392px;height:844px;background:#0B0C10;border-radius:48px;overflow:hidden;position:relative;">
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:33px;background:#000;border-radius:20px;z-index:20;"></div>
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 9px;position:relative;z-index:10;">
+          <div style="font:600 16px Inter;color:#F0F0F4;letter-spacing:.2px;">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#F0F0F4"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#F0F0F4"><path d="M8.5 2C5.4 2 2.6 3.2.5 5.2l1.4 1.5C3.6 5 5.9 4 8.5 4s4.9 1 6.6 2.7l1.4-1.5C14.4 3.2 11.6 2 8.5 2z"/><path d="M8.5 6.5c-1.6 0-3.1.6-4.2 1.7l1.5 1.5c.7-.7 1.7-1.2 2.7-1.2s2 .5 2.7 1.2l1.5-1.5C11.6 7.1 10.1 6.5 8.5 6.5z"/><circle cx="8.5" cy="11" r="1.3"/></svg>
+            <div style="display:flex;align-items:center;gap:2px;"><div style="width:24px;height:12px;border-radius:3.5px;border:1px solid rgba(240,240,244,.4);padding:1.6px;"><div style="width:72%;height:100%;background:#F0F0F4;border-radius:1.5px;"></div></div><div style="width:1.5px;height:4px;background:rgba(240,240,244,.4);border-radius:1px;"></div></div>
+          </div>
+        </div>
+
+        <div style="padding:8px 20px 0;"><div style="font:800 28px Inter;color:#F0F0F4;letter-spacing:-.7px;">Réglages</div></div>
+
+        <!-- profile -->
+        <div style="margin:18px 20px 0;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;">
+          <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(140deg,#A49AFE,#6B62D6);display:flex;align-items:center;justify-content:center;font:700 20px Inter;color:#0B0C10;flex:none;">LM</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font:700 17px Inter;color:#F0F0F4;">Léa Moreau</div>
+            <div style="font:400 13.5px Inter;color:#A8ABBE;margin-top:2px;">lea.moreau@gmail.com</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+
+        <!-- group 1 -->
+        <div style="font:600 12.5px Inter;color:#6B6F82;letter-spacing:.3px;padding:22px 24px 8px;text-transform:uppercase;">Préférences</div>
+        <div style="margin:0 20px;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">Apparence</div>
+            <div style="font:400 14px Inter;color:#A8ABBE;">Sombre</div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div style="height:1px;background:rgba(148,152,178,.12);margin-left:58px;"></div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">Langue</div>
+            <div style="font:400 14px Inter;color:#A8ABBE;">Français</div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div style="height:1px;background:rgba(148,152,178,.12);margin-left:58px;"></div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">Notifications & rappels</div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+
+        <!-- group 2 -->
+        <div style="font:600 12.5px Inter;color:#6B6F82;letter-spacing:.3px;padding:22px 24px 8px;text-transform:uppercase;">Système</div>
+        <div style="margin:0 20px;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">Permissions · Temps d'écran</div>
+            <div style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;border-radius:50%;background:#4ADE80;"></span><span style="font:600 13px Inter;color:#4ADE80;">Activé</span></div>
+          </div>
+          <div style="height:1px;background:rgba(148,152,178,.12);margin-left:58px;"></div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A49AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">Abonnement</div>
+            <div style="font:700 12px Inter;color:#A49AFE;background:rgba(164,154,254,.14);border-radius:99px;padding:3px 10px;">Premium</div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+
+        <!-- group 3 -->
+        <div style="margin:22px 20px 0;background:#161821;border:1px solid rgba(148,152,178,.16);border-radius:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">À propos</div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div style="height:1px;background:rgba(148,152,178,.12);margin-left:58px;"></div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;">
+            <div style="width:30px;height:30px;border-radius:8px;background:#1C1F2B;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+            <div style="flex:1;font:500 15px Inter;color:#F0F0F4;">Confidentialité</div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6F82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+
+        <div style="text-align:center;font:400 12px Inter;color:#6B6F82;padding:22px 0;">Blocus · version 1.4.0</div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(240,240,244,.5);z-index:16;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ÉCRAN 5 — INTERCEPTION ══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;align-items:center;" data-screen-label="Interception">
+    <div style="font:600 13px Inter;color:#A49AFE;letter-spacing:.4px;">05 · Interception ✦</div>
+    <div style="width:414px;padding:11px;background:#000;border-radius:58px;box-shadow:0 50px 90px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.05);">
+      <div style="width:392px;height:844px;background:#08090C;border-radius:48px;overflow:hidden;position:relative;">
+        <div style="position:absolute;inset:0;background:radial-gradient(420px 420px at 50% 38%,rgba(164,154,254,.14) 0%,rgba(164,154,254,0) 62%);"></div>
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:33px;background:#000;border-radius:20px;z-index:20;"></div>
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 9px;position:relative;z-index:10;">
+          <div style="font:600 16px Inter;color:#F0F0F4;letter-spacing:.2px;">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#F0F0F4"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#F0F0F4"><path d="M8.5 2C5.4 2 2.6 3.2.5 5.2l1.4 1.5C3.6 5 5.9 4 8.5 4s4.9 1 6.6 2.7l1.4-1.5C14.4 3.2 11.6 2 8.5 2z"/><path d="M8.5 6.5c-1.6 0-3.1.6-4.2 1.7l1.5 1.5c.7-.7 1.7-1.2 2.7-1.2s2 .5 2.7 1.2l1.5-1.5C11.6 7.1 10.1 6.5 8.5 6.5z"/><circle cx="8.5" cy="11" r="1.3"/></svg>
+            <div style="display:flex;align-items:center;gap:2px;"><div style="width:24px;height:12px;border-radius:3.5px;border:1px solid rgba(240,240,244,.4);padding:1.6px;"><div style="width:72%;height:100%;background:#F0F0F4;border-radius:1.5px;"></div></div><div style="width:1.5px;height:4px;background:rgba(240,240,244,.4);border-radius:1px;"></div></div>
+          </div>
+        </div>
+
+        <div style="position:relative;z-index:5;height:calc(844px - 54px);display:flex;flex-direction:column;align-items:center;padding:0 32px;">
+          <div style="margin-top:64px;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);border:1px solid rgba(148,152,178,.16);border-radius:99px;padding:7px 14px 7px 8px;">
+            <svg width="24" height="24" viewBox="0 0 48 48" style="border-radius:7px;"><rect width="48" height="48" rx="12" fill="#010101"/><path d="M31 12c.5 3 2.6 5.2 5.5 5.6v3.6c-1.9.1-3.7-.4-5.4-1.4v7.9c0 4.6-3.4 7.9-7.8 7.9-4.2 0-7.4-3.2-7.4-7.2 0-4.1 3.3-7.2 7.6-6.9v3.8c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 2 1.5 3.5 3.4 3.5 2 0 3.6-1.5 3.6-3.9V12H31z" fill="#fff"/></svg>
+            <span style="font:600 14px Inter;color:#A8ABBE;">TikTok · en pause</span>
+          </div>
+
+          <div style="margin-top:56px;position:relative;width:236px;height:236px;">
+            <svg width="236" height="236" viewBox="0 0 236 236" style="transform:rotate(-90deg);">
+              <circle cx="118" cy="118" r="104" fill="none" stroke="#1C1F2B" stroke-width="12"/>
+              <circle cx="118" cy="118" r="104" fill="none" stroke="#A49AFE" stroke-width="12" stroke-linecap="round" stroke-dasharray="653.45" stroke-dashoffset="248.3"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div class="tnum" style="font:800 68px Inter;color:#F0F0F4;letter-spacing:-2px;line-height:1;">18</div>
+              <div style="font:500 14px Inter;color:#A8ABBE;margin-top:4px;">secondes restantes</div>
+            </div>
+          </div>
+
+          <div style="margin-top:52px;text-align:center;">
+            <div style="font:700 25px Inter;color:#F0F0F4;letter-spacing:-.4px;line-height:1.3;">Qu'est-ce que tu<br>cherches, vraiment ?</div>
+            <div style="font:400 14.5px Inter;color:#A8ABBE;margin-top:14px;line-height:1.5;">Prends une respiration. Dans quelques<br>secondes, tu pourras décider en conscience.</div>
+          </div>
+
+          <div style="margin-top:auto;width:100%;padding-bottom:34px;">
+            <div style="height:54px;border-radius:16px;background:#A49AFE;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 8px 30px -6px rgba(164,154,254,.55);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l-6 6 6 6"/><path d="M3 12h13a5 5 0 0 1 0 10h-1"/></svg>
+              <span style="font:700 16px Inter;color:#0B0C10;">Revenir en arrière</span>
+            </div>
+            <div style="text-align:center;margin-top:18px;"><span style="font:500 14px Inter;color:#6B6F82;">Ouvrir quand même</span></div>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(240,240,244,.5);z-index:16;"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<template id="__bundler_thumbnail" data-bg-color="#0B0C10">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0B0C10"/>
+    <rect x="470" y="180" width="260" height="440" rx="52" fill="#161821" stroke="rgba(148,152,178,0.16)" stroke-width="2"/>
+    <circle cx="600" cy="360" r="70" fill="none" stroke="#1C1F2B" stroke-width="14"/>
+    <circle cx="600" cy="360" r="70" fill="none" stroke="#A49AFE" stroke-width="14" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="150" transform="rotate(-90 600 360)"/>
+    <text x="600" y="378" font-family="Inter,sans-serif" font-size="52" font-weight="800" fill="#F0F0F4" text-anchor="middle">18</text>
+    <rect x="510" y="470" width="180" height="16" rx="8" fill="#A49AFE"/>
+    <rect x="530" y="505" width="140" height="10" rx="5" fill="#6B6F82"/>
+  </svg>
+</template>
+</x-dc>
+</body>
+</html>

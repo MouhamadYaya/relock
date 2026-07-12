@@ -4,7 +4,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createStaticNavigation } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React from 'react'
+import ActivityScreen from '@/features/activity/screens/ActivityScreen'
 import AuthScreen from '@/features/auth/screens/AuthScreen'
+import AddScreen from '@/features/blocking/screens/AddScreen'
+import PauseRitualScreen from '@/features/blocking/screens/PauseRitualScreen'
 import HomeScreen from '@/features/home/screens/HomeScreen'
 import StoryScreen from '@/features/home/screens/StoryScreen'
 import LanguagePickerModal from '@/features/settings/screens/LanguagePickerModal'
@@ -30,7 +33,7 @@ export const HomeTabs = createBottomTabNavigator<HomeTabParamList>({
   tabBar: props => <AnimatedTabBar {...props} />,
   screens: {
     [ROUTES.TAB_HOME]: HomeScreen,
-    [ROUTES.TAB_SETTINGS]: SettingsScreen,
+    [ROUTES.TAB_ACTIVITY]: ActivityScreen,
   },
 })
 
@@ -41,7 +44,16 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
     [ROUTES.ROOT_ONBOARDING]: OnboardingScreen,
     [ROUTES.ROOT_AUTH]: AuthScreen,
     [ROUTES.ROOT_APP]: HomeTabs,
+    [ROUTES.ADD_BLOCK]: {
+      screen: AddScreen,
+      options: { presentation: 'modal' },
+    },
+    [ROUTES.SETTINGS]: SettingsScreen,
     [ROUTES.HOME_STORY]: StoryScreen,
+    [ROUTES.PAUSE_RITUAL]: {
+      screen: PauseRitualScreen,
+      options: { presentation: 'fullScreenModal', gestureEnabled: false },
+    },
     [ROUTES.MODAL_THEME_PICKER]: {
       screen: ThemePickerModal,
       options: HALF_SHEET_OPTIONS,

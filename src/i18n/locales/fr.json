@@ -1,0 +1,116 @@
+{
+  "common": {
+    "error_title": "Un problème est survenu",
+    "error_hint": "Une erreur inattendue s'est produite. Réessaie.",
+    "retry": "Réessayer",
+    "offline_banner": "Tu es hors ligne. Données en cache affichées.",
+    "loading": "Chargement…"
+  },
+  "auth": {
+    "a11y_toggle_theme": "Changer le thème",
+    "welcome": "Content de te revoir",
+    "subtitle": "Connecte-toi pour continuer",
+    "mock_demo_hint": "Démo : les champs sont pré-remplis — appuie sur Se connecter (API mock).",
+    "or": "OU",
+    "email": "E-mail",
+    "email_placeholder": "toi@exemple.com",
+    "password": "Mot de passe",
+    "forgot_password": "Oublié ?",
+    "password_placeholder": "••••••••",
+    "signing_in": "Connexion…",
+    "sign_in": "Se connecter",
+    "no_account": "Pas encore de compte ?",
+    "sign_up": "S'inscrire",
+    "terms_prefix": "En continuant, tu acceptes nos",
+    "terms_of_service": "Conditions d'utilisation",
+    "and": "et",
+    "privacy_policy": "Politique de confidentialité"
+  },
+  "home": {
+    "title": "Accueil",
+    "greeting_morning": "Bonjour",
+    "greeting_afternoon": "Bon après-midi",
+    "greeting_evening": "Bonsoir",
+    "resisted_lead": "Aujourd'hui, tu as résisté à",
+    "openings": "ouvertures",
+    "streak_current": "Série en cours",
+    "streak_record": "Record {{days}}j",
+    "streak_unit": "jours de contrôle",
+    "time_regained": "Temps regagné",
+    "today": "aujourd'hui",
+    "interceptions": "Interceptions",
+    "scrolls_stopped": "scrolls stoppés",
+    "active_blocks": "Blocages actifs",
+    "manage": "Gérer"
+  },
+  "blockType": {
+    "progressive_delay": "Délai progressif",
+    "schedule": "Plages horaires",
+    "daily_limit": "Limite d'ouvertures",
+    "progressive_delay_desc": "Un temps d'attente qui grandit à chaque ouverture",
+    "schedule_desc": "Bloque à certaines heures (ex : 22h–8h)",
+    "daily_limit_desc": "Un nombre max d'ouvertures par jour"
+  },
+  "activity": {
+    "title": "Activité",
+    "seg_month": "Mois",
+    "seg_week": "Semaine",
+    "seg_day": "Jour",
+    "summary_today": "Aujourd'hui",
+    "regained": "de scroll",
+    "openings": "Ouvertures",
+    "interceptions": "Interceptions",
+    "per_hour": "Temps d'écran par heure",
+    "top_apps": "Temps d'écran le plus élevé"
+  },
+  "add": {
+    "title": "Ajout",
+    "new_block": "Nouveau blocage",
+    "type_section": "Type de blocage",
+    "apps_section": "Applications",
+    "apps_hint": "Réseaux à feed court suggérés — tu pourras en ajouter d'autres.",
+    "activate": "Activer le blocage",
+    "placeholder": "Bientôt : crée un blocage et choisis tes apps."
+  },
+  "pause": {
+    "title": "Respire un instant",
+    "question": "Qu'est-ce que tu cherches, vraiment ?",
+    "go_back": "Revenir en arrière",
+    "open_anyway": "Ouvrir quand même",
+    "opening": "Ouverture dans"
+  },
+  "settings": {
+    "language": {
+      "label": "Langue",
+      "french": "Français",
+      "english": "Anglais",
+      "russian": "Russe",
+      "german": "Allemand"
+    },
+    "title": "Paramètres",
+    "appearance": "Apparence",
+    "theme": "Thème",
+    "general": "Général",
+    "account": "Compte",
+    "notifications": "Notifications",
+    "permissions": "Permissions",
+    "screen_time": "Temps d'écran",
+    "subscription": "Abonnement",
+    "privacy": "Confidentialité",
+    "preview_pause": "Aperçu du rituel de pause",
+    "about": "À propos",
+    "version": "Version",
+    "logout": "Se déconnecter",
+    "theme_light": "Clair",
+    "theme_dark": "Sombre",
+    "theme_system": "Système"
+  },
+  "onboarding": {
+    "headline": "Reprends le contrôle\nde ton attention.",
+    "tagline": "Moins de scroll compulsif. Plus de toi.",
+    "get_started": "Commencer"
+  },
+  "app": {
+    "title": "Blocus"
+  }
+}

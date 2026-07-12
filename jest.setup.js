@@ -71,6 +71,7 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedScrollHandler: jest.fn(() => ({})),
     useAnimatedGestureHandler: jest.fn(() => ({})),
     useAnimatedReaction: jest.fn(),
+    useReducedMotion: jest.fn(() => false),
     withTiming: jest.fn(value => value),
     withSpring: jest.fn(value => value),
     withDecay: jest.fn(value => value),
@@ -85,7 +86,11 @@ jest.mock('react-native-reanimated', () => {
       linear: jest.fn(),
       ease: jest.fn(),
       quad: jest.fn(),
+      cubic: jest.fn(),
       bezier: jest.fn(),
+      out: jest.fn(fn => fn),
+      in: jest.fn(fn => fn),
+      inOut: jest.fn(fn => fn),
     },
   }
 })

@@ -38,7 +38,7 @@ export default function App() {
   useBackButtonHandler(
     routeName =>
       routeName === ROUTES.TAB_HOME ||
-      routeName === ROUTES.TAB_SETTINGS ||
+      routeName === ROUTES.TAB_ACTIVITY ||
       routeName === ROUTES.AUTH_LOGIN ||
       routeName === ROUTES.ONBOARDING_MAIN,
   )

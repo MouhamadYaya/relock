@@ -22,17 +22,17 @@ export const radius = {
   none: 0,
 
   // Subtle rounding (inputs, lists)
-  xs: 2,
-  sm: 4,
+  xs: 4,
+  sm: 8,
 
-  // Medium rounding (buttons, cards)
-  md: 6,
-  lg: 8,
+  // Medium rounding (buttons, chips) — tuned toward Opal (généreux)
+  md: 12,
+  lg: 16,
 
-  // Large rounding (sheets, surfaces)
-  xl: 12,
-  xxl: 16,
-  xxxl: 20,
+  // Large rounding (cards, surfaces, sheets) — Opal-level
+  xl: 20,
+  xxl: 24,
+  xxxl: 28,
 
   // Special shapes
   rounded: 999, // full circle if width = height

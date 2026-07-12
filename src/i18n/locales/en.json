@@ -43,11 +43,59 @@
     "quick_action_message": "Message",
     "quick_action_schedule": "Schedule",
     "quick_action_report": "Report",
-    "quick_action_upload": "Upload"
+    "quick_action_upload": "Upload",
+    "resisted_lead": "Today, you resisted",
+    "openings": "openings",
+    "streak_current": "Current streak",
+    "streak_record": "Record {{days}}d",
+    "streak_unit": "days in control",
+    "time_regained": "Time regained",
+    "today": "today",
+    "interceptions": "Interceptions",
+    "scrolls_stopped": "scrolls stopped",
+    "active_blocks": "Active blocks",
+    "manage": "Manage"
+  },
+  "blockType": {
+    "progressive_delay": "Progressive delay",
+    "schedule": "Time windows",
+    "daily_limit": "Daily open limit",
+    "progressive_delay_desc": "A wait that grows with each open",
+    "schedule_desc": "Block at certain hours (e.g. 10pm–8am)",
+    "daily_limit_desc": "A max number of opens per day"
+  },
+  "activity": {
+    "title": "Activity",
+    "seg_month": "Month",
+    "seg_week": "Week",
+    "seg_day": "Day",
+    "summary_today": "Today",
+    "regained": "of scrolling",
+    "openings": "Opens",
+    "interceptions": "Interceptions",
+    "per_hour": "Screen time per hour",
+    "top_apps": "Most screen time"
+  },
+  "add": {
+    "title": "Add",
+    "new_block": "New block",
+    "type_section": "Block type",
+    "apps_section": "Apps",
+    "apps_hint": "Suggested short-form feeds — you can add more.",
+    "activate": "Activate block",
+    "placeholder": "Coming soon: create a block and pick your apps."
+  },
+  "pause": {
+    "title": "Take a breath",
+    "question": "What are you really looking for?",
+    "go_back": "Go back",
+    "open_anyway": "Open anyway",
+    "opening": "Opening in"
   },
   "settings": {
     "language": {
       "label": "Language",
+      "french": "French",
       "english": "English",
       "russian": "Russian",
       "german": "German"
@@ -55,6 +103,14 @@
     "title": "Settings",
     "appearance": "Appearance",
     "theme": "Theme",
+    "general": "General",
+    "account": "Account",
+    "notifications": "Notifications",
+    "permissions": "Permissions",
+    "screen_time": "Screen Time",
+    "subscription": "Subscription",
+    "privacy": "Privacy",
+    "preview_pause": "Preview pause ritual",
     "about": "About",
     "version": "Version",
     "logout": "Log out",
