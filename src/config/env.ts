@@ -20,6 +20,8 @@ function parseTracesSampleRate(raw: string | undefined): number {
 export const env = {
   API_URL: (Config.API_URL ?? '').trim(),
   USE_MOCK_API: parseEnvBool(Config.USE_MOCK_API),
+  SUPABASE_URL: (Config.SUPABASE_URL ?? '').trim(),
+  SUPABASE_ANON_KEY: (Config.SUPABASE_ANON_KEY ?? '').trim(),
   WS_URL: (Config.WS_URL ?? '').trim(),
   ENV: (Config.ENV ?? (__DEV__ ? 'development' : 'production')).trim(),
   SENTRY_DSN: (Config.SENTRY_DSN ?? '').trim(),
