@@ -1,54 +1,80 @@
 /**
- * Domain service for authentication — business logic stays out of screens/hooks.
+ * Service d'authentification — Supabase (email + mot de passe).
  * Path: `src/features/auth/services/auth/`
  */
 
-import { constants, flags } from '@/config/constants'
+import { constants } from '@/config/constants'
 import type { AuthSession } from '@/features/auth/types'
 import { performLogout } from '@/session/logout'
-import { isOffline } from '@/shared/services/api/network/netinfo'
-import { OPS } from '@/shared/services/api/transport/operations'
-import { transport } from '@/shared/services/api/transport/transport'
 import { kvStorage } from '@/shared/services/storage/mmkv'
+import { supabase } from '@/shared/services/supabase/client'
 import { normalizeError } from '@/shared/utils/normalize-error'
-import { AuthMapper } from './auth.mappers'
-import {
-  type LoginRequest,
-  zLoginRequest,
-  zLoginResponse,
-} from './auth.schemas'
+import { type LoginRequest, zLoginRequest } from './auth.schemas'
+
+function persist(session: {
+  access_token: string
+  refresh_token: string
+}): void {
+  kvStorage.setString(constants.AUTH_TOKEN, session.access_token)
+  kvStorage.setString(constants.REFRESH_TOKEN, session.refresh_token)
+}
 
 export const AuthService = {
   async login(payload: LoginRequest): Promise<AuthSession> {
     const ok = zLoginRequest.safeParse(payload)
     if (!ok.success) {
       const message =
-        ok.error.issues.map(i => i.message).join('; ') || 'Invalid login'
+        ok.error.issues.map(i => i.message).join('; ') ||
+        'Identifiants invalides'
       throw normalizeError(new Error(message))
     }
 
-    // skip network check when mock transport is active
-    if (!flags.USE_MOCK && isOffline()) {
-      throw new Error('Offline: login requires network')
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: ok.data.email,
+      password: ok.data.password,
+    })
+    if (error) throw normalizeError(error)
+    if (!data.session || !data.user) {
+      throw normalizeError(new Error('Session introuvable'))
     }
 
-    // use OPS (Operation = union of OPS)
-    const raw = await transport.mutate<unknown>(OPS.AUTH_LOGIN, ok.data)
+    persist(data.session)
+    return {
+      token: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      userId: data.user.id,
+      email: data.user.email ?? ok.data.email,
+    }
+  },
 
-    const validated = zLoginResponse.parse(raw)
-    const session = AuthMapper.toAuthSession(validated)
-
-    // persist tokens under canonical keys (used by auth interceptor)
-    kvStorage.setString(constants.AUTH_TOKEN, session.token)
-
-    if (session.refreshToken) {
-      kvStorage.setString(constants.REFRESH_TOKEN, session.refreshToken)
+  /**
+   * Inscription. Si la confirmation e-mail est activée côté Supabase, la
+   * session n'est pas renvoyée : l'utilisateur doit confirmer son e-mail.
+   */
+  async signUp(payload: LoginRequest): Promise<{ needsEmailConfirm: boolean }> {
+    const ok = zLoginRequest.safeParse(payload)
+    if (!ok.success) {
+      const message =
+        ok.error.issues.map(i => i.message).join('; ') ||
+        'Identifiants invalides'
+      throw normalizeError(new Error(message))
     }
 
-    return session
+    const { data, error } = await supabase.auth.signUp({
+      email: ok.data.email,
+      password: ok.data.password,
+    })
+    if (error) throw normalizeError(error)
+
+    if (data.session) {
+      persist(data.session)
+      return { needsEmailConfirm: false }
+    }
+    return { needsEmailConfirm: true }
   },
 
   async logout() {
+    await supabase.auth.signOut()
     kvStorage.delete(constants.AUTH_TOKEN)
     kvStorage.delete(constants.REFRESH_TOKEN)
     await performLogout()

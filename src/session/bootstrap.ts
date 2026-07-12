@@ -6,7 +6,7 @@ export type InitialRoute = 'ROOT_ONBOARDING' | 'ROOT_AUTH' | 'ROOT_APP'
 // ⚠️ TEMPORAIRE (preview) — onboarding + connexion désactivés : l'app démarre
 // directement sur les onglets. À RÉACTIVER plus tard (voir choseafaire.md).
 // Pour réactiver : repasser ce flag à false.
-const BYPASS_AUTH: boolean = true
+const BYPASS_AUTH: boolean = false
 
 export function getInitialRoute(): InitialRoute {
   if (BYPASS_AUTH) return 'ROOT_APP'

@@ -35,6 +35,7 @@ import Svg, {
 import { flags } from '@/config/constants'
 import { AUTH_MOCK_DEMO } from '@/features/auth/constants'
 import { useLoginMutation } from '@/features/auth/hooks/useLoginMutation'
+import { AuthService } from '@/features/auth/services/auth/auth.service'
 import { useT } from '@/i18n/useT'
 import { resetRoot } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
@@ -44,7 +45,7 @@ import { Text } from '@/shared/components/ui/Text'
 import { useToggle } from '@/shared/hooks/useToggle'
 import { useTheme } from '@/shared/theme'
 import { normalizeError } from '@/shared/utils/normalize-error'
-import { showErrorToast } from '@/shared/utils/toast'
+import { showErrorToast, showToast } from '@/shared/utils/toast'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -408,6 +409,22 @@ export default function AuthScreen() {
       showErrorToast(normalizeError(e))
     }
   }, [email, password, login])
+
+  const handleSignUp = useCallback(async () => {
+    try {
+      const { needsEmailConfirm } = await AuthService.signUp({
+        email,
+        password,
+      })
+      if (needsEmailConfirm) {
+        showToast('Compte créé — confirme ton e-mail pour te connecter.')
+      } else {
+        resetRoot({ index: 0, routes: [{ name: ROUTES.ROOT_APP }] })
+      }
+    } catch (e) {
+      showErrorToast(normalizeError(e))
+    }
+  }, [email, password])
 
   const handleToggleTheme = useCallback(() => {
     setTheme(isDark ? 'light' : 'dark')
@@ -808,7 +825,10 @@ export default function AuthScreen() {
           <Text style={[ty.bodySmall, { color: c.textTertiary }]}>
             {t('auth.no_account')}{' '}
           </Text>
-          <Pressable style={({ pressed }) => pressed && styles.pressedOpacity}>
+          <Pressable
+            onPress={handleSignUp}
+            style={({ pressed }) => pressed && styles.pressedOpacity}
+          >
             <Text style={[ty.labelLarge, { color: c.primary }]}>
               {t('auth.sign_up')}
             </Text>
