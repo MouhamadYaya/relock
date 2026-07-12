@@ -1,11 +1,14 @@
 import { IconName } from '@assets/icons'
 import React, { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
+import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { showErrorToast, showToast } from '@/shared/utils/toast'
 
 const FW = {
   400: fonts.regular,
@@ -65,6 +68,7 @@ export default function AddScreen() {
   const [apps, setApps] = useState<Set<string>>(
     () => new Set(['tiktok', 'instagram']),
   )
+  const createRule = useCreateRuleMutation()
 
   const toggleApp = (id: string) =>
     setApps(prev => {
@@ -72,6 +76,23 @@ export default function AddScreen() {
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
+
+  const onSubmit = () => {
+    if (apps.size === 0 || createRule.isPending) return
+    createRule.mutate(
+      { type: type as BlockRuleType, appIds: [...apps] as AppId[] },
+      {
+        onSuccess: () => {
+          showToast('Blocage activé')
+          goBack()
+        },
+        onError: e => showErrorToast(e),
+      },
+    )
+  }
+
+  const submitting = createRule.isPending
+  const disabled = apps.size === 0 || submitting
 
   return (
     <ScreenWrapper>
@@ -220,19 +241,17 @@ export default function AddScreen() {
           {/* CTA */}
           <Pressable
             accessibilityRole="button"
-            disabled={apps.size === 0}
+            disabled={disabled}
+            onPress={onSubmit}
             style={[
               styles.cta,
-              { backgroundColor: apps.size === 0 ? C.surface2 : C.accent },
+              { backgroundColor: disabled ? C.surface2 : C.accent },
             ]}
           >
             <Text
-              style={[
-                f(700),
-                { fontSize: 16, color: apps.size === 0 ? C.ink3 : C.bg },
-              ]}
+              style={[f(700), { fontSize: 16, color: disabled ? C.ink3 : C.bg }]}
             >
-              Activer le blocage
+              {submitting ? 'Activation…' : 'Activer le blocage'}
             </Text>
           </Pressable>
 

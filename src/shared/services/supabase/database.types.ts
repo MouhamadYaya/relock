@@ -4,7 +4,7 @@
 export type BlockRuleType = 'progressive_delay' | 'schedule' | 'daily_limit'
 export type BlockEventType = 'intercepted' | 'opened_anyway' | 'delay_shown'
 
-export interface Profile {
+export type Profile = {
   id: string
   display_name: string | null
   avatar_url: string | null
@@ -14,7 +14,7 @@ export interface Profile {
   updated_at: string
 }
 
-export interface BlockRule {
+export type BlockRule = {
   id: string
   user_id: string
   type: BlockRuleType
@@ -25,7 +25,7 @@ export interface BlockRule {
   updated_at: string
 }
 
-export interface BlockEvent {
+export type BlockEvent = {
   id: string
   user_id: string
   rule_id: string | null
@@ -35,7 +35,7 @@ export interface BlockEvent {
   metadata: Record<string, unknown>
 }
 
-export interface DailyStats {
+export type DailyStats = {
   id: string
   user_id: string
   date: string
@@ -45,7 +45,7 @@ export interface DailyStats {
   streak_respected: boolean
 }
 
-export interface Settings {
+export type Settings = {
   user_id: string
   theme: string
   notifications_enabled: boolean
@@ -53,7 +53,12 @@ export interface Settings {
   updated_at: string
 }
 
-type Row<T> = { Row: T; Insert: Partial<T>; Update: Partial<T> }
+type Row<T> = {
+  Row: T
+  Insert: Partial<T>
+  Update: Partial<T>
+  Relationships: []
+}
 
 export interface Database {
   public: {
@@ -64,7 +69,9 @@ export interface Database {
       daily_stats: Row<DailyStats>
       settings: Row<Settings>
     }
-    Views: Record<string, never>
-    Functions: Record<string, never>
+    Views: { [_ in never]: never }
+    Functions: { [_ in never]: never }
+    Enums: { [_ in never]: never }
+    CompositeTypes: { [_ in never]: never }
   }
 }

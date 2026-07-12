@@ -1,11 +1,25 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
+import { useToggleRuleMutation } from '@/features/blocking/hooks/useToggleRuleMutation'
+import {
+  appsSubtitle,
+  type BlockRuleView,
+  RULE_TYPE_LABEL,
+} from '@/features/blocking/types'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import type { BlockRuleType } from '@/shared/services/supabase/database.types'
+
+const TYPE_ICON: Record<BlockRuleType, IconName> = {
+  progressive_delay: IconName.CLOCK,
+  schedule: IconName.CALENDAR,
+  daily_limit: IconName.CHART,
+}
 
 // Police Inter par poids (le fichier ExtraBold n'est pas lié → 800 rendu en Bold)
 const FW = {
@@ -40,28 +54,32 @@ const WEEK = [
   { d: 'D', done: false },
 ]
 
-const BLOCKS = [
-  {
-    icon: IconName.CLOCK,
-    title: 'Délai progressif',
-    sub: 'TikTok, Instagram +1',
-  },
-  {
-    icon: IconName.CALENDAR,
-    title: 'Plages horaires',
-    sub: 'TikTok · 22h – 8h',
-  },
-]
-
-function Toggle() {
+function Toggle({ on, onPress }: { on: boolean; onPress: () => void }) {
   return (
-    <View style={styles.toggle}>
-      <View style={styles.toggleKnob} />
-    </View>
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityState={{ checked: on }}
+      onPress={onPress}
+      hitSlop={6}
+      style={[
+        styles.toggle,
+        { backgroundColor: on ? C.accent : C.surface2 },
+      ]}
+    >
+      <View
+        style={[
+          styles.toggleKnob,
+          on ? { right: 3 } : { left: 3, backgroundColor: C.ink3 },
+        ]}
+      />
+    </Pressable>
   )
 }
 
 export default function HomeScreen() {
+  const { rules } = useBlockRulesQuery()
+  const toggleRule = useToggleRuleMutation()
+
   return (
     <ScreenWrapper>
       <ScrollView
@@ -252,17 +270,17 @@ export default function HomeScreen() {
                 </Text>
               </Pressable>
             </View>
-            {BLOCKS.map((b, i) => (
-              <View
-                key={b.title}
-                style={[styles.blockRow, i === 0 && { marginBottom: 8 }]}
+            {rules.length === 0 ? (
+              <Pressable
+                onPress={() => navigate(ROUTES.ADD_BLOCK)}
+                style={[styles.blockRow, styles.emptyRow]}
               >
                 <View style={styles.blockIcon}>
-                  <IconSvg name={b.icon} size={20} color={C.accent} />
+                  <IconSvg name={IconName.BLOCK} size={20} color={C.ink3} />
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                    {b.title}
+                    Aucun blocage
                   </Text>
                   <Text
                     style={[
@@ -270,12 +288,49 @@ export default function HomeScreen() {
                       { fontSize: 13, color: C.ink2, marginTop: 2 },
                     ]}
                   >
-                    {b.sub}
+                    Touche pour créer ton premier blocage
                   </Text>
                 </View>
-                <Toggle />
-              </View>
-            ))}
+                <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
+              </Pressable>
+            ) : (
+              rules.map((r: BlockRuleView, i: number) => (
+                <View
+                  key={r.id}
+                  style={[
+                    styles.blockRow,
+                    i < rules.length - 1 && { marginBottom: 8 },
+                  ]}
+                >
+                  <View style={styles.blockIcon}>
+                    <IconSvg
+                      name={TYPE_ICON[r.type]}
+                      size={20}
+                      color={C.accent}
+                    />
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                      {RULE_TYPE_LABEL[r.type]}
+                    </Text>
+                    <Text
+                      style={[
+                        f(400),
+                        { fontSize: 13, color: C.ink2, marginTop: 2 },
+                      ]}
+                    >
+                      {appsSubtitle(r.appIds)}
+                    </Text>
+                  </View>
+                  <Toggle
+                    on={r.isActive}
+                    onPress={() =>
+                      toggleRule.mutate({ id: r.id, isActive: !r.isActive })
+                    }
+                  />
+                </View>
+              ))
+            )}
           </View>
 
           {/* CTA */}
@@ -374,17 +429,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  emptyRow: { borderStyle: 'dashed' },
   toggle: {
     width: 44,
     height: 26,
     borderRadius: 99,
-    backgroundColor: C.accent,
     justifyContent: 'center',
   },
   toggleKnob: {
     position: 'absolute',
     top: 3,
-    right: 3,
     width: 20,
     height: 20,
     borderRadius: 10,
