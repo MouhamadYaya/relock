@@ -26,8 +26,6 @@ const C = {
   accent: '#A49AFE',
   // Inactif en blanc (visibilité) plutôt qu'en gris.
   inactive: '#F2F2F6',
-  // Bouton « + » : fond violet accent de l'app + « + » sombre façon CTA.
-  fabIcon: '#0B0C10',
 }
 
 /** Icônes PLEINES (premium) rendues en SVG, teintées selon l'état. */
@@ -112,12 +110,23 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
         onPress={() => navigate(ROUTES.ADD_BLOCK)}
         style={styles.fab}
       >
-        <Svg width={28} height={28} viewBox="0 0 24 24">
-          <Path
-            d="M12 5v14M5 12h14"
-            stroke={C.fabIcon}
-            strokeWidth={2.6}
-            strokeLinecap="round"
+        {/* « + » premium : glyphe massif à barres arrondies, en accent. */}
+        <Svg width={30} height={30} viewBox="0 0 24 24">
+          <Rect
+            x={9.7}
+            y={3.4}
+            width={4.6}
+            height={17.2}
+            rx={2.3}
+            fill={C.accent}
+          />
+          <Rect
+            x={3.4}
+            y={9.7}
+            width={17.2}
+            height={4.6}
+            rx={2.3}
+            fill={C.accent}
           />
         </Svg>
       </Pressable>
@@ -177,14 +186,17 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: C.accent,
+    // Fond frosted transparent (comme la pilule) → « + » violet qui ressort
+    // sans jamais se confondre avec le contenu derrière.
+    backgroundColor: C.pill,
+    borderWidth: 1,
+    borderColor: C.pillBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    // Ombre minimale, presque invisible.
     shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
 })

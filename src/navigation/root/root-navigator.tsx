@@ -46,7 +46,7 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
     [ROUTES.ROOT_APP]: HomeTabs,
     [ROUTES.ADD_BLOCK]: {
       screen: AddScreen,
-      options: { presentation: 'modal' },
+      options: HALF_SHEET_OPTIONS,
     },
     [ROUTES.SETTINGS]: SettingsScreen,
     [ROUTES.HOME_STORY]: StoryScreen,

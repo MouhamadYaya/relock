@@ -288,21 +288,19 @@ export default function HomeScreen() {
 
           {/* Blocages actifs */}
           <View style={{ marginTop: 14 }}>
-            <View style={[styles.rowBetween, { marginBottom: 12 }]}>
-              <Text
-                style={[
-                  f(700),
-                  { fontSize: 16, color: C.ink, letterSpacing: -0.2 },
-                ]}
-              >
-                Blocages actifs
-              </Text>
-              <Pressable onPress={() => navigate(ROUTES.ADD_BLOCK)} hitSlop={8}>
-                <Text style={[f(600), { fontSize: 13, color: C.accent }]}>
-                  Gérer
-                </Text>
-              </Pressable>
-            </View>
+            <Text
+              style={[
+                f(700),
+                {
+                  fontSize: 16,
+                  color: C.ink,
+                  letterSpacing: -0.2,
+                  marginBottom: 12,
+                },
+              ]}
+            >
+              Blocages actifs
+            </Text>
             {rules.length === 0 ? (
               <Pressable
                 onPress={() => navigate(ROUTES.ADD_BLOCK)}
@@ -355,10 +353,7 @@ export default function HomeScreen() {
                       {appsSubtitle(r.appIds, r.count)}
                     </Text>
                   </View>
-                  <Toggle
-                    on={r.isActive}
-                    onPress={() => onToggleRule(r)}
-                  />
+                  <Toggle on={r.isActive} onPress={() => onToggleRule(r)} />
                 </View>
               ))
             )}

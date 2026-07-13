@@ -80,6 +80,7 @@
   },
   "dependencies": {
     "@react-native-clipboard/clipboard": "^1.14.1",
+    "@react-native-community/blur": "^4.4.1",
     "@react-native-community/datetimepicker": "^8.6.0",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-vector-icons/ionicons": "^12.3.0",
@@ -101,6 +102,7 @@
     "react-native-bootsplash": "^6.3.11",
     "react-native-config": "^1.6.1",
     "react-native-gesture-handler": "^2.29.1",
+    "react-native-haptic-feedback": "^3.0.0",
     "react-native-localize": "^3.6.0",
     "react-native-mmkv": "4.3.0",
     "react-native-nitro-modules": "0.35.0",
