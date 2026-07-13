@@ -1,16 +1,21 @@
 import { IconName } from '@assets/icons'
 import React, { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
+import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
+import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
-import {
-  isScreenTimeReportAvailable,
-  ScreenTimeReport,
-} from '@/shared/native/ScreenTimeReport'
 import { fonts } from '@/shared/theme/tokens/fonts'
+
+function fmtDuration(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h === 0) return `${m} min`
+  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`
+}
 
 const FW = {
   400: fonts.regular,
@@ -30,79 +35,288 @@ const C = {
   ink3: '#6B6F82',
   accent: '#A49AFE',
   border: 'rgba(148,152,178,0.16)',
+  divider: 'rgba(148,152,178,0.16)',
 }
 
-const SEGMENTS = ['Jour', 'Semaine', 'Mois']
+const SEGMENTS = ['Mois', 'Semaine', 'Jour']
+const DATES = [
+  { d: 'D', n: 5 },
+  { d: 'L', n: 6 },
+  { d: 'M', n: 7 },
+  { d: 'M', n: 8 },
+  { d: 'J', n: 9 },
+  { d: 'V', n: 10 },
+  { d: 'S', n: 11, active: true },
+]
+const HOURS = [
+  18, 8, 5, 5, 12, 22, 40, 58, 35, 28, 20, 44, 66, 52, 38, 30, 48, 72, 100, 64,
+  42, 26, 14, 8,
+]
+const TOP_APPS: { app: AppId; name: string; time: string; ratio: number }[] = [
+  { app: 'tiktok', name: 'TikTok', time: '24 m 54 s', ratio: 1 },
+  { app: 'instagram', name: 'Instagram', time: '18 m 10 s', ratio: 0.73 },
+  { app: 'youtube', name: 'YouTube', time: '8 m 32 s', ratio: 0.34 },
+]
 
 export default function ActivityScreen() {
-  const [seg, setSeg] = useState(0)
+  const [seg, setSeg] = useState(2)
+  const stats = useHomeStats()
 
   return (
     <ScreenWrapper>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[f(800), { fontSize: 24, color: C.ink, letterSpacing: -0.6 }]}>
-            Activité
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Réglages"
-            onPress={() => navigate(ROUTES.SETTINGS)}
-            hitSlop={8}
-            style={styles.gear}
-          >
-            <IconSvg name={IconName.SETTINGS} size={19} color={C.ink2} />
-          </Pressable>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text
+              style={[
+                f(800),
+                { fontSize: 24, color: C.ink, letterSpacing: -0.6 },
+              ]}
+            >
+              Activité
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Réglages"
+              onPress={() => navigate(ROUTES.SETTINGS)}
+              hitSlop={8}
+              style={styles.gear}
+            >
+              <IconSvg name={IconName.SETTINGS} size={19} color={C.ink2} />
+            </Pressable>
+          </View>
 
-        {/* Période */}
-        <View style={styles.segment}>
-          {SEGMENTS.map((s, i) => {
-            const active = seg === i
-            return (
-              <Pressable
-                key={s}
-                onPress={() => setSeg(i)}
-                style={[styles.segItem, active && { backgroundColor: C.accent }]}
-              >
-                <Text
+          {/* Segmented */}
+          <View style={styles.segment}>
+            {SEGMENTS.map((s, i) => {
+              const active = seg === i
+              return (
+                <Pressable
+                  key={s}
+                  onPress={() => setSeg(i)}
                   style={[
-                    f(active ? 700 : 600),
-                    { fontSize: 14, color: active ? C.bg : C.ink2 },
+                    styles.segItem,
+                    active && { backgroundColor: C.accent },
                   ]}
                 >
-                  {s}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </View>
+                  <Text
+                    style={[
+                      f(active ? 700 : 600),
+                      { fontSize: 14, color: active ? C.bg : C.ink2 },
+                    ]}
+                  >
+                    {s}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
 
-        {/* Temps d'écran réel (rendu par iOS via l'extension) */}
-        <View style={styles.card}>
-          {isScreenTimeReportAvailable ? (
-            <ScreenTimeReport style={styles.report} period={seg} />
-          ) : (
-            <View style={styles.fallback}>
-              <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                Disponible sur iPhone
+          {/* Date band */}
+          <View style={styles.dateBand}>
+            {DATES.map((d, i) => (
+              <View key={`${d.d}-${i}`} style={styles.dateCol}>
+                <Text
+                  style={[
+                    f(d.active ? 700 : 600),
+                    {
+                      fontSize: 12,
+                      color: d.active ? C.accent : C.ink3,
+                      marginBottom: 8,
+                    },
+                  ]}
+                >
+                  {d.d}
+                </Text>
+                <View
+                  style={[
+                    styles.dateBubble,
+                    d.active && { backgroundColor: C.accent },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      f(d.active ? 700 : 600),
+                      styles.tnum,
+                      { fontSize: 15, color: d.active ? C.bg : C.ink2 },
+                    ]}
+                  >
+                    {d.n}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* Résumé */}
+          <View style={[styles.card, { marginTop: 20, padding: 20 }]}>
+            <Text style={[f(500), { fontSize: 13, color: C.ink3 }]}>
+              Aujourd'hui, 11 juillet
+            </Text>
+            <View style={styles.heroRow}>
+              <Text
+                style={[
+                  f(800),
+                  styles.tnum,
+                  { fontSize: 40, color: C.ink, letterSpacing: -1.5 },
+                ]}
+              >
+                {fmtDuration(stats.savedMinutes)}
               </Text>
-              <Text style={[f(400), styles.fallbackSub]}>
-                Le vrai temps d'écran par app (avec les icônes) est fourni par
-                iOS et ne s'affiche que sur un iPhone physique.
+              <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>
+                regagné
               </Text>
             </View>
-          )}
+            <View style={styles.hr} />
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[f(700), styles.tnum, { fontSize: 22, color: C.ink }]}
+                >
+                  {stats.resisted}
+                </Text>
+                <Text
+                  style={[
+                    f(500),
+                    { fontSize: 13, color: C.ink2, marginTop: 2 },
+                  ]}
+                >
+                  Résistances
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    f(700),
+                    styles.tnum,
+                    { fontSize: 22, color: C.accent },
+                  ]}
+                >
+                  {stats.interceptions}
+                </Text>
+                <Text
+                  style={[
+                    f(500),
+                    { fontSize: 13, color: C.ink2, marginTop: 2 },
+                  ]}
+                >
+                  Interceptions
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Graph */}
+          <View style={{ marginTop: 24 }}>
+            <Text
+              style={[
+                f(700),
+                {
+                  fontSize: 16,
+                  color: C.ink,
+                  letterSpacing: -0.2,
+                  marginBottom: 12,
+                },
+              ]}
+            >
+              Temps d'écran par heure
+            </Text>
+            <View
+              style={[
+                styles.card,
+                { paddingTop: 18, paddingHorizontal: 16, paddingBottom: 14 },
+              ]}
+            >
+              <View style={styles.chart}>
+                {HOURS.map((h, i) => (
+                  <View
+                    key={`h-${i}`}
+                    style={{
+                      flex: 1,
+                      height: `${h}%`,
+                      backgroundColor: C.accent,
+                      borderRadius: 3,
+                    }}
+                  />
+                ))}
+              </View>
+              <View style={styles.axis}>
+                {['0 h', '06 h', '12 h', '18 h'].map(l => (
+                  <Text
+                    key={l}
+                    style={[f(500), { fontSize: 11, color: C.ink3 }]}
+                  >
+                    {l}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* App la plus ouverte */}
+          <View style={{ marginTop: 22 }}>
+            <Text
+              style={[
+                f(700),
+                {
+                  fontSize: 16,
+                  color: C.ink,
+                  letterSpacing: -0.2,
+                  marginBottom: 14,
+                },
+              ]}
+            >
+              App la plus ouverte
+            </Text>
+            {TOP_APPS.map((a, i) => (
+              <View
+                key={a.name}
+                style={[
+                  styles.appRow,
+                  i < TOP_APPS.length - 1 && { marginBottom: 16 },
+                ]}
+              >
+                <AppLogo app={a.app} size={40} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={styles.appTop}>
+                    <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                      {a.name}
+                    </Text>
+                    <Text
+                      style={[
+                        f(600),
+                        styles.tnum,
+                        { fontSize: 14, color: C.ink2 },
+                      ]}
+                    >
+                      {a.time}
+                    </Text>
+                  </View>
+                  <View style={styles.track}>
+                    <View
+                      style={{
+                        width: `${a.ratio * 100}%`,
+                        height: 6,
+                        borderRadius: 99,
+                        backgroundColor: C.accent,
+                      }}
+                    />
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={{ height: 8 }} />
         </View>
-      </View>
+      </ScrollView>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
     paddingBottom: TAB_BAR_CLEARANCE,
@@ -136,28 +350,59 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 11,
   },
-  card: {
-    flex: 1,
-    marginTop: 16,
-    marginBottom: 12,
-    backgroundColor: C.surface,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: C.border,
-    overflow: 'hidden',
+  dateBand: {
+    flexDirection: 'row',
+    marginTop: 18,
   },
-  report: { flex: 1 },
-  fallback: {
-    flex: 1,
+  dateCol: { flex: 1, alignItems: 'center' },
+  dateBubble: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 30,
   },
-  fallbackSub: {
-    fontSize: 13,
-    color: C.ink2,
+  tnum: { fontVariant: ['tabular-nums'] },
+  card: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 20,
+  },
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
     marginTop: 6,
-    textAlign: 'center',
-    lineHeight: 19,
+  },
+  hr: {
+    height: 1,
+    backgroundColor: C.divider,
+    marginTop: 18,
+    marginBottom: 16,
+  },
+  chart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 3,
+    height: 120,
+  },
+  axis: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  appRow: { flexDirection: 'row', alignItems: 'center', gap: 13 },
+  appTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  track: {
+    height: 6,
+    borderRadius: 99,
+    backgroundColor: C.surface2,
+    overflow: 'hidden',
   },
 })
