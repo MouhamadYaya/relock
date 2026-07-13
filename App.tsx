@@ -8,6 +8,7 @@ import '@/i18n/i18n'
 
 import { flags } from '@/config/constants'
 import { authKeys } from '@/features/auth/api/keys'
+import { runInstallReset } from '@/features/blocking/services/reset.service'
 import { userKeys } from '@/features/user/api/keys'
 import { useT } from '@/i18n/useT'
 import { useBackButtonHandler } from '@/navigation/helpers/use-back-handler'
@@ -32,6 +33,8 @@ export default function App() {
 
   useEffect(() => {
     setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
+    // (Ré)installation : purge le blocage résiduel au niveau système.
+    void runInstallReset()
   }, [])
 
   // Android: exit app from root-level leaves (main tabs, login, onboarding).

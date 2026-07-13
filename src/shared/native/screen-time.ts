@@ -42,6 +42,8 @@ interface BlocusScreenTimeNative {
   getStatus(): Promise<ScreenTimeStatus>
   /** Récupère + vide le journal d'événements de l'extension. */
   pullEvents(): Promise<ScreenTimeEvent[]>
+  /** 1er lancement après (ré)install : purge le blocage système. true si frais. */
+  resetIfFreshInstall(): Promise<boolean>
 }
 
 const native = NativeModules.BlocusScreenTime as
@@ -77,4 +79,6 @@ export const ScreenTime = {
   stopBlocking: () => ensure().stopBlocking(),
   getStatus: () => ensure().getStatus(),
   pullEvents: () => ensure().pullEvents(),
+  resetIfFreshInstall: () =>
+    native ? native.resetIfFreshInstall() : Promise.resolve(false),
 }

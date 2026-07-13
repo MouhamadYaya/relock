@@ -311,6 +311,37 @@ final class BlocusScreenTime: NSObject {
     defaults?.removeObject(forKey: "eventLog")
     resolve(log)
   }
+
+  /// Au 1er lancement après (ré)installation : enlève tout blocage résiduel
+  /// laissé au niveau système (le bouclier/surveillance survivent à la
+  /// suppression de l'app). Renvoie `true` si c'était une install fraîche
+  /// (l'app en profite pour effacer aussi l'historique cloud).
+  @objc(resetIfFreshInstall:rejecter:)
+  func resetIfFreshInstall(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    // Drapeau dans le sandbox app (effacé à la désinstallation).
+    let key = "blocus.installed"
+    if UserDefaults.standard.bool(forKey: key) {
+      resolve(false)
+      return
+    }
+    UserDefaults.standard.set(true, forKey: key)
+    guard #available(iOS 16.0, *) else {
+      resolve(true)
+      return
+    }
+    center.stopMonitoring() // stoppe toutes les surveillances
+    store.shield.applications = nil
+    store.shield.applicationCategories = nil
+    store.shield.webDomains = nil
+    defaults?.removeObject(forKey: "selection")
+    defaults?.removeObject(forKey: "eventLog")
+    defaults?.set(false, forKey: "blocus.isBlocking")
+    defaults?.removeObject(forKey: "strictUntil")
+    resolve(true)
+  }
 }
 
 // MARK: - SwiftUI : conteneur du sélecteur avec boutons Terminé / Annuler
