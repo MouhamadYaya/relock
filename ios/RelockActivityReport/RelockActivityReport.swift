@@ -29,7 +29,7 @@ struct AppUsage: Identifiable {
 
 struct UsageModel {
   var totalSeconds: Double = 0
-  var hourly: [Double] = Array(repeating: 0, count: 24)
+  var values: [Double] = [] // durée par bucket (heure ou jour), chronologique
   var apps: [AppUsage] = []
 }
 
@@ -42,14 +42,13 @@ struct UsageReport: DeviceActivityReportScene {
   ) async -> UsageModel {
     var model = UsageModel()
     var byApp: [String: AppUsage] = [:]
+    var buckets: [(Date, Double)] = []
 
     for await entry in data {
       for await segment in entry.activitySegments {
-        let hour = Calendar.current.component(
-          .hour, from: segment.dateInterval.start)
         let dur = segment.totalActivityDuration
         model.totalSeconds += dur
-        if hour >= 0, hour < 24 { model.hourly[hour] += dur }
+        buckets.append((segment.dateInterval.start, dur))
 
         for await category in segment.categories {
           for await app in category.applications {
@@ -66,6 +65,7 @@ struct UsageReport: DeviceActivityReportScene {
       }
     }
 
+    model.values = buckets.sorted { $0.0 < $1.0 }.map { $0.1 }
     model.apps = byApp.values.sorted { $0.seconds > $1.seconds }
     return model
   }

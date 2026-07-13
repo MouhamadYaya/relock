@@ -21,7 +21,7 @@ struct UsageReportView: View {
   }
 
   private var axisMax: Double {
-    let peak = model.hourly.max() ?? 0
+    let peak = model.values.max() ?? 0
     if peak <= 0 { return 3600 }
     let step = 1800.0 // arrondi à la demi-heure supérieure
     return max(step, (peak / step).rounded(.up) * step)
@@ -83,10 +83,10 @@ struct UsageReportView: View {
             Rectangle().fill(grid).frame(height: 1)
           }
           HStack(alignment: .bottom, spacing: 2) {
-            ForEach(0..<24, id: \.self) { i in
-              let frac = axisMax > 0 ? model.hourly[i] / axisMax : 0
+            ForEach(model.values.indices, id: \.self) { i in
+              let frac = axisMax > 0 ? model.values[i] / axisMax : 0
               RoundedRectangle(cornerRadius: 2)
-                .fill(accent.opacity(model.hourly[i] > 0 ? 0.9 : 0.12))
+                .fill(accent.opacity(model.values[i] > 0 ? 0.9 : 0.12))
                 .frame(height: max(2, geo.size.height * frac))
                 .frame(maxWidth: .infinity)
             }

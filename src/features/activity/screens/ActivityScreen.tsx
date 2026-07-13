@@ -1,5 +1,5 @@
 import { IconName } from '@assets/icons'
-import React from 'react'
+import React, { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
@@ -24,13 +24,19 @@ const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
 const C = {
   bg: '#0B0C10',
   surface: '#161821',
+  surface2: '#1C1F2B',
   ink: '#F0F0F4',
   ink2: '#A8ABBE',
   ink3: '#6B6F82',
+  accent: '#A49AFE',
   border: 'rgba(148,152,178,0.16)',
 }
 
+const SEGMENTS = ['Jour', 'Semaine', 'Mois']
+
 export default function ActivityScreen() {
+  const [seg, setSeg] = useState(0)
+
   return (
     <ScreenWrapper>
       <View style={styles.container}>
@@ -50,10 +56,33 @@ export default function ActivityScreen() {
           </Pressable>
         </View>
 
+        {/* Période */}
+        <View style={styles.segment}>
+          {SEGMENTS.map((s, i) => {
+            const active = seg === i
+            return (
+              <Pressable
+                key={s}
+                onPress={() => setSeg(i)}
+                style={[styles.segItem, active && { backgroundColor: C.accent }]}
+              >
+                <Text
+                  style={[
+                    f(active ? 700 : 600),
+                    { fontSize: 14, color: active ? C.bg : C.ink2 },
+                  ]}
+                >
+                  {s}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+
         {/* Temps d'écran réel (rendu par iOS via l'extension) */}
         <View style={styles.card}>
           {isScreenTimeReportAvailable ? (
-            <ScreenTimeReport style={styles.report} />
+            <ScreenTimeReport style={styles.report} period={seg} />
           ) : (
             <View style={styles.fallback}>
               <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
@@ -93,9 +122,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  segment: {
+    flexDirection: 'row',
+    backgroundColor: C.surface2,
+    borderRadius: 14,
+    padding: 4,
+    marginTop: 18,
+  },
+  segItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: 11,
+  },
   card: {
     flex: 1,
-    marginTop: 18,
+    marginTop: 16,
     marginBottom: 12,
     backgroundColor: C.surface,
     borderRadius: 22,
