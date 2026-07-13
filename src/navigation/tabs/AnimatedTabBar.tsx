@@ -1,21 +1,20 @@
 // Barre d'onglets FLOTTANTE (réf. concurrent) :
 // pilule « frosted » translucide qui flotte PAR-DESSUS le contenu (aucune bande
-// de fond opaque). Accueil + Activité (icône + label), l'onglet actif surélevé
-// et en accent, les inactifs en blanc. À droite, nettement séparé, un bouton
-// circulaire « glassy » clair « + » qui ouvre l'écran Ajout.
+// de fond opaque). Accueil + Activité avec icônes PLEINES + label, l'onglet
+// actif surélevé et en accent, les inactifs en blanc. À droite, nettement
+// séparé, un bouton circulaire violet (accent app) « + » façon CTA.
 
-import { IconName } from '@assets/icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import React from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, { Path, Rect } from 'react-native-svg'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
-import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 /** Hauteur à réserver en bas des écrans à onglets pour laisser flotter la barre. */
-export const TAB_BAR_CLEARANCE = 118
+export const TAB_BAR_CLEARANCE = 116
 
 const C = {
   // Pilule frosted : nettement plus claire que le fond near-black.
@@ -27,16 +26,43 @@ const C = {
   accent: '#A49AFE',
   // Inactif en blanc (visibilité) plutôt qu'en gris.
   inactive: '#F2F2F6',
-  // Bouton circulaire « + » détaché : fond sombre transparent (comme la
-  // pilule) avec un « + » blanc bien visible façon CTA.
-  fab: 'rgba(38,41,54,0.92)',
-  fabBorder: 'rgba(255,255,255,0.14)',
-  fabIcon: '#FFFFFF',
+  // Bouton « + » : fond violet accent de l'app + « + » sombre façon CTA.
+  fabIcon: '#0B0C10',
 }
 
-const TAB_META: Record<string, { icon: IconName; label: string }> = {
-  [ROUTES.TAB_HOME]: { icon: IconName.HOME, label: 'Accueil' },
-  [ROUTES.TAB_ACTIVITY]: { icon: IconName.CHART, label: 'Activité' },
+/** Icônes PLEINES (premium) rendues en SVG, teintées selon l'état. */
+function TabGlyph({
+  route,
+  color,
+  size,
+}: {
+  route: string
+  color: string
+  size: number
+}) {
+  if (route === ROUTES.TAB_ACTIVITY) {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Rect x={3.5} y={12} width={4.4} height={8.5} rx={1.7} fill={color} />
+        <Rect x={9.8} y={3.5} width={4.4} height={17} rx={1.7} fill={color} />
+        <Rect x={16.1} y={8.5} width={4.4} height={12} rx={1.7} fill={color} />
+      </Svg>
+    )
+  }
+  // Accueil : maison pleine.
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M11.06 2.82 3.4 8.9A2.4 2.4 0 0 0 2.5 10.8v8.05c0 .9.74 1.65 1.65 1.65H8.6a1 1 0 0 0 1-1v-4.55a1 1 0 0 1 1-1h2.8a1 1 0 0 1 1 1V19.5a1 1 0 0 0 1 1h4.45c.91 0 1.65-.74 1.65-1.65V10.8a2.4 2.4 0 0 0-.9-1.88l-7.66-6.1a1.5 1.5 0 0 0-1.88 0z"
+        fill={color}
+      />
+    </Svg>
+  )
+}
+
+const TAB_META: Record<string, { label: string }> = {
+  [ROUTES.TAB_HOME]: { label: 'Accueil' },
+  [ROUTES.TAB_ACTIVITY]: { label: 'Activité' },
 }
 
 export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
@@ -51,10 +77,8 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
       <View style={styles.pill}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index
-          const meta = TAB_META[route.name] ?? {
-            icon: IconName.HOME,
-            label: route.name,
-          }
+          const label = TAB_META[route.name]?.label ?? route.name
+          const color = isFocused ? C.accent : C.inactive
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
@@ -70,36 +94,32 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
               key={route.key}
               accessibilityRole="tab"
               accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={meta.label}
+              accessibilityLabel={label}
               onPress={onPress}
               style={[styles.tab, isFocused && styles.tabActive]}
             >
-              <IconSvg
-                name={meta.icon}
-                size={23}
-                color={isFocused ? C.accent : C.inactive}
-              />
-              <Text
-                style={[
-                  styles.label,
-                  { color: isFocused ? C.accent : C.inactive },
-                ]}
-              >
-                {meta.label}
-              </Text>
+              <TabGlyph route={route.name} color={color} size={22} />
+              <Text style={[styles.label, { color }]}>{label}</Text>
             </Pressable>
           )
         })}
       </View>
 
-      {/* Bouton « + » circulaire détaché */}
+      {/* Bouton « + » circulaire détaché (violet accent, façon CTA) */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Nouveau blocage"
         onPress={() => navigate(ROUTES.ADD_BLOCK)}
         style={styles.fab}
       >
-        <IconSvg name={IconName.PLUS} size={30} color={C.fabIcon} />
+        <Svg width={28} height={28} viewBox="0 0 24 24">
+          <Path
+            d="M12 5v14M5 12h14"
+            stroke={C.fabIcon}
+            strokeWidth={2.6}
+            strokeLinecap="round"
+          />
+        </Svg>
       </Pressable>
     </View>
   )
@@ -115,63 +135,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 30,
+    gap: 38,
     paddingTop: 10,
     backgroundColor: 'transparent',
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     backgroundColor: C.pill,
     borderWidth: 1,
     borderColor: C.pillBorder,
-    borderRadius: 30,
-    padding: 6,
-    // Ombre douce → effet flottant.
+    borderRadius: 28,
+    padding: 5,
     shadowColor: '#000',
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   tab: {
-    minWidth: 92,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    borderRadius: 24,
+    minWidth: 90,
+    paddingVertical: 5,
+    paddingHorizontal: 16,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 3,
   },
   tabActive: {
     backgroundColor: C.selected,
     borderWidth: 1,
     borderColor: C.selectedBorder,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
   },
   label: {
     fontFamily: fonts.semiBold,
-    fontSize: 13,
+    fontSize: 12.5,
     letterSpacing: -0.1,
   },
   fab: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: C.fab,
-    borderWidth: 1,
-    borderColor: C.fabBorder,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: C.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    // Ombre douce (flottant) + léger halo lavande pour ressortir comme un CTA.
-    shadowColor: C.accent,
-    shadowOpacity: 0.45,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    // Ombre minimale, presque invisible.
+    shadowColor: '#000',
+    shadowOpacity: 0.16,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
 })
