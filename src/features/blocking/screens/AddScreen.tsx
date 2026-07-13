@@ -73,6 +73,7 @@ const C = {
   accent: '#A49AFE',
   hair: 'rgba(255,255,255,0.06)',
   ambient10: 'rgba(164,154,254,0.10)',
+  ambient18: 'rgba(164,154,254,0.18)',
 }
 
 const GRAB = 26 // hauteur de la zone poignée
@@ -173,6 +174,7 @@ export default function AddScreen() {
   const [count, setCount] = useState(0)
   const [working, setWorking] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [warn, setWarn] = useState<string | null>(null)
   const createRule = useCreateRuleMutation()
 
   const [durationMin, setDurationMin] = useState(30)
@@ -339,10 +341,7 @@ export default function AddScreen() {
       const e = end.getHours() * 60 + end.getMinutes()
       const win = e - s > 0 ? e - s : e - s + 1440
       if (win < 15) {
-        Alert.alert(
-          'Plage trop courte',
-          "Une plage horaire doit durer au moins 15 minutes (limite d'iOS).",
-        )
+        setWarn('Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.')
         return
       }
     }
@@ -364,7 +363,12 @@ export default function AddScreen() {
       })
       setSuccessMsg(summary())
     } catch (e) {
-      showErrorToast(e)
+      const msg = String((e as { message?: string })?.message ?? e ?? '')
+      if (/too short|schedule/i.test(msg)) {
+        setWarn('Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.')
+      } else {
+        showErrorToast(e)
+      }
     } finally {
       setWorking(false)
     }
@@ -612,6 +616,24 @@ export default function AddScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Avertissement (ex : plage trop courte) */}
+      <Modal visible={!!warn} transparent animationType="fade">
+        <View style={styles.modalBg}>
+          <View style={styles.successCard}>
+            <View style={styles.warnBadge}>
+              <IconSvg name={IconName.CALENDAR} size={28} color={C.accent} />
+            </View>
+            <Text style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}>
+              Plage trop courte
+            </Text>
+            <Text style={[f(400), styles.successSub]}>{warn}</Text>
+            <Pressable onPress={() => setWarn(null)} style={styles.successBtn}>
+              <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>Compris</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -741,6 +763,14 @@ const styles = StyleSheet.create({
     height: 62,
     borderRadius: 31,
     backgroundColor: C.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  warnBadge: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: C.ambient18,
     alignItems: 'center',
     justifyContent: 'center',
   },
