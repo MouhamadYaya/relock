@@ -17,7 +17,11 @@ import SwiftUI
 final class BlocusScreenTime: NSObject {
 
   /// Store des réglages gérés — le bouclier posé ici bloque les apps ciblées.
-  private let store = ManagedSettingsStore(named: .init(rawValue: "blocus.default"))
+  /// Propriété calculée (l'init `named:` est iOS 16+, la classe cible iOS 15).
+  @available(iOS 16.0, *)
+  private var store: ManagedSettingsStore {
+    ManagedSettingsStore(named: .init(rawValue: "blocus.default"))
+  }
 
   /// Clé de persistance de la sélection (jeton opaque, Codable).
   private let selectionKey = "blocus.selection"
@@ -156,6 +160,10 @@ final class BlocusScreenTime: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    guard #available(iOS 16.0, *) else {
+      resolve(true)
+      return
+    }
     store.shield.applications = nil
     store.shield.applicationCategories = nil
     store.shield.webDomains = nil
