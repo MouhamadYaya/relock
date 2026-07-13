@@ -13,6 +13,7 @@
 		2244776AFEDE4D159156A9AF /* Inter-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EF42131922094AC1BC44EDBB /* Inter-SemiBold.ttf */; };
 		3847BFCBB50F41F29462493A /* JetBrainsMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5B1181BB56454D09A355328F /* JetBrainsMono-Regular.ttf */; };
 		4FCAC8B284A252FEA644948F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		55513E05EA2429C334AFC2FA /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23BE557DFCBF1E290B255014 /* Foundation.framework */; };
 		5B2205118EDDD85F2BFADA02 /* RelockMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 14EE595CCFF2B3E063DC7BD8 /* RelockMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		68E19F8399DC4AD8AE3D4AD6 /* Inter-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 09245AC1DD1546958697DF20 /* Inter-Medium.ttf */; };
 		75A0FC4477D368589469663B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23BE557DFCBF1E290B255014 /* Foundation.framework */; };
@@ -21,8 +22,10 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		9AB0C186AECDC6BD4B51936B /* RelockMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8337079EF960E496124E3891 /* RelockMonitor.swift */; };
 		9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */; };
+		A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99267AE42A73E61E98DE0728 /* RelockShield.swift */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
+		E4C21F3F1320BC6FCCD31280 /* RelockShield.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A673B73E1554D473DCDADCDD /* RelockShield.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
 		FE082EB568BC4C66870D3470 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -34,6 +37,13 @@
 			remoteGlobalIDString = 8BA9BB81E9029AC33DFAE70B;
 			remoteInfo = RelockMonitor;
 		};
+		945F0F6678B2720DA015EA4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 84E8DAD0EFE1AAEFF9EEB11E;
+			remoteInfo = RelockShield;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +54,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				5B2205118EDDD85F2BFADA02 /* RelockMonitor.appex in Embed Foundation Extensions */,
+				E4C21F3F1320BC6FCCD31280 /* RelockShield.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -69,6 +80,10 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ReactNativeStarter/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ReactNativeStarter/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8337079EF960E496124E3891 /* RelockMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockMonitor.swift; path = RelockMonitor/RelockMonitor.swift; sourceTree = "<group>"; };
+		8DB7C56395D472046F777B09 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockShield/Info.plist; sourceTree = "<group>"; };
+		9275E3DCA17F1B2CFB757E9D /* RelockShield.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShield.entitlements; path = RelockShield/RelockShield.entitlements; sourceTree = "<group>"; };
+		99267AE42A73E61E98DE0728 /* RelockShield.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockShield.swift; path = RelockShield/RelockShield.swift; sourceTree = "<group>"; };
+		A673B73E1554D473DCDADCDD /* RelockShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlocusScreenTime.swift; path = ReactNativeStarter/BlocusScreenTime.swift; sourceTree = "<group>"; };
 		C504AB07807F4A598A8D411D /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = ReactNativeStarter/BootSplash.storyboard; sourceTree = "<group>"; };
 		DC2160CB3002FE400001F544 /* ReactNativeStarter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = ReactNativeStarter.entitlements; path = ReactNativeStarter/ReactNativeStarter.entitlements; sourceTree = "<group>"; };
@@ -92,6 +107,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				75A0FC4477D368589469663B /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		481A7705E5BCED6BB44D7240 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55513E05EA2429C334AFC2FA /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,6 +158,16 @@
 			name = RelockMonitor;
 			sourceTree = SOURCE_ROOT;
 		};
+		38538F64AEFBD779705D3CF1 /* RelockShield */ = {
+			isa = PBXGroup;
+			children = (
+				99267AE42A73E61E98DE0728 /* RelockShield.swift */,
+				8DB7C56395D472046F777B09 /* Info.plist */,
+				9275E3DCA17F1B2CFB757E9D /* RelockShield.entitlements */,
+			);
+			name = RelockShield;
+			sourceTree = SOURCE_ROOT;
+		};
 		6873D83C4F101C214A8EAF46 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -160,6 +193,7 @@
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
 				AD08869FAC5A4C82A789B950 /* Resources */,
 				31C9505DB233722D382788C6 /* RelockMonitor */,
+				38538F64AEFBD779705D3CF1 /* RelockShield */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -171,6 +205,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* ReactNativeStarter.app */,
 				14EE595CCFF2B3E063DC7BD8 /* RelockMonitor.appex */,
+				A673B73E1554D473DCDADCDD /* RelockShield.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -216,11 +251,29 @@
 			);
 			dependencies = (
 				28F1351425A5E4F7BA4A2756 /* PBXTargetDependency */,
+				F8FCDB80C7D4F92B0A3FD680 /* PBXTargetDependency */,
 			);
 			name = ReactNativeStarter;
 			productName = ReactNativeStarter;
 			productReference = 13B07F961A680F5B00A75B9A /* ReactNativeStarter.app */;
 			productType = "com.apple.product-type.application";
+		};
+		84E8DAD0EFE1AAEFF9EEB11E /* RelockShield */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9347A749821D97D8CBBC3E5D /* Build configuration list for PBXNativeTarget "RelockShield" */;
+			buildPhases = (
+				EE0C0A45D3BF6E5E7C1F7869 /* Sources */,
+				481A7705E5BCED6BB44D7240 /* Frameworks */,
+				C0A81A7020E96B5FA0C176DC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RelockShield;
+			productName = RelockShield;
+			productReference = A673B73E1554D473DCDADCDD /* RelockShield.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		8BA9BB81E9029AC33DFAE70B /* RelockMonitor */ = {
 			isa = PBXNativeTarget;
@@ -267,6 +320,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* ReactNativeStarter */,
 				8BA9BB81E9029AC33DFAE70B /* RelockMonitor */,
+				84E8DAD0EFE1AAEFF9EEB11E /* RelockShield */,
 			);
 		};
 /* End PBXProject section */
@@ -290,6 +344,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		446FA19089CE3987CBD24D63 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0A81A7020E96B5FA0C176DC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -392,6 +453,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EE0C0A45D3BF6E5E7C1F7869 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -400,6 +469,12 @@
 			name = RelockMonitor;
 			target = 8BA9BB81E9029AC33DFAE70B /* RelockMonitor */;
 			targetProxy = 65D12CC414D862D0A250497D /* PBXContainerItemProxy */;
+		};
+		F8FCDB80C7D4F92B0A3FD680 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RelockShield;
+			target = 84E8DAD0EFE1AAEFF9EEB11E /* RelockShield */;
+			targetProxy = 945F0F6678B2720DA015EA4F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -461,6 +536,33 @@
 				PRODUCT_NAME = ReactNativeStarter;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		5CB8372B9AB306233FD1236B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = RelockShield/RelockShield.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7K9HCH8GF2;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = RelockShield/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShield;
+				PRODUCT_NAME = RelockShield;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -635,6 +737,32 @@
 			};
 			name = Release;
 		};
+		8C6DB4441AC0BCA881964178 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = RelockShield/RelockShield.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7K9HCH8GF2;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = RelockShield/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShield;
+				PRODUCT_NAME = RelockShield;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		9B77CBA2AB0EA2DBA729D782 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -678,6 +806,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9347A749821D97D8CBBC3E5D /* Build configuration list for PBXNativeTarget "RelockShield" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CB8372B9AB306233FD1236B /* Release */,
+				8C6DB4441AC0BCA881964178 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
