@@ -15,16 +15,21 @@ class RelockShield: ShieldConfigurationDataSource {
   private static let ink2 = UIColor(white: 0.68, alpha: 1.0)
 
   private func make() -> ShieldConfiguration {
-    let icon = UIImage(systemName: "cube.fill")?
-      .withTintColor(Self.accent, renderingMode: .alwaysOriginal)
+    // Illustration « personne qui lit » (déposée dans Shield.xcassets → "BlockArt").
+    // Repli sur un symbole tant que le fichier n'est pas fourni.
+    let art =
+      UIImage(named: "BlockArt")
+      ?? UIImage(systemName: "book.fill")?
+        .withTintColor(Self.accent, renderingMode: .alwaysOriginal)
     return ShieldConfiguration(
       backgroundBlurStyle: .dark,
       backgroundColor: Self.bg,
-      icon: icon,
-      title: ShieldConfiguration.Label(
-        text: "Reprends le contrôle", color: .white),
+      icon: art,
+      title: ShieldConfiguration.Label(text: "Bloqué", color: .white),
       subtitle: ShieldConfiguration.Label(
-        text: "Cette app est bloquée par Relock.", color: Self.ink2),
+        text:
+          "Concentre-toi sur ce qui compte. Ou fais une vraie pause — ouvrir cette app ne t'aidera pas.",
+        color: Self.ink2),
       primaryButtonLabel: ShieldConfiguration.Label(
         text: "Fermer", color: Self.bg),
       primaryButtonBackgroundColor: Self.accent)
