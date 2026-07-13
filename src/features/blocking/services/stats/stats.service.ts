@@ -1,0 +1,96 @@
+/**
+ * Stats réelles. Source de vérité : le journal d'événements de l'extension
+ * (via App Group → `ScreenTime.pullEvents`), remonté dans Supabase `daily_stats`.
+ *
+ * « resisted » = l'utilisateur a buté sur l'écran de blocage et tapé « Fermer »
+ * (proxy fiable des ouvertures évitées ; iOS ne donne pas le nb d'ouvertures).
+ */
+
+import { ScreenTime } from '@/shared/native/screen-time'
+import { supabase } from '@/shared/services/supabase/client'
+import type { DailyStats } from '@/shared/services/supabase/database.types'
+import { normalizeError } from '@/shared/utils/normalize-error'
+
+/** Estimation : minutes regagnées par ouverture évitée (hypothèse produit). */
+export const MIN_SAVED_PER_RESIST = 5
+
+const today = () => new Date().toISOString().slice(0, 10)
+
+export const StatsService = {
+  /** Remonte les événements de l'extension vers `daily_stats` (idempotent-ish). */
+  async syncFromDevice(): Promise<void> {
+    if (!ScreenTime.isAvailable) return
+    const events = await ScreenTime.pullEvents()
+    if (!events.length) return
+
+    const { data: u, error: uErr } = await supabase.auth.getUser()
+    if (uErr) throw normalizeError(uErr)
+    const userId = u.user?.id
+    if (!userId) return
+
+    // Compte les « résistances » par jour.
+    const perDay: Record<string, number> = {}
+    for (const e of events) {
+      if (e.kind !== 'resisted') continue
+      const day = (e.at ?? '').slice(0, 10)
+      if (day) perDay[day] = (perDay[day] ?? 0) + 1
+    }
+
+    for (const [date, resisted] of Object.entries(perDay)) {
+      const { data: existing } = await supabase
+        .from('daily_stats')
+        .select('interceptions_count,opens_stopped,time_saved_minutes')
+        .eq('date', date)
+        .maybeSingle()
+      await supabase.from('daily_stats').upsert(
+        {
+          user_id: userId,
+          date,
+          interceptions_count: (existing?.interceptions_count ?? 0) + resisted,
+          opens_stopped: (existing?.opens_stopped ?? 0) + resisted,
+          time_saved_minutes:
+            (existing?.time_saved_minutes ?? 0) + resisted * MIN_SAVED_PER_RESIST,
+          streak_respected: true,
+        },
+        { onConflict: 'user_id,date' },
+      )
+    }
+  },
+
+  async today(): Promise<DailyStats | null> {
+    const { data, error } = await supabase
+      .from('daily_stats')
+      .select('*')
+      .eq('date', today())
+      .maybeSingle()
+    if (error) throw normalizeError(error)
+    return data
+  },
+
+  /** Derniers jours (récents en premier) pour la série + le graphe. */
+  async recent(days = 30): Promise<DailyStats[]> {
+    const { data, error } = await supabase
+      .from('daily_stats')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(days)
+    if (error) throw normalizeError(error)
+    return data ?? []
+  },
+}
+
+/** Série = nb de jours consécutifs (jusqu'à aujourd'hui) avec une activité. */
+export function computeStreak(rows: DailyStats[]): number {
+  const byDate = new Set(rows.filter(r => r.streak_respected).map(r => r.date))
+  let streak = 0
+  const d = new Date()
+  // Autorise que « aujourd'hui » soit encore vide sans casser la série.
+  if (!byDate.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1)
+  for (;;) {
+    const key = d.toISOString().slice(0, 10)
+    if (!byDate.has(key)) break
+    streak += 1
+    d.setDate(d.getDate() - 1)
+  }
+  return streak
+}

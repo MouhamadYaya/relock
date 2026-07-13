@@ -2,10 +2,11 @@ import { IconName } from '@assets/icons'
 import React from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
-import { useToggleRuleMutation } from '@/features/blocking/hooks/useToggleRuleMutation'
+import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
 import {
-  appsSubtitle,
   type BlockRuleView,
+  blockStatusLine,
+  isLocked,
   RULE_TYPE_LABEL,
 } from '@/features/blocking/types'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
@@ -13,28 +14,8 @@ import { ROUTES } from '@/navigation/routes'
 import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
-import { ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { showErrorToast } from '@/shared/utils/toast'
-
-/** Ré-arme la mécanique native d'une règle depuis son type + config. */
-async function armRule(type: BlockRuleType, config?: Record<string, unknown>) {
-  const c = config ?? {}
-  const n = (v: unknown, d = 0) => (typeof v === 'number' ? v : d)
-  if (type === 'schedule') {
-    await ScreenTime.startSchedule(
-      n(c.start_hour),
-      n(c.start_minute),
-      n(c.end_hour),
-      n(c.end_minute),
-    )
-  } else if (type === 'daily_limit') {
-    await ScreenTime.startDailyLimit(n(c.limit_min, 60))
-  } else {
-    await ScreenTime.startTimedBlock(n(c.duration_min, 30), !!c.strict)
-  }
-}
 
 const TYPE_ICON: Record<BlockRuleType, IconName> = {
   progressive_delay: IconName.CLOCK,
@@ -75,43 +56,17 @@ const WEEK = [
   { d: 'D', done: false },
 ]
 
-function Toggle({ on, onPress }: { on: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityState={{ checked: on }}
-      onPress={onPress}
-      hitSlop={6}
-      style={[styles.toggle, { backgroundColor: on ? C.accent : C.surface2 }]}
-    >
-      <View
-        style={[
-          styles.toggleKnob,
-          on ? { right: 3 } : { left: 3, backgroundColor: C.ink3 },
-        ]}
-      />
-    </Pressable>
-  )
+function fmtSaved(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h === 0) return `${m} min`
+  if (m === 0) return `${h} h`
+  return `${h} h ${String(m).padStart(2, '0')}`
 }
 
 export default function HomeScreen() {
   const { rules } = useBlockRulesQuery()
-  const toggleRule = useToggleRuleMutation()
-
-  const onToggleRule = async (r: BlockRuleView) => {
-    const next = !r.isActive
-    if (ScreenTime.isAvailable) {
-      try {
-        if (next) await armRule(r.type, r.config)
-        else await ScreenTime.stopBlocking()
-      } catch (e) {
-        // ex : mode strict → stopBlocking rejette ; on ne change pas l'état.
-        showErrorToast(e)
-        return
-      }
-    }
-    toggleRule.mutate({ id: r.id, isActive: next })
-  }
+  const stats = useHomeStats()
 
   return (
     <ScreenWrapper>
@@ -152,7 +107,10 @@ export default function HomeScreen() {
               ]}
             >
               Aujourd'hui, tu as résisté à{' '}
-              <Text style={[f(700), { color: C.accent }]}>7 ouvertures</Text>.
+              <Text style={[f(700), { color: C.accent }]}>
+                {stats.resisted} ouverture{stats.resisted > 1 ? 's' : ''}
+              </Text>
+              .
             </Text>
           </View>
 
@@ -188,7 +146,7 @@ export default function HomeScreen() {
                   },
                 ]}
               >
-                12
+                {stats.streak}
               </Text>
               <Text style={[f(600), { fontSize: 17, color: C.ink }]}>
                 jours de contrôle
@@ -246,7 +204,7 @@ export default function HomeScreen() {
                   },
                 ]}
               >
-                1 h 47
+                {fmtSaved(stats.savedMinutes)}
               </Text>
               <Text
                 style={[
@@ -273,7 +231,7 @@ export default function HomeScreen() {
                   },
                 ]}
               >
-                9
+                {stats.interceptions}
               </Text>
               <Text
                 style={[
@@ -287,7 +245,7 @@ export default function HomeScreen() {
           </View>
 
           {/* Blocages actifs */}
-          <View style={{ marginTop: 14 }}>
+          <View style={{ marginTop: 30 }}>
             <Text
               style={[
                 f(700),
@@ -299,7 +257,7 @@ export default function HomeScreen() {
                 },
               ]}
             >
-              Blocages actifs
+              Gérer les blocages
             </Text>
             {rules.length === 0 ? (
               <Pressable
@@ -325,37 +283,47 @@ export default function HomeScreen() {
                 <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
               </Pressable>
             ) : (
-              rules.map((r: BlockRuleView, i: number) => (
-                <View
-                  key={r.id}
-                  style={[
-                    styles.blockRow,
-                    i < rules.length - 1 && { marginBottom: 8 },
-                  ]}
-                >
-                  <View style={styles.blockIcon}>
+              rules.map((r: BlockRuleView, i: number) => {
+                const locked = isLocked(r)
+                return (
+                  <Pressable
+                    key={r.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${RULE_TYPE_LABEL[r.type]} — voir le détail`}
+                    onPress={() => navigate(ROUTES.BLOCK_DETAIL, { rule: r })}
+                    style={[
+                      styles.blockRow,
+                      i < rules.length - 1 && { marginBottom: 8 },
+                    ]}
+                  >
+                    <View style={styles.blockIcon}>
+                      <IconSvg
+                        name={TYPE_ICON[r.type]}
+                        size={20}
+                        color={C.accent}
+                      />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                        {RULE_TYPE_LABEL[r.type]}
+                      </Text>
+                      <Text
+                        style={[
+                          f(400),
+                          { fontSize: 13, color: C.ink2, marginTop: 2 },
+                        ]}
+                      >
+                        {blockStatusLine(r)}
+                      </Text>
+                    </View>
                     <IconSvg
-                      name={TYPE_ICON[r.type]}
-                      size={20}
-                      color={C.accent}
+                      name={locked ? IconName.LOCK : IconName.FORWARD}
+                      size={locked ? 17 : 18}
+                      color={C.ink3}
                     />
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                      {RULE_TYPE_LABEL[r.type]}
-                    </Text>
-                    <Text
-                      style={[
-                        f(400),
-                        { fontSize: 13, color: C.ink2, marginTop: 2 },
-                      ]}
-                    >
-                      {appsSubtitle(r.appIds, r.count)}
-                    </Text>
-                  </View>
-                  <Toggle on={r.isActive} onPress={() => onToggleRule(r)} />
-                </View>
-              ))
+                  </Pressable>
+                )
+              })
             )}
           </View>
 
@@ -449,18 +417,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyRow: { borderStyle: 'dashed' },
-  toggle: {
-    width: 44,
-    height: 26,
-    borderRadius: 99,
-    justifyContent: 'center',
-  },
-  toggleKnob: {
-    position: 'absolute',
-    top: 3,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: C.bg,
-  },
 })
