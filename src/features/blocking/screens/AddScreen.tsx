@@ -1,8 +1,9 @@
 import { IconName } from '@assets/icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
+  type LayoutChangeEvent,
   Modal,
   Pressable,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -28,9 +30,13 @@ import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
 
 // Libs natives (flou + taptic) chargées en douceur : si le module natif n'est
-// pas encore lié (avant rebuild), on retombe sur un fond assombri / pas de haptic.
-let BlurView: React.ComponentType<{ style?: unknown; blurType?: string; blurAmount?: number; reducedTransparencyFallbackColor?: string }> | null =
-  null
+// pas encore lié, on retombe sur un fond assombri / pas de haptic.
+let BlurView: React.ComponentType<{
+  style?: unknown
+  blurType?: string
+  blurAmount?: number
+  reducedTransparencyFallbackColor?: string
+}> | null = null
 try {
   BlurView = require('@react-native-community/blur').BlurView
 } catch {}
@@ -67,8 +73,10 @@ const C = {
   accent: '#A49AFE',
   hair: 'rgba(255,255,255,0.06)',
   ambient10: 'rgba(164,154,254,0.10)',
-  ambient18: 'rgba(164,154,254,0.18)',
 }
+
+const GRAB = 26 // hauteur de la zone poignée
+const BOTTOM = 30 // marge basse (home indicator + air)
 
 type TypeKey = 'block_now' | 'schedule' | 'daily_limit'
 const DB_TYPE: Record<TypeKey, BlockRuleType> = {
@@ -117,7 +125,7 @@ function fmtDuration(min: number): string {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-/** Ligne de type (étape 1) — chevron + scale au press. */
+/** Ligne de type (étape 1) — flèche + léger scale au press. */
 function TypeRow({
   icon,
   title,
@@ -134,10 +142,10 @@ function TypeRow({
   return (
     <AnimatedPressable
       onPressIn={() => {
-        scale.value = withSpring(0.96, { damping: 20, stiffness: 320 })
+        scale.value = withSpring(0.96, { damping: 22, stiffness: 320 })
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 20, stiffness: 320 })
+        scale.value = withSpring(1, { damping: 22, stiffness: 320 })
       }}
       onPress={onPress}
       style={[styles.typeRow, style]}
@@ -158,8 +166,7 @@ function TypeRow({
 
 export default function AddScreen() {
   const { height: SCREEN_H, width: SCREEN_W } = useWindowDimensions()
-  const H1 = Math.round(SCREEN_H * 0.5)
-  const H2 = Math.round(SCREEN_H * 0.72)
+  const MAXH = Math.round(SCREEN_H * 0.9)
 
   const [step, setStep] = useState<0 | 1>(0)
   const [type, setType] = useState<TypeKey>('block_now')
@@ -176,29 +183,68 @@ export default function AddScreen() {
   const durationValue = useMemo(() => minutesToDate(durationMin), [durationMin])
   const limitValue = useMemo(() => minutesToDate(limitMin), [limitMin])
 
+  // Hauteur adaptative : on mesure le contenu de chaque étape.
+  const [contentH, setContentH] = useState<[number, number]>([
+    Math.round(SCREEN_H * 0.42),
+    Math.round(SCREEN_H * 0.58),
+  ])
+  const measure = (i: 0 | 1) => (e: LayoutChangeEvent) => {
+    const h = Math.round(e.nativeEvent.layout.height)
+    setContentH(prev =>
+      prev[i] === h ? prev : i === 0 ? [h, prev[1]] : [prev[0], h],
+    )
+  }
+
   // Animations
   const translateY = useSharedValue(SCREEN_H)
   const backdrop = useSharedValue(0)
   const stepX = useSharedValue(0)
-  const sheetH = useSharedValue(H1)
+  const sheetH = useSharedValue(Math.round(SCREEN_H * 0.42) + GRAB)
+  const firstMeasure = useRef(true)
 
+  const target = Math.min(MAXH, GRAB + contentH[step])
+
+  // Entrée : simple glissé vers le haut, sans rebond.
   useEffect(() => {
-    translateY.value = withSpring(0, { damping: 24, stiffness: 240 })
-    backdrop.value = withTiming(1, { duration: 260 })
+    translateY.value = withTiming(0, {
+      duration: 340,
+      easing: Easing.out(Easing.cubic),
+    })
+    backdrop.value = withTiming(1, { duration: 240 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Ajuste la hauteur au contenu (instantané au 1er layout, animé ensuite).
+  useEffect(() => {
+    if (firstMeasure.current) {
+      sheetH.value = target
+      firstMeasure.current = false
+    } else {
+      sheetH.value = withTiming(target, {
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target])
+
   const close = () => {
     backdrop.value = withTiming(0, { duration: 200 })
-    translateY.value = withTiming(SCREEN_H, { duration: 240 }, fin => {
-      if (fin) runOnJS(goBack)()
-    })
+    translateY.value = withTiming(
+      SCREEN_H,
+      { duration: 240, easing: Easing.in(Easing.cubic) },
+      fin => {
+        if (fin) runOnJS(goBack)()
+      },
+    )
   }
 
   const goStep = (s: 0 | 1) => {
     setStep(s)
-    stepX.value = withSpring(s, { damping: 26, stiffness: 240 })
-    sheetH.value = withTiming(s === 0 ? H1 : H2, { duration: 320 })
+    stepX.value = withTiming(s, {
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
+    })
   }
 
   const onSelectType = (k: TypeKey) => {
@@ -212,10 +258,10 @@ export default function AddScreen() {
       translateY.value = Math.max(0, e.translationY)
     })
     .onEnd(e => {
-      if (e.translationY > 120 || e.velocityY > 900) {
+      if (e.translationY > 110 || e.velocityY > 900) {
         runOnJS(close)()
       } else {
-        translateY.value = withSpring(0, { damping: 24, stiffness: 240 })
+        translateY.value = withSpring(0, { damping: 30, stiffness: 240 })
       }
     })
 
@@ -316,7 +362,7 @@ export default function AddScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Fond flouté + assombri, tap pour fermer */}
+      {/* Fond flouté (léger) + assombri, tap pour fermer */}
       <AnimatedPressable
         style={[StyleSheet.absoluteFill, backdropStyle]}
         onPress={close}
@@ -325,7 +371,7 @@ export default function AddScreen() {
           <BlurView
             style={StyleSheet.absoluteFill as object}
             blurType="dark"
-            blurAmount={18}
+            blurAmount={9}
             reducedTransparencyFallbackColor="#0B0C10"
           />
         ) : null}
@@ -342,192 +388,190 @@ export default function AddScreen() {
 
         <Animated.View style={[styles.pager, { width: SCREEN_W * 2 }, pagerStyle]}>
           {/* Étape 1 : choix du type */}
-          <View style={[styles.panel, { width: SCREEN_W }]}>
-            <Text style={[f(700), styles.h1]}>Nouveau blocage</Text>
-            <Text style={[f(400), styles.sub]}>Quel type de blocage ?</Text>
-            <View style={{ gap: 10, marginTop: 18 }}>
-              {TYPES.map(tp => (
-                <TypeRow
-                  key={tp.key}
-                  icon={tp.icon}
-                  title={tp.title}
-                  desc={tp.desc}
-                  onPress={() => onSelectType(tp.key)}
-                />
-              ))}
+          <View style={{ width: SCREEN_W }}>
+            <View style={styles.panel} onLayout={measure(0)}>
+              <Text style={[f(700), styles.h1]}>Nouveau blocage</Text>
+              <Text style={[f(400), styles.sub]}>Quel type de blocage ?</Text>
+              <View style={{ gap: 14, marginTop: 24 }}>
+                {TYPES.map(tp => (
+                  <TypeRow
+                    key={tp.key}
+                    icon={tp.icon}
+                    title={tp.title}
+                    desc={tp.desc}
+                    onPress={() => onSelectType(tp.key)}
+                  />
+                ))}
+              </View>
             </View>
           </View>
 
           {/* Étape 2 : réglage + apps + CTA */}
-          <View style={[styles.panel, { width: SCREEN_W }]}>
-            <View style={styles.step2Head}>
-              <Pressable
-                onPress={() => goStep(0)}
-                hitSlop={10}
-                style={styles.backBtn}
-              >
-                <IconSvg name={IconName.BACK} size={18} color={C.ink} />
-              </Pressable>
-              <Text style={[f(700), { fontSize: 17, color: C.ink }]}>
-                {typeTitle}
-              </Text>
-              <View style={{ width: 36 }} />
-            </View>
+          <View style={{ width: SCREEN_W }}>
+            <View style={styles.panel} onLayout={measure(1)}>
+              <View style={styles.step2Head}>
+                <Pressable
+                  onPress={() => goStep(0)}
+                  hitSlop={10}
+                  style={styles.backBtn}
+                >
+                  <IconSvg name={IconName.BACK} size={18} color={C.ink} />
+                </Pressable>
+                <Text style={[f(700), { fontSize: 17, color: C.ink }]}>
+                  {typeTitle}
+                </Text>
+                <View style={{ width: 36 }} />
+              </View>
 
-            {step === 1 && (
-              <>
-                {type === 'block_now' && (
-                  <>
-                    <View style={styles.card}>
-                      <View style={styles.cardHeadRow}>
-                        <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                          Durée
-                        </Text>
-                        <Text style={[f(600), { fontSize: 15, color: C.accent }]}>
-                          {fmtDuration(durationMin)}
-                        </Text>
-                      </View>
-                      <View style={styles.pickerWrap}>
-                        <DateTimePicker
-                          mode="countdown"
-                          display="spinner"
-                          value={durationValue}
-                          minuteInterval={5}
-                          themeVariant="dark"
-                          onChange={(_e, d) =>
-                            d && setDurationMin(dateToMinutes(d))
-                          }
-                        />
-                      </View>
-                    </View>
-                    <View style={[styles.card, styles.strictCard]}>
-                      <View style={{ flex: 1, minWidth: 0 }}>
-                        <View style={styles.strictTitleRow}>
-                          <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
-                            Mode strict
-                          </Text>
-                          <Pressable onPress={explainStrict} hitSlop={12}>
-                            <View style={styles.help}>
-                              <Text style={[f(700), { fontSize: 12, color: C.ink2 }]}>
-                                ?
-                              </Text>
-                            </View>
-                          </Pressable>
-                        </View>
-                        <Text
-                          style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 3 }]}
-                        >
-                          Impossible d'arrêter avant la fin.
-                        </Text>
-                      </View>
-                      <Switch
-                        value={strict}
-                        onValueChange={v => {
-                          tapHaptic()
-                          setStrict(v)
-                        }}
-                        trackColor={{ false: C.surface2, true: C.accent }}
-                        thumbColor="#FFFFFF"
-                        ios_backgroundColor={C.surface2}
-                      />
-                    </View>
-                  </>
-                )}
-
-                {type === 'schedule' && (
-                  <View style={styles.card}>
-                    <View style={styles.timeRow}>
-                      <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                        Début
-                      </Text>
-                      <DateTimePicker
-                        mode="time"
-                        display="compact"
-                        value={start}
-                        themeVariant="dark"
-                        onChange={(_e, d) => d && setStart(d)}
-                      />
-                    </View>
-                    <View style={styles.hairline} />
-                    <View style={styles.timeRow}>
-                      <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                        Fin
-                      </Text>
-                      <DateTimePicker
-                        mode="time"
-                        display="compact"
-                        value={end}
-                        themeVariant="dark"
-                        onChange={(_e, d) => d && setEnd(d)}
-                      />
-                    </View>
-                    <Text style={[f(400), styles.hint]}>
-                      Chaque jour {hhmm(start)} → {hhmm(end)}.
-                    </Text>
-                  </View>
-                )}
-
-                {type === 'daily_limit' && (
+              {type === 'block_now' && (
+                <>
                   <View style={styles.card}>
                     <View style={styles.cardHeadRow}>
                       <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                        Limite / jour
+                        Durée
                       </Text>
                       <Text style={[f(600), { fontSize: 15, color: C.accent }]}>
-                        {fmtDuration(limitMin)}
+                        {fmtDuration(durationMin)}
                       </Text>
                     </View>
                     <View style={styles.pickerWrap}>
                       <DateTimePicker
                         mode="countdown"
                         display="spinner"
-                        value={limitValue}
+                        value={durationValue}
                         minuteInterval={5}
                         themeVariant="dark"
-                        onChange={(_e, d) => d && setLimitMin(dateToMinutes(d))}
+                        onChange={(_e, d) => d && setDurationMin(dateToMinutes(d))}
                       />
                     </View>
                   </View>
-                )}
-
-                <Pressable onPress={onPickApps} style={[styles.card, styles.appsCard]}>
-                  <View style={styles.appsIcon}>
-                    <IconSvg name={IconName.BLOCK} size={20} color={C.accent} />
+                  <View style={[styles.card, styles.strictCard]}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <View style={styles.strictTitleRow}>
+                        <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
+                          Mode strict
+                        </Text>
+                        <Pressable onPress={explainStrict} hitSlop={12}>
+                          <View style={styles.help}>
+                            <Text style={[f(700), { fontSize: 12, color: C.ink2 }]}>
+                              ?
+                            </Text>
+                          </View>
+                        </Pressable>
+                      </View>
+                      <Text
+                        style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 3 }]}
+                      >
+                        Impossible d'arrêter avant la fin.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={strict}
+                      onValueChange={v => {
+                        tapHaptic()
+                        setStrict(v)
+                      }}
+                      trackColor={{ false: C.surface2, true: C.accent }}
+                      thumbColor="#FFFFFF"
+                      ios_backgroundColor={C.surface2}
+                    />
                   </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
-                      {count === 0
-                        ? 'Choisir les apps'
-                        : `${count} app${count > 1 ? 's' : ''}`}
-                    </Text>
-                    <Text
-                      style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 3 }]}
-                    >
-                      {count === 0 ? "Sélecteur d'Apple" : 'Touche pour modifier'}
-                    </Text>
-                  </View>
-                  <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
-                </Pressable>
+                </>
+              )}
 
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={disabled}
-                  onPress={onSubmit}
-                  style={[
-                    styles.cta,
-                    { backgroundColor: disabled ? C.surface2 : C.accent },
-                  ]}
-                >
-                  <Text
-                    style={[f(700), { fontSize: 16, color: disabled ? C.ink3 : C.bg }]}
-                  >
-                    {working || createRule.isPending
-                      ? 'Activation…'
-                      : 'Activer le blocage'}
+              {type === 'schedule' && (
+                <View style={styles.card}>
+                  <View style={styles.timeRow}>
+                    <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                      Début
+                    </Text>
+                    <DateTimePicker
+                      mode="time"
+                      display="compact"
+                      value={start}
+                      themeVariant="dark"
+                      onChange={(_e, d) => d && setStart(d)}
+                    />
+                  </View>
+                  <View style={styles.hairline} />
+                  <View style={styles.timeRow}>
+                    <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                      Fin
+                    </Text>
+                    <DateTimePicker
+                      mode="time"
+                      display="compact"
+                      value={end}
+                      themeVariant="dark"
+                      onChange={(_e, d) => d && setEnd(d)}
+                    />
+                  </View>
+                  <Text style={[f(400), styles.hint]}>
+                    Chaque jour {hhmm(start)} → {hhmm(end)}.
                   </Text>
-                </Pressable>
-              </>
-            )}
+                </View>
+              )}
+
+              {type === 'daily_limit' && (
+                <View style={styles.card}>
+                  <View style={styles.cardHeadRow}>
+                    <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                      Limite / jour
+                    </Text>
+                    <Text style={[f(600), { fontSize: 15, color: C.accent }]}>
+                      {fmtDuration(limitMin)}
+                    </Text>
+                  </View>
+                  <View style={styles.pickerWrap}>
+                    <DateTimePicker
+                      mode="countdown"
+                      display="spinner"
+                      value={limitValue}
+                      minuteInterval={5}
+                      themeVariant="dark"
+                      onChange={(_e, d) => d && setLimitMin(dateToMinutes(d))}
+                    />
+                  </View>
+                </View>
+              )}
+
+              <Pressable onPress={onPickApps} style={[styles.card, styles.appsCard]}>
+                <View style={styles.appsIcon}>
+                  <IconSvg name={IconName.BLOCK} size={20} color={C.accent} />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
+                    {count === 0
+                      ? 'Choisir les apps'
+                      : `${count} app${count > 1 ? 's' : ''}`}
+                  </Text>
+                  <Text
+                    style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 3 }]}
+                  >
+                    {count === 0 ? "Sélecteur d'Apple" : 'Touche pour modifier'}
+                  </Text>
+                </View>
+                <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                disabled={disabled}
+                onPress={onSubmit}
+                style={[
+                  styles.cta,
+                  { backgroundColor: disabled ? C.surface2 : C.accent },
+                ]}
+              >
+                <Text
+                  style={[f(700), { fontSize: 16, color: disabled ? C.ink3 : C.bg }]}
+                >
+                  {working || createRule.isPending
+                    ? 'Activation…'
+                    : 'Activer le blocage'}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </Animated.View>
       </Animated.View>
@@ -561,7 +605,7 @@ export default function AddScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  dim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,7,10,0.4)' },
+  dim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,7,10,0.28)' },
   sheet: {
     backgroundColor: C.sheet,
     borderTopLeftRadius: 30,
@@ -570,27 +614,27 @@ const styles = StyleSheet.create({
     // Ombre violette douce et diffuse (remplace la bordure brillante)
     shadowColor: C.accent,
     shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
+    shadowOpacity: 0.32,
+    shadowRadius: 26,
   },
-  grabZone: { alignItems: 'center', paddingTop: 10, paddingBottom: 6 },
+  grabZone: { alignItems: 'center', paddingTop: 10, paddingBottom: 10 },
   grabber: {
     width: 40,
     height: 5,
     borderRadius: 3,
     backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  pager: { flex: 1, flexDirection: 'row' },
-  panel: { paddingHorizontal: 22, paddingTop: 8 },
+  pager: { flexDirection: 'row' },
+  panel: { paddingHorizontal: 22, paddingBottom: BOTTOM },
   h1: { fontSize: 22, color: C.ink, letterSpacing: -0.3 },
-  sub: { fontSize: 14.5, color: C.ink2, marginTop: 5 },
+  sub: { fontSize: 14.5, color: C.ink2, marginTop: 6 },
   typeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
     backgroundColor: C.surface,
     borderRadius: 18,
-    padding: 15,
+    padding: 16,
   },
   typeIcon: {
     width: 44,
@@ -604,7 +648,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 18,
+    marginBottom: 22,
   },
   backBtn: {
     width: 36,
@@ -623,7 +667,7 @@ const styles = StyleSheet.create({
   pickerWrap: { alignItems: 'center', marginTop: 2 },
   hint: { fontSize: 12.5, color: C.ink3, marginTop: 8, lineHeight: 17 },
   strictCard: {
-    marginTop: 12,
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -645,7 +689,7 @@ const styles = StyleSheet.create({
   },
   hairline: { height: 1, backgroundColor: C.hair, marginVertical: 12 },
   appsCard: {
-    marginTop: 12,
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -663,7 +707,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 18,
+    marginTop: 22,
   },
   modalBg: {
     flex: 1,
