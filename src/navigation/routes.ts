@@ -38,6 +38,7 @@ export const ROUTES = {
   // PUSHED SCREENS (over tabs)
   //
   ADD_BLOCK: 'ADD_BLOCK',
+  BLOCK_DETAIL: 'BLOCK_DETAIL',
   SETTINGS: 'SETTINGS',
   HOME_STORY: 'HOME_STORY',
 

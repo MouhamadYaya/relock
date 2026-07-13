@@ -31,7 +31,7 @@
 		9AB0C186AECDC6BD4B51936B /* RelockMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8337079EF960E496124E3891 /* RelockMonitor.swift */; };
 		9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */; };
 		A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99267AE42A73E61E98DE0728 /* RelockShield.swift */; };
-		B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.m */; };
+		B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
 		C775DF612177016E41684402 /* Shield.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */; };
@@ -115,7 +115,7 @@
 		8DB7C56395D472046F777B09 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockShield/Info.plist; sourceTree = "<group>"; };
 		8E83780A43318F4A8DB717DC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockShieldAction/Info.plist; sourceTree = "<group>"; };
 		9275E3DCA17F1B2CFB757E9D /* RelockShield.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShield.entitlements; path = RelockShield/RelockShield.entitlements; sourceTree = "<group>"; };
-		98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = ScreenTimeReportViewManager.m; path = ReactNativeStarter/ScreenTimeReportViewManager.m; sourceTree = "<group>"; };
+		98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = ScreenTimeReportViewManager.mm; path = ReactNativeStarter/ScreenTimeReportViewManager.mm; sourceTree = "<group>"; };
 		99267AE42A73E61E98DE0728 /* RelockShield.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockShield.swift; path = RelockShield/RelockShield.swift; sourceTree = "<group>"; };
 		A673B73E1554D473DCDADCDD /* RelockShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA36F585153B5E7C7D71D1B7 /* RelockShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -192,7 +192,7 @@
 				EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */,
 				55276F1AD513ADCDA696FED4 /* ScreenTimeReportView.swift */,
 				0E239EECBD552FA87471FE5E /* ScreenTimeReportViewManager.swift */,
-				98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.m */,
+				98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */,
 			);
 			name = ReactNativeStarter;
 			sourceTree = "<group>";
@@ -582,7 +582,7 @@
 				C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */,
 				0CF7C5D8BB8B78E3539478DC /* ScreenTimeReportView.swift in Sources */,
 				325143E77DE7C2351A0B913B /* ScreenTimeReportViewManager.swift in Sources */,
-				B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.m in Sources */,
+				B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

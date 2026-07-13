@@ -3,7 +3,10 @@
  * Kept here (not `StaticParamList<typeof RootStack>`) to avoid a circular import:
  * navigator → screens → e.g. StoryScreen → this module.
  */
+import type { BlockRuleView } from '@/features/blocking/types'
 import { ROUTES } from '@/navigation/routes'
+
+export type BlockDetailParams = { rule: BlockRuleView }
 
 export type StoryScreenParams = {
   id: string
@@ -33,6 +36,7 @@ export type RootStackParamList = {
   [ROUTES.ROOT_AUTH]: undefined
   [ROUTES.ROOT_ONBOARDING]: undefined
   [ROUTES.ADD_BLOCK]: undefined
+  [ROUTES.BLOCK_DETAIL]: BlockDetailParams
   [ROUTES.SETTINGS]: undefined
   [ROUTES.HOME_STORY]: StoryScreenParams
   [ROUTES.PAUSE_RITUAL]: PauseRitualParams | undefined

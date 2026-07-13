@@ -18,6 +18,7 @@ function toView(row: BlockRule): BlockRuleView {
     isActive: row.is_active,
     count: typeof sel?.count === 'number' ? sel.count : undefined,
     config: (row.config ?? {}) as Record<string, unknown>,
+    createdAt: row.created_at,
   }
 }
 
@@ -60,6 +61,12 @@ export const BlockRulesService = {
       .from('block_rules')
       .update({ is_active: isActive })
       .eq('id', id)
+    if (error) throw normalizeError(error)
+  },
+
+  /** Suppression définitive d'une règle (action « Arrêter le blocage »). */
+  async remove(id: string): Promise<void> {
+    const { error } = await supabase.from('block_rules').delete().eq('id', id)
     if (error) throw normalizeError(error)
   },
 }

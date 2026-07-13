@@ -26,6 +26,8 @@ const C = {
   accent: '#A49AFE',
   // Inactif en blanc (visibilité) plutôt qu'en gris.
   inactive: '#F2F2F6',
+  // Équivalent opaque du cercle frosted (pour le liseré de l'icône +).
+  fabGap: '#242733',
 }
 
 /** Icônes PLEINES (premium) rendues en SVG, teintées selon l'état. */
@@ -110,23 +112,37 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
         onPress={() => navigate(ROUTES.ADD_BLOCK)}
         style={styles.fab}
       >
-        {/* « + » premium : glyphe massif à barres arrondies, en accent. */}
-        <Svg width={30} height={30} viewBox="0 0 24 24">
+        {/* Icône « nouveau blocage » : deux cartes empilées + « + », en blanc.
+            Un liseré de séparation (couleur du cercle) détache la carte avant. */}
+        <Svg width={34} height={34} viewBox="0 0 24 24">
+          {/* Carte arrière (contour blanc, squircle) */}
           <Rect
-            x={9.7}
-            y={3.4}
-            width={4.6}
-            height={17.2}
-            rx={2.3}
-            fill={C.accent}
+            x={3}
+            y={3}
+            width={12.6}
+            height={12.6}
+            rx={3.6}
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth={1.8}
           />
+          {/* Liseré : occulte le contour arrière sous la carte avant */}
           <Rect
-            x={3.4}
-            y={9.7}
-            width={17.2}
-            height={4.6}
-            rx={2.3}
-            fill={C.accent}
+            x={6.7}
+            y={6.7}
+            width={14.6}
+            height={14.6}
+            rx={4.4}
+            fill={C.fabGap}
+          />
+          {/* Carte avant (pleine blanche, squircle) */}
+          <Rect x={8} y={8} width={13} height={13} rx={3.8} fill="#FFFFFF" />
+          {/* « + » sombre, centré dans la carte avant */}
+          <Path
+            d="M14.5 11.6v5.8M11.6 14.5h5.8"
+            stroke="#1B1E28"
+            strokeWidth={2}
+            strokeLinecap="round"
           />
         </Svg>
       </Pressable>
