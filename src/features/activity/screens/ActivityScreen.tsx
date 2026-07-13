@@ -7,10 +7,7 @@ import { ROUTES } from '@/navigation/routes'
 import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
-import {
-  isScreenTimeReportAvailable,
-  ScreenTimeReport,
-} from '@/shared/native/ScreenTimeReport'
+import { ScreenTimeReport } from '@/shared/native/ScreenTimeReport'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 const FW = {
@@ -150,19 +147,20 @@ export default function ActivityScreen() {
             Temps d'écran & utilisation des apps
           </Text>
           <View style={styles.reportCard}>
-            {isScreenTimeReportAvailable ? (
-              <ScreenTimeReport style={styles.report} period={period} />
-            ) : (
-              <View style={styles.fallback}>
-                <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                  Disponible sur iPhone
-                </Text>
-                <Text style={[f(400), styles.fallbackSub]}>
-                  Le vrai temps d'écran par app (avec les icônes) est fourni par
-                  iOS et ne s'affiche que sur un iPhone physique.
-                </Text>
-              </View>
-            )}
+            <ScreenTimeReport
+              style={styles.report}
+              period={period}
+              fallback={
+                <View style={styles.fallback}>
+                  <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                    Temps d'écran indisponible
+                  </Text>
+                  <Text style={[f(400), styles.fallbackSub]}>
+                    La vue système ne s'est pas affichée. On règle ça.
+                  </Text>
+                </View>
+              }
+            />
           </View>
         </View>
       </ScrollView>

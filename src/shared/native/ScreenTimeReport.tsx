@@ -1,37 +1,44 @@
 import React from 'react'
-import {
-  Platform,
-  requireNativeComponent,
-  UIManager,
-  type ViewProps,
-} from 'react-native'
+import { Platform, requireNativeComponent, type ViewProps } from 'react-native'
 
 type ReportProps = ViewProps & { period?: number }
 const NAME = 'ScreenTimeReportView'
 
-// Le composant existe seulement si le view manager natif est enregistré.
-// (Sinon `requireNativeComponent` plante au rendu : « View config not found ».)
-function componentRegistered(): boolean {
-  if (Platform.OS !== 'ios') return false
-  try {
-    return UIManager.getViewManagerConfig?.(NAME) != null
-  } catch {
-    return false
-  }
-}
-
+// On récupère le composant (l'échec « View config not found » survient au RENDU,
+// pas ici) — on le tente et on le protège par un ErrorBoundary.
 let NativeReport: React.ComponentType<ReportProps> | null = null
-if (componentRegistered()) {
-  try {
+try {
+  if (Platform.OS === 'ios') {
     NativeReport = requireNativeComponent<ReportProps>(NAME)
-  } catch {
-    NativeReport = null
+  }
+} catch {
+  NativeReport = null
+}
+
+export const isScreenTimeReportAvailable = Platform.OS === 'ios'
+
+class ReportBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children
   }
 }
 
-export const isScreenTimeReportAvailable = NativeReport != null
-
-export function ScreenTimeReport(props: ReportProps) {
-  if (!NativeReport) return null
-  return <NativeReport {...props} />
+export function ScreenTimeReport({
+  fallback,
+  ...props
+}: ReportProps & { fallback?: React.ReactNode }) {
+  if (!NativeReport) return <>{fallback ?? null}</>
+  const Native = NativeReport
+  return (
+    <ReportBoundary fallback={fallback ?? null}>
+      <Native {...props} />
+    </ReportBoundary>
+  )
 }
