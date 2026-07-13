@@ -333,6 +333,19 @@ export default function AddScreen() {
 
   const onSubmit = async () => {
     if (count === 0 || working || createRule.isPending) return
+    // iOS impose des fenêtres DeviceActivity d'au moins 15 min.
+    if (type === 'schedule') {
+      const s = start.getHours() * 60 + start.getMinutes()
+      const e = end.getHours() * 60 + end.getMinutes()
+      const win = e - s > 0 ? e - s : e - s + 1440
+      if (win < 15) {
+        Alert.alert(
+          'Plage trop courte',
+          "Une plage horaire doit durer au moins 15 minutes (limite d'iOS).",
+        )
+        return
+      }
+    }
     setWorking(true)
     try {
       if (ScreenTime.isAvailable) {
