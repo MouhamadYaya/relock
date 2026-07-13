@@ -7,6 +7,7 @@ import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
+import { ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast, showToast } from '@/shared/utils/toast'
 
@@ -69,6 +70,7 @@ export default function AddScreen() {
     () => new Set(['tiktok', 'instagram']),
   )
   const createRule = useCreateRuleMutation()
+  const [working, setWorking] = useState(false)
 
   const toggleApp = (id: string) =>
     setApps(prev => {
@@ -77,22 +79,61 @@ export default function AddScreen() {
       return next
     })
 
-  const onSubmit = () => {
-    if (apps.size === 0 || createRule.isPending) return
-    createRule.mutate(
-      { type: type as BlockRuleType, appIds: [...apps] as AppId[] },
-      {
-        onSuccess: () => {
-          showToast('Blocage activé')
-          goBack()
+  const onSubmit = async () => {
+    if (apps.size === 0 || working || createRule.isPending) return
+
+    // Simulateur / module natif absent : on crée juste la règle (pas de blocage réel).
+    if (!ScreenTime.isAvailable) {
+      createRule.mutate(
+        { type: type as BlockRuleType, appIds: [...apps] as AppId[] },
+        {
+          onSuccess: () => {
+            showToast('Blocage activé')
+            goBack()
+          },
+          onError: e => showErrorToast(e),
         },
-        onError: e => showErrorToast(e),
-      },
-    )
+      )
+      return
+    }
+
+    // iPhone : autorisation Family Controls → sélecteur Apple → bouclier réel.
+    setWorking(true)
+    try {
+      const status = await ScreenTime.requestAuthorization()
+      if (status !== 'approved') {
+        showToast("Autorisation Temps d'écran refusée")
+        return
+      }
+      const { count } = await ScreenTime.presentPicker()
+      if (count === 0) {
+        showToast('Sélectionne au moins une app à bloquer')
+        return
+      }
+      await ScreenTime.startBlocking()
+      await createRule.mutateAsync({
+        type: type as BlockRuleType,
+        appIds: [...apps] as AppId[],
+        count,
+      })
+      showToast(`Blocage activé — ${count} app${count > 1 ? 's' : ''}`)
+      goBack()
+    } catch (e) {
+      showErrorToast(e)
+    } finally {
+      setWorking(false)
+    }
   }
 
-  const submitting = createRule.isPending
+  const submitting = working || createRule.isPending
   const disabled = apps.size === 0 || submitting
+
+  const appsText =
+    apps.size === 0
+      ? ''
+      : APPS.filter(a => apps.has(a.id))
+          .map(a => a.name)
+          .join(', ')
 
   return (
     <ScreenWrapper>
@@ -238,6 +279,40 @@ export default function AddScreen() {
             })}
           </View>
 
+          {/* Aperçu de la règle */}
+          {appsText ? (
+            <View style={styles.preview}>
+              <IconSvg
+                name={IconName.INFO}
+                size={18}
+                color={C.accent}
+                style={styles.previewIcon}
+              />
+              <Text style={[f(400), styles.previewText]}>
+                {type === 'progressive_delay' ? (
+                  <>
+                    Délai de <Text style={styles.previewStrong}>30 s</Text> à la
+                    1re ouverture, <Text style={styles.previewStrong}>+15 s</Text>{' '}
+                    ensuite.{' '}
+                  </>
+                ) : type === 'schedule' ? (
+                  <>
+                    Blocage actif de{' '}
+                    <Text style={styles.previewStrong}>22h</Text> à{' '}
+                    <Text style={styles.previewStrong}>8h</Text>.{' '}
+                  </>
+                ) : (
+                  <>
+                    Maximum{' '}
+                    <Text style={styles.previewStrong}>10 ouvertures</Text> par
+                    jour.{' '}
+                  </>
+                )}
+                Appliqué à {appsText}.
+              </Text>
+            </View>
+          ) : null}
+
           {/* CTA */}
           <Pressable
             accessibilityRole="button"
@@ -359,11 +434,30 @@ const styles = StyleSheet.create({
     borderColor: C.radioBorder,
     zIndex: 1,
   },
+  preview: {
+    marginTop: 'auto',
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  previewIcon: { marginTop: 1 },
+  previewText: {
+    flex: 1,
+    fontSize: 13.5,
+    color: C.ink2,
+    lineHeight: 20,
+  },
+  previewStrong: { color: C.ink, fontFamily: fonts.semiBold },
   cta: {
     height: 54,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 'auto',
+    marginTop: 14,
   },
 })

@@ -9,12 +9,16 @@ export interface BlockRuleView {
   type: BlockRuleType
   appIds: AppId[]
   isActive: boolean
+  /** Nombre d'apps réellement choisies via le sélecteur Apple (jeton opaque). */
+  count?: number
 }
 
 /** Entrée de création d'une règle depuis l'écran Ajout. */
 export interface CreateRuleInput {
   type: BlockRuleType
   appIds: AppId[]
+  /** Renseigné quand la sélection vient du sélecteur système Family Controls. */
+  count?: number
 }
 
 /** Libellé FR d'un type de règle. */
@@ -34,8 +38,15 @@ export const APP_LABEL: Record<string, string> = {
   x: 'X',
 }
 
-/** Sous-titre « TikTok, Instagram +1 » à partir des apps d'une règle. */
-export function appsSubtitle(appIds: string[]): string {
+/**
+ * Sous-titre d'une règle. Pour une sélection système (Family Controls), on ne
+ * connaît que le nombre d'apps (jeton opaque) → « X apps bloquées ». Sinon on
+ * liste les apps du préréglage : « TikTok, Instagram +1 ».
+ */
+export function appsSubtitle(appIds: string[], count?: number): string {
+  if (typeof count === 'number' && count > 0) {
+    return count === 1 ? '1 app bloquée' : `${count} apps bloquées`
+  }
   if (appIds.length === 0) return 'Aucune app'
   const shown = appIds.slice(0, 2).map(id => APP_LABEL[id] ?? id)
   const extra = appIds.length - shown.length

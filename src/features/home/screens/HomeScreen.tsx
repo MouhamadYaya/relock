@@ -10,6 +10,7 @@ import {
 } from '@/features/blocking/types'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
+import { ScreenTime } from '@/shared/native/screen-time'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -319,14 +320,21 @@ export default function HomeScreen() {
                         { fontSize: 13, color: C.ink2, marginTop: 2 },
                       ]}
                     >
-                      {appsSubtitle(r.appIds)}
+                      {appsSubtitle(r.appIds, r.count)}
                     </Text>
                   </View>
                   <Toggle
                     on={r.isActive}
-                    onPress={() =>
-                      toggleRule.mutate({ id: r.id, isActive: !r.isActive })
-                    }
+                    onPress={() => {
+                      const next = !r.isActive
+                      if (ScreenTime.isAvailable) {
+                        ;(next
+                          ? ScreenTime.startBlocking()
+                          : ScreenTime.stopBlocking()
+                        ).catch(() => {})
+                      }
+                      toggleRule.mutate({ id: r.id, isActive: next })
+                    }}
                   />
                 </View>
               ))

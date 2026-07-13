@@ -1,6 +1,7 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { appConfig } from '@/config/app-config'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
@@ -163,6 +164,10 @@ export default function SettingsScreen() {
             />
           </View>
 
+          <Text style={[f(400), styles.footer]}>
+            Blocus · version {appConfig.version}
+          </Text>
+
           <View style={{ height: 32 }} />
         </View>
       </ScrollView>
@@ -241,5 +246,11 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     paddingVertical: 3,
     paddingHorizontal: 10,
+  },
+  footer: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: C.ink3,
+    paddingTop: 22,
   },
 })

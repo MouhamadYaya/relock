@@ -10,12 +10,13 @@ import type { BlockRule } from '@/shared/services/supabase/database.types'
 import { normalizeError } from '@/shared/utils/normalize-error'
 
 function toView(row: BlockRule): BlockRuleView {
-  const sel = row.app_selection as { apps?: string[] }
+  const sel = row.app_selection as { apps?: string[]; count?: number }
   return {
     id: row.id,
     type: row.type,
     appIds: (sel?.apps ?? []) as AppId[],
     isActive: row.is_active,
+    count: typeof sel?.count === 'number' ? sel.count : undefined,
   }
 }
 
@@ -40,7 +41,10 @@ export const BlockRulesService = {
       .insert({
         user_id: userId,
         type: input.type,
-        app_selection: { apps: input.appIds },
+        app_selection:
+          typeof input.count === 'number'
+            ? { apps: input.appIds, count: input.count }
+            : { apps: input.appIds },
         config: {},
         is_active: true,
       })

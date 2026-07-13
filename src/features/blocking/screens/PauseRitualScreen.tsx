@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import React, { useEffect, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import Animated, {
   cancelAnimation,
   Easing,
@@ -10,7 +10,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Svg, { Circle, Path } from 'react-native-svg'
+import Svg, {
+  Circle,
+  Defs,
+  Path,
+  RadialGradient,
+  Rect,
+  Stop,
+} from 'react-native-svg'
 import type { RootStackParamList } from '@/navigation/root-param-list'
 import { ROUTES } from '@/navigation/routes'
 import { AppLogo } from '@/shared/components/ui/AppLogo'
@@ -47,6 +54,7 @@ type Props = NativeStackScreenProps<
 
 export default function PauseRitualScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets()
+  const { width: winW, height: winH } = useWindowDimensions()
   const reduceMotion = useReducedMotion()
   const total = route.params?.seconds ?? 30
   const appName = route.params?.appName ?? 'TikTok'
@@ -89,6 +97,28 @@ export default function PauseRitualScreen({ navigation, route }: Props) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      {/* Halo ambiant — glow de marque derrière le rituel (écran signature) */}
+      <Svg
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+        width={winW}
+        height={winH}
+      >
+        <Defs>
+          <RadialGradient
+            id="pauseGlow"
+            gradientUnits="userSpaceOnUse"
+            cx={winW / 2}
+            cy={winH * 0.38}
+            r={260}
+          >
+            <Stop offset="0" stopColor="#A49AFE" stopOpacity={0.14} />
+            <Stop offset="1" stopColor="#A49AFE" stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width={winW} height={winH} fill="url(#pauseGlow)" />
+      </Svg>
+
       {/* Pilule app */}
       <View style={[styles.pill, { marginTop: 44 }]}>
         <AppLogo app="tiktok" size={24} />
