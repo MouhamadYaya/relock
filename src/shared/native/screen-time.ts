@@ -1,5 +1,5 @@
 /**
- * Pont JS vers le module natif Family Controls (iOS 16+, iPhone physique).
+ * Pont JS vers le module natif Family Controls / DeviceActivity (iOS 16+).
  *
  * Sur simulateur / Android / build sans le module, `NativeModules.BlocusScreenTime`
  * est indéfini : `isScreenTimeAvailable` vaut false et l'app retombe sur le
@@ -7,26 +7,41 @@
  */
 import { NativeModules, Platform } from 'react-native'
 
-export type AuthStatus =
-  | 'approved'
-  | 'denied'
-  | 'notDetermined'
-  | 'unsupported'
+export type AuthStatus = 'approved' | 'denied' | 'notDetermined' | 'unsupported'
 
 export interface ScreenTimeStatus {
   supported: boolean
   authorized: boolean
   blocking: boolean
   count: number
+  strict: boolean
+}
+
+export interface ScreenTimeEvent {
+  kind: string
+  activity: string
+  at: string
 }
 
 interface BlocusScreenTimeNative {
   requestAuthorization(): Promise<AuthStatus>
   authorizationStatus(): Promise<AuthStatus>
   presentPicker(): Promise<{ count: number }>
-  startBlocking(): Promise<boolean>
+  /** Bloque maintenant pour `minutes` (min 15). strict = pas d'arrêt anticipé. */
+  startTimedBlock(minutes: number, strict: boolean): Promise<boolean>
+  /** Blocage récurrent quotidien sur une plage horaire. */
+  startSchedule(
+    startHour: number,
+    startMinute: number,
+    endHour: number,
+    endMinute: number,
+  ): Promise<boolean>
+  /** Blocage quand l'usage quotidien des apps atteint `minutes`. */
+  startDailyLimit(minutes: number): Promise<boolean>
   stopBlocking(): Promise<boolean>
   getStatus(): Promise<ScreenTimeStatus>
+  /** Récupère + vide le journal d'événements de l'extension. */
+  pullEvents(): Promise<ScreenTimeEvent[]>
 }
 
 const native = NativeModules.BlocusScreenTime as
@@ -50,7 +65,16 @@ export const ScreenTime = {
   requestAuthorization: () => ensure().requestAuthorization(),
   authorizationStatus: () => ensure().authorizationStatus(),
   presentPicker: () => ensure().presentPicker(),
-  startBlocking: () => ensure().startBlocking(),
+  startTimedBlock: (minutes: number, strict: boolean) =>
+    ensure().startTimedBlock(minutes, strict),
+  startSchedule: (
+    startHour: number,
+    startMinute: number,
+    endHour: number,
+    endMinute: number,
+  ) => ensure().startSchedule(startHour, startMinute, endHour, endMinute),
+  startDailyLimit: (minutes: number) => ensure().startDailyLimit(minutes),
   stopBlocking: () => ensure().stopBlocking(),
   getStatus: () => ensure().getStatus(),
+  pullEvents: () => ensure().pullEvents(),
 }

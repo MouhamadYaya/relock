@@ -5,53 +5,79 @@ import ManagedSettings
 import React
 import SwiftUI
 
-/// Module natif Family Controls pour Blocus.
+/// Module natif Family Controls de Relock (app principale).
 ///
-/// A1 : autorisation + sélecteur d'apps Apple (jeton opaque) + bouclier
-/// ManagedSettings (blocage réel des apps choisies). Aucune extension requise
-/// pour cet incrément : le bouclier est posé directement depuis l'app.
+/// - Autorisation + sélecteur d'apps Apple (jeton opaque).
+/// - Trois mécaniques pilotées par DeviceActivity (l'extension `RelockMonitor`
+///   applique/retire le bouclier aux bons moments, même app fermée) :
+///     • Bloquer maintenant  → fenêtre [maintenant, +durée] (+ mode strict).
+///     • Plage horaire       → fenêtre quotidienne début→fin.
+///     • Limite de temps/jour → seuil d'usage atteint = blocage jusqu'au lendemain.
 ///
-/// ⚠️ Ne fonctionne QUE sur iPhone physique (iOS 16+) avec l'entitlement
-/// `com.apple.developer.family-controls` approuvé par Apple.
+/// Sélection + état sont partagés avec l'extension via l'App Group.
+/// ⚠️ iOS 16+, iPhone physique, entitlement family-controls.
 @objc(BlocusScreenTime)
 final class BlocusScreenTime: NSObject {
 
-  /// Store des réglages gérés — le bouclier posé ici bloque les apps ciblées.
-  /// Propriété calculée (l'init `named:` est iOS 16+, la classe cible iOS 15).
-  @available(iOS 16.0, *)
-  private var store: ManagedSettingsStore {
-    ManagedSettingsStore(named: .init(rawValue: "blocus.default"))
-  }
+  private static let suite = "group.com.yaya.relock"
+  private static let storeName = "blocus.default"
 
-  /// Clé de persistance de la sélection (jeton opaque, Codable).
-  private let selectionKey = "blocus.selection"
-  private let blockingKey = "blocus.isBlocking"
+  private let defaults = UserDefaults(suiteName: BlocusScreenTime.suite)
+
+  // Noms d'activité DeviceActivity (doivent matcher RelockMonitor).
+  private let timedActivity = DeviceActivityName("timed")
+  private let scheduleActivity = DeviceActivityName("schedule")
+  private let limitActivity = DeviceActivityName("dailyLimit")
 
   @objc static func requiresMainQueueSetup() -> Bool { true }
 
-  // MARK: - Persistance de la sélection (jeton opaque)
+  @available(iOS 16.0, *)
+  private var store: ManagedSettingsStore {
+    ManagedSettingsStore(named: .init(rawValue: BlocusScreenTime.storeName))
+  }
+
+  @available(iOS 16.0, *)
+  private var center: DeviceActivityCenter { DeviceActivityCenter() }
+
+  // MARK: - Sélection partagée (App Group)
 
   @available(iOS 16.0, *)
   private func loadSelection() -> FamilyActivitySelection {
     guard
-      let data = UserDefaults.standard.data(forKey: selectionKey),
-      let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data)
-    else {
-      return FamilyActivitySelection()
-    }
+      let data = defaults?.data(forKey: "selection"),
+      let decoded = try? JSONDecoder().decode(
+        FamilyActivitySelection.self, from: data)
+    else { return FamilyActivitySelection() }
     return decoded
   }
 
   @available(iOS 16.0, *)
   private func saveSelection(_ selection: FamilyActivitySelection) {
     if let data = try? JSONEncoder().encode(selection) {
-      UserDefaults.standard.set(data, forKey: selectionKey)
+      defaults?.set(data, forKey: "selection")
     }
   }
 
   @available(iOS 16.0, *)
   private func selectionCount(_ s: FamilyActivitySelection) -> Int {
     s.applicationTokens.count + s.categoryTokens.count + s.webDomainTokens.count
+  }
+
+  @available(iOS 16.0, *)
+  private func applyShield(_ s: FamilyActivitySelection) {
+    store.shield.applications = s.applicationTokens.isEmpty ? nil : s.applicationTokens
+    store.shield.applicationCategories =
+      s.categoryTokens.isEmpty ? nil : .specific(s.categoryTokens)
+    store.shield.webDomains = s.webDomainTokens.isEmpty ? nil : s.webDomainTokens
+    defaults?.set(true, forKey: "blocus.isBlocking")
+  }
+
+  @available(iOS 16.0, *)
+  private func clearShield() {
+    store.shield.applications = nil
+    store.shield.applicationCategories = nil
+    store.shield.webDomains = nil
+    defaults?.set(false, forKey: "blocus.isBlocking")
   }
 
   // MARK: - Autorisation
@@ -62,8 +88,7 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis pour Family Controls", nil)
-      return
+      reject("unsupported", "iOS 16+ requis pour Family Controls", nil); return
     }
     Task {
       do {
@@ -80,10 +105,7 @@ final class BlocusScreenTime: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    guard #available(iOS 16.0, *) else {
-      resolve("unsupported")
-      return
-    }
+    guard #available(iOS 16.0, *) else { resolve("unsupported"); return }
     switch AuthorizationCenter.shared.authorizationStatus {
     case .approved: resolve("approved")
     case .denied: resolve("denied")
@@ -92,7 +114,7 @@ final class BlocusScreenTime: NSObject {
     }
   }
 
-  // MARK: - Sélecteur d'apps Apple (FamilyActivityPicker)
+  // MARK: - Sélecteur d'apps Apple
 
   @objc(presentPicker:rejecter:)
   func presentPicker(
@@ -100,8 +122,7 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil)
-      return
+      reject("unsupported", "iOS 16+ requis", nil); return
     }
     DispatchQueue.main.async {
       guard let presenter = RCTPresentedViewController() else {
@@ -129,47 +150,133 @@ final class BlocusScreenTime: NSObject {
     }
   }
 
-  // MARK: - Bouclier (blocage réel)
+  // MARK: - Mécanique 1 : Bloquer maintenant (durée + mode strict)
 
-  @objc(startBlocking:rejecter:)
-  func startBlocking(
-    _ resolve: @escaping RCTPromiseResolveBlock,
+  @objc(startTimedBlock:strict:resolver:rejecter:)
+  func startTimedBlock(
+    _ minutes: NSNumber,
+    strict: Bool,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil)
-      return
+      reject("unsupported", "iOS 16+ requis", nil); return
     }
     let selection = loadSelection()
     guard selectionCount(selection) > 0 else {
-      reject("empty_selection", "Aucune app sélectionnée", nil)
-      return
+      reject("empty_selection", "Aucune app sélectionnée", nil); return
     }
-    store.shield.applications =
-      selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
-    store.shield.applicationCategories =
-      selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
-    store.shield.webDomains =
-      selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
-    UserDefaults.standard.set(true, forKey: blockingKey)
-    resolve(true)
+    let mins = max(15, minutes.intValue)  // DeviceActivity : fenêtre ≥ 15 min
+    let cal = Calendar.current
+    let now = Date()
+    let end = now.addingTimeInterval(TimeInterval(mins * 60))
+    let schedule = DeviceActivitySchedule(
+      intervalStart: cal.dateComponents([.hour, .minute, .second], from: now),
+      intervalEnd: cal.dateComponents([.hour, .minute, .second], from: end),
+      repeats: false)
+    do {
+      center.stopMonitoring([timedActivity])
+      try center.startMonitoring(timedActivity, during: schedule)
+      applyShield(selection)  // blocage immédiat ; l'extension retire à la fin
+      if strict {
+        defaults?.set(end.timeIntervalSince1970, forKey: "strictUntil")
+      } else {
+        defaults?.removeObject(forKey: "strictUntil")
+      }
+      resolve(true)
+    } catch {
+      reject("monitor_failed", error.localizedDescription, error)
+    }
   }
+
+  // MARK: - Mécanique 2 : Plage horaire quotidienne
+
+  @objc(startSchedule:startMinute:endHour:endMinute:resolver:rejecter:)
+  func startSchedule(
+    _ startHour: NSNumber, startMinute: NSNumber,
+    endHour: NSNumber, endMinute: NSNumber,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      reject("unsupported", "iOS 16+ requis", nil); return
+    }
+    guard selectionCount(loadSelection()) > 0 else {
+      reject("empty_selection", "Aucune app sélectionnée", nil); return
+    }
+    let schedule = DeviceActivitySchedule(
+      intervalStart: DateComponents(
+        hour: startHour.intValue, minute: startMinute.intValue),
+      intervalEnd: DateComponents(
+        hour: endHour.intValue, minute: endMinute.intValue),
+      repeats: true)
+    do {
+      center.stopMonitoring([scheduleActivity])
+      try center.startMonitoring(scheduleActivity, during: schedule)
+      resolve(true)
+    } catch {
+      reject("monitor_failed", error.localizedDescription, error)
+    }
+  }
+
+  // MARK: - Mécanique 3 : Limite de temps / jour
+
+  @objc(startDailyLimit:resolver:rejecter:)
+  func startDailyLimit(
+    _ minutes: NSNumber,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      reject("unsupported", "iOS 16+ requis", nil); return
+    }
+    let selection = loadSelection()
+    guard selectionCount(selection) > 0 else {
+      reject("empty_selection", "Aucune app sélectionnée", nil); return
+    }
+    let schedule = DeviceActivitySchedule(
+      intervalStart: DateComponents(hour: 0, minute: 0),
+      intervalEnd: DateComponents(hour: 23, minute: 59),
+      repeats: true)
+    let event = DeviceActivityEvent(
+      applications: selection.applicationTokens,
+      categories: selection.categoryTokens,
+      webDomains: selection.webDomainTokens,
+      threshold: DateComponents(minute: max(1, minutes.intValue)))
+    do {
+      center.stopMonitoring([limitActivity])
+      try center.startMonitoring(
+        limitActivity, during: schedule,
+        events: [DeviceActivityEvent.Name("limitReached"): event])
+      resolve(true)
+    } catch {
+      reject("monitor_failed", error.localizedDescription, error)
+    }
+  }
+
+  // MARK: - Stop (respecte le mode strict)
 
   @objc(stopBlocking:rejecter:)
   func stopBlocking(
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    guard #available(iOS 16.0, *) else {
-      resolve(true)
+    guard #available(iOS 16.0, *) else { resolve(true); return }
+    if let until = defaults?.double(forKey: "strictUntil"), until > 0,
+      Date().timeIntervalSince1970 < until
+    {
+      reject(
+        "strict_locked",
+        "Mode strict actif — déblocage impossible avant la fin.", nil)
       return
     }
-    store.shield.applications = nil
-    store.shield.applicationCategories = nil
-    store.shield.webDomains = nil
-    UserDefaults.standard.set(false, forKey: blockingKey)
+    center.stopMonitoring([timedActivity, scheduleActivity, limitActivity])
+    clearShield()
+    defaults?.removeObject(forKey: "strictUntil")
     resolve(true)
   }
+
+  // MARK: - Statut + journal d'événements (pour les stats)
 
   @objc(getStatus:rejecter:)
   func getStatus(
@@ -177,16 +284,32 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      resolve(["supported": false, "authorized": false, "blocking": false, "count": 0])
+      resolve([
+        "supported": false, "authorized": false, "blocking": false,
+        "count": 0, "strict": false,
+      ])
       return
     }
     let authorized = AuthorizationCenter.shared.authorizationStatus == .approved
+    let strictUntil = defaults?.double(forKey: "strictUntil") ?? 0
     resolve([
       "supported": true,
       "authorized": authorized,
-      "blocking": UserDefaults.standard.bool(forKey: blockingKey),
+      "blocking": defaults?.bool(forKey: "blocus.isBlocking") ?? false,
       "count": selectionCount(loadSelection()),
+      "strict": strictUntil > Date().timeIntervalSince1970,
     ])
+  }
+
+  /// Renvoie et vide le journal d'événements accumulé par l'extension.
+  @objc(pullEvents:rejecter:)
+  func pullEvents(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let log = defaults?.array(forKey: "eventLog") as? [[String: Any]] ?? []
+    defaults?.removeObject(forKey: "eventLog")
+    resolve(log)
   }
 }
 

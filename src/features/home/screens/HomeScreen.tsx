@@ -16,6 +16,25 @@ import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { showErrorToast } from '@/shared/utils/toast'
+
+/** Ré-arme la mécanique native d'une règle depuis son type + config. */
+async function armRule(type: BlockRuleType, config?: Record<string, unknown>) {
+  const c = config ?? {}
+  const n = (v: unknown, d = 0) => (typeof v === 'number' ? v : d)
+  if (type === 'schedule') {
+    await ScreenTime.startSchedule(
+      n(c.start_hour),
+      n(c.start_minute),
+      n(c.end_hour),
+      n(c.end_minute),
+    )
+  } else if (type === 'daily_limit') {
+    await ScreenTime.startDailyLimit(n(c.limit_min, 60))
+  } else {
+    await ScreenTime.startTimedBlock(n(c.duration_min, 30), !!c.strict)
+  }
+}
 
 const TYPE_ICON: Record<BlockRuleType, IconName> = {
   progressive_delay: IconName.CLOCK,
@@ -78,6 +97,21 @@ function Toggle({ on, onPress }: { on: boolean; onPress: () => void }) {
 export default function HomeScreen() {
   const { rules } = useBlockRulesQuery()
   const toggleRule = useToggleRuleMutation()
+
+  const onToggleRule = async (r: BlockRuleView) => {
+    const next = !r.isActive
+    if (ScreenTime.isAvailable) {
+      try {
+        if (next) await armRule(r.type, r.config)
+        else await ScreenTime.stopBlocking()
+      } catch (e) {
+        // ex : mode strict → stopBlocking rejette ; on ne change pas l'état.
+        showErrorToast(e)
+        return
+      }
+    }
+    toggleRule.mutate({ id: r.id, isActive: next })
+  }
 
   return (
     <ScreenWrapper>
@@ -323,16 +357,7 @@ export default function HomeScreen() {
                   </View>
                   <Toggle
                     on={r.isActive}
-                    onPress={() => {
-                      const next = !r.isActive
-                      if (ScreenTime.isAvailable) {
-                        ;(next
-                          ? ScreenTime.startBlocking()
-                          : ScreenTime.stopBlocking()
-                        ).catch(() => {})
-                      }
-                      toggleRule.mutate({ id: r.id, isActive: next })
-                    }}
+                    onPress={() => onToggleRule(r)}
                   />
                 </View>
               ))

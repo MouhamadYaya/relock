@@ -17,6 +17,7 @@ function toView(row: BlockRule): BlockRuleView {
     appIds: (sel?.apps ?? []) as AppId[],
     isActive: row.is_active,
     count: typeof sel?.count === 'number' ? sel.count : undefined,
+    config: (row.config ?? {}) as Record<string, unknown>,
   }
 }
 
@@ -45,7 +46,7 @@ export const BlockRulesService = {
           typeof input.count === 'number'
             ? { apps: input.appIds, count: input.count }
             : { apps: input.appIds },
-        config: {},
+        config: input.config ?? {},
         is_active: true,
       })
       .select('*')

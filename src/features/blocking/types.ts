@@ -11,6 +11,8 @@ export interface BlockRuleView {
   isActive: boolean
   /** Nombre d'apps réellement choisies via le sélecteur Apple (jeton opaque). */
   count?: number
+  /** Paramètres du type (durée/plage/limite) pour ré-armer la mécanique. */
+  config?: Record<string, unknown>
 }
 
 /** Entrée de création d'une règle depuis l'écran Ajout. */
@@ -19,13 +21,20 @@ export interface CreateRuleInput {
   appIds: AppId[]
   /** Renseigné quand la sélection vient du sélecteur système Family Controls. */
   count?: number
+  /** Paramètres du type (durée, plage, limite…) stockés dans `config`. */
+  config?: Record<string, unknown>
 }
 
-/** Libellé FR d'un type de règle. */
+/**
+ * Libellé FR d'un type de règle.
+ * NB : on réutilise les valeurs d'enum existantes avec de nouveaux sens
+ * (aucune migration DB) — `progressive_delay` = « Bloquer maintenant »,
+ * `daily_limit` = « Limite de temps/jour ».
+ */
 export const RULE_TYPE_LABEL: Record<BlockRuleType, string> = {
-  progressive_delay: 'Délai progressif',
-  schedule: 'Plages horaires',
-  daily_limit: "Limite d'ouvertures / jour",
+  progressive_delay: 'Bloquer maintenant',
+  schedule: 'Plage horaire',
+  daily_limit: 'Limite de temps / jour',
 }
 
 /** Libellé FR d'une app bloquable. */
