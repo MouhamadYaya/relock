@@ -213,14 +213,19 @@ export default function HomeScreen() {
                             borderColor: 'rgba(164,154,254,0.55)',
                             backgroundColor: 'rgba(164,154,254,0.1)',
                           },
+                      w.today && {
+                        borderWidth: 2,
+                        borderStyle: 'solid',
+                        borderColor: '#FFFFFF',
+                      },
                     ]}
                   />
                   <Text
                     style={[
-                      f(w.done ? 500 : 700),
+                      f(w.today || !w.done ? 700 : 500),
                       {
                         fontSize: 11,
-                        color: w.done ? C.ink3 : C.accent,
+                        color: w.today ? C.ink : w.done ? C.ink3 : C.accent,
                         marginTop: 6,
                       },
                     ]}

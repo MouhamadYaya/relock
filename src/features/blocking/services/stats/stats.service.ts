@@ -14,7 +14,15 @@ import { normalizeError } from '@/shared/utils/normalize-error'
 /** Estimation : minutes regagnées par ouverture évitée (hypothèse produit). */
 export const MIN_SAVED_PER_RESIST = 5
 
-const today = () => new Date().toISOString().slice(0, 10)
+/** Date locale « YYYY-MM-DD » (pas UTC — sinon décalage d'un jour selon le fuseau). */
+export function ymd(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const today = () => ymd(new Date())
 
 export const StatsService = {
   /** Remonte les événements de l'extension vers `daily_stats` (idempotent-ish). */
@@ -80,17 +88,21 @@ export const StatsService = {
 }
 
 /** Semaine courante (lun→dim) : chaque jour actif ou non (pour l'Accueil). */
-export function computeWeek(rows: DailyStats[]): { d: string; done: boolean }[] {
+export function computeWeek(
+  rows: DailyStats[],
+): { d: string; done: boolean; today: boolean }[] {
   const set = new Set(rows.filter(r => r.streak_respected).map(r => r.date))
   const labels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
   const now = new Date()
+  const todayKey = ymd(now)
   const dow = (now.getDay() + 6) % 7 // 0 = lundi
   const monday = new Date(now)
   monday.setDate(now.getDate() - dow)
   return labels.map((d, i) => {
     const day = new Date(monday)
     day.setDate(monday.getDate() + i)
-    return { d, done: set.has(day.toISOString().slice(0, 10)) }
+    const key = ymd(day)
+    return { d, done: set.has(key), today: key === todayKey }
   })
 }
 
@@ -118,9 +130,9 @@ export function computeStreak(rows: DailyStats[]): number {
   let streak = 0
   const d = new Date()
   // Autorise que « aujourd'hui » soit encore vide sans casser la série.
-  if (!byDate.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1)
+  if (!byDate.has(ymd(d))) d.setDate(d.getDate() - 1)
   for (;;) {
-    const key = d.toISOString().slice(0, 10)
+    const key = ymd(d)
     if (!byDate.has(key)) break
     streak += 1
     d.setDate(d.getDate() - 1)

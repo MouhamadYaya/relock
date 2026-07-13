@@ -262,14 +262,9 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else { resolve(true); return }
-    if let until = defaults?.double(forKey: "strictUntil"), until > 0,
-      Date().timeIntervalSince1970 < until
-    {
-      reject(
-        "strict_locked",
-        "Mode strict actif — déblocage impossible avant la fin.", nil)
-      return
-    }
+    // Le mode strict est appliqué PAR blocage côté JS (isLocked masque le bouton
+    // d'arrêt du blocage strict). Pas de verrou global ici, sinon un blocage
+    // strict empêcherait d'arrêter les AUTRES (indépendance des blocages).
     center.stopMonitoring([timedActivity, scheduleActivity, limitActivity])
     clearShield()
     defaults?.removeObject(forKey: "strictUntil")
