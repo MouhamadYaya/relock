@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native'
@@ -171,6 +172,7 @@ export default function AddScreen() {
 
   const [step, setStep] = useState<0 | 1>(0)
   const [type, setType] = useState<TypeKey>('block_now')
+  const [name, setName] = useState('')
   const [count, setCount] = useState(0)
   const [working, setWorking] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
@@ -299,16 +301,18 @@ export default function AddScreen() {
     )
 
   const buildConfig = (): Record<string, unknown> => {
+    const base = name.trim() ? { name: name.trim() } : {}
     if (type === 'block_now')
-      return { mode: 'block_now', duration_min: durationMin, strict }
+      return { ...base, mode: 'block_now', duration_min: durationMin, strict }
     if (type === 'schedule')
       return {
+        ...base,
         start_hour: start.getHours(),
         start_minute: start.getMinutes(),
         end_hour: end.getHours(),
         end_minute: end.getMinutes(),
       }
-    return { limit_min: limitMin }
+    return { ...base, limit_min: limitMin }
   }
 
   const summary = (): string => {
@@ -439,6 +443,15 @@ export default function AddScreen() {
                 </Text>
                 <View style={{ width: 36 }} />
               </View>
+
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Nom (optionnel)"
+                placeholderTextColor={C.ink3}
+                maxLength={30}
+                style={[f(500), styles.nameInput]}
+              />
 
               {type === 'block_now' && (
                 <>
@@ -683,7 +696,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 22,
+    marginBottom: 18,
+  },
+  nameInput: {
+    backgroundColor: C.surface,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 48,
+    fontSize: 15,
+    color: C.ink,
+    marginBottom: 14,
   },
   backBtn: {
     width: 36,

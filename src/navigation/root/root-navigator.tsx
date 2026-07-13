@@ -7,6 +7,7 @@ import React from 'react'
 import ActivityScreen from '@/features/activity/screens/ActivityScreen'
 import AuthScreen from '@/features/auth/screens/AuthScreen'
 import AddScreen from '@/features/blocking/screens/AddScreen'
+import BlockDetailScreen from '@/features/blocking/screens/BlockDetailScreen'
 import PauseRitualScreen from '@/features/blocking/screens/PauseRitualScreen'
 import HomeScreen from '@/features/home/screens/HomeScreen'
 import StoryScreen from '@/features/home/screens/StoryScreen'
@@ -46,6 +47,10 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
     [ROUTES.ROOT_APP]: HomeTabs,
     [ROUTES.ADD_BLOCK]: {
       screen: AddScreen,
+      options: HALF_SHEET_OPTIONS,
+    },
+    [ROUTES.BLOCK_DETAIL]: {
+      screen: BlockDetailScreen,
       options: HALF_SHEET_OPTIONS,
     },
     [ROUTES.SETTINGS]: SettingsScreen,
