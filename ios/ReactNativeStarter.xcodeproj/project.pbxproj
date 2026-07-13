@@ -17,7 +17,9 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		8143C8043D2840B199B5CCE6 /* Inter-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E765D1D4EDC64EF9ACA97354 /* Inter-Bold.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
+		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
 		FE082EB568BC4C66870D3470 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -35,9 +37,11 @@
 		7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = ReactNativeStarter/Colors.xcassets; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ReactNativeStarter/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ReactNativeStarter/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlocusScreenTime.swift; path = ReactNativeStarter/BlocusScreenTime.swift; sourceTree = "<group>"; };
 		C504AB07807F4A598A8D411D /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = ReactNativeStarter/BootSplash.storyboard; sourceTree = "<group>"; };
 		DC2160CB3002FE400001F544 /* ReactNativeStarter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = ReactNativeStarter.entitlements; path = ReactNativeStarter/ReactNativeStarter.entitlements; sourceTree = "<group>"; };
 		E765D1D4EDC64EF9ACA97354 /* Inter-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Bold.ttf"; path = "../assets/fonts/Inter-Bold.ttf"; sourceTree = "<group>"; };
+		EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = BlocusScreenTime.m; path = ReactNativeStarter/BlocusScreenTime.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		EF42131922094AC1BC44EDBB /* Inter-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-SemiBold.ttf"; path = "../assets/fonts/Inter-SemiBold.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,6 +69,8 @@
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				C504AB07807F4A598A8D411D /* BootSplash.storyboard */,
 				7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */,
+				C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */,
+				EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */,
 			);
 			name = ReactNativeStarter;
 			sourceTree = "<group>";
@@ -285,6 +291,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */,
+				C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
