@@ -1,8 +1,8 @@
 {
   "name": "ReactNativeStarter",
-  "displayName": "Blocus",
+  "displayName": "Relock",
   "expo": {
-    "name": "Blocus",
+    "name": "Relock",
     "slug": "blocus",
     "scheme": "blocus",
     "version": "0.0.1",

@@ -85,7 +85,9 @@ export function ScreenWrapper({
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  container: { flex: 1 },
+  // Colonne de contenu bornée + centrée sur grand écran (iPad). Sans effet
+  // sur iPhone (largeur écran < maxWidth).
+  container: { flex: 1, width: '100%', maxWidth: 540, alignSelf: 'center' },
   header: { width: '100%' },
   footer: { width: '100%' },
   scrollContent: { flexGrow: 1 },

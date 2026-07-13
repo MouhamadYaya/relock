@@ -2,7 +2,7 @@ import { IconName } from '@assets/icons'
 import React from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { appConfig } from '@/config/app-config'
-import { navigate } from '@/navigation/helpers/navigation-helpers'
+import { goBack, navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
@@ -71,8 +71,19 @@ export default function SettingsScreen() {
     <ScreenWrapper>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ paddingTop: 8 }}>
-          {/* Titre */}
-          <Text style={[f(800), styles.title]}>Réglages</Text>
+          {/* Header : retour + titre */}
+          <View style={styles.header}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Retour à l'accueil"
+              onPress={() => goBack()}
+              hitSlop={8}
+              style={styles.backBtn}
+            >
+              <IconSvg name={IconName.BACK} size={18} color={C.ink} />
+            </Pressable>
+            <Text style={[f(800), styles.title]}>Réglages</Text>
+          </View>
 
           {/* Profil */}
           <Pressable style={styles.profile}>
@@ -165,7 +176,7 @@ export default function SettingsScreen() {
           </View>
 
           <Text style={[f(400), styles.footer]}>
-            Blocus · version {appConfig.version}
+            Relock · version {appConfig.version}
           </Text>
 
           <View style={{ height: 32 }} />
@@ -176,11 +187,26 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 28,
     color: C.ink,
     letterSpacing: -0.7,
-    paddingHorizontal: 20,
   },
   profile: {
     marginTop: 18,

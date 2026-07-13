@@ -1,29 +1,42 @@
-// Barre d'onglets flottante (maquette Blocus) :
-// pilule en verre avec Accueil + Activité (icônes seules) + un gros bouton "+"
-// central qui ouvre l'écran Ajout. Les Réglages se font via l'engrenage des écrans.
+// Barre d'onglets FLOTTANTE (réf. concurrent) :
+// pilule « frosted » translucide qui flotte PAR-DESSUS le contenu (aucune bande
+// de fond opaque). Accueil + Activité (icône + label), l'onglet actif surélevé
+// et en accent, les inactifs en blanc. À droite, nettement séparé, un bouton
+// circulaire « glassy » clair « + » qui ouvre l'écran Ajout.
 
 import { IconName } from '@assets/icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import React from 'react'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
+import { fonts } from '@/shared/theme/tokens/fonts'
+
+/** Hauteur à réserver en bas des écrans à onglets pour laisser flotter la barre. */
+export const TAB_BAR_CLEARANCE = 118
 
 const C = {
-  bg: '#0B0C10',
-  pill: '#14161E',
-  border: 'rgba(148,152,178,0.16)',
-  ambient: 'rgba(164,154,254,0.14)',
+  // Pilule frosted : nettement plus claire que le fond near-black.
+  pill: 'rgba(38,41,54,0.92)',
+  pillBorder: 'rgba(255,255,255,0.10)',
+  // Segment actif surélevé, nettement plus clair.
+  selected: 'rgba(255,255,255,0.13)',
+  selectedBorder: 'rgba(255,255,255,0.16)',
   accent: '#A49AFE',
-  inactive: '#6B6F82',
-  divider: 'rgba(148,152,178,0.16)',
+  // Inactif en blanc (visibilité) plutôt qu'en gris.
+  inactive: '#F2F2F6',
+  // Bouton circulaire « + » détaché : fond sombre transparent (comme la
+  // pilule) avec un « + » blanc bien visible façon CTA.
+  fab: 'rgba(38,41,54,0.92)',
+  fabBorder: 'rgba(255,255,255,0.14)',
+  fabIcon: '#FFFFFF',
 }
 
-function iconForRoute(routeName: string): IconName {
-  if (routeName === ROUTES.TAB_ACTIVITY) return IconName.CHART
-  return IconName.HOME
+const TAB_META: Record<string, { icon: IconName; label: string }> = {
+  [ROUTES.TAB_HOME]: { icon: IconName.HOME, label: 'Accueil' },
+  [ROUTES.TAB_ACTIVITY]: { icon: IconName.CHART, label: 'Activité' },
 }
 
 export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
@@ -31,11 +44,17 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View
-      style={[styles.outer, { paddingBottom: Math.max(insets.bottom, 12) }]}
+      pointerEvents="box-none"
+      style={[styles.outer, { paddingBottom: Math.max(insets.bottom, 16) }]}
     >
+      {/* Pilule Accueil + Activité */}
       <View style={styles.pill}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index
+          const meta = TAB_META[route.name] ?? {
+            icon: IconName.HOME,
+            label: route.name,
+          }
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
@@ -51,74 +70,108 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
               key={route.key}
               accessibilityRole="tab"
               accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={meta.label}
               onPress={onPress}
               style={[styles.tab, isFocused && styles.tabActive]}
             >
               <IconSvg
-                name={iconForRoute(route.name)}
-                size={22}
+                name={meta.icon}
+                size={23}
                 color={isFocused ? C.accent : C.inactive}
               />
+              <Text
+                style={[
+                  styles.label,
+                  { color: isFocused ? C.accent : C.inactive },
+                ]}
+              >
+                {meta.label}
+              </Text>
             </Pressable>
           )
         })}
-
-        <View style={styles.divider} />
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Nouveau blocage"
-          onPress={() => navigate(ROUTES.ADD_BLOCK)}
-          style={styles.fab}
-        >
-          <IconSvg name={IconName.PLUS} size={22} color={C.bg} />
-        </Pressable>
       </View>
+
+      {/* Bouton « + » circulaire détaché */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Nouveau blocage"
+        onPress={() => navigate(ROUTES.ADD_BLOCK)}
+        style={styles.fab}
+      >
+        <IconSvg name={IconName.PLUS} size={30} color={C.fabIcon} />
+      </Pressable>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
+  // Flotte par-dessus le contenu : aucune bande de fond opaque.
   outer: {
-    width: '100%',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.bg,
+    justifyContent: 'center',
+    gap: 30,
     paddingTop: 10,
+    backgroundColor: 'transparent',
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: C.pill,
     borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 26,
-    paddingVertical: 7,
-    paddingHorizontal: 9,
+    borderColor: C.pillBorder,
+    borderRadius: 30,
+    padding: 6,
+    // Ombre douce → effet flottant.
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 10,
   },
   tab: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 18,
+    minWidth: 92,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   tabActive: {
-    backgroundColor: C.ambient,
+    backgroundColor: C.selected,
+    borderWidth: 1,
+    borderColor: C.selectedBorder,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
-  divider: {
-    width: 1,
-    height: 26,
-    backgroundColor: C.divider,
-    marginHorizontal: 6,
+  label: {
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    letterSpacing: -0.1,
   },
   fab: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: C.accent,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: C.fab,
+    borderWidth: 1,
+    borderColor: C.fabBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 2,
+    // Ombre douce (flottant) + léger halo lavande pour ressortir comme un CTA.
+    shadowColor: C.accent,
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
 })

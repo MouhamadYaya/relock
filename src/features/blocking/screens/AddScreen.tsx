@@ -2,12 +2,12 @@ import { IconName } from '@assets/icons'
 import React, { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
-import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
+import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast, showToast } from '@/shared/utils/toast'
 
@@ -292,8 +292,8 @@ export default function AddScreen() {
                 {type === 'progressive_delay' ? (
                   <>
                     Délai de <Text style={styles.previewStrong}>30 s</Text> à la
-                    1re ouverture, <Text style={styles.previewStrong}>+15 s</Text>{' '}
-                    ensuite.{' '}
+                    1re ouverture,{' '}
+                    <Text style={styles.previewStrong}>+15 s</Text> ensuite.{' '}
                   </>
                 ) : type === 'schedule' ? (
                   <>
@@ -324,7 +324,10 @@ export default function AddScreen() {
             ]}
           >
             <Text
-              style={[f(700), { fontSize: 16, color: disabled ? C.ink3 : C.bg }]}
+              style={[
+                f(700),
+                { fontSize: 16, color: disabled ? C.ink3 : C.bg },
+              ]}
             >
               {submitting ? 'Activation…' : 'Activer le blocage'}
             </Text>

@@ -1,4 +1,4 @@
-# Blocus — Choses à faire / à ne pas oublier
+# Relock — Choses à faire / à ne pas oublier
 
 Fichier de suivi de tout ce qui est reporté, à brancher plus tard, ou qui dépend de toi.
 Voir aussi [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -13,7 +13,7 @@ Voir aussi [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md), [docs/ARCHITECTURE.
 - [ ] **Supabase — config à faire de ton côté** : (a) désactiver la confirmation e-mail (Authentication → Providers → Email → *Confirm email* OFF) pour tester l'inscription instantanément ; (b) ⚠️ **faire tourner la clé secret** (`sb_secret_…`) exposée dans le chat.
 - [x] **Blocages réels (Ajout → Accueil)** : l'écran Ajout écrit la règle dans `block_rules`, l'Accueil la lit (liste + toggle actif/inactif + état vide). **Vérifié end-to-end dans l'app** (création → affichage → persiste après redémarrage → RLS OK).
 - [ ] **Stats réelles (reste mock)** : la série, « temps regagné », interceptions, ouvertures viennent encore de données factices. Elles dépendent de `block_events` / `daily_stats`, qui ne se remplissent qu'avec l'**interception native** (bloquée, #8). À câbler quand le natif remonte des événements (ou via un petit seed de démo).
-- [ ] **Bundle ID** : `cole-lucky.SwiftSupabaseStarter` — confirmer que c'est bien l'ID sur lequel l'approbation Family Controls a été accordée, et que Blocus doit l'utiliser (c'est aussi l'ID de ton app SwiftUI « Monevo »).
+- [ ] **Bundle ID** : `cole-lucky.SwiftSupabaseStarter` — confirmer que c'est bien l'ID sur lequel l'approbation Family Controls a été accordée, et que Relock doit l'utiliser (c'est aussi l'ID de ton app SwiftUI « Monevo »).
 - [ ] **Build dev client signé** sur ton iPhone : nécessite ton compte développeur Apple dans Xcode (signing / provisioning). Étape manuelle de ton côté — je prépare tout le reste.
 - [ ] **Apple Sign-In** : activer la capability dans le portail Apple + configurer le provider dans Supabase Auth.
 

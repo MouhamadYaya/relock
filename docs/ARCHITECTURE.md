@@ -1,4 +1,4 @@
-# Architecture — Blocus V1
+# Architecture — Relock V1
 
 Décisions techniques verrouillées en Phase 2. Plateforme : **iOS uniquement**. Base : starter **bare React Native 0.82** (ce repo). Voir [PRODUCT.md](../PRODUCT.md) et [DESIGN.md](../DESIGN.md).
 
@@ -7,7 +7,7 @@ Décisions techniques verrouillées en Phase 2. Plateforme : **iOS uniquement**.
 - **UI / base** : starter bare RN 0.82 (React Navigation 7, TanStack Query, Zustand, MMKV, i18next, thème light/dark, couche transport pluggable — tout existant, réutilisé).
 - **Blocage natif** : `expo-modules-core` (greffé via [`install-expo-modules`](https://docs.expo.dev/bare/installing-expo-modules/)) + **`react-native-device-activity`** (Kingstinct, v0.6.x, iOS 15.1+). Pas d'EAS ni de Dev Client complet requis : un `expo prebuild` unique scaffolde les extensions Xcode, puis builds Xcode locaux classiques.
 - **Backend** : **Supabase** (Auth + Postgres + RLS). Branché sur la couche transport existante via un adaptateur Supabase (remplace le mock/Firebase du starter).
-- **i18n** : ajout du **français** (langue principale de Blocus).
+- **i18n** : ajout du **français** (langue principale de Relock).
 - **Preview mobile** : build Xcode local sur **appareil physique** (Family Controls / shield ne sont pas testables complètement sur simulateur).
 
 ## Prérequis Apple (bloquants)
@@ -31,7 +31,7 @@ Les 3 mécaniques V1 :
 
 ## Hors périmètre V1 (→ V1.1)
 
-- **Extension `DeviceActivityReport`** (vraies minutes de temps d'écran système par app / par heure). Contrainte Apple dure : cette extension est sandboxée au point de **ne pas pouvoir écrire dans l'App Group** — les minutes réelles ne remontent jamais au JS ni à Supabase, et le rendu SwiftUI est peu stylable. Reportée. En V1, l'écran **Activité s'appuie à 100 % sur les métriques Blocus** (interceptions, ouvertures stoppées, streak, temps regagné) — pixel-perfect avec la maquette et synchronisées.
+- **Extension `DeviceActivityReport`** (vraies minutes de temps d'écran système par app / par heure). Contrainte Apple dure : cette extension est sandboxée au point de **ne pas pouvoir écrire dans l'App Group** — les minutes réelles ne remontent jamais au JS ni à Supabase, et le rendu SwiftUI est peu stylable. Reportée. En V1, l'écran **Activité s'appuie à 100 % sur les métriques Relock** (interceptions, ouvertures stoppées, streak, temps regagné) — pixel-perfect avec la maquette et synchronisées.
 
 ## Propriété des données
 

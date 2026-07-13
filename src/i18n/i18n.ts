@@ -46,7 +46,7 @@ const fallbackLng = LanguageKey.english
 // Do not set keySeparator: false so nested paths work (e.g. onboarding.welcome)
 i18n.use(initReactI18next).init({
   compatibilityJSON: 'v4',
-  lng: defaultLng, // Blocus par défaut en français ; fallback anglais
+  lng: defaultLng, // Relock par défaut en français ; fallback anglais
   fallbackLng,
   resources,
   defaultNS: 'translation',

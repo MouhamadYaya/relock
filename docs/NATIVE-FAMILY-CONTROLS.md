@@ -28,7 +28,7 @@ Voir aussi [choseafaire.md](../choseafaire.md).
 1. Ouvrir `ios/ReactNativeStarter.xcworkspace` dans Xcode.
 2. Cible **ReactNativeStarter** → onglet **Signing & Capabilities** :
    - **Team** = ton compte développeur Apple.
-   - **Bundle Identifier** = l'identifiant Blocus **approuvé Family Controls**.
+   - **Bundle Identifier** = l'identifiant Relock **approuvé Family Controls**.
    - Vérifier que la capability **Family Controls** est listée (elle vient de l'entitlement).
 3. Brancher l'iPhone, le sélectionner comme destination.
 4. **Run** (⌘R). Première fois : approuver le profil dev sur l'iPhone (Réglages → Général → VPN et gestion d'appareils).

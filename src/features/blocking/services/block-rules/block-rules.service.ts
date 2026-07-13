@@ -25,7 +25,7 @@ export const BlockRulesService = {
     const { data, error } = await supabase
       .from('block_rules')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
     if (error) throw normalizeError(error)
     return (data ?? []).map(toView)
   },

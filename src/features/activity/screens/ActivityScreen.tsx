@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
+import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
@@ -306,7 +307,11 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingTop: 4 },
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: TAB_BAR_CLEARANCE,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

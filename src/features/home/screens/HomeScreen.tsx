@@ -10,11 +10,12 @@ import {
 } from '@/features/blocking/types'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
-import { ScreenTime } from '@/shared/native/screen-time'
+import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
-import { fonts } from '@/shared/theme/tokens/fonts'
+import { ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
+import { fonts } from '@/shared/theme/tokens/fonts'
 
 const TYPE_ICON: Record<BlockRuleType, IconName> = {
   progressive_delay: IconName.CLOCK,
@@ -62,10 +63,7 @@ function Toggle({ on, onPress }: { on: boolean; onPress: () => void }) {
       accessibilityState={{ checked: on }}
       onPress={onPress}
       hitSlop={6}
-      style={[
-        styles.toggle,
-        { backgroundColor: on ? C.accent : C.surface2 },
-      ]}
+      style={[styles.toggle, { backgroundColor: on ? C.accent : C.surface2 }]}
     >
       <View
         style={[
@@ -90,7 +88,7 @@ export default function HomeScreen() {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[f(800), styles.brand]}>Blocus</Text>
+            <Text style={[f(800), styles.brand]}>Relock</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Réglages"
@@ -197,7 +195,7 @@ export default function HomeScreen() {
           </View>
 
           {/* Deux stats */}
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+          <View style={{ flexDirection: 'row', gap: 16, marginTop: 8 }}>
             <View style={[styles.statCard]}>
               <Text style={[f(500), { fontSize: 12.5, color: C.ink2 }]}>
                 Temps regagné
@@ -341,18 +339,6 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {/* CTA */}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => navigate(ROUTES.ADD_BLOCK)}
-            style={[styles.cta, { marginTop: 'auto' }]}
-          >
-            <IconSvg name={IconName.BLOCK} size={19} color={C.bg} />
-            <Text style={[f(700), { fontSize: 16, color: C.bg }]}>
-              Bloquer maintenant
-            </Text>
-          </Pressable>
-
           <View style={{ height: 8 }} />
         </View>
       </ScrollView>
@@ -362,7 +348,12 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1 },
-  container: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 4 },
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: TAB_BAR_CLEARANCE,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -451,18 +442,5 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: C.bg,
-  },
-  cta: {
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: C.accent,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    shadowColor: C.accent,
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
   },
 })

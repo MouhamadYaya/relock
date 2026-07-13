@@ -1,6 +1,6 @@
 # Design
 
-Système visuel de **Blocus** — app iOS de lutte contre le scroll compulsif. Dark-first, premium, inspiré du soin visuel d'Opal. Ce document capture les tokens réels du starter (`src/shared/theme`) et marque les **cibles** (raffinements vers le niveau Opal). Il est la référence pour toute génération d'écran : les variantes doivent rester sur cette base.
+Système visuel de **Relock** — app iOS de lutte contre le scroll compulsif. Dark-first, premium, inspiré du soin visuel d'Opal. Ce document capture les tokens réels du starter (`src/shared/theme`) et marque les **cibles** (raffinements vers le niveau Opal). Il est la référence pour toute génération d'écran : les variantes doivent rester sur cette base.
 
 ## Theme & Mood
 
@@ -83,7 +83,7 @@ Intentionnelle, jamais gratuite. Ease-out exponentiel (quart/quint/expo), pas de
 
 ## Components (existants dans le starter)
 
-Réutiliser : `Button`, `Text`, `ScreenWrapper`, `ScreenHeader`, `HalfSheet`, `GlobalModal`, `ErrorBoundary`, `SuspenseBoundary`, `OfflineBanner`, `IconSvg`, `Activity`, `ThemedStatusBar`, `SectionHeader`, `AnimatedTabBar` (tab bar custom animée). Étendre plutôt que réinventer. Nouveaux composants à prévoir (spécifiques Blocus) : carte Résumé, graphe temps-par-heure, ligne d'app avec barre de progression, sélecteur de type de blocage, écran d'interception, bande de dates (jour/semaine/mois), anneau de délai progressif.
+Réutiliser : `Button`, `Text`, `ScreenWrapper`, `ScreenHeader`, `HalfSheet`, `GlobalModal`, `ErrorBoundary`, `SuspenseBoundary`, `OfflineBanner`, `IconSvg`, `Activity`, `ThemedStatusBar`, `SectionHeader`, `AnimatedTabBar` (tab bar custom animée). Étendre plutôt que réinventer. Nouveaux composants à prévoir (spécifiques Relock) : carte Résumé, graphe temps-par-heure, ligne d'app avec barre de progression, sélecteur de type de blocage, écran d'interception, bande de dates (jour/semaine/mois), anneau de délai progressif.
 
 ## Iconography
 
