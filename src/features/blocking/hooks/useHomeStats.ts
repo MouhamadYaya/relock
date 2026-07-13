@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+  computeRecordStreak,
   computeStreak,
+  computeWeek,
   StatsService,
 } from '@/features/blocking/services/stats/stats.service'
 import { Freshness } from '@/shared/services/api/query/policy/freshness'
@@ -16,7 +18,13 @@ export function useHomeStats() {
         StatsService.today(),
         StatsService.recent(30),
       ])
-      return { today, recent, streak: computeStreak(recent) }
+      return {
+        today,
+        recent,
+        streak: computeStreak(recent),
+        record: computeRecordStreak(recent),
+        week: computeWeek(recent),
+      }
     },
     staleTime: Freshness.nearRealtime.staleTime,
     gcTime: Freshness.nearRealtime.gcTime,
@@ -28,6 +36,8 @@ export function useHomeStats() {
     interceptions: query.data?.today?.interceptions_count ?? 0,
     savedMinutes: query.data?.today?.time_saved_minutes ?? 0,
     streak: query.data?.streak ?? 0,
+    record: query.data?.record ?? 0,
+    week: query.data?.week ?? computeWeek([]),
     recent: query.data?.recent ?? [],
     isLoading: query.isLoading,
   }

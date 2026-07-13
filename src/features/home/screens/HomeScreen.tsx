@@ -46,16 +46,6 @@ const C = {
   ambient: 'rgba(164,154,254,0.14)',
 }
 
-const WEEK = [
-  { d: 'L', done: true },
-  { d: 'M', done: true },
-  { d: 'M', done: true },
-  { d: 'J', done: true },
-  { d: 'V', done: true },
-  { d: 'S', done: true },
-  { d: 'D', done: false },
-]
-
 function fmtSaved(min: number): string {
   const h = Math.floor(min / 60)
   const m = min % 60
@@ -125,12 +115,14 @@ export default function HomeScreen() {
               <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>
                 Série en cours
               </Text>
-              <View style={styles.badge}>
-                <IconSvg name={IconName.FLAME} size={13} color={C.accent} />
-                <Text style={[f(700), { fontSize: 13, color: C.accent }]}>
-                  Record 18j
-                </Text>
-              </View>
+              {stats.record > 0 && (
+                <View style={styles.badge}>
+                  <IconSvg name={IconName.FLAME} size={13} color={C.accent} />
+                  <Text style={[f(700), { fontSize: 13, color: C.accent }]}>
+                    Record {stats.record}j
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.streakRow}>
@@ -154,7 +146,7 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.week}>
-              {WEEK.map((w, i) => (
+              {stats.week.map((w, i) => (
                 <View key={`${w.d}-${i}`} style={styles.weekCell}>
                   <View
                     style={[

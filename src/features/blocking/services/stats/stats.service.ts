@@ -79,6 +79,39 @@ export const StatsService = {
   },
 }
 
+/** Semaine courante (lun→dim) : chaque jour actif ou non (pour l'Accueil). */
+export function computeWeek(rows: DailyStats[]): { d: string; done: boolean }[] {
+  const set = new Set(rows.filter(r => r.streak_respected).map(r => r.date))
+  const labels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+  const now = new Date()
+  const dow = (now.getDay() + 6) % 7 // 0 = lundi
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - dow)
+  return labels.map((d, i) => {
+    const day = new Date(monday)
+    day.setDate(monday.getDate() + i)
+    return { d, done: set.has(day.toISOString().slice(0, 10)) }
+  })
+}
+
+/** Record = plus longue suite de jours consécutifs jamais atteinte. */
+export function computeRecordStreak(rows: DailyStats[]): number {
+  const dates = rows
+    .filter(r => r.streak_respected)
+    .map(r => r.date)
+    .sort()
+  let best = 0
+  let cur = 0
+  let prev: number | null = null
+  for (const ds of dates) {
+    const t = new Date(ds).getTime()
+    cur = prev !== null && t - prev === 86_400_000 ? cur + 1 : 1
+    best = Math.max(best, cur)
+    prev = t
+  }
+  return best
+}
+
 /** Série = nb de jours consécutifs (jusqu'à aujourd'hui) avec une activité. */
 export function computeStreak(rows: DailyStats[]): number {
   const byDate = new Set(rows.filter(r => r.streak_respected).map(r => r.date))
