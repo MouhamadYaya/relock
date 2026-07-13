@@ -28,6 +28,7 @@
 		A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99267AE42A73E61E98DE0728 /* RelockShield.swift */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
+		C775DF612177016E41684402 /* Shield.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */; };
 		E4C21F3F1320BC6FCCD31280 /* RelockShield.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A673B73E1554D473DCDADCDD /* RelockShield.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
 		FE082EB568BC4C66870D3470 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */; };
 /* End PBXBuildFile section */
@@ -83,6 +84,7 @@
 		23BE557DFCBF1E290B255014 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		268F817BF344E9828193546B /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockMonitor/Info.plist; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-ReactNativeStarter.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeStarter.debug.xcconfig"; path = "Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter.debug.xcconfig"; sourceTree = "<group>"; };
+		54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Shield.xcassets; path = RelockShield/Shield.xcassets; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-ReactNativeStarter.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeStarter.release.xcconfig"; path = "Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter.release.xcconfig"; sourceTree = "<group>"; };
 		5B1181BB56454D09A355328F /* JetBrainsMono-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "JetBrainsMono-Regular.ttf"; path = "../assets/fonts/JetBrainsMono-Regular.ttf"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-ReactNativeStarter.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReactNativeStarter.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -187,6 +189,7 @@
 				99267AE42A73E61E98DE0728 /* RelockShield.swift */,
 				8DB7C56395D472046F777B09 /* Info.plist */,
 				9275E3DCA17F1B2CFB757E9D /* RelockShield.entitlements */,
+				54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */,
 			);
 			name = RelockShield;
 			sourceTree = SOURCE_ROOT;
@@ -408,6 +411,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C775DF612177016E41684402 /* Shield.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
