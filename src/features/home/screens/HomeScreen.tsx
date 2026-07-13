@@ -6,8 +6,8 @@ import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
 import {
   type BlockRuleView,
   blockStatusLine,
-  isLocked,
   RULE_TYPE_LABEL,
+  timedRunning,
 } from '@/features/blocking/types'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
@@ -42,8 +42,12 @@ const C = {
   ink2: '#A8ABBE',
   ink3: '#6B6F82',
   accent: '#A49AFE',
+  amber: '#FBBF24',
   border: 'rgba(148,152,178,0.16)',
   ambient: 'rgba(164,154,254,0.14)',
+  liveBg: 'rgba(164,154,254,0.12)',
+  liveBorder: 'rgba(164,154,254,0.5)',
+  liveIcon: 'rgba(164,154,254,0.2)',
 }
 
 function fmtSaved(min: number): string {
@@ -54,9 +58,57 @@ function fmtSaved(min: number): string {
   return `${h} h ${String(m).padStart(2, '0')}`
 }
 
+/** Carte de blocage — simple : type + statut + état (Actif / En pause). */
+function BlockCard({ rule }: { rule: BlockRuleView }) {
+  const active = rule.isActive
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${RULE_TYPE_LABEL[rule.type]} — voir le détail`}
+      onPress={() => navigate(ROUTES.BLOCK_DETAIL, { rule })}
+      style={[styles.blockRow, { marginBottom: 10 }]}
+    >
+      <View style={styles.blockIcon}>
+        <IconSvg
+          name={TYPE_ICON[rule.type]}
+          size={20}
+          color={active ? C.accent : C.ink3}
+        />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+          {RULE_TYPE_LABEL[rule.type]}
+        </Text>
+        <Text style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 2 }]}>
+          {blockStatusLine(rule)}
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.statePill,
+          { backgroundColor: active ? C.liveBg : C.surface2 },
+        ]}
+      >
+        <Text
+          style={[
+            f(600),
+            { fontSize: 11.5, color: active ? C.accent : C.ink3 },
+          ]}
+        >
+          {active ? 'Actif' : 'En pause'}
+        </Text>
+      </View>
+    </Pressable>
+  )
+}
+
 export default function HomeScreen() {
   const { rules } = useBlockRulesQuery()
   const stats = useHomeStats()
+  // Un « Bloquer maintenant » terminé disparaît (c'est ponctuel).
+  const visibleRules = rules.filter(
+    r => !(r.type === 'progressive_delay' && !timedRunning(r)),
+  )
 
   return (
     <ScreenWrapper>
@@ -236,22 +288,25 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Blocages actifs */}
-          <View style={{ marginTop: 30 }}>
-            <Text
-              style={[
-                f(700),
-                {
-                  fontSize: 16,
-                  color: C.ink,
-                  letterSpacing: -0.2,
-                  marginBottom: 12,
-                },
-              ]}
-            >
-              Gérer les blocages
-            </Text>
-            {rules.length === 0 ? (
+          {/* Tes blocages — liste unique */}
+          <View style={{ marginTop: 28 }}>
+            <View style={[styles.rowBetween, { marginBottom: 12 }]}>
+              <Text style={[f(700), { fontSize: 16, color: C.ink }]}>
+                Tes blocages
+              </Text>
+              {visibleRules.length > 0 && (
+                <Pressable
+                  onPress={() => navigate(ROUTES.ADD_BLOCK)}
+                  hitSlop={8}
+                >
+                  <Text style={[f(600), { fontSize: 13, color: C.accent }]}>
+                    Ajouter
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+
+            {visibleRules.length === 0 ? (
               <Pressable
                 onPress={() => navigate(ROUTES.ADD_BLOCK)}
                 style={[styles.blockRow, styles.emptyRow]}
@@ -275,47 +330,7 @@ export default function HomeScreen() {
                 <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
               </Pressable>
             ) : (
-              rules.map((r: BlockRuleView, i: number) => {
-                const locked = isLocked(r)
-                return (
-                  <Pressable
-                    key={r.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${RULE_TYPE_LABEL[r.type]} — voir le détail`}
-                    onPress={() => navigate(ROUTES.BLOCK_DETAIL, { rule: r })}
-                    style={[
-                      styles.blockRow,
-                      i < rules.length - 1 && { marginBottom: 8 },
-                    ]}
-                  >
-                    <View style={styles.blockIcon}>
-                      <IconSvg
-                        name={TYPE_ICON[r.type]}
-                        size={20}
-                        color={C.accent}
-                      />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                        {RULE_TYPE_LABEL[r.type]}
-                      </Text>
-                      <Text
-                        style={[
-                          f(400),
-                          { fontSize: 13, color: C.ink2, marginTop: 2 },
-                        ]}
-                      >
-                        {blockStatusLine(r)}
-                      </Text>
-                    </View>
-                    <IconSvg
-                      name={locked ? IconName.LOCK : IconName.FORWARD}
-                      size={locked ? 17 : 18}
-                      color={C.ink3}
-                    />
-                  </Pressable>
-                )
-              })
+              visibleRules.map(r => <BlockCard key={r.id} rule={r} />)
             )}
           </View>
 
@@ -389,6 +404,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
+  zoneLabel: {
+    fontSize: 12,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+    marginLeft: 2,
+  },
   blockRow: {
     backgroundColor: C.surface,
     borderWidth: 1,
@@ -399,6 +421,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 13,
+    marginBottom: 8,
+  },
+  blockRowLive: {
+    backgroundColor: C.liveBg,
+    borderColor: C.liveBorder,
   },
   blockIcon: {
     width: 40,
@@ -409,4 +436,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyRow: { borderStyle: 'dashed' },
+  statePill: {
+    borderRadius: 99,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+  },
 })
