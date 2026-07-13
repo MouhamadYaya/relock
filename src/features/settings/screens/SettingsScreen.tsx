@@ -1,12 +1,21 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useProfile, useUpdateName } from '@/features/user/hooks/useProfile'
 import { appConfig } from '@/config/app-config'
 import { goBack, navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { showErrorToast } from '@/shared/utils/toast'
+
+function initialsFrom(s: string | null): string {
+  if (!s) return '?'
+  const parts = s.trim().split(/\s+/).filter(Boolean)
+  const letters = parts.slice(0, 2).map(w => w[0]).join('')
+  return (letters || '?').toUpperCase()
+}
 
 const FW = {
   400: fonts.regular,
@@ -67,6 +76,29 @@ function Row({ icon, label, value, onPress, right, last }: RowProps) {
 }
 
 export default function SettingsScreen() {
+  const { name, displayName, email } = useProfile()
+  const updateName = useUpdateName()
+
+  const onEditName = () => {
+    Alert.prompt(
+      'Ton prénom',
+      "Comment veux-tu qu'on t'appelle ?",
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Enregistrer',
+          onPress: (text?: string) => {
+            if (text != null) {
+              updateName.mutate(text, { onError: e => showErrorToast(e) })
+            }
+          },
+        },
+      ],
+      'plain-text',
+      name ?? '',
+    )
+  }
+
   return (
     <ScreenWrapper>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -86,13 +118,15 @@ export default function SettingsScreen() {
           </View>
 
           {/* Profil */}
-          <Pressable style={styles.profile}>
+          <Pressable style={styles.profile} onPress={onEditName}>
             <View style={styles.avatar}>
-              <Text style={[f(700), { fontSize: 20, color: C.bg }]}>LM</Text>
+              <Text style={[f(700), { fontSize: 20, color: C.bg }]}>
+                {initialsFrom(displayName)}
+              </Text>
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[f(700), { fontSize: 17, color: C.ink }]}>
-                Léa Moreau
+                {displayName ?? 'Ajoute ton prénom'}
               </Text>
               <Text
                 style={[
@@ -100,7 +134,7 @@ export default function SettingsScreen() {
                   { fontSize: 13.5, color: C.ink2, marginTop: 2 },
                 ]}
               >
-                lea.moreau@gmail.com
+                {email ?? ''}
               </Text>
             </View>
             <IconSvg name={IconName.FORWARD} size={20} color={C.ink3} />

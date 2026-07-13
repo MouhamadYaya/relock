@@ -3,6 +3,7 @@ import React from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
+import { useProfile } from '@/features/user/hooks/useProfile'
 import {
   type BlockRuleView,
   blockStatusLine,
@@ -105,6 +106,7 @@ function BlockCard({ rule }: { rule: BlockRuleView }) {
 export default function HomeScreen() {
   const { rules } = useBlockRulesQuery()
   const stats = useHomeStats()
+  const { displayName } = useProfile()
   // Un « Bloquer maintenant » terminé disparaît (c'est ponctuel).
   const visibleRules = rules.filter(
     r => !(r.type === 'progressive_delay' && !timedRunning(r)),
@@ -134,7 +136,7 @@ export default function HomeScreen() {
           {/* Salutation + phrase */}
           <View style={{ marginTop: 10 }}>
             <Text style={[f(500), { fontSize: 15, color: C.ink2 }]}>
-              Bonjour, Léa
+              {displayName ? `Bonjour, ${displayName}` : 'Bonjour 👋'}
             </Text>
             <Text
               style={[
