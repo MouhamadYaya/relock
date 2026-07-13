@@ -323,9 +323,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -362,9 +366,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -471,7 +479,7 @@
 				CODE_SIGN_ENTITLEMENTS = RelockMonitor/RelockMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = RXMGX6LY59;
+				DEVELOPMENT_TEAM = 7K9HCH8GF2;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RelockMonitor/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -642,7 +650,7 @@
 				CODE_SIGN_ENTITLEMENTS = RelockMonitor/RelockMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = RXMGX6LY59;
+				DEVELOPMENT_TEAM = 7K9HCH8GF2;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RelockMonitor/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
