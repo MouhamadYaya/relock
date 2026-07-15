@@ -24,45 +24,169 @@ export function ymd(d: Date): string {
 
 const today = () => ymd(new Date())
 
+/**
+ * Jour LOCAL d'un événement natif. L'extension horodate en ISO 8601 **UTC**
+ * (« 2026-07-14T02:30:00Z ») : un simple `slice(0, 10)` prendrait la date UTC
+ * et rangerait un tap de 22h30 (UTC-4) sur la ligne de DEMAIN — stats du jour
+ * figées à 0 et case « demain » remplie. On convertit donc via Date → ymd local.
+ */
+export function eventDayLocal(at: string | undefined): string | null {
+  if (!at) return null
+  const d = new Date(at)
+  return Number.isNaN(d.getTime()) ? null : ymd(d)
+}
+
+/** Un « Bloquer maintenant » (timed) est-il terminé (fin = création + durée) ? */
+function isExpiredTimed(
+  r: { config: unknown; created_at: string | null },
+  now: number,
+): boolean {
+  if (!r.created_at) return false
+  const cfg = (r.config ?? {}) as Record<string, unknown>
+  const dur = typeof cfg.duration_min === 'number' ? cfg.duration_min : 30
+  return new Date(r.created_at).getTime() + dur * 60_000 <= now
+}
+
 export const StatsService = {
-  /** Remonte les événements de l'extension vers `daily_stats` (idempotent-ish). */
+  /**
+   * Remonte les événements de l'extension vers `daily_stats`.
+   *
+   * Protocole PULL-ACK (aucune perte possible) :
+   *  1. session vérifiée AVANT toute lecture ;
+   *  2. lecture du journal natif SANS le vider ;
+   *  3. upsert Supabase ;
+   *  4. seulement alors, purge des événements synchronisés (`ackEvents`).
+   * En cas d'échec (offline, erreur), le journal reste intact et sera
+   * resynchronisé au prochain passage.
+   */
   async syncFromDevice(): Promise<void> {
     if (!ScreenTime.isAvailable) return
-    const events = await ScreenTime.pullEvents()
-    if (!events.length) return
 
     const { data: u, error: uErr } = await supabase.auth.getUser()
     if (uErr) throw normalizeError(uErr)
     const userId = u.user?.id
-    if (!userId) return
+    // DIAG TEMP (lu via Metro) — état de la chaîne côté APP.
+    console.log('[RELOCK-DIAG] sync session=', userId ? 'OUI' : 'NON')
+    if (!userId) return // pas de session → on ne touche PAS au journal
 
-    // Compte les « résistances » par jour.
-    const perDay: Record<string, number> = {}
+    const events = await ScreenTime.pullEvents()
+    console.log(
+      '[RELOCK-DIAG] sync journal=',
+      events.length,
+      JSON.stringify(events.slice(-6)),
+    )
+    if (!events.length) return
+
+    // Regroupe par jour EN PRÉSERVANT L'ORDRE (le journal est du plus ancien au
+    // plus récent, donc les jours y sont contigus et croissants).
+    //  • resistedPerDay : tap « Fermer » sur le bouclier (ouvertures évitées) ;
+    //  • countPerDay    : nb d'events du jour → sert à l'ack ciblé ;
+    //  • dayOrder       : jours dans l'ordre chronologique.
+    const resistedPerDay: Record<string, number> = {}
+    const countPerDay: Record<string, number> = {}
+    const dayOrder: string[] = []
     for (const e of events) {
-      if (e.kind !== 'resisted') continue
-      const day = (e.at ?? '').slice(0, 10)
-      if (day) perDay[day] = (perDay[day] ?? 0) + 1
+      const day = eventDayLocal(e.at)
+      if (!day) continue
+      if (!(day in countPerDay)) {
+        countPerDay[day] = 0
+        dayOrder.push(day)
+      }
+      countPerDay[day] += 1
+      if (e.kind === 'resisted') {
+        resistedPerDay[day] = (resistedPerDay[day] ?? 0) + 1
+      }
     }
 
-    for (const [date, resisted] of Object.entries(perDay)) {
+    // ACK PAR JOUR, immédiatement après chaque upsert validé. L'écriture est un
+    // read-modify-write NON idempotent (`existing + resisted`) : si on ackait
+    // tout à la fin, une interruption entre un upsert validé et l'ack ferait
+    // RE-COMPTER ces events au prochain passage. En purgeant jour par jour, un
+    // jour déjà écrit ne peut plus être rejoué ; un échec laisse ce jour (et les
+    // suivants) intacts pour un retry sûr. `ackEvents(n)` purge les n plus
+    // anciens → comme on traite dans l'ordre chronologique, ce sont bien ceux
+    // du jour courant.
+    for (const date of dayOrder) {
+      const resisted = resistedPerDay[date] ?? 0
       const { data: existing } = await supabase
         .from('daily_stats')
         .select('interceptions_count,opens_stopped,time_saved_minutes')
         .eq('date', date)
         .maybeSingle()
-      await supabase.from('daily_stats').upsert(
+      const { error } = await supabase.from('daily_stats').upsert(
         {
           user_id: userId,
           date,
           interceptions_count: (existing?.interceptions_count ?? 0) + resisted,
           opens_stopped: (existing?.opens_stopped ?? 0) + resisted,
           time_saved_minutes:
-            (existing?.time_saved_minutes ?? 0) + resisted * MIN_SAVED_PER_RESIST,
+            (existing?.time_saved_minutes ?? 0) +
+            resisted * MIN_SAVED_PER_RESIST,
           streak_respected: true,
         },
         { onConflict: 'user_id,date' },
       )
+      if (error) throw normalizeError(error) // jour non acké → retry plus tard
+      await ScreenTime.ackEvents(countPerDay[date]) // purge CE jour uniquement
     }
+  },
+
+  /**
+   * « Jour de contrôle » : marque AUJOURD'HUI comme respecté dès lors qu'une
+   * VRAIE protection est active — même sans aucune tentative d'ouverture.
+   *
+   * Purge d'abord les « Bloquer maintenant » (timed) déjà expirés : un one-shot
+   * terminé doit disparaître. Sinon il reste `is_active=true` indéfiniment,
+   * gonfle la série alors qu'il ne bloque plus rien, et devient une ligne
+   * orpheline impossible à supprimer depuis l'UI (filtrée de l'Accueil).
+   */
+  async heartbeatToday(): Promise<void> {
+    const { data: u } = await supabase.auth.getUser()
+    const userId = u.user?.id
+    if (!userId) return
+
+    // Auto-guérison : une ligne datée dans le FUTUR est impossible légitimement
+    // (séquelle du bug UTC→local). On la purge pour que la semaine et la série
+    // redeviennent exactes dès la prochaine ouverture.
+    await supabase.from('daily_stats').delete().gt('date', today())
+
+    const { data: active } = await supabase
+      .from('block_rules')
+      .select('id,type,config,created_at')
+      .eq('is_active', true)
+    const rows = active ?? []
+    const now = Date.now()
+
+    const expiredTimed = rows.filter(
+      r => r.type === 'progressive_delay' && isExpiredTimed(r, now),
+    )
+    for (const r of expiredTimed) {
+      await supabase.from('block_rules').delete().eq('id', r.id)
+      if (ScreenTime.isAvailable) {
+        await ScreenTime.clearRuleData(r.id, 'timed').catch(() => {})
+      }
+    }
+
+    // Ne compte QUE les protections encore réelles (les timed expirés purgés
+    // ci-dessus ne comptent plus).
+    if (rows.length - expiredTimed.length <= 0) return
+
+    const date = today()
+    const { data: existing } = await supabase
+      .from('daily_stats')
+      .select('id,streak_respected')
+      .eq('date', date)
+      .maybeSingle()
+    if (existing?.streak_respected) return
+
+    await supabase.from('daily_stats').upsert(
+      {
+        user_id: userId,
+        date,
+        streak_respected: true,
+      },
+      { onConflict: 'user_id,date' },
+    )
   },
 
   async today(): Promise<DailyStats | null> {
@@ -75,8 +199,11 @@ export const StatsService = {
     return data
   },
 
-  /** Derniers jours (récents en premier) pour la série + le graphe. */
-  async recent(days = 30): Promise<DailyStats[]> {
+  /**
+   * Derniers jours (récents en premier) pour la série + le graphe.
+   * 365 par défaut : la série et le record ne sont plus plafonnés à 30 j.
+   */
+  async recent(days = 365): Promise<DailyStats[]> {
     const { data, error } = await supabase
       .from('daily_stats')
       .select('*')

@@ -1,5 +1,34 @@
 # Relock — Rapport QA pré-App Store
 
+> ## ✅ Post-correctifs (13 juillet 2026, même jour)
+> **« Fix all » exécuté.** État après correction — build natif OK, `tsc` clean, 83/83 tests :
+>
+> | Bug | Correctif appliqué |
+> |---|---|
+> | **B1** | App Group ajouté à `RelockShieldAction.entitlements` → les « resisted » arrivent enfin |
+> | **B2** | Détection réelle via `UIManager.hasViewManagerConfig` + prop `fallback` + ErrorBoundary interne — plus aucun crash possible de l'onglet Activité |
+> | **B3/B21** | Protocole **pull-ack** : session vérifiée avant lecture, `ackEvents(n)` après upsert réussi — zéro perte |
+> | **B4/B5/B6** | Refonte multi-blocages : **une activité DeviceActivity par règle** (`timed.<id>`…), **sélection par règle** (`selection.<id>`), bouclier = **union des fenêtres actives**, `stopRule`/`clearRuleData` ciblés — pause/fin d'une règle n'affecte plus jamais les autres |
+> | **B7** | Plus de wipe cloud silencieux : dialogue « Reprendre mes données / Repartir de zéro » (`useFreshInstallPrompt`) |
+> | **B8** | `heartbeatToday()` : jour de contrôle = blocage actif ce jour (un jour parfait ne casse plus la série) + tout jour avec événement compte |
+> | **B9** | `recent(365)` — série/record dé-plafonnés (test mis à jour) |
+> | **B10** | Carte Activité pilotée par la période (Aujourd'hui / 7 j / 30 j) + `periodLabel` dérivé dans l'extension (fini le « aujourd'hui » en dur) |
+> | **B11/B12** | Kinds Monitor renommés (`window_start`/`window_end`/`limit_reached`) ; l'Activité affiche **Interceptions + Série** (fini le doublon Résistances) |
+> | **B13** | Déjà résolu par la carte « Actif/En pause » (plus d'anneau quota mensonger) |
+> | **B15** | Fenêtre minutée en **composants de date complets** — traverse minuit sans ambiguïté |
+> | **B16** | `CodeSignOnCopy` ajouté à `RelockMonitor.appex` |
+> | **B17** | `strictUntil` global supprimé (strict géré par règle côté JS) |
+> | **B19/B20** | `app.json` → `com.yaya.relock` ; `RCTNewArchEnabled` retiré du plist Monitor |
+> | Login | Bandeau démo/mock, identifiants pré-remplis et boutons sociaux morts **supprimés** (vérifié à l'écran) |
+> | Onboarding | Cartes FR véridiques dans les 4 langues (fini « encrypted end-to-end » et « instant sync ») |
+> | Réglages | Apparence/Langue **branchés** sur les vraies modales, statut Temps d'écran **réel** (tap = demande d'autorisation), lignes mortes (Notifications, Abonnement/Premium, À propos, Confidentialité, rituel) **supprimées** |
+> | Info.plist | `NSLocationWhenInUseUsageDescription` vide **retiré** |
+>
+> **Créés** : `bindSelection`/`stopRule`/`clearRuleData`/`ackEvents` (natif + bridge), `genUUID` (id client → lie natif ↔ DB dès la création, avec rollback si l'insert échoue), `StatsService.heartbeatToday`.
+> **Restent à ta charge** : exécuter la vérification sur iPhone (§ « À vérifier sur appareil »), demande d'entitlement **Family Controls distribution** pour les 5 bundle IDs, `PrivacyInfo.xcprivacy` à revalider, et **B14** (pause→reprise d'une limite remet le quota du jour à zéro — contrainte DeviceActivity, à assumer dans l'UI plus tard).
+
+---
+
 **Date** : 13 juillet 2026 · **Build audité** : branche locale (dernier commit `b6c60c9`) + modifications non commitées
 **Méthode** : audit complet de la chaîne de données (Swift natif + extensions + JS + Supabase), 83 tests automatisés (dont 39 nouveaux de simulation temporelle multi-jours/mois, exécutés dans 2 fuseaux horaires), campagne dynamique sur simulateur iPhone 17 Pro Max (démarrage à froid, kill/relaunch, background/foreground, réinstallation complète).
 

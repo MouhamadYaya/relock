@@ -41,6 +41,7 @@ export const BlockRulesService = {
     const { data, error } = await supabase
       .from('block_rules')
       .insert({
+        ...(input.id ? { id: input.id } : {}),
         user_id: userId,
         type: input.type,
         app_selection:

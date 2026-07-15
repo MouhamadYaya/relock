@@ -1,8 +1,7 @@
-// Barre d'onglets FLOTTANTE (réf. concurrent) :
-// pilule « frosted » translucide qui flotte PAR-DESSUS le contenu (aucune bande
-// de fond opaque). Accueil + Activité avec icônes PLEINES + label, l'onglet
-// actif surélevé et en accent, les inactifs en blanc. À droite, nettement
-// séparé, un bouton circulaire violet (accent app) « + » façon CTA.
+// Barre d'onglets FLOTTANTE (maquette « Relock Home ») : pilule frosted avec
+// Accueil + Activité (icône contour + label, côte à côte ; onglet actif en
+// surbrillance douce). À droite, séparé, un bouton circulaire ACCENT PLEIN
+// (façon CTA) qui ouvre la création de blocage.
 
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import React from 'react'
@@ -17,44 +16,37 @@ import { fonts } from '@/shared/theme/tokens/fonts'
 export const TAB_BAR_CLEARANCE = 116
 
 const C = {
-  // Pilule frosted : nettement plus claire que le fond near-black.
-  pill: 'rgba(38,41,54,0.92)',
-  pillBorder: 'rgba(255,255,255,0.10)',
-  // Segment actif surélevé, nettement plus clair.
-  selected: 'rgba(255,255,255,0.13)',
-  selectedBorder: 'rgba(255,255,255,0.16)',
-  accent: '#A49AFE',
-  // Inactif en blanc (visibilité) plutôt qu'en gris.
-  inactive: '#F2F2F6',
-  // Équivalent opaque du cercle frosted (pour le liseré de l'icône +).
-  fabGap: '#242733',
+  pill: 'rgba(32,32,40,0.94)',
+  pillRing: 'rgba(255,255,255,0.09)',
+  activeBg: 'rgba(255,255,255,0.12)',
+  accent: '#A5A1F5',
+  onAccent: '#131318',
+  activeInk: '#F5F5F7',
+  inactiveInk: 'rgba(235,235,245,0.5)',
 }
 
-/** Icônes PLEINES (premium) rendues en SVG, teintées selon l'état. */
-function TabGlyph({
-  route,
-  color,
-  size,
-}: {
-  route: string
-  color: string
-  size: number
-}) {
+/** Icônes contour (maquette), teintées selon l'état. */
+function TabGlyph({ route, color }: { route: string; color: string }) {
   if (route === ROUTES.TAB_ACTIVITY) {
     return (
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        <Rect x={3.5} y={12} width={4.4} height={8.5} rx={1.7} fill={color} />
-        <Rect x={9.8} y={3.5} width={4.4} height={17} rx={1.7} fill={color} />
-        <Rect x={16.1} y={8.5} width={4.4} height={12} rx={1.7} fill={color} />
+      <Svg width={19} height={19} viewBox="0 0 20 20" fill="none">
+        <Path
+          d="M4.5 16.5V11M10 16.5V5.5M15.5 16.5V8.5"
+          stroke={color}
+          strokeWidth={1.8}
+          strokeLinecap="round"
+        />
       </Svg>
     )
   }
-  // Accueil : maison pleine.
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={19} height={19} viewBox="0 0 20 20" fill="none">
       <Path
-        d="M11.06 2.82 3.4 8.9A2.4 2.4 0 0 0 2.5 10.8v8.05c0 .9.74 1.65 1.65 1.65H8.6a1 1 0 0 0 1-1v-4.55a1 1 0 0 1 1-1h2.8a1 1 0 0 1 1 1V19.5a1 1 0 0 0 1 1h4.45c.91 0 1.65-.74 1.65-1.65V10.8a2.4 2.4 0 0 0-.9-1.88l-7.66-6.1a1.5 1.5 0 0 0-1.88 0z"
-        fill={color}
+        d="M4 9.3 10 4l6 5.3V16a1.4 1.4 0 0 1-1.4 1.4h-2.7V13a1.9 1.9 0 0 0-3.8 0v4.4H5.4A1.4 1.4 0 0 1 4 16V9.3Z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </Svg>
   )
@@ -78,7 +70,7 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const isFocused = state.index === index
           const label = TAB_META[route.name]?.label ?? route.name
-          const color = isFocused ? C.accent : C.inactive
+          const color = isFocused ? C.activeInk : C.inactiveInk
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
@@ -98,50 +90,25 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
               onPress={onPress}
               style={[styles.tab, isFocused && styles.tabActive]}
             >
-              <TabGlyph route={route.name} color={color} size={22} />
+              <TabGlyph route={route.name} color={color} />
               <Text style={[styles.label, { color }]}>{label}</Text>
             </Pressable>
           )
         })}
       </View>
 
-      {/* Bouton « + » circulaire détaché (violet accent, façon CTA) */}
+      {/* Bouton « + » circulaire ACCENT PLEIN */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Nouveau blocage"
         onPress={() => navigate(ROUTES.ADD_BLOCK)}
         style={styles.fab}
       >
-        {/* Icône « nouveau blocage » : deux cartes empilées + « + », en blanc.
-            Un liseré de séparation (couleur du cercle) détache la carte avant. */}
-        <Svg width={34} height={34} viewBox="0 0 24 24">
-          {/* Carte arrière (contour blanc, squircle) */}
-          <Rect
-            x={3}
-            y={3}
-            width={12.6}
-            height={12.6}
-            rx={3.6}
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth={1.8}
-          />
-          {/* Liseré : occulte le contour arrière sous la carte avant */}
-          <Rect
-            x={6.7}
-            y={6.7}
-            width={14.6}
-            height={14.6}
-            rx={4.4}
-            fill={C.fabGap}
-          />
-          {/* Carte avant (pleine blanche, squircle) */}
-          <Rect x={8} y={8} width={13} height={13} rx={3.8} fill="#FFFFFF" />
-          {/* « + » sombre, centré dans la carte avant */}
+        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
           <Path
-            d="M14.5 11.6v5.8M11.6 14.5h5.8"
-            stroke="#1B1E28"
-            strokeWidth={2}
+            d="M12 5.5v13M5.5 12h13"
+            stroke={C.onAccent}
+            strokeWidth={2.4}
             strokeLinecap="round"
           />
         </Svg>
@@ -151,7 +118,6 @@ export function AnimatedTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  // Flotte par-dessus le contenu : aucune bande de fond opaque.
   outer: {
     position: 'absolute',
     left: 0,
@@ -160,59 +126,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 38,
+    gap: 12,
     paddingTop: 10,
     backgroundColor: 'transparent',
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     backgroundColor: C.pill,
-    borderWidth: 1,
-    borderColor: C.pillBorder,
-    borderRadius: 28,
+    borderRadius: 999,
     padding: 5,
+    borderWidth: 1,
+    borderColor: C.pillRing,
     shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 18,
+    shadowOpacity: 0.55,
+    shadowRadius: 30,
     shadowOffset: { width: 0, height: 10 },
     elevation: 8,
   },
   tab: {
-    minWidth: 90,
-    paddingVertical: 5,
-    paddingHorizontal: 16,
-    borderRadius: 22,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
+    gap: 7,
+    paddingVertical: 11,
+    paddingHorizontal: 18,
+    borderRadius: 999,
   },
-  tabActive: {
-    backgroundColor: C.selected,
-    borderWidth: 1,
-    borderColor: C.selectedBorder,
-  },
+  tabActive: { backgroundColor: C.activeBg },
   label: {
     fontFamily: fonts.semiBold,
-    fontSize: 12.5,
-    letterSpacing: -0.1,
+    fontSize: 13.5,
   },
   fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    // Fond frosted transparent (comme la pilule) → « + » violet qui ressort
-    // sans jamais se confondre avec le contenu derrière.
-    backgroundColor: C.pill,
-    borderWidth: 1,
-    borderColor: C.pillBorder,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: C.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    shadowColor: C.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
 })

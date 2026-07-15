@@ -11,8 +11,8 @@ import BlockDetailScreen from '@/features/blocking/screens/BlockDetailScreen'
 import PauseRitualScreen from '@/features/blocking/screens/PauseRitualScreen'
 import HomeScreen from '@/features/home/screens/HomeScreen'
 import StoryScreen from '@/features/home/screens/StoryScreen'
+import OnboardingFlow from '@/features/onboarding/OnboardingFlow'
 import LanguagePickerModal from '@/features/settings/screens/LanguagePickerModal'
-import OnboardingScreen from '@/features/settings/screens/OnboardingScreen'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import ThemePickerModal from '@/features/settings/screens/ThemePickerModal'
 import type {
@@ -42,7 +42,7 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
   initialRouteName: getInitialRoute(),
   screenOptions: { headerShown: false },
   screens: {
-    [ROUTES.ROOT_ONBOARDING]: OnboardingScreen,
+    [ROUTES.ROOT_ONBOARDING]: OnboardingFlow,
     [ROUTES.ROOT_AUTH]: AuthScreen,
     [ROUTES.ROOT_APP]: HomeTabs,
     [ROUTES.ADD_BLOCK]: {

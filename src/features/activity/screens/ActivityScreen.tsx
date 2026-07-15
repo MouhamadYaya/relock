@@ -1,10 +1,17 @@
 import { IconName } from '@assets/icons'
-import React, { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  ActivityIndicator,
+  DeviceEventEmitter,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
+import Svg, { Path } from 'react-native-svg'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
-import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTimeReport } from '@/shared/native/ScreenTimeReport'
@@ -28,154 +35,300 @@ const C = {
   ink3: '#6B6F82',
   accent: '#A49AFE',
   border: 'rgba(148,152,178,0.16)',
-  divider: 'rgba(148,152,178,0.16)',
 }
 
 const SEGMENTS = ['Mois', 'Semaine', 'Jour']
-const MOIS = [
-  'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août',
-  'septembre', 'octobre', 'novembre', 'décembre',
+const DOW = ['D', 'L', 'M', 'M', 'J', 'V', 'S'] // getDay() 0=dimanche
+const MONTHS_SHORT = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
+]
+const MONTHS = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
 ]
 
-function fmtDuration(min: number): string {
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  if (h === 0) return `${m} min`
-  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`
+/** 7 derniers jours (plus ancien → aujourd'hui), avec décalage jour. */
+function lastSevenDays(): { offset: number; letter: string; day: number }[] {
+  const out: { offset: number; letter: string; day: number }[] = []
+  for (let offset = 6; offset >= 0; offset--) {
+    const d = new Date()
+    d.setDate(d.getDate() - offset)
+    out.push({ offset, letter: DOW[d.getDay()], day: d.getDate() })
+  }
+  return out
 }
 
-function todayLabel(): string {
-  const d = new Date()
-  return `Aujourd'hui, ${d.getDate()} ${MOIS[d.getMonth()]}`
+/** Lundi (00:00) de la semaine de `d` — les semaines FR commencent lundi. */
+function mondayOf(d: Date): Date {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7))
+  return x
+}
+
+/** 6 dernières semaines (plus récente d'abord), avec décalage semaine. */
+function lastSixWeeks(): { offset: number; label: string }[] {
+  const out: { offset: number; label: string }[] = []
+  const monday = mondayOf(new Date())
+  for (let offset = 0; offset < 6; offset++) {
+    if (offset === 0) {
+      out.push({ offset, label: 'Cette semaine' })
+      continue
+    }
+    const d = new Date(monday)
+    d.setDate(monday.getDate() - 7 * offset)
+    out.push({
+      offset,
+      label: `Sem. du ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`,
+    })
+  }
+  return out
+}
+
+/** 6 derniers mois (plus récent d'abord), avec décalage mois. */
+function lastSixMonths(): { offset: number; label: string }[] {
+  const out: { offset: number; label: string }[] = []
+  const now = new Date()
+  for (let offset = 0; offset < 6; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1)
+    const year =
+      d.getFullYear() === now.getFullYear() ? '' : ` ${d.getFullYear()}`
+    out.push({
+      offset,
+      label: offset === 0 ? 'Ce mois-ci' : `${MONTHS[d.getMonth()]}${year}`,
+    })
+  }
+  return out
+}
+
+function ReloadIcon({ color, size = 19 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
 }
 
 export default function ActivityScreen() {
   const [seg, setSeg] = useState(2) // Jour par défaut
-  const stats = useHomeStats()
+  // Décalage en unités de la période courante (jours/semaines/mois). 0 = actuel.
+  const [offset, setOffset] = useState(0)
+  const [reloadKey, setReloadKey] = useState(0)
   const period = 2 - seg // Jour(2)->0, Semaine(1)->1, Mois(0)->2
+  const days = useMemo(() => lastSevenDays(), [])
+  const weeks = useMemo(() => lastSixWeeks(), [])
+  const months = useMemo(() => lastSixMonths(), [])
+
+  const selectSegment = (i: number) => {
+    setSeg(i)
+    setOffset(0) // chaque période repart sur « actuel »
+  }
+
+  // Dev : pilotage des filtres par le pont de test (validation scriptée).
+  useEffect(() => {
+    if (!__DEV__) return
+    const sub = DeviceEventEmitter.addListener(
+      'relock-dev-activity-period',
+      (p: { period: number; offset: number }) => {
+        setSeg(2 - p.period)
+        setOffset(p.offset)
+      },
+    )
+    return () => sub.remove()
+  }, [])
 
   return (
     <ScreenWrapper>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
-      >
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text
-              style={[f(800), { fontSize: 24, color: C.ink, letterSpacing: -0.6 }]}
+      <View style={styles.root}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[f(800), styles.title]}>Activité</Text>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Rafraîchir"
+              onPress={() => setReloadKey(k => k + 1)}
+              hitSlop={8}
+              style={styles.iconBtn}
             >
-              Activité
-            </Text>
+              <ReloadIcon color={C.ink2} />
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Réglages"
               onPress={() => navigate(ROUTES.SETTINGS)}
               hitSlop={8}
-              style={styles.gear}
+              style={styles.iconBtn}
             >
               <IconSvg name={IconName.SETTINGS} size={19} color={C.ink2} />
             </Pressable>
           </View>
+        </View>
 
-          {/* Période */}
-          <View style={styles.segment}>
-            {SEGMENTS.map((s, i) => {
-              const active = seg === i
+        {/* Période */}
+        <View style={styles.segment}>
+          {SEGMENTS.map((s, i) => {
+            const active = seg === i
+            return (
+              <Pressable
+                key={s}
+                onPress={() => selectSegment(i)}
+                style={[
+                  styles.segItem,
+                  active && { backgroundColor: C.accent },
+                ]}
+              >
+                <Text
+                  style={[
+                    f(active ? 700 : 600),
+                    { fontSize: 14, color: active ? C.bg : C.ink2 },
+                  ]}
+                >
+                  {s}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+
+        {/* Sélecteur de jour (mode Jour uniquement) — hauteur bornée pour ne
+            pas étirer le ScrollView horizontal et pousser la carte en bas. */}
+        {period === 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.daysScroll}
+            contentContainerStyle={styles.daysRow}
+          >
+            {days.map(d => {
+              const active = d.offset === offset
               return (
                 <Pressable
-                  key={s}
-                  onPress={() => setSeg(i)}
-                  style={[styles.segItem, active && { backgroundColor: C.accent }]}
+                  key={d.offset}
+                  onPress={() => setOffset(d.offset)}
+                  style={styles.dayCol}
+                >
+                  <Text style={[f(600), styles.dayLetter]}>{d.letter}</Text>
+                  <View
+                    style={[styles.dayCircle, active && styles.dayCircleActive]}
+                  >
+                    <Text
+                      style={[
+                        f(active ? 700 : 500),
+                        { fontSize: 16, color: active ? C.bg : C.ink },
+                      ]}
+                    >
+                      {d.day}
+                    </Text>
+                  </View>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+        )}
+
+        {/* Sélecteur de semaine / mois — 6 dernières périodes, même principe
+            que les 7 derniers jours (décalage passé au rapport natif). */}
+        {period !== 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipsScroll}
+            contentContainerStyle={styles.chipsRow}
+          >
+            {(period === 1 ? weeks : months).map(p => {
+              const active = p.offset === offset
+              return (
+                <Pressable
+                  key={p.offset}
+                  onPress={() => setOffset(p.offset)}
+                  style={[styles.chip, active && styles.chipActive]}
                 >
                   <Text
                     style={[
-                      f(active ? 700 : 600),
-                      { fontSize: 14, color: active ? C.bg : C.ink2 },
+                      f(active ? 700 : 500),
+                      { fontSize: 13.5, color: active ? C.bg : C.ink },
                     ]}
                   >
-                    {s}
+                    {p.label}
                   </Text>
                 </Pressable>
               )
             })}
-          </View>
+          </ScrollView>
+        )}
 
-          {/* Résumé Relock (nos vraies métriques, aujourd'hui) */}
-          <View style={[styles.card, { marginTop: 18, padding: 20 }]}>
-            <Text style={[f(500), { fontSize: 13, color: C.ink3 }]}>
-              {todayLabel()}
+        {/* Rapport système : il REMPLIT l'espace et défile lui-même (une vue
+            DeviceActivityReport ne peut pas défiler dans un ScrollView RN —
+            elle bloque le geste / tronque). Seuls l'entête + les sélecteurs
+            au-dessus restent fixes. Loader derrière le temps du calcul iOS. */}
+        <View style={styles.reportCard}>
+          <View style={styles.reportLoading} pointerEvents="none">
+            <ActivityIndicator color={C.accent} />
+            <Text style={[f(500), styles.reportLoadingText]}>
+              Chargement du rapport…
             </Text>
-            <View style={styles.heroRow}>
-              <Text
-                style={[
-                  f(800),
-                  styles.tnum,
-                  { fontSize: 40, color: C.ink, letterSpacing: -1.5 },
-                ]}
-              >
-                {fmtDuration(stats.savedMinutes)}
-              </Text>
-              <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>regagné</Text>
-            </View>
-            <View style={styles.hr} />
-            <View style={{ flexDirection: 'row' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={[f(700), styles.tnum, { fontSize: 22, color: C.ink }]}>
-                  {stats.resisted}
+          </View>
+          <ScreenTimeReport
+            key={`${reloadKey}-${period}-${offset}`}
+            style={styles.report}
+            period={period}
+            offset={offset}
+            fallback={
+              <View style={styles.fallback}>
+                <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                  Disponible sur iPhone
                 </Text>
-                <Text style={[f(500), { fontSize: 13, color: C.ink2, marginTop: 2 }]}>
-                  Résistances
+                <Text style={[f(400), styles.fallbackSub]}>
+                  Le vrai temps d'écran par app (avec les icônes) est fourni par
+                  iOS et ne s'affiche que sur un iPhone physique.
                 </Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[f(700), styles.tnum, { fontSize: 22, color: C.accent }]}
-                >
-                  {stats.interceptions}
-                </Text>
-                <Text style={[f(500), { fontSize: 13, color: C.ink2, marginTop: 2 }]}>
-                  Interceptions
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Temps d'écran réel (vue native système) */}
-          <Text style={[f(700), styles.sectionTitle]}>
-            Temps d'écran & utilisation des apps
-          </Text>
-          <View style={styles.reportCard}>
-            <ScreenTimeReport
-              style={styles.report}
-              period={period}
-              fallback={
-                <View style={styles.fallback}>
-                  <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                    Temps d'écran indisponible
-                  </Text>
-                  <Text style={[f(400), styles.fallbackSub]}>
-                    La vue système ne s'est pas affichée. On règle ça.
-                  </Text>
-                </View>
-              }
-            />
-          </View>
+            }
+          />
         </View>
-      </ScrollView>
+      </View>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingTop: 4 },
+  root: { flex: 1, paddingHorizontal: 20, paddingTop: 4 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  gear: {
+  title: { fontSize: 24, color: C.ink, letterSpacing: -0.6 },
+  headerActions: { flexDirection: 'row', gap: 10 },
+  iconBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -199,40 +352,45 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 11,
   },
-  tnum: { fontVariant: ['tabular-nums'] },
-  card: {
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 20,
+  daysScroll: { flexGrow: 0, maxHeight: 96 },
+  daysRow: { gap: 10, paddingVertical: 16, paddingRight: 4 },
+  chipsScroll: { flexGrow: 0, maxHeight: 70 },
+  chipsRow: { gap: 8, paddingVertical: 16, paddingRight: 4 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 18,
+    backgroundColor: C.surface2,
   },
-  heroRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 10,
-    marginTop: 6,
+  chipActive: { backgroundColor: C.accent },
+  dayCol: { alignItems: 'center', gap: 8 },
+  dayLetter: { fontSize: 12, color: C.ink3 },
+  dayCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: C.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  hr: {
-    height: 1,
-    backgroundColor: C.divider,
-    marginTop: 18,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    color: C.ink,
-    letterSpacing: -0.2,
-    marginTop: 24,
-    marginBottom: 12,
-  },
+  dayCircleActive: { backgroundColor: C.accent },
   reportCard: {
-    height: 480,
+    flex: 1,
+    marginTop: 8,
+    marginBottom: 12,
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.border,
     borderRadius: 20,
     overflow: 'hidden',
   },
+  reportLoading: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  reportLoadingText: { fontSize: 13, color: C.ink3 },
   report: { flex: 1 },
   fallback: {
     flex: 1,

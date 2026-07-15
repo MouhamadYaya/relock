@@ -9,11 +9,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "cole-lucky.SwiftSupabaseStarter",
+      "bundleIdentifier": "com.yaya.relock",
       "supportsTablet": false
     },
     "android": {
-      "package": "cole.lucky.blocus"
+      "package": "com.yaya.relock"
     }
   }
 }

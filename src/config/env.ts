@@ -22,6 +22,9 @@ export const env = {
   USE_MOCK_API: parseEnvBool(Config.USE_MOCK_API),
   SUPABASE_URL: (Config.SUPABASE_URL ?? '').trim(),
   SUPABASE_ANON_KEY: (Config.SUPABASE_ANON_KEY ?? '').trim(),
+  /** Compte Supabase de dev pour `DEV_SKIP_AUTH` (jamais utilisé en release). */
+  DEV_LOGIN_EMAIL: (Config.DEV_LOGIN_EMAIL ?? '').trim(),
+  DEV_LOGIN_PASSWORD: (Config.DEV_LOGIN_PASSWORD ?? '').trim(),
   WS_URL: (Config.WS_URL ?? '').trim(),
   ENV: (Config.ENV ?? (__DEV__ ? 'development' : 'production')).trim(),
   SENTRY_DSN: (Config.SENTRY_DSN ?? '').trim(),

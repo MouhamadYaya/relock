@@ -17,6 +17,12 @@ end
 target 'ReactNativeStarter' do
   config = use_native_modules!
 
+  # Les centaines d'avertissements des Pods (React Native, libs tierces :
+  # comma operator de Folly, APIs dépréciées, conversions…) ne sont pas
+  # actionnables ici et noient ceux de NOTRE code. On les inhibe — les
+  # avertissements de nos cibles (app + extensions Relock) restent visibles.
+  inhibit_all_warnings!
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
@@ -30,5 +36,15 @@ target 'ReactNativeStarter' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    installer.pods_project.targets.each do |target|
+      target.build_phases.each do |phase|
+        # « Run script … will be run during every build » (Hermes, etc.) :
+        # c'est le comportement voulu par RN — on le déclare explicitement
+        # pour faire taire l'avertissement Xcode.
+        if phase.respond_to?(:name) && phase.name.to_s.start_with?('[CP-User]')
+          phase.always_out_of_date = '1'
+        end
+      end
+    end
   end
 end

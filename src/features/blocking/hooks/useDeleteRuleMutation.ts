@@ -18,6 +18,7 @@ export function useDeleteRuleMutation() {
     },
     onSuccess: async () => {
       await invalidateByTags(qc, BLOCKING_TAGS, [blockingKeys.tagMap])
+      await qc.invalidateQueries({ queryKey: ['stats'] })
     },
   })
 }

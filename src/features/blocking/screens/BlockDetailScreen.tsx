@@ -1,6 +1,6 @@
 import { IconName } from '@assets/icons'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 import { HalfSheet } from '@/features/blocking/components/HalfSheet'
 import { RingProgress } from '@/features/blocking/components/RingProgress'
@@ -11,9 +11,9 @@ import {
   appsSubtitle,
   type BlockRuleView,
   isLocked,
+  RULE_TYPE_LABEL,
   ringInfo,
   ringLabel,
-  RULE_TYPE_LABEL,
   scheduleActive,
   timedRunning,
   unlockTimeLabel,
@@ -22,7 +22,7 @@ import { goBack } from '@/navigation/helpers/navigation-helpers'
 import type { RootStackParamList } from '@/navigation/root-param-list'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
-import { ScreenTime } from '@/shared/native/screen-time'
+import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -54,7 +54,10 @@ const TYPE_ICON: Record<BlockRuleType, IconName> = {
   daily_limit: IconName.CHART,
 }
 
-type Props = NativeStackScreenProps<RootStackParamList, typeof ROUTES.BLOCK_DETAIL>
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  typeof ROUTES.BLOCK_DETAIL
+>
 
 const num = (v: unknown, d = 0): number => (typeof v === 'number' ? v : d)
 
@@ -81,7 +84,9 @@ function limitText(rule: BlockRuleView): string {
 
 function Pill({ text, on }: { text: string; on: boolean }) {
   return (
-    <View style={[styles.pill, { backgroundColor: on ? C.ambient : C.surface2 }]}>
+    <View
+      style={[styles.pill, { backgroundColor: on ? C.ambient : C.surface2 }]}
+    >
       <Text style={[f(600), { fontSize: 12, color: on ? C.accent : C.ink3 }]}>
         {text}
       </Text>
@@ -95,7 +100,10 @@ function StatusBadge({ rule }: { rule: BlockRuleView }) {
     return scheduleActive(rule) ? (
       <Pill text="Actif maintenant" on />
     ) : (
-      <Pill text={`Prochain à ${num(rule.config?.start_hour, 22)}h`} on={false} />
+      <Pill
+        text={`Prochain à ${num(rule.config?.start_hour, 22)}h`}
+        on={false}
+      />
     )
   }
   return <Pill text="Actif" on />
@@ -107,13 +115,27 @@ export default function BlockDetailScreen({ route }: Props) {
   const toggle = useToggleRuleMutation()
 
   const isSession = rule.type === 'progressive_delay'
+  // Tick : pour un « Bloquer maintenant », l'anneau, le « restant » et le
+  // passage « en cours → terminé » doivent avancer tant que la feuille est
+  // ouverte (sinon on affiche « Arrêter » sur un blocage déjà fini).
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (!isSession) return
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [isSession])
   const locked = isLocked(rule)
-  const running = timedRunning(rule)
-  const ring = ringInfo(rule)
+  const running = timedRunning(rule, now)
+  const ring = ringInfo(rule, now)
 
   const removeAnd = async (close: () => void) => {
     try {
-      if (ScreenTime.isAvailable) await ScreenTime.stopBlocking().catch(() => {})
+      // Stop CIBLÉ : n'affecte jamais les autres blocages en cours.
+      if (ScreenTime.isAvailable) {
+        await ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(
+          () => {},
+        )
+      }
       await del.mutateAsync({ id: rule.id })
       close()
     } catch (e) {
@@ -122,14 +144,18 @@ export default function BlockDetailScreen({ route }: Props) {
   }
 
   const confirmStop = (close: () => void) =>
-    Alert.alert('Ne vous mentez pas !', 'Veux-tu vraiment arrêter ce blocage ?', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Arrêter le blocage',
-        style: 'destructive',
-        onPress: () => removeAnd(close),
-      },
-    ])
+    Alert.alert(
+      'Ne vous mentez pas !',
+      'Veux-tu vraiment arrêter ce blocage ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Arrêter le blocage',
+          style: 'destructive',
+          onPress: () => removeAnd(close),
+        },
+      ],
+    )
 
   const confirmDelete = (close: () => void) =>
     Alert.alert('Supprimer ce blocage ?', 'Action définitive.', [
@@ -145,8 +171,10 @@ export default function BlockDetailScreen({ route }: Props) {
     const next = !rule.isActive
     try {
       if (ScreenTime.isAvailable) {
+        // Pause/reprise CIBLÉE : la sélection de la règle reste liée côté
+        // natif, seule SA fenêtre s'arrête ou se ré-arme.
         if (next) await armRule(rule)
-        else await ScreenTime.stopBlocking()
+        else await ScreenTime.stopRule(rule.id, nativeKindOf(rule.type))
       }
       await toggle.mutateAsync({ id: rule.id, isActive: next })
       close()
@@ -169,7 +197,10 @@ export default function BlockDetailScreen({ route }: Props) {
                 {ruleName(rule)}
               </Text>
               <Text
-                style={[f(400), { fontSize: 13.5, color: C.ink2, marginTop: 2 }]}
+                style={[
+                  f(400),
+                  { fontSize: 13.5, color: C.ink2, marginTop: 2 },
+                ]}
               >
                 {appsSubtitle(rule.appIds, rule.count)}
               </Text>
@@ -181,7 +212,9 @@ export default function BlockDetailScreen({ route }: Props) {
             locked ? (
               <View style={styles.lockCard}>
                 <IconSvg name={IconName.LOCK} size={20} color={C.accent} />
-                <Text style={[f(600), { fontSize: 15, color: C.ink, marginTop: 8 }]}>
+                <Text
+                  style={[f(600), { fontSize: 15, color: C.ink, marginTop: 8 }]}
+                >
                   Verrouillé jusqu'à {unlockTimeLabel(rule)}
                 </Text>
                 <Text style={[f(400), styles.lockSub]}>
@@ -201,19 +234,30 @@ export default function BlockDetailScreen({ route }: Props) {
                     <Text
                       style={[
                         f(700),
-                        { fontSize: 24, color: C.ink, fontVariant: ['tabular-nums'] },
+                        {
+                          fontSize: 24,
+                          color: C.ink,
+                          fontVariant: ['tabular-nums'],
+                        },
                       ]}
                     >
-                      {ringLabel(rule)}
+                      {ringLabel(rule, now)}
                     </Text>
-                    <Text style={[f(400), { fontSize: 11.5, color: C.ink3, marginTop: 2 }]}>
+                    <Text
+                      style={[
+                        f(400),
+                        { fontSize: 11.5, color: C.ink3, marginTop: 2 },
+                      ]}
+                    >
                       restant
                     </Text>
                   </View>
                 </RingProgress>
               </View>
             ) : (
-              <Text style={[f(400), styles.doneText]}>Ce blocage est terminé.</Text>
+              <Text style={[f(400), styles.doneText]}>
+                Ce blocage est terminé.
+              </Text>
             )
           ) : (
             <View style={styles.infoCard}>
@@ -222,12 +266,16 @@ export default function BlockDetailScreen({ route }: Props) {
                   {rule.type === 'schedule' ? 'Plage' : 'Limite'}
                 </Text>
                 <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                  {rule.type === 'schedule' ? scheduleText(rule) : limitText(rule)}
+                  {rule.type === 'schedule'
+                    ? scheduleText(rule)
+                    : limitText(rule)}
                 </Text>
               </View>
               <View style={styles.hair} />
               <View style={styles.infoRow}>
-                <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>État</Text>
+                <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>
+                  État
+                </Text>
                 <StatusBadge rule={rule} />
               </View>
             </View>

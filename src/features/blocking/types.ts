@@ -19,6 +19,11 @@ export interface BlockRuleView {
 
 /** Entrée de création d'une règle depuis l'écran Ajout. */
 export interface CreateRuleInput {
+  /**
+   * Id fourni par le CLIENT (UUID v4) : la mécanique native (activité
+   * DeviceActivity + sélection App Group) est liée à cet id avant l'insert.
+   */
+  id?: string
   type: BlockRuleType
   appIds: AppId[]
   /** Renseigné quand la sélection vient du sélecteur système Family Controls. */
@@ -84,9 +89,6 @@ export function isLocked(rule: BlockRuleView): boolean {
   const end = blockEndDate(rule)
   return end ? end.getTime() > Date.now() : true
 }
-
-const hhmm = (d: Date) =>
-  `${d.getHours()}h${d.getMinutes() ? String(d.getMinutes()).padStart(2, '0') : ''}`
 
 /** « HH:MM » — heure de déverrouillage d'un blocage strict. */
 export function unlockTimeLabel(rule: BlockRuleView): string {

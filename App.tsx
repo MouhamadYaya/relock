@@ -15,6 +15,8 @@ import { useBackButtonHandler } from '@/navigation/helpers/use-back-handler'
 import { NavigationRoot } from '@/navigation/NavigationRoot'
 import { clearNavigationPersistence } from '@/navigation/persistence/navigation-persistence'
 import { ROUTES } from '@/navigation/routes'
+import { ensureDevSession } from '@/session/dev-auth'
+import { initDevTestBridge } from '@/session/dev-test-bridge'
 import { ErrorBoundary } from '@/shared/components/ui/ErrorBoundary'
 import { OfflineBanner } from '@/shared/components/ui/OfflineBanner'
 import { QueryProvider } from '@/shared/services/api/query/client/provider'
@@ -33,8 +35,12 @@ export default function App() {
 
   useEffect(() => {
     setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
+    // Dev : session Supabase automatique quand le login est désactivé.
+    ensureDevSession().catch(() => undefined)
+    // Dev : pilotage par deep link (tests scriptés sur simulateur).
+    initDevTestBridge()
     // (Ré)installation : purge le blocage résiduel au niveau système.
-    void runInstallReset()
+    runInstallReset().catch(() => undefined)
   }, [])
 
   // Android: exit app from root-level leaves (main tabs, login, onboarding).

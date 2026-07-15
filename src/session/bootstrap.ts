@@ -1,15 +1,12 @@
-import { constants } from '@/config/constants'
+import { constants, flags } from '@/config/constants'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 export type InitialRoute = 'ROOT_ONBOARDING' | 'ROOT_AUTH' | 'ROOT_APP'
 
-// ⚠️ TEMPORAIRE (preview) — onboarding + connexion désactivés : l'app démarre
-// directement sur les onglets. À RÉACTIVER plus tard (voir choseafaire.md).
-// Pour réactiver : repasser ce flag à false.
-const BYPASS_AUTH: boolean = false
-
 export function getInitialRoute(): InitialRoute {
-  if (BYPASS_AUTH) return 'ROOT_APP'
+  // Dev : accès direct aux onglets. La session Supabase correspondante est
+  // ouverte par `ensureDevSession()` (src/session/dev-auth.ts) au démarrage.
+  if (flags.DEV_SKIP_AUTH) return 'ROOT_APP'
 
   const onboardingDone = kvStorage.getString(constants.ONBOARDING_DONE) === '1'
   const token = kvStorage.getString(constants.AUTH_TOKEN)

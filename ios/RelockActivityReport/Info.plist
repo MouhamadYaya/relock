@@ -23,7 +23,9 @@
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.deviceactivity.report-extension</string>
+		<string>com.apple.deviceactivityui.report-extension</string>
 	</dict>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 </dict>
 </plist>

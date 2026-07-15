@@ -121,12 +121,12 @@
   "onboarding": {
     "headline": "Everything you need,\nin one place.",
     "tagline": "Fast, reliable, and beautifully designed.",
-    "feature_1_title": "Offline-ready",
-    "feature_1_body": "Works seamlessly without a connection",
-    "feature_2_title": "Secure by default",
-    "feature_2_body": "Your data is encrypted end-to-end",
-    "feature_3_title": "Lightning fast",
-    "feature_3_body": "Instant sync across all your devices",
+    "feature_1_title": "Real blocking",
+    "feature_1_body": "The iOS shield applies even when the app is closed",
+    "feature_2_title": "Mindful friction",
+    "feature_2_body": "A screen stops you before the scroll starts",
+    "feature_3_title": "Your numbers, honestly",
+    "feature_3_body": "Interceptions, time saved and streak, day by day",
     "get_started": "Get started"
   },
   "uikit": {

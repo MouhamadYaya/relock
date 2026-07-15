@@ -25,4 +25,11 @@ export const constants = {
 export const flags = {
   /** Dev-only mock transport; enable with `USE_MOCK_API=true` or `=1` in `.env`. */
   USE_MOCK: __DEV__ && parseEnvBool(Config.USE_MOCK_API),
+  /**
+   * Dev uniquement : saute onboarding + écran de connexion (démarrage direct
+   * sur les onglets) ET ouvre une session Supabase de développement
+   * (`DEV_LOGIN_EMAIL` / `DEV_LOGIN_PASSWORD` dans `.env`) pour que les
+   * requêtes RLS (stats, règles) fonctionnent. Sans effet en release.
+   */
+  DEV_SKIP_AUTH: __DEV__ && parseEnvBool(Config.DEV_SKIP_AUTH),
 }

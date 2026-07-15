@@ -1,19 +1,78 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useProfile, useUpdateName } from '@/features/user/hooks/useProfile'
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native'
 import { appConfig } from '@/config/app-config'
+import { NotificationService } from '@/features/notifications/notification.service'
+import {
+  getNotifPrefs,
+  type NotifPrefs,
+  setNotifPrefs,
+} from '@/features/notifications/prefs'
+import { useProfile, useUpdateName } from '@/features/user/hooks/useProfile'
+import { i18n } from '@/i18n'
 import { goBack, navigate } from '@/navigation/helpers/navigation-helpers'
 import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
+import { ScreenTime } from '@/shared/native/screen-time'
+import { useTheme } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
+
+const THEME_LABEL: Record<string, string> = {
+  dark: 'Sombre',
+  light: 'Clair',
+  system: 'Système',
+}
+
+const LANGUAGE_LABEL: Record<string, string> = {
+  fr: 'Français',
+  en: 'English',
+  de: 'Deutsch',
+  ru: 'Русский',
+}
+
+/** Dev : bilan de santé natif (build, journal, vie des extensions). */
+function showNativeDiagnostics() {
+  if (!ScreenTime.isAvailable) {
+    Alert.alert('Diagnostic natif', 'Module natif indisponible (simulateur ?).')
+    return
+  }
+  ScreenTime.getDiagnostics()
+    .then(d => {
+      const lines = [
+        `Build natif : ${d.nativeBuiltAt}`,
+        `Autorisation : ${d.authorized ? 'accordée' : 'ABSENTE'}`,
+        `App Group : ${d.appGroupOK ? 'OK' : 'INACCESSIBLE'}`,
+        `Journal : ${d.eventLogCount} événement(s)`,
+        `Résistances (total) : ${d.totalResisted}`,
+        `Fenêtres actives : ${d.activeWindows.join(', ') || 'aucune'}`,
+        `Moniteur réveillé : ${d.monitorLastWakeAt}`,
+        `  → ${d.monitorLastWakeWhat}`,
+        `Bouclier tapé : ${d.shieldLastActionAt}`,
+        '',
+        ...d.eventLogTail.map(e => `· ${e.kind} (${e.at})`),
+      ]
+      Alert.alert('Diagnostic natif', lines.join('\n'))
+    })
+    .catch(e => showErrorToast(e))
+}
 
 function initialsFrom(s: string | null): string {
   if (!s) return '?'
   const parts = s.trim().split(/\s+/).filter(Boolean)
-  const letters = parts.slice(0, 2).map(w => w[0]).join('')
+  const letters = parts
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
   return (letters || '?').toUpperCase()
 }
 
@@ -75,9 +134,79 @@ function Row({ icon, label, value, onPress, right, last }: RowProps) {
   )
 }
 
+function SwitchRow({
+  icon,
+  label,
+  value,
+  onValueChange,
+  last,
+}: {
+  icon: IconName
+  label: string
+  value: boolean
+  onValueChange: (v: boolean) => void
+  last?: boolean
+}) {
+  return (
+    <View>
+      <View style={styles.row}>
+        <View style={styles.rowIcon}>
+          <IconSvg name={icon} size={16} color={C.accent} />
+        </View>
+        <Text style={[f(500), { flex: 1, fontSize: 15, color: C.ink }]}>
+          {label}
+        </Text>
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          trackColor={{ true: C.accent, false: C.surface2 }}
+          ios_backgroundColor={C.surface2}
+        />
+      </View>
+      {last ? null : <View style={styles.rowDivider} />}
+    </View>
+  )
+}
+
 export default function SettingsScreen() {
   const { name, displayName, email } = useProfile()
   const updateName = useUpdateName()
+  const { mode } = useTheme()
+
+  // Notifications : préférences persistées, appliquées IMMÉDIATEMENT.
+  const [notif, setNotif] = React.useState<NotifPrefs>(getNotifPrefs)
+  const updateNotif = (patch: Partial<NotifPrefs>) => {
+    const next = { ...notif, ...patch }
+    setNotif(next)
+    setNotifPrefs(next)
+    const turningOn = next.master && Object.values(patch).some(v => v === true)
+    ;(async () => {
+      if (turningOn) await NotificationService.ensurePermission()
+      await NotificationService.reconcileFromLast()
+    })().catch(() => {})
+  }
+
+  // Statut réel de l'autorisation Temps d'écran (jamais codé en dur).
+  const [authorized, setAuthorized] = React.useState(false)
+  React.useEffect(() => {
+    if (!ScreenTime.isAvailable) return
+    ScreenTime.authorizationStatus()
+      .then(s => setAuthorized(s === 'approved'))
+      .catch(() => {})
+  }, [])
+
+  const requestScreenTime = () => {
+    if (!ScreenTime.isAvailable) {
+      Alert.alert(
+        "Temps d'écran",
+        'Disponible uniquement sur iPhone (Family Controls).',
+      )
+      return
+    }
+    ScreenTime.requestAuthorization()
+      .then(s => setAuthorized(s === 'approved'))
+      .catch(e => showErrorToast(e))
+  }
 
   const onEditName = () => {
     Alert.prompt(
@@ -146,21 +275,45 @@ export default function SettingsScreen() {
             <Row
               icon={IconName.MOON}
               label="Apparence"
-              value="Sombre"
-              onPress={() => {}}
+              value={THEME_LABEL[mode] ?? 'Sombre'}
+              onPress={() => navigate(ROUTES.MODAL_THEME_PICKER)}
             />
             <Row
               icon={IconName.GLOBE}
               label="Langue"
-              value="Français"
-              onPress={() => {}}
-            />
-            <Row
-              icon={IconName.BELL}
-              label="Notifications & rappels"
-              onPress={() => {}}
+              value={LANGUAGE_LABEL[i18n.language] ?? i18n.language}
+              onPress={() => navigate(ROUTES.MODAL_LANGUAGE_PICKER)}
               last
             />
+          </View>
+
+          {/* Notifications — peu, mais utiles ; jamais de spam */}
+          <Text style={[f(600), styles.groupLabel]}>Notifications</Text>
+          <View style={styles.card}>
+            <SwitchRow
+              icon={IconName.BELL}
+              label="Notifications"
+              value={notif.master}
+              onValueChange={v => updateNotif({ master: v })}
+              last={!notif.master}
+            />
+            {notif.master ? (
+              <>
+                <SwitchRow
+                  icon={IconName.CLOCK}
+                  label="Rappels (série, retour)"
+                  value={notif.reminders}
+                  onValueChange={v => updateNotif({ reminders: v })}
+                />
+                <SwitchRow
+                  icon={IconName.STAR}
+                  label="Progression (bilan, jalons)"
+                  value={notif.progression}
+                  onValueChange={v => updateNotif({ progression: v })}
+                  last
+                />
+              </>
+            ) : null}
           </View>
 
           {/* Système */}
@@ -169,44 +322,35 @@ export default function SettingsScreen() {
             <Row
               icon={IconName.MONITOR}
               label="Permissions · Temps d'écran"
+              onPress={requestScreenTime}
               right={
                 <View style={styles.statusOn}>
-                  <View style={styles.dot} />
-                  <Text style={[f(600), { fontSize: 13, color: C.green }]}>
-                    Activé
+                  <View
+                    style={[
+                      styles.dot,
+                      { backgroundColor: authorized ? C.green : C.ink3 },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      f(600),
+                      { fontSize: 13, color: authorized ? C.green : C.ink3 },
+                    ]}
+                  >
+                    {authorized ? 'Activé' : 'À activer'}
                   </Text>
                 </View>
               }
+              last={!__DEV__}
             />
-            <Row
-              icon={IconName.SHIELD}
-              label="Abonnement"
-              onPress={() => {}}
-              right={
-                <View style={styles.badge}>
-                  <Text style={[f(700), { fontSize: 12, color: C.accent }]}>
-                    Premium
-                  </Text>
-                </View>
-              }
-              last
-            />
-          </View>
-
-          {/* Divers */}
-          <View style={[styles.card, { marginTop: 22 }]}>
-            <Row icon={IconName.INFO} label="À propos" onPress={() => {}} />
-            <Row
-              icon={IconName.LOCK}
-              label="Confidentialité"
-              onPress={() => {}}
-            />
-            <Row
-              icon={IconName.CLOCK}
-              label="Aperçu du rituel de pause"
-              onPress={() => navigate(ROUTES.PAUSE_RITUAL)}
-              last
-            />
+            {__DEV__ ? (
+              <Row
+                icon={IconName.MONITOR}
+                label="Diagnostic natif (dev)"
+                onPress={showNativeDiagnostics}
+                last
+              />
+            ) : null}
           </View>
 
           <Text style={[f(400), styles.footer]}>

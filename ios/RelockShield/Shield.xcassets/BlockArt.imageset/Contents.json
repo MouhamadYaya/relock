@@ -1,6 +1,6 @@
 {
   "images" : [
-    { "idiom" : "universal", "filename" : "block-art.jpeg" }
+    { "idiom" : "universal", "filename" : "block-art.png" }
   ],
   "info" : { "author" : "xcode", "version" : 1 }
 }

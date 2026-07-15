@@ -3,6 +3,8 @@
 
 @interface RCT_EXTERN_MODULE (ScreenTimeReportViewManager, RCTViewManager)
 RCT_EXPORT_VIEW_PROPERTY(period, NSNumber)
+RCT_EXPORT_VIEW_PROPERTY(offset, NSNumber)
+RCT_EXPORT_VIEW_PROPERTY(mode, NSString)
 @end
 
 // Enregistre cette vue legacy dans la couche d'interop Fabric (New Architecture),

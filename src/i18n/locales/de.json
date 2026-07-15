@@ -65,12 +65,12 @@
   "onboarding": {
     "headline": "Alles, was du brauchst,\nan einem Ort.",
     "tagline": "Schnell, zuverlässig und wunderschön gestaltet.",
-    "feature_1_title": "Offline-fähig",
-    "feature_1_body": "Funktioniert auch ohne Internetverbindung",
-    "feature_2_title": "Standardmäßig sicher",
-    "feature_2_body": "Deine Daten sind Ende-zu-Ende verschlüsselt",
-    "feature_3_title": "Blitzschnell",
-    "feature_3_body": "Sofortige Synchronisierung auf allen Geräten",
+    "feature_1_title": "Echte Blockierung",
+    "feature_1_body": "Der iOS-Schutzschild wirkt auch bei geschlossener App",
+    "feature_2_title": "Bewusste Reibung",
+    "feature_2_body": "Ein Bildschirm stoppt dich, bevor das Scrollen beginnt",
+    "feature_3_title": "Deine Zahlen, ehrlich",
+    "feature_3_body": "Abfangungen, gewonnene Zeit und Serie, Tag für Tag",
     "get_started": "Loslegen"
   },
   "uikit": {

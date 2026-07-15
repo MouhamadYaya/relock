@@ -38,6 +38,7 @@ import { PersistencePolicy } from '@/shared/services/api/query/persistence/limit
 import { mmkvPersister } from '@/shared/services/api/query/persistence/mmkv-persister'
 import type { TagMap } from '@/shared/services/api/query/tags'
 import { setOfflineMode } from '@/shared/services/api/transport/transport'
+import { supabase } from '@/shared/services/supabase/client'
 import { createQueryClient } from './query-client'
 
 type Props = React.PropsWithChildren<{
@@ -72,6 +73,15 @@ export function QueryProvider({ children, tagMaps }: Props) {
       const offline = isOffline()
       setOfflineMode(offline)
       onlineManager.setOnline(!offline)
+
+      // 5) Nouvelle session (login, ou session dev asynchrone au démarrage) :
+      // les queries déjà montées ont tourné sans user (RLS → vide). On les
+      // rejoue pour charger les données du compte fraîchement connecté.
+      supabase.auth.onAuthStateChange(event => {
+        if (event === 'SIGNED_IN') {
+          queryClient.invalidateQueries().catch(() => undefined)
+        }
+      })
     }
 
     // Net changes -> update onlineManager + transport offlineMode + replay queue when online

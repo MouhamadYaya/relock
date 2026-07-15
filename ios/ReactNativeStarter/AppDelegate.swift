@@ -32,6 +32,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     return true
   }
+
+  /// Deep links (`relock://…`) → RN Linking. Sert notamment au pont de test
+  /// dev piloté par `xcrun simctl openurl` (voir src/session/dev-test-bridge).
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    RCTLinkingManager.application(app, open: url, options: options)
+  }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {

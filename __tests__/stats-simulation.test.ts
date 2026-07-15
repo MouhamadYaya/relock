@@ -19,6 +19,7 @@ import {
   computeRecordStreak,
   computeStreak,
   computeWeek,
+  eventDayLocal,
   ymd,
 } from '@/features/blocking/services/stats/stats.service'
 import {
@@ -112,6 +113,29 @@ afterEach(() => {
   jest.useRealTimers()
 })
 
+// ── eventDayLocal : les événements natifs (UTC) tombent sur le jour LOCAL ─
+
+describe('eventDayLocal (fix du bug « tap du soir rangé sur demain »)', () => {
+  it('un tap à 22h30 locale reste sur AUJOURD’HUI, pas sur la date UTC', () => {
+    // Construit l’ISO UTC exactement comme l’extension : depuis un instant
+    // local (22h30). Quel que soit le fuseau de la machine, le jour retourné
+    // doit être le jour LOCAL de cet instant.
+    const local = new Date(2026, 6, 13, 22, 30) // 13 juil. 22:30 locale
+    const iso = local.toISOString() // ex. « 2026-07-14T02:30:00.000Z » en EDT
+    expect(eventDayLocal(iso)).toBe('2026-07-13')
+  })
+
+  it('un tap en pleine journée reste sur le même jour', () => {
+    const local = new Date(2026, 6, 13, 14, 0)
+    expect(eventDayLocal(local.toISOString())).toBe('2026-07-13')
+  })
+
+  it('horodatage invalide ou absent → null (événement ignoré proprement)', () => {
+    expect(eventDayLocal('pas-une-date')).toBeNull()
+    expect(eventDayLocal(undefined)).toBeNull()
+  })
+})
+
 // ── ymd : date LOCALE, pas UTC ───────────────────────────────────────────
 
 describe('ymd (clé de jour locale)', () => {
@@ -173,12 +197,12 @@ describe('computeStreak — simulation multi-jours', () => {
     expect(computeStreak(rows)).toBe(1)
   })
 
-  it('BUG DOCUMENTÉ — plafonné par recent(30) : 45 jours réels affichent 30', () => {
+  it('B9 corrigé — fenêtre recent(365) : une série de 45 jours affiche 45', () => {
     jest.useFakeTimers().setSystemTime(at('2026-07-13T20:00:00'))
     const rows45 = consecutiveDays(at('2026-07-13T12:00:00'), 45)
-    const asReturnedByRecent30 = rows45.slice(0, 30) // .limit(30), récents d’abord
-    expect(computeStreak(rows45)).toBe(45) // la vraie série
-    expect(computeStreak(asReturnedByRecent30)).toBe(30) // ce que voit l’app
+    // L'app lit désormais recent(365) : la série n'est plus tronquée à 30.
+    const asReturnedByRecent365 = rows45.slice(0, 365)
+    expect(computeStreak(asReturnedByRecent365)).toBe(45)
   })
 })
 

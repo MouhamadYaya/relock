@@ -18,6 +18,8 @@ export function useCreateRuleMutation() {
     },
     onSuccess: async () => {
       await invalidateByTags(qc, BLOCKING_TAGS, [blockingKeys.tagMap])
+      // La série / le heartbeat dépendent des règles actives → rafraîchir.
+      await qc.invalidateQueries({ queryKey: ['stats'] })
     },
   })
 }

@@ -60,8 +60,8 @@ export function HalfSheet({
       easing: Easing.out(Easing.cubic),
     })
     backdrop.value = withTiming(1, { duration: 240 })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // Valeurs partagées Reanimated : références stables → mount-only.
+  }, [backdrop, translateY])
 
   useEffect(() => {
     if (firstMeasure.current) {
@@ -73,8 +73,7 @@ export function HalfSheet({
         easing: Easing.out(Easing.cubic),
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target])
+  }, [sheetH, target])
 
   const close = () => {
     backdrop.value = withTiming(0, { duration: 200 })
@@ -143,7 +142,10 @@ export function HalfSheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  dim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,7,10,0.28)' },
+  dim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(6,7,10,0.28)',
+  },
   sheet: {
     backgroundColor: C.sheet,
     borderTopLeftRadius: 30,

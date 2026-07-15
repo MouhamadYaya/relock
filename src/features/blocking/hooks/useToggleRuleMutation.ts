@@ -17,6 +17,7 @@ export function useToggleRuleMutation() {
     },
     onSuccess: async () => {
       await invalidateByTags(qc, BLOCKING_TAGS, [blockingKeys.tagMap])
+      await qc.invalidateQueries({ queryKey: ['stats'] })
     },
   })
 }

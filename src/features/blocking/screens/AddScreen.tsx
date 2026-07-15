@@ -23,12 +23,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
+import { NotificationService } from '@/features/notifications/notification.service'
+import {
+  hasAskedNotifPermission,
+  markNotifPermissionAsked,
+} from '@/features/notifications/prefs'
 import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
+import { genUUID } from '@/shared/utils/uuid'
 
 // Libs natives (flou + taptic) chargées en douceur : si le module natif n'est
 // pas encore lié, on retombe sur un fond assombri / pas de haptic.
@@ -113,7 +119,8 @@ const timeToDate = (h: number, m: number) => {
   d.setHours(h, m, 0, 0)
   return d
 }
-const minutesToDate = (min: number) => timeToDate(Math.floor(min / 60), min % 60)
+const minutesToDate = (min: number) =>
+  timeToDate(Math.floor(min / 60), min % 60)
 const dateToMinutes = (d: Date) => d.getHours() * 60 + d.getMinutes()
 const hhmm = (d: Date) =>
   `${d.getHours()}h${d.getMinutes() ? String(d.getMinutes()).padStart(2, '0') : ''}`
@@ -140,7 +147,9 @@ function TypeRow({
   onPress: () => void
 }) {
   const scale = useSharedValue(1)
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
   return (
     <AnimatedPressable
       onPressIn={() => {
@@ -175,6 +184,10 @@ export default function AddScreen() {
   const [name, setName] = useState('')
   const [count, setCount] = useState(0)
   const [working, setWorking] = useState(false)
+  // Verrou SYNCHRONE anti double-soumission : `working` (state) ne se met à
+  // jour qu'au prochain render, donc deux taps rapides le liraient à false et
+  // créeraient deux règles. Un ref bloque dès le premier tap.
+  const submitting = useRef(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [warn, setWarn] = useState<string | null>(null)
   const createRule = useCreateRuleMutation()
@@ -215,8 +228,8 @@ export default function AddScreen() {
       easing: Easing.out(Easing.cubic),
     })
     backdrop.value = withTiming(1, { duration: 240 })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // Valeurs partagées Reanimated : références stables → mount-only.
+  }, [backdrop, translateY])
 
   // Ajuste la hauteur au contenu (instantané au 1er layout, animé ensuite).
   useEffect(() => {
@@ -229,8 +242,7 @@ export default function AddScreen() {
         easing: Easing.out(Easing.cubic),
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target])
+  }, [sheetH, target])
 
   const close = () => {
     backdrop.value = withTiming(0, { duration: 200 })
@@ -296,9 +308,30 @@ export default function AddScreen() {
   const explainStrict = () =>
     Alert.alert(
       'Mode strict',
-      "Une fois activé, tu ne peux pas arrêter le blocage avant la fin — même en rouvrant Relock. Idéal pour tenir un engagement.",
+      'Une fois activé, tu ne peux pas arrêter le blocage avant la fin — même en rouvrant Relock. Idéal pour tenir un engagement.',
       [{ text: 'Compris' }],
     )
+
+  // Engagement EXPLICITE avant d'armer un strict : le blocage devient non
+  // annulable dans l'app jusqu'à la fin. On rend ce choix conscient (pas un
+  // simple toggle qu'on active sans réaliser).
+  const confirmStrictCommitment = (): Promise<boolean> =>
+    new Promise(resolve => {
+      const endLabel = hhmm(new Date(Date.now() + durationMin * 60_000))
+      Alert.alert(
+        'Mode strict — tu t’engages',
+        `Tu ne pourras plus arrêter ce blocage avant ${endLabel}, même en fermant Relock. C’est le but : tenir.`,
+        [
+          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+          {
+            text: 'Je m’engage',
+            style: 'destructive',
+            onPress: () => resolve(true),
+          },
+        ],
+        { cancelable: false },
+      )
+    })
 
   const buildConfig = (): Record<string, unknown> => {
     const base = name.trim() ? { name: name.trim() } : {}
@@ -324,32 +357,78 @@ export default function AddScreen() {
     return `${apps} · limite ${fmtDuration(limitMin)} / jour`
   }
 
-  const runNative = async () => {
+  const runNative = async (ruleId: string) => {
     if (type === 'block_now')
-      await ScreenTime.startTimedBlock(durationMin, strict)
+      await ScreenTime.startTimedBlock(ruleId, durationMin, strict)
     else if (type === 'schedule')
       await ScreenTime.startSchedule(
+        ruleId,
         start.getHours(),
         start.getMinutes(),
         end.getHours(),
         end.getMinutes(),
       )
-    else await ScreenTime.startDailyLimit(limitMin)
+    else await ScreenTime.startDailyLimit(ruleId, limitMin)
+  }
+
+  const nativeKind = () =>
+    type === 'schedule'
+      ? 'schedule'
+      : type === 'daily_limit'
+        ? 'limit'
+        : 'timed'
+
+  // Soft-ask CONTEXTUEL : après le tout premier blocage (moment de valeur), on
+  // propose UNE fois les rappels — jamais au lancement de l'app.
+  const maybeAskNotifPermission = () => {
+    if (hasAskedNotifPermission() || !NotificationService) return
+    markNotifPermissionAsked()
+    Alert.alert(
+      'Un coup de pouce discret ?',
+      "Relock peut t'envoyer un rappel si ta série est en danger — jamais de spam, et tu gardes le contrôle depuis les Réglages.",
+      [
+        { text: 'Non merci', style: 'cancel' },
+        {
+          text: 'Activer les rappels',
+          onPress: () => {
+            NotificationService.ensurePermission().catch(() => {})
+          },
+        },
+      ],
+    )
   }
 
   const onSubmit = async () => {
-    if (count === 0 || working || createRule.isPending) return
+    if (count === 0 || working || createRule.isPending || submitting.current)
+      return
     // iOS impose des fenêtres DeviceActivity d'au moins 15 min.
     if (type === 'schedule') {
       const s = start.getHours() * 60 + start.getMinutes()
       const e = end.getHours() * 60 + end.getMinutes()
+      if (s === e) {
+        setWarn(
+          'Le début et la fin doivent être différents (sinon la plage dure 24 h).',
+        )
+        return
+      }
       const win = e - s > 0 ? e - s : e - s + 1440
       if (win < 15) {
-        setWarn('Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.')
+        setWarn(
+          'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
+        )
         return
       }
     }
+    // Blocage strict = engagement irréversible dans l'app → double confirmation.
+    if (type === 'block_now' && strict) {
+      const committed = await confirmStrictCommitment()
+      if (!committed) return
+    }
+    submitting.current = true
     setWorking(true)
+    // Id CLIENT : lie la mécanique native à la future ligne DB.
+    const ruleId = genUUID()
+    let nativeArmed = false
     try {
       if (ScreenTime.isAvailable) {
         const auth = await ScreenTime.requestAuthorization()
@@ -357,24 +436,36 @@ export default function AddScreen() {
           Alert.alert('Autorisation requise', "Active l'accès Temps d'écran.")
           return
         }
-        await runNative()
+        await ScreenTime.bindSelection(ruleId)
+        await runNative(ruleId)
+        nativeArmed = true
       }
       await createRule.mutateAsync({
+        id: ruleId,
         type: DB_TYPE[type],
         appIds: [],
         count,
         config: buildConfig(),
       })
       setSuccessMsg(summary())
+      maybeAskNotifPermission()
     } catch (e) {
+      // La règle DB a échoué : on désarme le natif pour ne pas laisser un
+      // blocage orphelin (invisible dans l'app).
+      if (nativeArmed) {
+        await ScreenTime.clearRuleData(ruleId, nativeKind()).catch(() => {})
+      }
       const msg = String((e as { message?: string })?.message ?? e ?? '')
       if (/too short|schedule/i.test(msg)) {
-        setWarn('Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.')
+        setWarn(
+          'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
+        )
       } else {
         showErrorToast(e)
       }
     } finally {
       setWorking(false)
+      submitting.current = false
     }
   }
 
@@ -407,7 +498,9 @@ export default function AddScreen() {
           </View>
         </GestureDetector>
 
-        <Animated.View style={[styles.pager, { width: SCREEN_W * 2 }, pagerStyle]}>
+        <Animated.View
+          style={[styles.pager, { width: SCREEN_W * 2 }, pagerStyle]}
+        >
           {/* Étape 1 : choix du type */}
           <View style={{ width: SCREEN_W }}>
             <View style={styles.panel} onLayout={measure(0)}>
@@ -471,26 +564,35 @@ export default function AddScreen() {
                         value={durationValue}
                         minuteInterval={5}
                         themeVariant="dark"
-                        onChange={(_e, d) => d && setDurationMin(dateToMinutes(d))}
+                        onChange={(_e, d) =>
+                          d && setDurationMin(dateToMinutes(d))
+                        }
                       />
                     </View>
                   </View>
                   <View style={[styles.card, styles.strictCard]}>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <View style={styles.strictTitleRow}>
-                        <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
+                        <Text
+                          style={[f(600), { fontSize: 15.5, color: C.ink }]}
+                        >
                           Mode strict
                         </Text>
                         <Pressable onPress={explainStrict} hitSlop={12}>
                           <View style={styles.help}>
-                            <Text style={[f(700), { fontSize: 12, color: C.ink2 }]}>
+                            <Text
+                              style={[f(700), { fontSize: 12, color: C.ink2 }]}
+                            >
                               ?
                             </Text>
                           </View>
                         </Pressable>
                       </View>
                       <Text
-                        style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 3 }]}
+                        style={[
+                          f(400),
+                          { fontSize: 13, color: C.ink2, marginTop: 3 },
+                        ]}
                       >
                         Impossible d'arrêter avant la fin.
                       </Text>
@@ -565,7 +667,10 @@ export default function AddScreen() {
                 </View>
               )}
 
-              <Pressable onPress={onPickApps} style={[styles.card, styles.appsCard]}>
+              <Pressable
+                onPress={onPickApps}
+                style={[styles.card, styles.appsCard]}
+              >
                 <View style={styles.appsIcon}>
                   <IconSvg name={IconName.BLOCK} size={20} color={C.accent} />
                 </View>
@@ -576,7 +681,10 @@ export default function AddScreen() {
                       : `${count} app${count > 1 ? 's' : ''}`}
                   </Text>
                   <Text
-                    style={[f(400), { fontSize: 13, color: C.ink2, marginTop: 3 }]}
+                    style={[
+                      f(400),
+                      { fontSize: 13, color: C.ink2, marginTop: 3 },
+                    ]}
                   >
                     {count === 0 ? "Sélecteur d'Apple" : 'Touche pour modifier'}
                   </Text>
@@ -594,7 +702,10 @@ export default function AddScreen() {
                 ]}
               >
                 <Text
-                  style={[f(700), { fontSize: 16, color: disabled ? C.ink3 : C.bg }]}
+                  style={[
+                    f(700),
+                    { fontSize: 16, color: disabled ? C.ink3 : C.bg },
+                  ]}
                 >
                   {working || createRule.isPending
                     ? 'Activation…'
@@ -613,7 +724,9 @@ export default function AddScreen() {
             <View style={styles.successCheck}>
               <IconSvg name={IconName.CHECK} size={30} color={C.bg} />
             </View>
-            <Text style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}>
+            <Text
+              style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}
+            >
               C'est activé
             </Text>
             <Text style={[f(400), styles.successSub]}>{successMsg}</Text>
@@ -624,7 +737,9 @@ export default function AddScreen() {
               }}
               style={styles.successBtn}
             >
-              <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>Terminé</Text>
+              <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>
+                Terminé
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -637,12 +752,16 @@ export default function AddScreen() {
             <View style={styles.warnBadge}>
               <IconSvg name={IconName.CALENDAR} size={28} color={C.accent} />
             </View>
-            <Text style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}>
+            <Text
+              style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}
+            >
               Plage trop courte
             </Text>
             <Text style={[f(400), styles.successSub]}>{warn}</Text>
             <Pressable onPress={() => setWarn(null)} style={styles.successBtn}>
-              <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>Compris</Text>
+              <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>
+                Compris
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -653,7 +772,10 @@ export default function AddScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  dim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,7,10,0.28)' },
+  dim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(6,7,10,0.28)',
+  },
   sheet: {
     backgroundColor: C.sheet,
     borderTopLeftRadius: 30,

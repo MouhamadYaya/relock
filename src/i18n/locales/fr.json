@@ -108,7 +108,13 @@
   "onboarding": {
     "headline": "Reprends le contrôle\nde ton attention.",
     "tagline": "Moins de scroll compulsif. Plus de toi.",
-    "get_started": "Commencer"
+    "get_started": "Commencer",
+    "feature_1_title": "Blocage réel",
+    "feature_1_body": "Le bouclier iOS s'applique même quand l'app est fermée",
+    "feature_2_title": "Friction consciente",
+    "feature_2_body": "Un écran t'arrête avant que le scroll ne commence",
+    "feature_3_title": "Tes chiffres en face",
+    "feature_3_body": "Interceptions, temps regagné et série, jour après jour"
   },
   "app": {
     "title": "Relock"

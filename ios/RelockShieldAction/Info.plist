@@ -27,5 +27,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).RelockShieldAction</string>
 	</dict>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 </dict>
 </plist>
