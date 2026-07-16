@@ -311,13 +311,15 @@ export default function ActivityScreen() {
           </ScrollView>
         )}
 
-        {/* Rapport système : deux vues natives distinctes, car iOS ne fournit
-            les activations/notifications QUE sur des tranches quotidiennes,
-            alors que le graphe du jour a besoin de tranches horaires. Le graphe
-            a donc son propre rapport (hauteur fixe), et le résumé + classement
-            vivent dans un rapport quotidien qui remplit le reste et défile
-            lui-même (un DeviceActivityReport ne peut pas défiler dans un
-            ScrollView RN). Loader derrière, le temps du calcul iOS. */}
+        {/* Rapport système. Trois vues natives empilées — résumé, graphe,
+            classement — car leurs filtres diffèrent : iOS ne fournit les
+            activations/notifications QUE sur des tranches quotidiennes, alors
+            que le graphe du jour a besoin de tranches horaires. Un même
+            DeviceActivityReport ne portant qu'un seul filtre, c'est le seul
+            moyen de garder le graphe AU MILIEU. Résumé et graphe ont une
+            hauteur fixe ; le classement prend le reste et défile lui-même (un
+            DeviceActivityReport ne peut pas défiler dans un ScrollView RN).
+            Loader derrière, le temps du calcul iOS. */}
         <View style={styles.reportCard}>
           {/* Le rapport iOS se rend par-dessus quand il est prêt. Ce voile
               DOIT s'effacer tout seul : sinon, quand la période ne contient
@@ -334,8 +336,8 @@ export default function ActivityScreen() {
           )}
           <ScreenTimeReport
             key={`s-${reloadKey}-${period}-${offset}`}
-            style={styles.report}
-            mode="usage"
+            style={styles.summary}
+            mode="summary"
             period={period}
             offset={offset}
             fallback={
@@ -350,12 +352,17 @@ export default function ActivityScreen() {
               </View>
             }
           />
-        </View>
-        <View style={styles.chartCard}>
           <ScreenTimeReport
             key={`c-${reloadKey}-${period}-${offset}`}
-            style={styles.report}
+            style={styles.chart}
             mode="chart"
+            period={period}
+            offset={offset}
+          />
+          <ScreenTimeReport
+            key={`a-${reloadKey}-${period}-${offset}`}
+            style={styles.report}
+            mode="apps"
             period={period}
             offset={offset}
           />
@@ -423,16 +430,6 @@ const styles = StyleSheet.create({
   reportCard: {
     flex: 1,
     marginTop: 8,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  // Graphe : hauteur fixe (titre + carte 128 pt + axe + marges internes).
-  chartCard: {
-    height: 218,
-    marginTop: 10,
     marginBottom: 12,
     backgroundColor: C.surface,
     borderWidth: 1,
@@ -440,6 +437,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
+  // Hauteurs calées sur le contenu des vues natives (elles ne peuvent pas
+  // s'auto-dimensionner) : résumé = date + total + libellé + 2 stats ;
+  // graphe = titre + carte de 128 pt + axe X, marges comprises.
+  summary: { height: 172 },
+  chart: { height: 230 },
   reportLoading: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',

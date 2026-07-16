@@ -22,31 +22,16 @@ func formatDuration(_ s: Double) -> String {
   return r == 0 ? "\(h) h" : "\(h) h \(String(format: "%02d", r))"
 }
 
-/// Résumé (total + activations + notifications) et classement des apps.
+/// Résumé : total + activations + notifications.
 /// Alimenté par des segments QUOTIDIENS : c'est la seule granularité où iOS
 /// renseigne `numberOfPickups` / `numberOfNotifications` (en tranches horaires
 /// ils reviennent quasiment nuls — d'où les « 1 activation » d'une journée
-/// entière). Le graphe, lui, vit dans `UsageChartView`.
-struct UsageReportView: View {
+/// entière). Le graphe vit dans `UsageChartView`, le classement dans
+/// `UsageAppsView` : trois vues empilées, car leurs filtres diffèrent.
+struct UsageSummaryView: View {
   let model: UsageModel
 
-  private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
-
   var body: some View {
-    ScrollView(showsIndicators: false) {
-      VStack(alignment: .leading, spacing: 14) {
-        summaryCard
-        appsSection
-      }
-      .padding(16)
-    }
-    .environment(\.colorScheme, .dark)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-  }
-
-  // MARK: Résumé
-
-  private var summaryCard: some View {
     VStack(alignment: .leading, spacing: 12) {
       VStack(alignment: .leading, spacing: 2) {
         if !model.dateLabel.isEmpty {
@@ -70,6 +55,9 @@ struct UsageReportView: View {
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
+    .padding(16)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .environment(\.colorScheme, .dark)
   }
 
   private func stat(_ value: String, _ label: String) -> some View {
@@ -81,8 +69,26 @@ struct UsageReportView: View {
         .font(.system(size: 12)).foregroundColor(ReportPalette.ink3)
     }
   }
+}
 
-  // MARK: Apps
+/// Classement des apps (segments QUOTIDIENS, comme le résumé).
+struct UsageAppsView: View {
+  let model: UsageModel
+
+  private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
+
+  var body: some View {
+    ScrollView(showsIndicators: false) {
+      appsSection
+        .padding(16)
+        // Sans cette largeur imposée, le VStack se dimensionne sur son contenu
+        // et le ScrollView le CENTRE : le titre n'était plus aligné avec ceux
+        // des autres cartes.
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .environment(\.colorScheme, .dark)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
 
   private var appsSection: some View {
     VStack(alignment: .leading, spacing: 10) {

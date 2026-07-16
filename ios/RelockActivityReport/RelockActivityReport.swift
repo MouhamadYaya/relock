@@ -20,10 +20,17 @@ enum RelockReportLog {
 @main
 struct RelockActivityReport: DeviceActivityReportExtension {
   var body: some DeviceActivityReportScene {
-    // Résumé + classement des apps — TOUJOURS sur des segments quotidiens
-    // (seule granularité où iOS renseigne activations et notifications).
-    UsageReport { model in
-      UsageReportView(model: model)
+    // L'Activité empile trois vues : résumé, graphe, classement. Le résumé et
+    // le classement veulent des segments QUOTIDIENS (seule granularité où iOS
+    // renseigne activations et notifications) alors que le graphe du jour veut
+    // des tranches HORAIRES : filtres différents ⇒ rapports séparés. Ils sont
+    // donc scindés en deux scènes pour que le graphe puisse s'intercaler au
+    // milieu, comme dans la maquette.
+    SummaryReport { model in
+      UsageSummaryView(model: model)
+    }
+    AppsReport { model in
+      UsageAppsView(model: model)
     }
     // Graphe : tranches horaires (Jour) ou quotidiennes (Semaine/Mois). Deux
     // contextes distincts → la granularité est connue PAR CONSTRUCTION, même
@@ -260,7 +267,7 @@ extension String {
   }
 }
 
-// MARK: - Scène : résumé + classement des apps (segments QUOTIDIENS)
+// MARK: - Scènes : résumé et classement (segments QUOTIDIENS)
 
 struct UsageModel {
   var totalSeconds: Double = 0
@@ -274,29 +281,45 @@ struct UsageModel {
   var beyondRetention = false
 }
 
-struct UsageReport: DeviceActivityReportScene {
-  let context: DeviceActivityReport.Context = .init("Usage")
-  let content: (UsageModel) -> UsageReportView
+private func usageModel(
+  _ data: DeviceActivityResults<DeviceActivityData>
+) async -> UsageModel {
+  let agg = await aggregateUsage(data)
+  var model = UsageModel()
+  model.totalSeconds = agg.totalSeconds
+  model.totalPickups = agg.totalPickups
+  model.totalNotifications = agg.totalNotifications
+  model.apps = agg.apps
+  model.isEmpty = !agg.hadData
+  model.dateLabel = periodLabel(
+    start: agg.spanStart, end: agg.spanEnd, hourly: false)
+  if let s = agg.spanStart, !agg.hadData {
+    // iOS ne conserve qu'un historique court : au-delà, « 0 min » n'est pas
+    // une réalité mesurée mais une absence de données. On le dit.
+    model.beyondRetention = Date().timeIntervalSince(s) > 30 * 86_400
+  }
+  return model
+}
+
+struct SummaryReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("UsageSummary")
+  let content: (UsageModel) -> UsageSummaryView
 
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> UsageModel {
-    let agg = await aggregateUsage(data)
-    var model = UsageModel()
-    model.totalSeconds = agg.totalSeconds
-    model.totalPickups = agg.totalPickups
-    model.totalNotifications = agg.totalNotifications
-    model.apps = agg.apps
-    model.isEmpty = !agg.hadData
-    model.dateLabel = periodLabel(
-      start: agg.spanStart, end: agg.spanEnd, hourly: false)
-    if let s = agg.spanStart, !agg.hadData {
-      // iOS ne conserve qu'un historique court : au-delà, « 0 min » n'est pas
-      // une réalité mesurée mais une absence de données. On le dit.
-      model.beyondRetention =
-        Date().timeIntervalSince(s) > 30 * 86_400
-    }
-    return model
+    await usageModel(data)
+  }
+}
+
+struct AppsReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("UsageApps")
+  let content: (UsageModel) -> UsageAppsView
+
+  func makeConfiguration(
+    representing data: DeviceActivityResults<DeviceActivityData>
+  ) async -> UsageModel {
+    await usageModel(data)
   }
 }
 

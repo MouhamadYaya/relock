@@ -81,13 +81,22 @@ private struct ReportContainer: View {
           filter: DeviceActivityFilter(
             segment: .daily(during: iv), users: .all, devices: devices)))
 
-    default:
-      // Résumé + classement : TOUJOURS des segments quotidiens — seule
-      // granularité où iOS renseigne activations et notifications (en tranches
-      // horaires ils reviennent quasi nuls : « 1 activation » pour une journée).
+    case "apps":
+      // Classement : segments quotidiens (cf. « summary »).
       return AnyView(
         DeviceActivityReport(
-          DeviceActivityReport.Context("Usage"),
+          DeviceActivityReport.Context("UsageApps"),
+          filter: DeviceActivityFilter(
+            segment: .daily(during: interval(cal, now)), users: .all,
+            devices: devices)))
+
+    default:
+      // Résumé : TOUJOURS des segments quotidiens — seule granularité où iOS
+      // renseigne activations et notifications (en tranches horaires ils
+      // reviennent quasi nuls : « 1 activation » pour une journée entière).
+      return AnyView(
+        DeviceActivityReport(
+          DeviceActivityReport.Context("UsageSummary"),
           filter: DeviceActivityFilter(
             segment: .daily(during: interval(cal, now)), users: .all,
             devices: devices)))
