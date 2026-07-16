@@ -1,68 +1,47 @@
 import ManagedSettings
 import SwiftUI
 
-/// Rendu du temps d'écran calqué sur le concurrent (Refocus) : résumé (total +
-/// activations + notifications), graphe horaire (fond quadrillé + axes X/Y), et
-/// classement des apps (vraie icône + nom + barre proportionnelle + méta).
-/// Défile verticalement ; forcé en mode sombre (sinon iOS rend les libellés
-/// système des apps en noir).
+// Palette partagée par les vues du rapport (mode sombre forcé : sinon iOS rend
+// les libellés système des apps en noir).
+enum ReportPalette {
+  static let accent = Color(red: 0.643, green: 0.604, blue: 0.996)
+  static let ink = Color(red: 0.94, green: 0.94, blue: 0.96)
+  static let ink2 = Color(red: 0.66, green: 0.67, blue: 0.75)
+  static let ink3 = Color(red: 0.46, green: 0.48, blue: 0.56)
+  static let card = Color.white.opacity(0.04)
+  static let grid = Color.white.opacity(0.07)
+  static let track = Color.white.opacity(0.08)
+}
+
+/// « 36 min » / « 2 h 14 » — format partagé.
+func formatDuration(_ s: Double) -> String {
+  let m = Int(s / 60)
+  if m < 60 { return "\(m) min" }
+  let h = m / 60
+  let r = m % 60
+  return r == 0 ? "\(h) h" : "\(h) h \(String(format: "%02d", r))"
+}
+
+/// Résumé (total + activations + notifications) et classement des apps.
+/// Alimenté par des segments QUOTIDIENS : c'est la seule granularité où iOS
+/// renseigne `numberOfPickups` / `numberOfNotifications` (en tranches horaires
+/// ils reviennent quasiment nuls — d'où les « 1 activation » d'une journée
+/// entière). Le graphe, lui, vit dans `UsageChartView`.
 struct UsageReportView: View {
   let model: UsageModel
 
-  private let accent = Color(red: 0.643, green: 0.604, blue: 0.996)
-  private let ink = Color(red: 0.94, green: 0.94, blue: 0.96)
-  private let ink2 = Color(red: 0.66, green: 0.67, blue: 0.75)
-  private let ink3 = Color(red: 0.46, green: 0.48, blue: 0.56)
-  private let base = Color(red: 0.086, green: 0.094, blue: 0.129) // #161821 (carte)
-  private let card = Color.white.opacity(0.04)
-  private let grid = Color.white.opacity(0.07)
-  private let track = Color.white.opacity(0.08)
-
-  // MARK: Formatage
-
-  private func fmt(_ s: Double) -> String {
-    let m = Int(s / 60)
-    if m < 60 { return "\(m) min" }
-    let h = m / 60
-    let r = m % 60
-    return r == 0 ? "\(h) h" : "\(h) h \(String(format: "%02d", r))"
-  }
-
-  private var axisMax: Double {
-    let peak = model.values.max() ?? 0
-    if peak <= 0 { return 3600 }
-    let step = 1800.0
-    return max(step, (peak / step).rounded(.up) * step)
-  }
-
-  private func yLabel(_ s: Double) -> String {
-    if axisMax >= 3600 {
-      let h = s / 3600
-      return h == h.rounded() ? "\(Int(h))h" : String(format: "%.1fh", h)
-    }
-    return "\(Int(s / 60))m"
-  }
-
   private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
 
-  // MARK: Corps
-
   var body: some View {
-    // Scroll INTERNE (SwiftUI) : une vue DeviceActivityReport ne peut pas
-    // défiler dans un ScrollView RN (elle capte les gestes / tronque). Elle
-    // remplit donc l'écran et défile elle-même ; seuls les sélecteurs RN
-    // au-dessus restent fixes.
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 14) {
         summaryCard
-        chartSection
         appsSection
       }
       .padding(16)
     }
     .environment(\.colorScheme, .dark)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(base)
   }
 
   // MARK: Résumé
@@ -72,38 +51,154 @@ struct UsageReportView: View {
       VStack(alignment: .leading, spacing: 2) {
         if !model.dateLabel.isEmpty {
           Text(model.dateLabel)
-            .font(.system(size: 13)).foregroundColor(ink3)
+            .font(.system(size: 13)).foregroundColor(ReportPalette.ink3)
         }
-        Text(fmt(model.totalSeconds))
-          .font(.system(size: 30, weight: .bold)).foregroundColor(ink)
+        Text(model.isEmpty ? "—" : formatDuration(model.totalSeconds))
+          .font(.system(size: 30, weight: .bold))
+          .foregroundColor(ReportPalette.ink)
         Text("Temps d'écran")
-          .font(.system(size: 13, weight: .medium)).foregroundColor(ink2)
+          .font(.system(size: 13, weight: .medium))
+          .foregroundColor(ReportPalette.ink2)
       }
-      HStack(spacing: 28) {
-        stat("\(model.totalPickups)", "Activations")
-        stat("\(model.totalNotifications)", "Notifications")
+      if !model.isEmpty {
+        HStack(spacing: 28) {
+          stat("\(model.totalPickups)", "Activations")
+          stat("\(model.totalNotifications)", "Notifications")
+        }
       }
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(RoundedRectangle(cornerRadius: 18).fill(card))
+    .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
   }
 
   private func stat(_ value: String, _ label: String) -> some View {
     VStack(alignment: .leading, spacing: 1) {
-      Text(value).font(.system(size: 22, weight: .bold)).foregroundColor(ink)
-      Text(label).font(.system(size: 12)).foregroundColor(ink3)
+      Text(value)
+        .font(.system(size: 22, weight: .bold))
+        .foregroundColor(ReportPalette.ink)
+      Text(label)
+        .font(.system(size: 12)).foregroundColor(ReportPalette.ink3)
     }
   }
 
-  // MARK: Graphe
+  // MARK: Apps
 
-  private var chartSection: some View {
+  private var appsSection: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("Temps d'écran le plus élevé")
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(ReportPalette.ink2)
+      if model.apps.isEmpty {
+        // « Aucune donnée » ≠ « 0 minute » : iOS ne conserve qu'un historique
+        // court, le dire évite de faire passer une absence pour une mesure.
+        Text(
+          model.beyondRetention
+            ? "iOS ne conserve pas le détail du temps d'écran aussi loin dans le passé."
+            : "Aucune donnée d'usage sur la période."
+        )
+        .font(.system(size: 13)).foregroundColor(ReportPalette.ink3)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.vertical, 8)
+      } else {
+        VStack(spacing: 14) {
+          ForEach(model.apps.prefix(8)) { app in
+            appRow(app)
+          }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
+      }
+    }
+  }
+
+  private func appRow(_ app: AppUsage) -> some View {
+    VStack(alignment: .leading, spacing: 7) {
+      HStack(spacing: 10) {
+        icon(app)
+        if let token = app.token {
+          Label(token).labelStyle(.titleOnly)
+            .font(.system(size: 15, weight: .medium))
+            .foregroundColor(ReportPalette.ink)
+            .lineLimit(1)
+        } else {
+          Text(app.name)
+            .font(.system(size: 15, weight: .medium))
+            .foregroundColor(ReportPalette.ink)
+            .lineLimit(1)
+        }
+        Spacer(minLength: 8)
+        Text(formatDuration(app.seconds))
+          .font(.system(size: 14, weight: .semibold))
+          .foregroundColor(ReportPalette.ink2)
+      }
+      // Barre proportionnelle (consommation vs app la plus utilisée).
+      GeometryReader { geo in
+        ZStack(alignment: .leading) {
+          Capsule().fill(ReportPalette.track).frame(height: 4)
+          let frac = maxAppSeconds > 0 ? app.seconds / maxAppSeconds : 0
+          Capsule().fill(ReportPalette.accent)
+            .frame(width: max(4, geo.size.width * frac), height: 4)
+        }
+      }
+      .frame(height: 4)
+      Text(metaLine(app))
+        .font(.system(size: 12)).foregroundColor(ReportPalette.ink3)
+    }
+  }
+
+  private func icon(_ app: AppUsage) -> some View {
+    Group {
+      if let token = app.token {
+        Label(token).labelStyle(.iconOnly).font(.system(size: 26))
+      } else {
+        RoundedRectangle(cornerRadius: 7).fill(ReportPalette.track)
+      }
+    }
+    .frame(width: 30, height: 30)
+  }
+
+  private func metaLine(_ app: AppUsage) -> String {
+    let a = "\(app.pickups) activation\(app.pickups > 1 ? "s" : "")"
+    let n = "\(app.notifications) notification\(app.notifications > 1 ? "s" : "")"
+    return "\(a) · \(n)"
+  }
+}
+
+// MARK: - Graphe
+
+/// Graphe seul (fond quadrillé + axes). Deux contextes distincts l'alimentent :
+/// tranches horaires (Jour) ou quotidiennes (Semaine/Mois) — la granularité est
+/// donc toujours connue, même quand la période est vide.
+struct UsageChartView: View {
+  let model: ChartModel
+
+  private var axisMax: Double {
+    let peak = model.values.max() ?? 0
+    if peak <= 0 { return model.isHourly ? 3_600 : 7_200 }
+    let step = model.isHourly ? 1_800.0 : 3_600.0
+    return max(step, (peak / step).rounded(.up) * step)
+  }
+
+  private func yLabel(_ s: Double) -> String {
+    if axisMax >= 3_600 {
+      let h = s / 3_600
+      return h == h.rounded() ? "\(Int(h))h" : String(format: "%.1fh", h)
+    }
+    return "\(Int(s / 60))m"
+  }
+
+  var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       Text(model.isHourly ? "Temps d'écran par heure" : "Temps d'écran par jour")
-        .font(.system(size: 14, weight: .semibold)).foregroundColor(ink2)
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(ReportPalette.ink2)
       chartCard
     }
+    .padding(16)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .environment(\.colorScheme, .dark)
   }
 
   private var chartCard: some View {
@@ -119,21 +214,21 @@ struct UsageReportView: View {
       yAxis
     }
     .padding(14)
-    .background(RoundedRectangle(cornerRadius: 18).fill(card))
+    .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
   }
 
   private var gridBackground: some View {
     ZStack {
-      VStack(spacing: 0) { // lignes horizontales
+      VStack(spacing: 0) {  // lignes horizontales
         ForEach(0..<4) { i in
-          Rectangle().fill(grid).frame(height: 1)
+          Rectangle().fill(ReportPalette.grid).frame(height: 1)
           if i < 3 { Spacer() }
         }
       }
-      HStack(spacing: 0) { // repères verticaux (¼ · ½ · ¾)
+      HStack(spacing: 0) {  // repères verticaux (¼ · ½ · ¾)
         ForEach(0..<4) { i in
           if i > 0 {
-            Rectangle().fill(grid).frame(width: 1)
+            Rectangle().fill(ReportPalette.grid).frame(width: 1)
             Spacer()
           } else {
             Spacer()
@@ -149,7 +244,7 @@ struct UsageReportView: View {
         ForEach(model.values.indices, id: \.self) { i in
           let frac = axisMax > 0 ? model.values[i] / axisMax : 0
           RoundedRectangle(cornerRadius: 1.5)
-            .fill(accent.opacity(model.values[i] > 0 ? 0.95 : 0.10))
+            .fill(ReportPalette.accent.opacity(model.values[i] > 0 ? 0.95 : 0.10))
             .frame(height: max(2, geo.size.height * frac))
             .frame(maxWidth: .infinity)
         }
@@ -162,7 +257,7 @@ struct UsageReportView: View {
     HStack(spacing: 0) {
       ForEach(model.xLabels.indices, id: \.self) { i in
         Text(model.xLabels[i])
-          .font(.system(size: 10)).foregroundColor(ink3)
+          .font(.system(size: 10)).foregroundColor(ReportPalette.ink3)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
@@ -170,83 +265,14 @@ struct UsageReportView: View {
 
   private var yAxis: some View {
     VStack(alignment: .trailing) {
-      Text(yLabel(axisMax)).font(.system(size: 10)).foregroundColor(ink3)
+      Text(yLabel(axisMax))
+        .font(.system(size: 10)).foregroundColor(ReportPalette.ink3)
       Spacer()
-      Text(yLabel(axisMax / 2)).font(.system(size: 10)).foregroundColor(ink3)
+      Text(yLabel(axisMax / 2))
+        .font(.system(size: 10)).foregroundColor(ReportPalette.ink3)
       Spacer()
-      Text("0").font(.system(size: 10)).foregroundColor(ink3)
+      Text("0").font(.system(size: 10)).foregroundColor(ReportPalette.ink3)
     }
     .frame(width: 26, height: 128)
-  }
-
-  // MARK: Apps
-
-  private var appsSection: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      Text("Temps d'écran le plus élevé")
-        .font(.system(size: 14, weight: .semibold)).foregroundColor(ink2)
-      if model.apps.isEmpty {
-        Text("Aucune donnée d'usage sur la période.")
-          .font(.system(size: 13)).foregroundColor(ink3)
-          .padding(.vertical, 8)
-      } else {
-        VStack(spacing: 14) {
-          ForEach(model.apps.prefix(8)) { app in
-            appRow(app)
-          }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 18).fill(card))
-      }
-    }
-  }
-
-  private func appRow(_ app: AppUsage) -> some View {
-    VStack(alignment: .leading, spacing: 7) {
-      HStack(spacing: 10) {
-        icon(app)
-        if let token = app.token {
-          Label(token).labelStyle(.titleOnly)
-            .font(.system(size: 15, weight: .medium)).foregroundColor(ink)
-            .lineLimit(1)
-        } else {
-          Text(app.name)
-            .font(.system(size: 15, weight: .medium)).foregroundColor(ink)
-            .lineLimit(1)
-        }
-        Spacer(minLength: 8)
-        Text(fmt(app.seconds))
-          .font(.system(size: 14, weight: .semibold)).foregroundColor(ink2)
-      }
-      // Barre proportionnelle (consommation vs app la plus utilisée).
-      GeometryReader { geo in
-        ZStack(alignment: .leading) {
-          Capsule().fill(track).frame(height: 4)
-          let frac = maxAppSeconds > 0 ? app.seconds / maxAppSeconds : 0
-          Capsule().fill(accent)
-            .frame(width: max(4, geo.size.width * frac), height: 4)
-        }
-      }
-      .frame(height: 4)
-      Text(metaLine(app)).font(.system(size: 12)).foregroundColor(ink3)
-    }
-  }
-
-  private func icon(_ app: AppUsage) -> some View {
-    Group {
-      if let token = app.token {
-        Label(token).labelStyle(.iconOnly).font(.system(size: 26))
-      } else {
-        RoundedRectangle(cornerRadius: 7).fill(track)
-      }
-    }
-    .frame(width: 30, height: 30)
-  }
-
-  private func metaLine(_ app: AppUsage) -> String {
-    let a = "\(app.pickups) activation\(app.pickups > 1 ? "s" : "")"
-    let n = "\(app.notifications) notification\(app.notifications > 1 ? "s" : "")"
-    return "\(a) · \(n)"
   }
 }

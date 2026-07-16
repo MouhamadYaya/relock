@@ -25,11 +25,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { constants } from '@/config/constants'
 import { resetRoot } from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
+import { getPostOnboardingRoute, setOnboardingDone } from '@/session/bootstrap'
 import { ScreenTime } from '@/shared/native/screen-time'
-import { kvStorage } from '@/shared/services/storage/mmkv'
 import { ChoiceCard, f, OB, OBButton, Shell, Sub, Title } from './ui'
 
 // ── Données du diagnostic ──────────────────────────────────────────────
@@ -116,12 +114,19 @@ export default function OnboardingFlow() {
   const back = () => setI(v => Math.max(v - 1, 0))
   const patch = (p: Partial<Answers>) => setA(prev => ({ ...prev, ...p }))
 
+  // Fin d'onboarding : on pose le flag, puis on route comme le bootstrap
+  // (session dev / token / écran de connexion) — jamais l'app sans compte.
   const finish = () => {
-    kvStorage.setString(constants.ONBOARDING_DONE, '1')
-    resetRoot({ index: 0, routes: [{ name: ROUTES.ROOT_APP as never }] })
+    setOnboardingDone()
+    resetRoot({
+      index: 0,
+      routes: [{ name: getPostOnboardingRoute() as never }],
+    })
   }
 
-  const who = a.name.trim() || 'toi'
+  // Prénom facultatif : sans lui on n'interpelle pas du tout. Le repli littéral
+  // (« Ton plan est prêt, toi. ») se lisait comme un bug d'affichage.
+  const who = a.name.trim()
   const progress = DIAG.includes(step)
     ? (DIAG.indexOf(step) + 1) / DIAG.length
     : undefined
@@ -461,7 +466,7 @@ function MirrorScreen({
     >
       <View style={styles.storyCenter}>
         <Sub style={{ textAlign: 'center', marginTop: 0 }}>
-          {who}, à ce rythme, ton scroll représente
+          {who ? `${who}, à ce rythme` : 'À ce rythme'}, ton scroll représente
         </Sub>
         <Text style={[f(800), styles.mirrorNum]}>~{days}</Text>
         <Title style={{ textAlign: 'center', fontSize: 24 }}>
@@ -544,7 +549,7 @@ function SuccessScreen({
           <Text style={{ fontSize: 34, color: OB.accentInk }}>✓</Text>
         </View>
         <Title style={{ textAlign: 'center', marginTop: 22 }}>
-          Ton plan est prêt, {who}.
+          {who ? `Ton plan est prêt, ${who}.` : 'Ton plan est prêt.'}
         </Title>
         <View style={styles.recap}>
           <Recap k={`${appsCount || 'tes'}`} v="apps à reprendre en main" />

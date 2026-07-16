@@ -2,22 +2,30 @@ import { useQuery } from '@tanstack/react-query'
 import { blockingKeys } from '@/features/blocking/api/keys'
 import { BlockRulesService } from '@/features/blocking/services/block-rules/block-rules.service'
 import type { BlockRuleView } from '@/features/blocking/types'
+import { useSessionUserId } from '@/session/useSessionUser'
 import { Freshness } from '@/shared/services/api/query/policy/freshness'
 
 export function useBlockRulesQuery() {
+  const userId = useSessionUserId()
   const query = useQuery<BlockRuleView[]>({
-    queryKey: blockingKeys.rules(),
+    // Clé portée par l'utilisateur (le cache est persisté sur MMKV : sans ça,
+    // les règles d'un compte peuvent réapparaître sous un autre).
+    queryKey: [...blockingKeys.rules(), userId ?? 'anon'],
     // Réinstallation : AUCUN wipe automatique ici — l'utilisateur décide
     // via le dialogue de l'Accueil (useFreshInstallPrompt).
     queryFn: () => BlockRulesService.list(),
+    // Sans session, RLS renvoie une liste VIDE sans erreur : sans ce garde,
+    // l'Accueil affiche « Aucun blocage » et met ce vide en cache.
+    enabled: !!userId,
     staleTime: Freshness.nearRealtime.staleTime,
     gcTime: Freshness.nearRealtime.gcTime,
-    placeholderData: prev => prev,
   })
 
   return {
     rules: query.data ?? [],
-    isLoading: query.isLoading,
+    /** Aucune donnée encore disponible — à distinguer d'une liste vide. */
+    isPending: !query.data,
+    isError: query.isError,
     isRefetching: query.isRefetching,
     refetch: query.refetch,
   }

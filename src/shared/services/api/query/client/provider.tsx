@@ -34,7 +34,10 @@ import {
   setTagMapsForSync,
   syncEngine,
 } from '@/shared/services/api/offline/sync-engine'
-import { PersistencePolicy } from '@/shared/services/api/query/persistence/limits'
+import {
+  PersistencePolicy,
+  PersistenceTTL,
+} from '@/shared/services/api/query/persistence/limits'
 import { mmkvPersister } from '@/shared/services/api/query/persistence/mmkv-persister'
 import type { TagMap } from '@/shared/services/api/query/tags'
 import { setOfflineMode } from '@/shared/services/api/transport/transport'
@@ -74,12 +77,13 @@ export function QueryProvider({ children, tagMaps }: Props) {
       setOfflineMode(offline)
       onlineManager.setOnline(!offline)
 
-      // 5) Nouvelle session (login, ou session dev asynchrone au démarrage) :
-      // les queries déjà montées ont tourné sans user (RLS → vide). On les
-      // rejoue pour charger les données du compte fraîchement connecté.
+      // 5) Déconnexion : le cache (et sa copie persistée sur MMKV) appartient
+      // au compte qui vient de partir — on le vide pour qu'il ne puisse pas
+      // réapparaître sous le compte suivant. Les clés portent déjà l'id de
+      // l'utilisateur ; ceci purge le stockage.
       supabase.auth.onAuthStateChange(event => {
-        if (event === 'SIGNED_IN') {
-          queryClient.invalidateQueries().catch(() => undefined)
+        if (event === 'SIGNED_OUT') {
+          queryClient.clear()
         }
       })
     }
@@ -96,8 +100,17 @@ export function QueryProvider({ children, tagMaps }: Props) {
     })
 
     // AppState -> focusManager (refetchOnWindowFocus analogue)
+    //
+    // ⚠️ `state === 'active'` (le classique) est un piège sur iOS : l'état
+    // 'inactive' couvre des surfaces système TRANSITOIRES pendant lesquelles
+    // l'app reste visible — centre de contrôle, bannière de notification,
+    // multitâche, et surtout le sélecteur d'apps / l'alerte Temps d'écran que
+    // Relock ouvre en permanence. Marquer « non focalisé » y suspend TOUS les
+    // refetch, y compris `refetchInterval` : les stats se figeaient sans que
+    // rien ne l'explique, et chaque retour déclenchait une salve de refetch.
+    // Seul 'background' est une vraie perte de focus.
     const sub = AppState.addEventListener('change', state => {
-      focusManager.setFocused(state === 'active')
+      focusManager.setFocused(state !== 'background')
     })
 
     return () => {
@@ -112,6 +125,13 @@ export function QueryProvider({ children, tagMaps }: Props) {
       persistOptions={{
         persister: mmkvPersister,
         buster: 'rq-cache-v1',
+        // Sans `maxAge`, react-query-persist-client réhydrate un cache vieux
+        // de 24 h (son défaut) : au lancement, l'écran affichait des chiffres
+        // de la veille comme s'ils étaient d'aujourd'hui, le temps du refetch.
+        // Le cache persisté n'est là que pour éviter un écran vide au
+        // démarrage — au-delà de sa fraîcheur utile, mieux vaut ne rien
+        // réafficher qu'afficher du faux.
+        maxAge: PersistenceTTL.nearRealtime,
         dehydrateOptions: {
           shouldDehydrateQuery: query => {
             const meta = query.meta

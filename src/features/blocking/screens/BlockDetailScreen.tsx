@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 import { HalfSheet } from '@/features/blocking/components/HalfSheet'
 import { RingProgress } from '@/features/blocking/components/RingProgress'
+import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useDeleteRuleMutation } from '@/features/blocking/hooks/useDeleteRuleMutation'
 import { useToggleRuleMutation } from '@/features/blocking/hooks/useToggleRuleMutation'
 import { armRule } from '@/features/blocking/services/arm'
@@ -110,7 +111,15 @@ function StatusBadge({ rule }: { rule: BlockRuleView }) {
 }
 
 export default function BlockDetailScreen({ route }: Props) {
-  const { rule } = route.params
+  // Les paramètres de navigation sont une PHOTO prise à l'ouverture : ils ne
+  // suivent ni les mutations ni les refetch. La feuille affichait donc « En
+  // pause » sur une règle relancée entre-temps — et surtout `togglePause`
+  // calculait `!rule.isActive` sur cet état périmé, écrivant l'inverse de la
+  // réalité. On relit la règle vivante dans le cache ; on ne retombe sur le
+  // paramètre que si elle en a disparu (suppression en cours).
+  const { rule: routeRule } = route.params
+  const { rules } = useBlockRulesQuery()
+  const rule = rules.find(r => r.id === routeRule.id) ?? routeRule
   const del = useDeleteRuleMutation()
   const toggle = useToggleRuleMutation()
 

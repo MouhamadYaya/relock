@@ -127,13 +127,13 @@ function BlockRow({
 }
 
 export default function HomeScreen() {
-  const { rules, isLoading } = useBlockRulesQuery()
+  const { rules, isPending: rulesPending } = useBlockRulesQuery()
   const stats = useHomeStats()
   const toggleRule = useToggleRuleMutation()
   useFreshInstallPrompt()
   // Auto-réparation : iOS peut perdre la surveillance native (réinstall,
   // mise à jour) — on ré-arme les règles persistantes actives au lancement.
-  useRuleReconciler(rules, !isLoading)
+  useRuleReconciler(rules, !rulesPending)
 
   // Un « Bloquer maintenant » terminé disparaît (ponctuel).
   const visibleRules = rules.filter(
@@ -234,8 +234,11 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.streakRow}>
+              {/* Tant que les données ne sont pas là, « 0 » serait un mensonge :
+                  un chargement ou une panne réseau s'afficherait exactement
+                  comme une série réellement à zéro. */}
               <Text style={[f(700), styles.tnum, styles.streakNum]}>
-                {stats.streak}
+                {stats.isPending ? '—' : stats.streak}
               </Text>
               <Text style={[f(600), { fontSize: 16, color: C.ink }]}>
                 {stats.streak > 1 ? 'jours' : 'jour'} de contrôle
@@ -280,7 +283,7 @@ export default function HomeScreen() {
             <View style={styles.streakStats}>
               <View style={{ flex: 1 }}>
                 <Text style={[f(700), styles.statVal]}>
-                  {fmtSaved(stats.savedMinutes)}
+                  {stats.isPending ? '—' : fmtSaved(stats.savedMinutes)}
                 </Text>
                 <Text style={[f(400), styles.statLabel]}>
                   regagnées aujourd'hui
@@ -289,7 +292,7 @@ export default function HomeScreen() {
               <View style={styles.statDivider} />
               <View style={{ flex: 1, paddingLeft: 20 }}>
                 <Text style={[f(700), styles.statVal]}>
-                  {stats.interceptions}
+                  {stats.isPending ? '—' : stats.interceptions}
                 </Text>
                 <Text style={[f(400), styles.statLabel]}>
                   ouverture{stats.interceptions > 1 ? 's' : ''} évitée
@@ -313,7 +316,19 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {visibleRules.length === 0 ? (
+          {rulesPending ? (
+            // Chargement : surtout PAS « Aucun blocage » — l'utilisateur
+            // croirait ses règles perdues, alors qu'elles arrivent.
+            <View style={styles.emptyCard}>
+              <View style={styles.blockIcon} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <View style={[styles.skelLine, { width: '45%' }]} />
+                <View
+                  style={[styles.skelLine, { width: '70%', marginTop: 8 }]}
+                />
+              </View>
+            </View>
+          ) : visibleRules.length === 0 ? (
             <Pressable
               onPress={() => navigate(ROUTES.ADD_BLOCK)}
               style={styles.emptyCard}
@@ -501,6 +516,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingVertical: 14,
     paddingHorizontal: 16,
+  },
+  skelLine: {
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
 
   // Alerte autorisation

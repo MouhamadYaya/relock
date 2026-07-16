@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { AppState, StyleSheet, Text, View } from 'react-native'
 import {
   isScreenTimeReportAvailable,
   ScreenTimeReport,
 } from '@/shared/native/ScreenTimeReport'
+import { ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 /**
@@ -21,6 +22,7 @@ import { fonts } from '@/shared/theme/tokens/fonts'
 const C = {
   label: 'rgba(235,235,245,0.55)',
   skel: 'rgba(255,255,255,0.05)',
+  muted: 'rgba(235,235,245,0.4)',
 }
 
 export function ScreenTimeHero() {
@@ -32,34 +34,64 @@ export function ScreenTimeHero() {
     return () => clearTimeout(t)
   }, [])
 
+  // Sans autorisation Temps d'écran, iOS ne rend RIEN dans la vue du rapport :
+  // l'Accueil affichait alors un trou muet sous le titre. On dit pourquoi.
+  const [authorized, setAuthorized] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (!ScreenTime.isAvailable) {
+      setAuthorized(false)
+      return
+    }
+    const check = () => {
+      ScreenTime.authorizationStatus()
+        .then(s => setAuthorized(s === 'approved'))
+        .catch(() => setAuthorized(false))
+    }
+    check()
+    const sub = AppState.addEventListener('change', s => {
+      if (s === 'active') check()
+    })
+    return () => sub.remove()
+  }, [])
+
   if (!isScreenTimeReportAvailable) return null
 
   return (
     <View style={styles.section}>
       <Text style={styles.label}>Temps d'écran aujourd'hui</Text>
 
-      {/* Total du jour + delta vs hier — rendu natif (extension rapport). */}
-      <View style={styles.heroWrap}>
-        {showSkeleton && (
-          <View style={styles.heroSkeleton} pointerEvents="none">
-            <View style={styles.skelBig} />
-            <View style={styles.skelSmall} />
+      {authorized === false ? (
+        <View style={styles.heroWrap}>
+          <Text style={styles.unavailable}>
+            Autorise le Temps d'écran pour voir tes vraies données.
+          </Text>
+        </View>
+      ) : (
+        <>
+          {/* Total du jour + delta vs hier — rendu natif (extension rapport). */}
+          <View style={styles.heroWrap}>
+            {showSkeleton && (
+              <View style={styles.heroSkeleton} pointerEvents="none">
+                <View style={styles.skelBig} />
+                <View style={styles.skelSmall} />
+              </View>
+            )}
+            <ScreenTimeReport mode="hero" style={styles.report} />
           </View>
-        )}
-        <ScreenTimeReport mode="hero" style={styles.report} />
-      </View>
 
-      {/* Pilules par app (aujourd'hui) — rendu natif. */}
-      <View style={styles.pillsWrap}>
-        {showSkeleton && (
-          <View style={styles.skeletonRow} pointerEvents="none">
-            {[0, 1, 2, 3, 4].map(i => (
-              <View key={i} style={styles.skel} />
-            ))}
+          {/* Pilules par app (aujourd'hui) — rendu natif. */}
+          <View style={styles.pillsWrap}>
+            {showSkeleton && (
+              <View style={styles.skeletonRow} pointerEvents="none">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <View key={i} style={styles.skel} />
+                ))}
+              </View>
+            )}
+            <ScreenTimeReport mode="pills" style={styles.report} />
           </View>
-        )}
-        <ScreenTimeReport mode="pills" style={styles.report} />
-      </View>
+        </>
+      )}
     </View>
   )
 }
@@ -73,7 +105,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   // Hauteur fixe : gros total (52) + delta (24) — la vue native remplit.
-  heroWrap: { height: 82, marginTop: 4 },
+  heroWrap: { height: 82, marginTop: 4, justifyContent: 'center' },
+  unavailable: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: C.muted,
+    lineHeight: 20,
+  },
   heroSkeleton: { ...StyleSheet.absoluteFillObject, gap: 8 },
   skelBig: {
     width: 150,

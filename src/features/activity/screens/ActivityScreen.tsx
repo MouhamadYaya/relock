@@ -2,6 +2,7 @@ import { IconName } from '@assets/icons'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
+  AppState,
   DeviceEventEmitter,
   Pressable,
   ScrollView,
@@ -142,9 +143,34 @@ export default function ActivityScreen() {
   const [offset, setOffset] = useState(0)
   const [reloadKey, setReloadKey] = useState(0)
   const period = 2 - seg // Jour(2)->0, Semaine(1)->1, Mois(0)->2
-  const days = useMemo(() => lastSevenDays(), [])
-  const weeks = useMemo(() => lastSixWeeks(), [])
-  const months = useMemo(() => lastSixMonths(), [])
+
+  // Les listes de dates sont recalculées à chaque rechargement ET au retour au
+  // premier plan : figées au montage, elles proposaient encore « hier » comme
+  // dernier jour lorsque l'app passait minuit ouverte, et l'offset 0 ne
+  // désignait alors plus aujourd'hui.
+  const [dateEpoch, setDateEpoch] = useState(0)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', s => {
+      if (s === 'active') setDateEpoch(e => e + 1)
+    })
+    return () => sub.remove()
+  }, [])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: recalcul volontaire au réveil / rechargement
+  const days = useMemo(() => lastSevenDays(), [dateEpoch, reloadKey])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: idem
+  const weeks = useMemo(() => lastSixWeeks(), [dateEpoch, reloadKey])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: idem
+  const months = useMemo(() => lastSixMonths(), [dateEpoch, reloadKey])
+
+  // Voile « Chargement… » : le rapport natif ne signale pas sa fin de rendu.
+  // On l'efface après un délai borné (il est purement décoratif) — sinon il
+  // masque définitivement le message des périodes sans données.
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    setLoading(true)
+    const t = setTimeout(() => setLoading(false), 2500)
+    return () => clearTimeout(t)
+  }, [])
 
   const selectSegment = (i: number) => {
     setSeg(i)
@@ -285,20 +311,31 @@ export default function ActivityScreen() {
           </ScrollView>
         )}
 
-        {/* Rapport système : il REMPLIT l'espace et défile lui-même (une vue
-            DeviceActivityReport ne peut pas défiler dans un ScrollView RN —
-            elle bloque le geste / tronque). Seuls l'entête + les sélecteurs
-            au-dessus restent fixes. Loader derrière le temps du calcul iOS. */}
+        {/* Rapport système : deux vues natives distinctes, car iOS ne fournit
+            les activations/notifications QUE sur des tranches quotidiennes,
+            alors que le graphe du jour a besoin de tranches horaires. Le graphe
+            a donc son propre rapport (hauteur fixe), et le résumé + classement
+            vivent dans un rapport quotidien qui remplit le reste et défile
+            lui-même (un DeviceActivityReport ne peut pas défiler dans un
+            ScrollView RN). Loader derrière, le temps du calcul iOS. */}
         <View style={styles.reportCard}>
-          <View style={styles.reportLoading} pointerEvents="none">
-            <ActivityIndicator color={C.accent} />
-            <Text style={[f(500), styles.reportLoadingText]}>
-              Chargement du rapport…
-            </Text>
-          </View>
+          {/* Le rapport iOS se rend par-dessus quand il est prêt. Ce voile
+              DOIT s'effacer tout seul : sinon, quand la période ne contient
+              rien (iOS ne conserve qu'un historique court) ou que
+              l'autorisation manque, « Chargement… » restait affiché POUR
+              TOUJOURS, masquant le message d'explication en dessous. */}
+          {loading && (
+            <View style={styles.reportLoading} pointerEvents="none">
+              <ActivityIndicator color={C.accent} />
+              <Text style={[f(500), styles.reportLoadingText]}>
+                Chargement du rapport…
+              </Text>
+            </View>
+          )}
           <ScreenTimeReport
-            key={`${reloadKey}-${period}-${offset}`}
+            key={`s-${reloadKey}-${period}-${offset}`}
             style={styles.report}
+            mode="usage"
             period={period}
             offset={offset}
             fallback={
@@ -312,6 +349,15 @@ export default function ActivityScreen() {
                 </Text>
               </View>
             }
+          />
+        </View>
+        <View style={styles.chartCard}>
+          <ScreenTimeReport
+            key={`c-${reloadKey}-${period}-${offset}`}
+            style={styles.report}
+            mode="chart"
+            period={period}
+            offset={offset}
           />
         </View>
       </View>
@@ -377,6 +423,16 @@ const styles = StyleSheet.create({
   reportCard: {
     flex: 1,
     marginTop: 8,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  // Graphe : hauteur fixe (titre + carte 128 pt + axe + marges internes).
+  chartCard: {
+    height: 218,
+    marginTop: 10,
     marginBottom: 12,
     backgroundColor: C.surface,
     borderWidth: 1,

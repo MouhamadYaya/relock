@@ -7,13 +7,12 @@ import os
 /// Extension DeviceActivityReport de Relock.
 /// Seul endroit où iOS autorise la lecture du temps d'écran système réel
 /// (par app, par heure) et le rendu des vraies icônes d'apps. Le contenu est
-/// une vue SwiftUI, hébergée dans l'app via `DeviceActivityReport(.usage, …)`.
+/// une vue SwiftUI, hébergée dans l'app via `DeviceActivityReport(…)`.
 ///
 /// ⚠️ Sandbox Apple : cette extension NE PEUT PAS exfiltrer les données
 /// (réseau interdit, écritures App Group silencieusement perdues côté app).
 /// Tout chiffre de temps d'écran à AFFICHER doit donc être RENDU ICI, dans
-/// une scène — jamais « publié » vers l'app. C'est la raison d'être de la
-/// scène `HeroReport` (total du jour de l'Accueil).
+/// une scène — jamais « publié » vers l'app.
 enum RelockReportLog {
   static let log = Logger(subsystem: "com.yaya.relock", category: "report")
 }
@@ -21,8 +20,19 @@ enum RelockReportLog {
 @main
 struct RelockActivityReport: DeviceActivityReportExtension {
   var body: some DeviceActivityReportScene {
+    // Résumé + classement des apps — TOUJOURS sur des segments quotidiens
+    // (seule granularité où iOS renseigne activations et notifications).
     UsageReport { model in
       UsageReportView(model: model)
+    }
+    // Graphe : tranches horaires (Jour) ou quotidiennes (Semaine/Mois). Deux
+    // contextes distincts → la granularité est connue PAR CONSTRUCTION, même
+    // quand la période ne contient aucune donnée.
+    HourChartReport { model in
+      UsageChartView(model: model)
+    }
+    DayChartReport { model in
+      UsageChartView(model: model)
     }
     PillsReport { apps in
       UsagePillsView(apps: apps)
@@ -33,8 +43,18 @@ struct RelockActivityReport: DeviceActivityReportExtension {
   }
 }
 
-extension DeviceActivityReport.Context {
-  static let usage = Self("Usage")
+// MARK: - Identité d'une app
+//
+// ⚠️ PIÈGE MAJEUR : iOS ne renseigne `bundleIdentifier` / `localizedDisplayName`
+// QUE pour les apps explicitement autorisées (celles de la sélection de
+// l'utilisateur). Pour toutes les autres, les DEUX sont nil. Une clé
+// « bundleIdentifier ?? nom » vaut donc « App » pour des dizaines d'apps
+// différentes : elles fusionnent en UNE ligne dont la durée est leur somme et
+// dont l'icône est celle de la dernière rencontrée (« Réglages · 16 h »).
+// Le `token` est la SEULE identité toujours fournie — et il est Hashable.
+enum AppKey: Hashable {
+  case token(ApplicationToken)
+  case label(String)
 }
 
 struct AppUsage: Identifiable {
@@ -46,176 +66,191 @@ struct AppUsage: Identifiable {
   let token: ApplicationToken?
 }
 
-struct UsageModel {
+/// Mesures d'UNE app sur UN segment.
+private struct AppStat {
+  var seconds: Double
+  var pickups: Int
+  var notifications: Int
+  var name: String
+  var token: ApplicationToken?
+}
+
+/// Une tranche de temps (heure ou jour) et le total des apps qu'elle contient.
+struct UsageBucket {
+  let start: Date
+  let seconds: Double
+}
+
+/// Résultat brut d'un rapport, indépendant de la vue qui le consomme.
+struct UsageAggregate {
+  var apps: [AppUsage] = []
+  var buckets: [UsageBucket] = []
   var totalSeconds: Double = 0
   var totalPickups: Int = 0
   var totalNotifications: Int = 0
-  var values: [Double] = [] // durée par bucket (heure ou jour), chronologique
-  var xLabels: [String] = [] // 4 repères d'axe X (ex. 00h · 06h · 12h · 18h)
-  var apps: [AppUsage] = []
-  /// Tranches horaires (vue Jour) ou quotidiennes (Semaine/Mois) — pilote le
-  /// titre du graphe (« par heure » / « par jour »).
-  var isHourly = true
-  /// Libellé de date FR dérivé de l'étendue réelle des segments (le filtre
-  /// vient de l'app hôte) : « Aujourd'hui, 13 juillet » / « Semaine du 7 juillet ».
-  var dateLabel: String = ""
+  var spanStart: Date?
+  var spanEnd: Date?
+  var hadData = false
 }
 
-struct UsageReport: DeviceActivityReportScene {
-  let context: DeviceActivityReport.Context = .usage
-  let content: (UsageModel) -> UsageReportView
+/// Agrège un rapport en une source de vérité UNIQUE, utilisée par toutes les
+/// scènes (accueil, graphe, classement) — c'est ce qui garantit que le total
+/// de l'Accueil, celui de l'Activité et la somme des lignes concordent.
+///
+/// Principes :
+///  • Le total NE vient PAS de `segment.totalActivityDuration` : cette valeur
+///    est incohérente d'une segmentation à l'autre (le même jour vaut 17 h en
+///    tranches quotidiennes et 11 h en tranches horaires) et ne correspond pas
+///    à la somme des apps affichées. On ne somme QUE des durées par app —
+///    la seule mesure que l'utilisateur peut vérifier ligne par ligne.
+///  • Anti-double-comptage : iOS peut renvoyer plusieurs « entries » couvrant
+///    le même segment (plusieurs appareils/comptes). On prend le MAXIMUM par
+///    (segment, app) au lieu d'additionner — sinon les durées doublent.
+///  • Chaque mesure est bornée par le temps réellement écoulé du segment :
+///    une app ne peut pas tourner 3 h dans une tranche d'1 h.
+func aggregateUsage(
+  _ data: DeviceActivityResults<DeviceActivityData>,
+  now: Date = Date()
+) async -> UsageAggregate {
+  var perSegment: [Date: [AppKey: AppStat]] = [:]
+  var segmentCap: [Date: Double] = [:]
+  var out = UsageAggregate()
+  var entryCount = 0
 
-  func makeConfiguration(
-    representing data: DeviceActivityResults<DeviceActivityData>
-  ) async -> UsageModel {
-    var model = UsageModel()
-    var byApp: [String: AppUsage] = [:]
-    var buckets: [(Date, Double)] = []
-    var spanStart: Date?
-    var spanEnd: Date?
-    var entryCount = 0
-    var segmentCount = 0
-    let nowRef = Date()
+  for await entry in data {
+    entryCount += 1
+    for await segment in entry.activitySegments {
+      let iv = segment.dateInterval
+      out.spanStart = min(out.spanStart ?? iv.start, iv.start)
+      out.spanEnd = max(out.spanEnd ?? iv.end, iv.end)
+      // Tranche entièrement dans le futur : ne peut contenir que des données
+      // parasites (autre fuseau, horloge d'un autre appareil).
+      guard iv.start < now else { continue }
+      let cap = max(0, min(iv.end, now).timeIntervalSince(iv.start))
+      segmentCap[iv.start] = cap
 
-    for await entry in data {
-      entryCount += 1
-      for await segment in entry.activitySegments {
-        segmentCount += 1
-        let dur = segment.totalActivityDuration
-        buckets.append((segment.dateInterval.start, dur))
-        spanStart = min(spanStart ?? segment.dateInterval.start, segment.dateInterval.start)
-        spanEnd = max(spanEnd ?? segment.dateInterval.end, segment.dateInterval.end)
-
-        // Un segment FUTUR (start ≥ maintenant) ne peut contenir que des
-        // données parasites (autre fuseau / autre appareil) : il est déjà
-        // exclu du graphe, on l'exclut aussi des totaux et du classement.
-        guard segment.dateInterval.start < nowRef else { continue }
-
-        for await category in segment.categories {
-          for await app in category.applications {
-            let sec = app.totalActivityDuration
-            let pick = app.numberOfPickups
-            let notif = app.numberOfNotifications
-            guard sec > 0 || pick > 0 || notif > 0 else { continue }
-            let name = app.application.localizedDisplayName ?? "App"
-            let key = app.application.bundleIdentifier ?? name
-            let prev = byApp[key]
-            byApp[key] = AppUsage(
-              id: key, name: name,
-              seconds: (prev?.seconds ?? 0) + sec,
-              pickups: (prev?.pickups ?? 0) + pick,
-              notifications: (prev?.notifications ?? 0) + notif,
-              token: app.application.token)
-            model.totalPickups += pick
-            model.totalNotifications += notif
+      for await category in segment.categories {
+        for await app in category.applications {
+          let sec = min(app.totalActivityDuration, cap)
+          let pick = app.numberOfPickups
+          let notif = app.numberOfNotifications
+          guard sec > 0 || pick > 0 || notif > 0 else { continue }
+          out.hadData = true
+          let token = app.application.token
+          let name =
+            app.application.localizedDisplayName
+            ?? app.application.bundleIdentifier ?? "App"
+          let key: AppKey = token.map { .token($0) } ?? .label(name)
+          let stat = AppStat(
+            seconds: sec, pickups: pick, notifications: notif, name: name,
+            token: token)
+          if let prev = perSegment[iv.start]?[key] {
+            // MAX, pas +=  : deux entries décrivant le même segment sont deux
+            // vues de la même réalité, pas deux usages à cumuler.
+            perSegment[iv.start]?[key] = AppStat(
+              seconds: max(prev.seconds, stat.seconds),
+              pickups: max(prev.pickups, stat.pickups),
+              notifications: max(prev.notifications, stat.notifications),
+              name: prev.name == "App" ? stat.name : prev.name,
+              token: prev.token ?? stat.token)
+          } else {
+            perSegment[iv.start, default: [:]][key] = stat
           }
         }
       }
     }
-
-    // Une app ne peut pas avoir tourné plus longtemps que la fenêtre écoulée
-    // elle-même : plafonne les valeurs aberrantes remontées par iOS (ex.
-    // « Réglages · 20 h ») au temps réellement écoulé de la période.
-    let elapsedWindow = windowElapsed(from: spanStart, to: spanEnd, now: nowRef)
-    if let cap = elapsedWindow {
-      for (key, app) in byApp where app.seconds > cap {
-        RelockReportLog.log.error(
-          "usage: valeur aberrante plafonnée \(key, privacy: .public) \(Int(app.seconds), privacy: .public)s > fenêtre \(Int(cap), privacy: .public)s"
-        )
-        byApp[key] = AppUsage(
-          id: app.id, name: app.name, seconds: cap, pickups: app.pickups,
-          notifications: app.notifications, token: app.token)
-      }
-    }
-
-    model.apps = byApp.values.sorted { $0.seconds > $1.seconds }
-    RelockReportLog.log.info(
-      "usage: entries=\(entryCount, privacy: .public) segments=\(segmentCount, privacy: .public) apps=\(byApp.count, privacy: .public) top=\(Int(model.apps.first?.seconds ?? 0), privacy: .public)s"
-    )
-
-    // ── Grille alignée sur le TEMPS (chaque tranche à SA place réelle) ──
-    // iOS renvoie des segments épars ou décalés (autre appareil/fuseau) : les
-    // afficher bout à bout les désaligne et les fait « déborder » dans le futur.
-    // On construit une grille fixe : chaque segment est rangé dans sa tranche
-    // réelle (heure du jour, ou jour de la période), 0 ailleurs, et toute
-    // tranche FUTURE (start ≥ maintenant) est ignorée. L'axe X est calé dessus,
-    // et le total = somme des barres réellement affichées (puis plafonné).
-    let now = Date()
-    let lf = DateFormatter()
-    lf.locale = Locale(identifier: "fr_FR")
-    if let s = spanStart, let e = spanEnd {
-      let span = e.timeIntervalSince(s)
-      let hourly = span <= 90_000 // ≤ ~25h → vue Jour (tranches d'1 h)
-      model.isHourly = hourly
-      let slot = hourly ? 3_600.0 : 86_400.0
-      let n = max(1, Int((span / slot).rounded()))
-      var grid = [Double](repeating: 0, count: n)
-      for (start, dur) in buckets where start < now {
-        let idx = Int((start.timeIntervalSince(s) / slot).rounded(.down))
-        if idx >= 0 && idx < n { grid[idx] += dur }
-      }
-      model.values = grid
-      model.totalSeconds = cappedScreenTime(grid.reduce(0, +), from: s, to: e)
-
-      // Axe X calé sur la grille (mêmes positions que les barres).
-      if hourly {
-        lf.dateFormat = "HH'h'" // 00h · 06h · 12h · 18h
-        for frac in [0.0, 0.25, 0.5, 0.75] {
-          let i = min(n - 1, Int(Double(n) * frac))
-          model.xLabels.append(
-            lf.string(from: s.addingTimeInterval(Double(i) * slot)))
-        }
-      } else if n <= 10 {
-        lf.dateFormat = "EEEEE" // Semaine : L M M J V S D
-        for i in 0..<n {
-          model.xLabels.append(
-            lf.string(from: s.addingTimeInterval(Double(i) * slot))
-              .uppercased())
-        }
-      } else {
-        lf.dateFormat = "d/M" // Mois : 4 repères de date
-        for frac in [0.0, 0.25, 0.5, 0.75] {
-          let i = min(n - 1, Int(Double(n) * frac))
-          model.xLabels.append(
-            lf.string(from: s.addingTimeInterval(Double(i) * slot)))
-        }
-      }
-
-    }
-
-    // Libellé de date FR — dérivé des dates réelles de la période, valable
-    // aussi pour les semaines/mois passés (sélecteurs de l'Activité).
-    if let s = spanStart, let e = spanEnd {
-      let days = e.timeIntervalSince(s) / 86_400
-      let cal = Calendar.current
-      let df = DateFormatter()
-      df.locale = Locale(identifier: "fr_FR")
-      if days <= 1.5 {
-        df.dateFormat = "d MMMM"
-        if cal.isDateInToday(s) {
-          model.dateLabel = "Aujourd'hui, \(df.string(from: s))"
-        } else {
-          df.dateFormat = "EEEE d MMMM"
-          model.dateLabel = df.string(from: s).capitalizedFirst
-        }
-      } else if days <= 8 {
-        if cal.isDate(Date(), equalTo: s, toGranularity: .weekOfYear) {
-          model.dateLabel = "Cette semaine"
-        } else {
-          df.dateFormat = "d MMMM"
-          model.dateLabel = "Semaine du \(df.string(from: s))"
-        }
-      } else {
-        if cal.isDate(Date(), equalTo: s, toGranularity: .month) {
-          model.dateLabel = "Ce mois-ci"
-        } else {
-          df.dateFormat = "MMMM yyyy"
-          model.dateLabel = df.string(from: s).capitalizedFirst
-        }
-      }
-    }
-    return model
   }
+
+  // Somme sur les segments (chaque segment est déjà dédupliqué).
+  var totals: [AppKey: AppStat] = [:]
+  for (start, stats) in perSegment {
+    var segSeconds = 0.0
+    for (key, s) in stats {
+      segSeconds += s.seconds
+      if let prev = totals[key] {
+        totals[key] = AppStat(
+          seconds: prev.seconds + s.seconds,
+          pickups: prev.pickups + s.pickups,
+          notifications: prev.notifications + s.notifications,
+          name: prev.name == "App" ? s.name : prev.name,
+          token: prev.token ?? s.token)
+      } else {
+        totals[key] = s
+      }
+      out.totalPickups += s.pickups
+      out.totalNotifications += s.notifications
+    }
+    // Le cumul des apps d'une tranche ne peut pas dépasser sa durée écoulée
+    // (deux apps peuvent être comptées en parallèle : image dans l'image…).
+    let cap = segmentCap[start] ?? segSeconds
+    out.buckets.append(UsageBucket(start: start, seconds: min(segSeconds, cap)))
+  }
+  out.buckets.sort { $0.start < $1.start }
+
+  out.apps = totals.map { key, s in
+    AppUsage(
+      id: keyIdentifier(key), name: s.name, seconds: s.seconds,
+      pickups: s.pickups, notifications: s.notifications, token: s.token)
+  }
+  .sorted { $0.seconds > $1.seconds }
+
+  // Total = somme des tranches = somme des apps. Une seule définition.
+  out.totalSeconds = out.buckets.reduce(0) { $0 + $1.seconds }
+
+  RelockReportLog.log.info(
+    """
+    agrégat: entries=\(entryCount, privacy: .public) \
+    segments=\(perSegment.count, privacy: .public) \
+    apps=\(out.apps.count, privacy: .public) \
+    total=\(Int(out.totalSeconds), privacy: .public)s \
+    pickups=\(out.totalPickups, privacy: .public) \
+    top=\(out.apps.first.map { "\($0.name) \(Int($0.seconds))s" } ?? "—", privacy: .public)
+    """
+  )
+  if entryCount > 1 {
+    RelockReportLog.log.error(
+      "agrégat: \(entryCount, privacy: .public) entries — dédup par MAX appliquée (plusieurs appareils/comptes ?)"
+    )
+  }
+  return out
+}
+
+private func keyIdentifier(_ key: AppKey) -> String {
+  switch key {
+  case .token(let t): return "t\(t.hashValue)"
+  case .label(let l): return "l\(l)"
+  }
+}
+
+// MARK: - Libellé de période
+
+/// Libellé FR d'une période, dérivé de la granularité DEMANDÉE (pas des
+/// données) : reste correct quand la période ne contient aucune donnée.
+func periodLabel(start: Date?, end: Date?, hourly: Bool) -> String {
+  guard let s = start else { return "" }
+  let cal = Calendar.current
+  let df = DateFormatter()
+  df.locale = Locale(identifier: "fr_FR")
+  let days = (end?.timeIntervalSince(s) ?? 0) / 86_400
+
+  if hourly || days <= 1.5 {
+    if cal.isDateInToday(s) {
+      df.dateFormat = "d MMMM"
+      return "Aujourd'hui, \(df.string(from: s))"
+    }
+    df.dateFormat = "EEEE d MMMM"
+    return df.string(from: s).capitalizedFirst
+  }
+  if days <= 8 {
+    if cal.isDate(Date(), equalTo: s, toGranularity: .weekOfYear) {
+      return "Cette semaine"
+    }
+    df.dateFormat = "d MMMM"
+    return "Semaine du \(df.string(from: s))"
+  }
+  if cal.isDate(Date(), equalTo: s, toGranularity: .month) { return "Ce mois-ci" }
+  df.dateFormat = "MMMM yyyy"
+  return df.string(from: s).capitalizedFirst
 }
 
 extension String {
@@ -225,27 +260,119 @@ extension String {
   }
 }
 
-/// Plafonne un total de temps d'écran au temps réellement ÉCOULÉ de la fenêtre :
-/// il ne peut PAS dépasser (fin_effective − début). Neutralise les agrégations
-/// multi-appareils / multi-comptes (Partage familial) qui gonflent le total
-/// au-delà du possible (ex. « 20 h aujourd'hui » alors qu'il est 17 h).
-func cappedScreenTime(_ raw: Double, from s: Date?, to e: Date?) -> Double {
-  guard let s = s, let e = e else { return raw }
-  let elapsed = max(0, min(e, Date()).timeIntervalSince(s))
-  return min(raw, elapsed)
+// MARK: - Scène : résumé + classement des apps (segments QUOTIDIENS)
+
+struct UsageModel {
+  var totalSeconds: Double = 0
+  var totalPickups: Int = 0
+  var totalNotifications: Int = 0
+  var apps: [AppUsage] = []
+  var dateLabel: String = ""
+  /// Aucune donnée renvoyée par iOS pour cette période (≠ « 0 minute »).
+  var isEmpty = true
+  /// Période antérieure à l'historique conservé par iOS (~30 j).
+  var beyondRetention = false
 }
 
-/// Temps écoulé (s) d'une fenêtre [début, fin] à l'instant `now`, ou nil si
-/// la fenêtre est inconnue. Sert de plafond aux durées PAR APP.
-func windowElapsed(from s: Date?, to e: Date?, now: Date = Date()) -> Double? {
-  guard let s = s, let e = e else { return nil }
-  return max(0, min(e, now).timeIntervalSince(s))
+struct UsageReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("Usage")
+  let content: (UsageModel) -> UsageReportView
+
+  func makeConfiguration(
+    representing data: DeviceActivityResults<DeviceActivityData>
+  ) async -> UsageModel {
+    let agg = await aggregateUsage(data)
+    var model = UsageModel()
+    model.totalSeconds = agg.totalSeconds
+    model.totalPickups = agg.totalPickups
+    model.totalNotifications = agg.totalNotifications
+    model.apps = agg.apps
+    model.isEmpty = !agg.hadData
+    model.dateLabel = periodLabel(
+      start: agg.spanStart, end: agg.spanEnd, hourly: false)
+    if let s = agg.spanStart, !agg.hadData {
+      // iOS ne conserve qu'un historique court : au-delà, « 0 min » n'est pas
+      // une réalité mesurée mais une absence de données. On le dit.
+      model.beyondRetention =
+        Date().timeIntervalSince(s) > 30 * 86_400
+    }
+    return model
+  }
 }
 
-// MARK: - Pilules « où part ton temps aujourd'hui » (Accueil)
+// MARK: - Scènes : graphe (deux granularités = deux contextes)
 
-/// Scène compacte : les apps du jour triées par durée décroissante.
-/// Hébergée sur l'Accueil via `ScreenTimeReportView` (mode « pills »).
+struct ChartModel {
+  var values: [Double] = []
+  var xLabels: [String] = []
+  var isHourly = true
+}
+
+/// Construit une grille alignée sur le TEMPS : chaque tranche à SA place
+/// réelle, 0 ailleurs — sinon les segments épars se tassent et débordent.
+private func makeChart(_ agg: UsageAggregate, hourly: Bool) -> ChartModel {
+  var model = ChartModel()
+  model.isHourly = hourly
+  guard let s = agg.spanStart, let e = agg.spanEnd else { return model }
+
+  let slot = hourly ? 3_600.0 : 86_400.0
+  let span = e.timeIntervalSince(s)
+  let n = max(1, Int((span / slot).rounded()))
+  var grid = [Double](repeating: 0, count: n)
+  for b in agg.buckets {
+    let idx = Int((b.start.timeIntervalSince(s) / slot).rounded(.down))
+    if idx >= 0 && idx < n { grid[idx] = min(grid[idx] + b.seconds, slot) }
+  }
+  model.values = grid
+
+  let lf = DateFormatter()
+  lf.locale = Locale(identifier: "fr_FR")
+  if hourly {
+    lf.dateFormat = "HH'h'"  // 00h · 06h · 12h · 18h
+    for frac in [0.0, 0.25, 0.5, 0.75] {
+      let i = min(n - 1, Int(Double(n) * frac))
+      model.xLabels.append(lf.string(from: s.addingTimeInterval(Double(i) * slot)))
+    }
+  } else if n <= 10 {
+    lf.dateFormat = "EEEEE"  // Semaine : L M M J V S D
+    for i in 0..<n {
+      model.xLabels.append(
+        lf.string(from: s.addingTimeInterval(Double(i) * slot)).uppercased())
+    }
+  } else {
+    lf.dateFormat = "d/M"  // Mois : 4 repères de date
+    for frac in [0.0, 0.25, 0.5, 0.75] {
+      let i = min(n - 1, Int(Double(n) * frac))
+      model.xLabels.append(lf.string(from: s.addingTimeInterval(Double(i) * slot)))
+    }
+  }
+  return model
+}
+
+struct HourChartReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("ChartHour")
+  let content: (ChartModel) -> UsageChartView
+
+  func makeConfiguration(
+    representing data: DeviceActivityResults<DeviceActivityData>
+  ) async -> ChartModel {
+    makeChart(await aggregateUsage(data), hourly: true)
+  }
+}
+
+struct DayChartReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("ChartDay")
+  let content: (ChartModel) -> UsageChartView
+
+  func makeConfiguration(
+    representing data: DeviceActivityResults<DeviceActivityData>
+  ) async -> ChartModel {
+    makeChart(await aggregateUsage(data), hourly: false)
+  }
+}
+
+// MARK: - Scène : pilules « où part ton temps aujourd'hui » (Accueil)
+
 struct PillsReport: DeviceActivityReportScene {
   let context: DeviceActivityReport.Context = .init("TodayPills")
   let content: ([AppUsage]) -> UsagePillsView
@@ -253,51 +380,15 @@ struct PillsReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> [AppUsage] {
-    var byApp: [String: AppUsage] = [:]
-    let nowRef = Date()
-    var spanStart: Date?
-    var spanEnd: Date?
-    for await entry in data {
-      for await segment in entry.activitySegments {
-        spanStart = min(
-          spanStart ?? segment.dateInterval.start, segment.dateInterval.start)
-        spanEnd = max(
-          spanEnd ?? segment.dateInterval.end, segment.dateInterval.end)
-        guard segment.dateInterval.start < nowRef else { continue }
-        for await category in segment.categories {
-          for await app in category.applications {
-            let sec = app.totalActivityDuration
-            guard sec > 0 else { continue }
-            let name = app.application.localizedDisplayName ?? "App"
-            let key = app.application.bundleIdentifier ?? name
-            let prev = byApp[key]
-            byApp[key] = AppUsage(
-              id: key, name: name, seconds: (prev?.seconds ?? 0) + sec,
-              pickups: 0, notifications: 0,
-              token: prev?.token ?? app.application.token)
-          }
-        }
-      }
-    }
-    // Plafond par app : jamais plus que le temps écoulé de la journée.
-    if let cap = windowElapsed(from: spanStart, to: spanEnd, now: nowRef) {
-      for (key, app) in byApp where app.seconds > cap {
-        byApp[key] = AppUsage(
-          id: app.id, name: app.name, seconds: cap, pickups: 0,
-          notifications: 0, token: app.token)
-      }
-    }
-    return byApp.values.sorted { $0.seconds > $1.seconds }
+    await aggregateUsage(data).apps
   }
 }
 
 /// Rangée de pilules : carte gris foncé SUBTILE derrière chaque pilule, icône en
-/// haut + durée compacte juste dessous (espace moyen). Défilement horizontal,
-/// ~5 cartes visibles + la suivante tronquée à droite (indice de défilement).
+/// haut + durée compacte juste dessous. Défilement horizontal.
 struct UsagePillsView: View {
   let apps: [AppUsage]
 
-  // Carte gris foncé SUBTILE (plus discrète que l'image, sans liseré) + durée sobre.
   private let cardBg = Color.white.opacity(0.045)
   private let time = Color.white.opacity(0.55)
   private let ink2 = Color(red: 0.66, green: 0.67, blue: 0.75)
@@ -309,16 +400,14 @@ struct UsagePillsView: View {
     if m < 60 { return "\(m)m" }
     let h = m / 60
     let r = m % 60
-    return r == 0 ? "\(h)h" : "\(h)h \(r)"  // « 2h 14 » — compact, minimaliste
+    return r == 0 ? "\(h)h" : "\(h)h \(r)"
   }
 
   var body: some View {
-    // Carte gris foncé subtile derrière chaque pilule (comme l'image, en plus
-    // discret) : icône en haut, durée compacte juste dessous, espace MOYEN.
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(alignment: .top, spacing: 9) {
         ForEach(apps.prefix(12)) { app in
-          VStack(spacing: 5) {  // espace MOYEN icône ↔ durée
+          VStack(spacing: 5) {
             if let token = app.token {
               Label(token)
                 .labelStyle(.iconOnly)
@@ -335,7 +424,7 @@ struct UsagePillsView: View {
               .foregroundColor(time)
               .lineLimit(1)
           }
-          .frame(width: 66, height: 74)  // ~taille image (un peu + haute que large)
+          .frame(width: 66, height: 74)
           .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous).fill(cardBg)
           )
@@ -353,12 +442,11 @@ struct UsagePillsView: View {
   }
 }
 
-// MARK: - Héro Accueil : total du jour + delta vs hier
+// MARK: - Scène : héro Accueil (total du jour + delta vs hier)
 //
-// Le sandbox de cette extension interdit de « publier » le total vers l'app
-// (écritures App Group invisibles côté app) : le chiffre de l'Accueil est donc
-// RENDU ici. Le filtre hôte couvre [hier 00:00 → aujourd'hui 23:59] en
-// segments quotidiens → la scène calcule aujourd'hui ET hier, donc le delta.
+// Filtre hôte : [hier 00:00 → fin d'aujourd'hui] en segments QUOTIDIENS — la
+// même granularité et la même formule que le résumé de l'Activité, pour que
+// les deux écrans affichent rigoureusement le même chiffre.
 
 struct HeroModel {
   var todaySeconds: Double = 0
@@ -373,36 +461,18 @@ struct HeroReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> HeroModel {
+    let agg = await aggregateUsage(data)
     let cal = Calendar.current
-    let nowRef = Date()
-    var today = 0.0
-    var yesterday = 0.0
-    var sawYesterday = false
-    var todayStart: Date?
-    var todayEnd: Date?
-
-    for await entry in data {
-      for await segment in entry.activitySegments {
-        let start = segment.dateInterval.start
-        guard start < nowRef else { continue }
-        let dur = segment.totalActivityDuration
-        if cal.isDateInToday(start) {
-          today += dur
-          todayStart = min(todayStart ?? start, start)
-          todayEnd = max(
-            todayEnd ?? segment.dateInterval.end, segment.dateInterval.end)
-        } else if cal.isDateInYesterday(start) {
-          yesterday += dur
-          sawYesterday = true
-        }
+    var model = HeroModel()
+    for b in agg.buckets {
+      if cal.isDateInToday(b.start) {
+        model.todaySeconds += b.seconds
+      } else if cal.isDateInYesterday(b.start) {
+        model.yesterdaySeconds = (model.yesterdaySeconds ?? 0) + b.seconds
       }
     }
-
-    var model = HeroModel()
-    model.todaySeconds = cappedScreenTime(today, from: todayStart, to: todayEnd)
-    model.yesterdaySeconds = sawYesterday ? min(yesterday, 86_400) : nil
     RelockReportLog.log.info(
-      "hero: today=\(Int(model.todaySeconds), privacy: .public)s yesterday=\(Int(yesterday), privacy: .public)s"
+      "hero: today=\(Int(model.todaySeconds), privacy: .public)s yesterday=\(Int(model.yesterdaySeconds ?? -1), privacy: .public)s"
     )
     return model
   }
