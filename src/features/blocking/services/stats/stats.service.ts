@@ -65,16 +65,9 @@ export const StatsService = {
     const { data: u, error: uErr } = await supabase.auth.getUser()
     if (uErr) throw normalizeError(uErr)
     const userId = u.user?.id
-    // DIAG TEMP (lu via Metro) — état de la chaîne côté APP.
-    console.log('[RELOCK-DIAG] sync session=', userId ? 'OUI' : 'NON')
     if (!userId) return // pas de session → on ne touche PAS au journal
 
     const events = await ScreenTime.pullEvents()
-    console.log(
-      '[RELOCK-DIAG] sync journal=',
-      events.length,
-      JSON.stringify(events.slice(-6)),
-    )
     if (!events.length) return
 
     // Regroupe par jour EN PRÉSERVANT L'ORDRE (le journal est du plus ancien au
