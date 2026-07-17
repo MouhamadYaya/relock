@@ -5,8 +5,8 @@ import os
 
 /// Héberge un rapport de temps d'écran (extension RelockActivityReport) dans une
 /// UIView pour RN.
-/// - `mode` : « usage » (résumé + classement), « chart » (graphe), « pills »
-///   (rangée du jour, Accueil) ou « hero » (total du jour + delta, Accueil).
+/// - `mode` : « usage » (Activité : résumé + graphe + classement, défilant),
+///   « pills » (rangée du jour, Accueil) ou « hero » (total + delta, Accueil).
 /// - `period` : 0 = jour, 1 = semaine, 2 = mois.
 /// - `offset` : recule dans le temps, en unités de la période.
 @available(iOS 16.0, *)
@@ -65,42 +65,23 @@ private struct ReportContainer: View {
             segment: .daily(during: DateInterval(start: start, end: today.end)),
             users: .all, devices: devices)))
 
-    case "chart":
+    default:
+      // Activité : UN SEUL rapport, qui défile lui-même. Le contexte porte la
+      // granularité (heures pour le jour, jours pour semaine/mois) : la vue
+      // sait donc l'afficher même si la période ne renvoie rien.
       let iv = interval(cal, now)
       if period == 0 {
-        // Jour → tranches horaires. Contexte dédié : la granularité est connue
-        // par construction, même si la période ne renvoie aucune donnée.
         return AnyView(
           DeviceActivityReport(
-            DeviceActivityReport.Context("ChartHour"),
+            DeviceActivityReport.Context("UsageHour"),
             filter: DeviceActivityFilter(
               segment: .hourly(during: iv), users: .all, devices: devices)))
       }
       return AnyView(
         DeviceActivityReport(
-          DeviceActivityReport.Context("ChartDay"),
+          DeviceActivityReport.Context("UsageDay"),
           filter: DeviceActivityFilter(
             segment: .daily(during: iv), users: .all, devices: devices)))
-
-    case "apps":
-      // Classement : segments quotidiens (cf. « summary »).
-      return AnyView(
-        DeviceActivityReport(
-          DeviceActivityReport.Context("UsageApps"),
-          filter: DeviceActivityFilter(
-            segment: .daily(during: interval(cal, now)), users: .all,
-            devices: devices)))
-
-    default:
-      // Résumé : TOUJOURS des segments quotidiens — seule granularité où iOS
-      // renseigne activations et notifications (en tranches horaires ils
-      // reviennent quasi nuls : « 1 activation » pour une journée entière).
-      return AnyView(
-        DeviceActivityReport(
-          DeviceActivityReport.Context("UsageSummary"),
-          filter: DeviceActivityFilter(
-            segment: .daily(during: interval(cal, now)), users: .all,
-            devices: devices)))
     }
   }
 }
@@ -112,7 +93,7 @@ final class ScreenTimeReportView: UIView {
 
   @objc var period: NSNumber = 0 { didSet { setNeedsRebuild() } }
   @objc var offset: NSNumber = 0 { didSet { setNeedsRebuild() } }
-  @objc var mode: NSString = "summary" { didSet { setNeedsRebuild() } }
+  @objc var mode: NSString = "usage" { didSet { setNeedsRebuild() } }
 
   private struct Config: Equatable {
     let period: Int
@@ -160,10 +141,16 @@ final class ScreenTimeReportView: UIView {
     ScreenTimeReportView.log.info(
       "rebuild mode=\(config.mode, privacy: .public) period=\(config.period, privacy: .public) offset=\(config.offset, privacy: .public)"
     )
+    let root = ReportContainer(
+      period: config.period, offset: config.offset, mode: config.mode)
+    if let existing = hosting as? UIHostingController<ReportContainer> {
+      // Vue déjà en place : on ne remplace QUE son contenu. La détruire pour
+      // en recréer une relançait le calcul système du rapport de zéro.
+      existing.rootView = root
+      return
+    }
     hosting?.view.removeFromSuperview()
-    let vc = UIHostingController(
-      rootView: ReportContainer(
-        period: config.period, offset: config.offset, mode: config.mode))
+    let vc = UIHostingController(rootView: root)
     vc.view.backgroundColor = .clear
     vc.view.frame = bounds
     vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -176,15 +163,4 @@ final class ScreenTimeReportView: UIView {
     hosting?.view.frame = bounds
   }
 
-  /// Un rapport est purement DÉCORATIF : aucun tap, aucun geste. On refuse
-  /// tout toucher pour qu'il traverse jusqu'au ScrollView de l'écran.
-  ///
-  /// Indispensable : la vue système du rapport vit hors process et capte les
-  /// gestes de sa zone. Le défilement ne marchait alors que dans les rares
-  /// interstices non couverts — « on ne peut scroller qu'en touchant
-  /// certaines zones ». `pointerEvents` de React Native ne peut rien ici :
-  /// cette vue n'est pas une vue RN, la prop est ignorée.
-  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-    nil
-  }
 }

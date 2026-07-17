@@ -20,26 +20,23 @@ enum RelockReportLog {
 @main
 struct RelockActivityReport: DeviceActivityReportExtension {
   var body: some DeviceActivityReportScene {
-    // L'Activité empile trois vues : résumé, graphe, classement. Le résumé et
-    // le classement veulent des segments QUOTIDIENS (seule granularité où iOS
-    // renseigne activations et notifications) alors que le graphe du jour veut
-    // des tranches HORAIRES : filtres différents ⇒ rapports séparés. Ils sont
-    // donc scindés en deux scènes pour que le graphe puisse s'intercaler au
-    // milieu, comme dans la maquette.
-    SummaryReport { model in
-      UsageSummaryView(model: model)
+    // ⚠️ UN SEUL rapport par écran, qui défile LUI-MÊME.
+    //
+    // La vue d'un rapport est rendue par ce process-ci, hors de l'app : iOS lui
+    // route les touches directement, sans passer par la hiérarchie de l'app
+    // (vérifié : le `hitTest` de la vue hôte n'est jamais appelé). Un
+    // ScrollView côté app ne reçoit donc JAMAIS le geste au-dessus d'un
+    // rapport — d'où « ça ne défile que dans les interstices ». Le seul
+    // défilement possible est celui d'ici. Corollaire : résumé, graphe et
+    // classement doivent tenir dans UNE scène.
+    //
+    // Deux contextes, un par granularité : elle est ainsi connue PAR
+    // CONSTRUCTION, même quand la période ne renvoie aucune donnée.
+    HourUsageReport { model in
+      UsageReportView(model: model)
     }
-    AppsReport { model in
-      UsageAppsView(model: model)
-    }
-    // Graphe : tranches horaires (Jour) ou quotidiennes (Semaine/Mois). Deux
-    // contextes distincts → la granularité est connue PAR CONSTRUCTION, même
-    // quand la période ne contient aucune donnée.
-    HourChartReport { model in
-      UsageChartView(model: model)
-    }
-    DayChartReport { model in
-      UsageChartView(model: model)
+    DayUsageReport { model in
+      UsageReportView(model: model)
     }
     PillsReport { apps in
       UsagePillsView(apps: apps)
@@ -305,15 +302,18 @@ extension String {
   }
 }
 
-// MARK: - Scènes : résumé et classement (segments QUOTIDIENS)
+// MARK: - Scène : l'Activité entière (résumé + graphe + classement)
 
 struct UsageModel {
   var totalSeconds: Double = 0
   var totalPickups: Int = 0
   var totalNotifications: Int = 0
   var apps: [AppUsage] = []
+  var values: [Double] = []  // durée par tranche, chronologique
+  var xLabels: [String] = []
+  var isHourly = true
   var dateLabel: String = ""
-  /// Aucune donnée renvoyée par iOS pour cette période (≠ « 0 minute »).
+  /// Aucune donnée renvoyée par iOS (≠ « 0 minute »).
   var isEmpty = true
   /// Période antérieure à l'historique conservé par iOS (~30 j).
   var beyondRetention = false
@@ -321,6 +321,7 @@ struct UsageModel {
 
 private func usageModel(
   _ data: DeviceActivityResults<DeviceActivityData>,
+  hourly: Bool,
   scene: String
 ) async -> UsageModel {
   let agg = await aggregateUsage(data, scene: scene)
@@ -329,9 +330,15 @@ private func usageModel(
   model.totalPickups = agg.totalPickups
   model.totalNotifications = agg.totalNotifications
   model.apps = agg.apps
+  model.isHourly = hourly
   model.isEmpty = !agg.hadData
   model.dateLabel = periodLabel(
-    start: agg.spanStart, end: agg.spanEnd, hourly: false)
+    start: agg.spanStart, end: agg.spanEnd, hourly: hourly)
+
+  let chart = makeChart(agg, hourly: hourly)
+  model.values = chart.values
+  model.xLabels = chart.xLabels
+
   if let s = agg.spanStart, !agg.hadData {
     // iOS ne conserve qu'un historique court : au-delà, « 0 min » n'est pas
     // une réalité mesurée mais une absence de données. On le dit.
@@ -340,41 +347,41 @@ private func usageModel(
   return model
 }
 
-struct SummaryReport: DeviceActivityReportScene {
-  let context: DeviceActivityReport.Context = .init("UsageSummary")
-  let content: (UsageModel) -> UsageSummaryView
+/// Vue Jour : tranches horaires (graphe par heure).
+struct HourUsageReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("UsageHour")
+  let content: (UsageModel) -> UsageReportView
 
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> UsageModel {
-    await usageModel(data, scene: "summary")
+    await usageModel(data, hourly: true, scene: "usageHour")
   }
 }
 
-struct AppsReport: DeviceActivityReportScene {
-  let context: DeviceActivityReport.Context = .init("UsageApps")
-  let content: (UsageModel) -> UsageAppsView
+/// Vues Semaine / Mois : tranches quotidiennes.
+struct DayUsageReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("UsageDay")
+  let content: (UsageModel) -> UsageReportView
 
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> UsageModel {
-    await usageModel(data, scene: "apps")
+    await usageModel(data, hourly: false, scene: "usageDay")
   }
 }
 
-// MARK: - Scènes : graphe (deux granularités = deux contextes)
+// MARK: - Graphe : grille alignée sur le temps
 
 struct ChartModel {
   var values: [Double] = []
   var xLabels: [String] = []
-  var isHourly = true
 }
 
-/// Construit une grille alignée sur le TEMPS : chaque tranche à SA place
-/// réelle, 0 ailleurs — sinon les segments épars se tassent et débordent.
+/// Chaque tranche à SA place réelle, 0 ailleurs — sinon les segments épars se
+/// tassent et débordent.
 private func makeChart(_ agg: UsageAggregate, hourly: Bool) -> ChartModel {
   var model = ChartModel()
-  model.isHourly = hourly
   guard let s = agg.spanStart, let e = agg.spanEnd else { return model }
 
   let slot = hourly ? 3_600.0 : 86_400.0
@@ -409,28 +416,6 @@ private func makeChart(_ agg: UsageAggregate, hourly: Bool) -> ChartModel {
     }
   }
   return model
-}
-
-struct HourChartReport: DeviceActivityReportScene {
-  let context: DeviceActivityReport.Context = .init("ChartHour")
-  let content: (ChartModel) -> UsageChartView
-
-  func makeConfiguration(
-    representing data: DeviceActivityResults<DeviceActivityData>
-  ) async -> ChartModel {
-    makeChart(await aggregateUsage(data, scene: "chartHour"), hourly: true)
-  }
-}
-
-struct DayChartReport: DeviceActivityReportScene {
-  let context: DeviceActivityReport.Context = .init("ChartDay")
-  let content: (ChartModel) -> UsageChartView
-
-  func makeConfiguration(
-    representing data: DeviceActivityResults<DeviceActivityData>
-  ) async -> ChartModel {
-    makeChart(await aggregateUsage(data, scene: "chartDay"), hourly: false)
-  }
 }
 
 // MARK: - Scène : pilules « où part ton temps aujourd'hui » (Accueil)

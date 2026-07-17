@@ -22,16 +22,35 @@ func formatDuration(_ s: Double) -> String {
   return r == 0 ? "\(h) h" : "\(h) h \(String(format: "%02d", r))"
 }
 
-/// Résumé : total + activations + notifications.
-/// Alimenté par des segments QUOTIDIENS : c'est la seule granularité où iOS
-/// renseigne `numberOfPickups` / `numberOfNotifications` (en tranches horaires
-/// ils reviennent quasiment nuls — d'où les « 1 activation » d'une journée
-/// entière). Le graphe vit dans `UsageChartView`, le classement dans
-/// `UsageAppsView` : trois vues empilées, car leurs filtres diffèrent.
-struct UsageSummaryView: View {
+/// L'Activité entière : résumé, graphe, classement — dans UN ScrollView.
+///
+/// ⚠️ Ce ScrollView est le SEUL défilement possible de l'écran. La vue d'un
+/// rapport est rendue hors process et iOS lui route les touches directement,
+/// sans passer par la hiérarchie de l'app : un ScrollView côté React Native
+/// ne reçoit jamais le geste au-dessus d'un rapport (vérifié — le `hitTest`
+/// de la vue hôte n'est jamais appelé). D'où l'obligation de tout réunir ici.
+struct UsageReportView: View {
   let model: UsageModel
 
+  private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
+
   var body: some View {
+    ScrollView(showsIndicators: false) {
+      VStack(alignment: .leading, spacing: 14) {
+        summaryCard
+        chartSection
+        appsSection
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.vertical, 4)
+    }
+    .environment(\.colorScheme, .dark)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+
+  // MARK: Résumé
+
+  private var summaryCard: some View {
     VStack(alignment: .leading, spacing: 12) {
       VStack(alignment: .leading, spacing: 2) {
         if !model.dateLabel.isEmpty {
@@ -55,11 +74,6 @@ struct UsageSummaryView: View {
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
-    // Marge VERTICALE seulement : l'écran n'a plus de conteneur de fond, les
-    // cartes s'alignent donc directement sur les filtres au-dessus.
-    .padding(.vertical, 6)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    .environment(\.colorScheme, .dark)
   }
 
   private func stat(_ value: String, _ label: String) -> some View {
@@ -71,22 +85,19 @@ struct UsageSummaryView: View {
         .font(.system(size: 12)).foregroundColor(ReportPalette.ink3)
     }
   }
-}
 
-/// Classement des apps (segments QUOTIDIENS, comme le résumé).
-struct UsageAppsView: View {
-  let model: UsageModel
+  // MARK: Graphe
 
-  private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
-
-  var body: some View {
-    // Volontairement SANS ScrollView : c'est la page RN qui défile. Une vue
-    // système qui défile capte le geste et fige tout l'écran autour d'elle.
-    appsSection
-      .padding(.vertical, 6)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .environment(\.colorScheme, .dark)
+  private var chartSection: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text(model.isHourly ? "Temps d'écran par heure" : "Temps d'écran par jour")
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(ReportPalette.ink2)
+      UsageChartView(model: model)
+    }
   }
+
+  // MARK: Classement
 
   private var appsSection: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -105,11 +116,8 @@ struct UsageAppsView: View {
         .fixedSize(horizontal: false, vertical: true)
         .padding(.vertical, 8)
       } else {
-        // 6 lignes au plus : la hauteur de cette vue est fixée côté RN (elle
-        // héberge un rapport système, non auto-dimensionnable) — au-delà, les
-        // dernières lignes seraient tronquées.
         VStack(spacing: 14) {
-          ForEach(model.apps.prefix(6)) { app in
+          ForEach(model.apps.prefix(8)) { app in
             appRow(app)
           }
         }
@@ -174,7 +182,10 @@ struct UsageAppsView: View {
     }
   }
 
+  /// Un site web n'a ni activations ni notifications : ne pas afficher
+  /// « 0 activation » pour lui, ce serait une mesure qui n'existe pas.
   private func metaLine(_ app: AppUsage) -> String {
+    if case .web = app.icon { return "Site web" }
     let a = "\(app.pickups) activation\(app.pickups > 1 ? "s" : "")"
     let n = "\(app.notifications) notification\(app.notifications > 1 ? "s" : "")"
     return "\(a) · \(n)"
@@ -183,11 +194,11 @@ struct UsageAppsView: View {
 
 // MARK: - Graphe
 
-/// Graphe seul (fond quadrillé + axes). Deux contextes distincts l'alimentent :
-/// tranches horaires (Jour) ou quotidiennes (Semaine/Mois) — la granularité est
-/// donc toujours connue, même quand la période est vide.
+/// Graphe seul (fond quadrillé + axes), intégré au rapport. Sa granularité
+/// vient du contexte qui l'alimente : elle reste donc juste même quand la
+/// période ne contient aucune donnée.
 struct UsageChartView: View {
-  let model: ChartModel
+  let model: UsageModel
 
   private var axisMax: Double {
     let peak = model.values.max() ?? 0
@@ -204,17 +215,7 @@ struct UsageChartView: View {
     return "\(Int(s / 60))m"
   }
 
-  var body: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      Text(model.isHourly ? "Temps d'écran par heure" : "Temps d'écran par jour")
-        .font(.system(size: 14, weight: .semibold))
-        .foregroundColor(ReportPalette.ink2)
-      chartCard
-    }
-    .padding(.vertical, 6)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    .environment(\.colorScheme, .dark)
-  }
+  var body: some View { chartCard }
 
   private var chartCard: some View {
     HStack(alignment: .top, spacing: 6) {
