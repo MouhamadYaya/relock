@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   AppState,
   DeviceEventEmitter,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,7 @@ import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTimeReport } from '@/shared/native/ScreenTimeReport'
+import { ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 const FW = {
@@ -88,11 +90,18 @@ function mondayOf(d: Date): Date {
   return x
 }
 
-/** 6 dernières semaines (plus récente d'abord), avec décalage semaine. */
-function lastSixWeeks(): { offset: number; label: string }[] {
+/**
+ * Nombre de périodes passées proposées. iOS ne conserve qu'un historique
+ * court de temps d'écran : au-delà, les rapports reviennent vides. Trois
+ * périodes couvrent ce qu'iOS sait réellement fournir.
+ */
+const PAST_PERIODS = 3
+
+/** 3 dernières semaines (plus récente d'abord), avec décalage semaine. */
+function lastWeeks(): { offset: number; label: string }[] {
   const out: { offset: number; label: string }[] = []
   const monday = mondayOf(new Date())
-  for (let offset = 0; offset < 6; offset++) {
+  for (let offset = 0; offset < PAST_PERIODS; offset++) {
     if (offset === 0) {
       out.push({ offset, label: 'Cette semaine' })
       continue
@@ -107,11 +116,11 @@ function lastSixWeeks(): { offset: number; label: string }[] {
   return out
 }
 
-/** 6 derniers mois (plus récent d'abord), avec décalage mois. */
-function lastSixMonths(): { offset: number; label: string }[] {
+/** 3 derniers mois (plus récent d'abord), avec décalage mois. */
+function lastMonths(): { offset: number; label: string }[] {
   const out: { offset: number; label: string }[] = []
   const now = new Date()
-  for (let offset = 0; offset < 6; offset++) {
+  for (let offset = 0; offset < PAST_PERIODS; offset++) {
     const d = new Date(now.getFullYear(), now.getMonth() - offset, 1)
     const year =
       d.getFullYear() === now.getFullYear() ? '' : ` ${d.getFullYear()}`
@@ -158,9 +167,9 @@ export default function ActivityScreen() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: recalcul volontaire au réveil / rechargement
   const days = useMemo(() => lastSevenDays(), [dateEpoch, reloadKey])
   // biome-ignore lint/correctness/useExhaustiveDependencies: idem
-  const weeks = useMemo(() => lastSixWeeks(), [dateEpoch, reloadKey])
+  const weeks = useMemo(() => lastWeeks(), [dateEpoch, reloadKey])
   // biome-ignore lint/correctness/useExhaustiveDependencies: idem
-  const months = useMemo(() => lastSixMonths(), [dateEpoch, reloadKey])
+  const months = useMemo(() => lastMonths(), [dateEpoch, reloadKey])
 
   // Voile « Chargement… » : le rapport natif ne signale pas sa fin de rendu.
   // On l'efface après un délai borné (il est purement décoratif) — sinon il
@@ -171,6 +180,34 @@ export default function ActivityScreen() {
     const t = setTimeout(() => setLoading(false), 2500)
     return () => clearTimeout(t)
   }, [])
+
+  // Sans autorisation Temps d'écran, iOS ne lance MÊME PAS l'extension de
+  // rapport : les trois vues restent muettes et l'écran n'affichait qu'un
+  // grand rectangle vide, sans la moindre explication. On le dit, et on
+  // propose de l'accorder — comme le fait déjà l'Accueil.
+  const [authorized, setAuthorized] = useState(true)
+  useEffect(() => {
+    if (!ScreenTime.isAvailable) return
+    const check = () => {
+      ScreenTime.authorizationStatus()
+        .then(s => setAuthorized(s === 'approved'))
+        .catch(() => {})
+    }
+    check()
+    const sub = AppState.addEventListener('change', s => {
+      if (s === 'active') check()
+    })
+    return () => sub.remove()
+  }, [])
+
+  const askAuthorization = () => {
+    ScreenTime.requestAuthorization()
+      .then(s => {
+        setAuthorized(s === 'approved')
+        if (s !== 'approved') Linking.openSettings()
+      })
+      .catch(() => Linking.openSettings())
+  }
 
   const selectSegment = (i: number) => {
     setSeg(i)
@@ -316,57 +353,85 @@ export default function ActivityScreen() {
             activations/notifications QUE sur des tranches quotidiennes, alors
             que le graphe du jour a besoin de tranches horaires. Un même
             DeviceActivityReport ne portant qu'un seul filtre, c'est le seul
-            moyen de garder le graphe AU MILIEU. Résumé et graphe ont une
-            hauteur fixe ; le classement prend le reste et défile lui-même (un
-            DeviceActivityReport ne peut pas défiler dans un ScrollView RN).
-            Loader derrière, le temps du calcul iOS. */}
-        <View style={styles.reportCard}>
-          {/* Le rapport iOS se rend par-dessus quand il est prêt. Ce voile
+            moyen de garder le graphe AU MILIEU.
+
+            Le défilement est celui de CE ScrollView : les rapports ont une
+            hauteur fixe et `pointerEvents="none"` (ils n'ont aucune zone
+            tactile), sinon la vue système capterait le geste et la page
+            resterait figée. */}
+        {!authorized && ScreenTime.isAvailable ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={askAuthorization}
+            style={[styles.reportCard, styles.authCard]}
+          >
+            <View style={styles.authIcon}>
+              <IconSvg name={IconName.MONITOR} size={22} color={C.accent} />
+            </View>
+            <Text style={[f(700), styles.authTitle]}>
+              Autorise le Temps d'écran
+            </Text>
+            <Text style={[f(400), styles.authSub]}>
+              iOS ne communique aucune donnée d'usage tant que Relock n'y est
+              pas autorisé. Appuie pour l'activer.
+            </Text>
+          </Pressable>
+        ) : (
+          <ScrollView
+            style={styles.reportCard}
+            contentContainerStyle={styles.reportContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Le rapport iOS se rend par-dessus quand il est prêt. Ce voile
               DOIT s'effacer tout seul : sinon, quand la période ne contient
               rien (iOS ne conserve qu'un historique court) ou que
               l'autorisation manque, « Chargement… » restait affiché POUR
               TOUJOURS, masquant le message d'explication en dessous. */}
-          {loading && (
-            <View style={styles.reportLoading} pointerEvents="none">
-              <ActivityIndicator color={C.accent} />
-              <Text style={[f(500), styles.reportLoadingText]}>
-                Chargement du rapport…
-              </Text>
-            </View>
-          )}
-          <ScreenTimeReport
-            key={`s-${reloadKey}-${period}-${offset}`}
-            style={styles.summary}
-            mode="summary"
-            period={period}
-            offset={offset}
-            fallback={
-              <View style={styles.fallback}>
-                <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                  Disponible sur iPhone
-                </Text>
-                <Text style={[f(400), styles.fallbackSub]}>
-                  Le vrai temps d'écran par app (avec les icônes) est fourni par
-                  iOS et ne s'affiche que sur un iPhone physique.
+            {loading && (
+              <View style={styles.reportLoading} pointerEvents="none">
+                <ActivityIndicator color={C.accent} />
+                <Text style={[f(500), styles.reportLoadingText]}>
+                  Chargement du rapport…
                 </Text>
               </View>
-            }
-          />
-          <ScreenTimeReport
-            key={`c-${reloadKey}-${period}-${offset}`}
-            style={styles.chart}
-            mode="chart"
-            period={period}
-            offset={offset}
-          />
-          <ScreenTimeReport
-            key={`a-${reloadKey}-${period}-${offset}`}
-            style={styles.report}
-            mode="apps"
-            period={period}
-            offset={offset}
-          />
-        </View>
+            )}
+            <ScreenTimeReport
+              key={`s-${reloadKey}-${period}-${offset}`}
+              style={styles.summary}
+              pointerEvents="none"
+              mode="summary"
+              period={period}
+              offset={offset}
+              fallback={
+                <View style={styles.fallback}>
+                  <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                    Disponible sur iPhone
+                  </Text>
+                  <Text style={[f(400), styles.fallbackSub]}>
+                    Le vrai temps d'écran par app (avec les icônes) est fourni
+                    par iOS et ne s'affiche que sur un iPhone physique.
+                  </Text>
+                </View>
+              }
+            />
+            <ScreenTimeReport
+              key={`c-${reloadKey}-${period}-${offset}`}
+              style={styles.chart}
+              pointerEvents="none"
+              mode="chart"
+              period={period}
+              offset={offset}
+            />
+            <ScreenTimeReport
+              key={`a-${reloadKey}-${period}-${offset}`}
+              style={styles.apps}
+              pointerEvents="none"
+              mode="apps"
+              period={period}
+              offset={offset}
+            />
+          </ScrollView>
+        )}
       </View>
     </ScreenWrapper>
   )
@@ -435,13 +500,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
     borderRadius: 20,
-    overflow: 'hidden',
   },
-  // Hauteurs calées sur le contenu des vues natives (elles ne peuvent pas
-  // s'auto-dimensionner) : résumé = date + total + libellé + 2 stats ;
-  // graphe = titre + carte de 128 pt + axe X, marges comprises.
+  reportContent: { paddingBottom: 8 },
+  authCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 10,
+  },
+  authIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: 'rgba(164,154,254,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  authTitle: { fontSize: 17, color: C.ink, letterSpacing: -0.3 },
+  authSub: {
+    fontSize: 13.5,
+    color: C.ink2,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  // Hauteurs calées sur le contenu des vues natives : hébergeant un rapport
+  // système rendu hors process, elles ne peuvent pas s'auto-dimensionner.
+  // Résumé = date + total + libellé + 2 stats ; graphe = titre + carte de
+  // 128 pt + axe X ; classement = en-tête + 6 lignes au plus.
   summary: { height: 172 },
   chart: { height: 230 },
+  apps: { height: 470 },
   reportLoading: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',

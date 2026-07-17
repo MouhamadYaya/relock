@@ -1,5 +1,5 @@
 import { CommonActions } from '@react-navigation/native'
-import { DeviceEventEmitter, Linking } from 'react-native'
+import { DeviceEventEmitter, Linking, NativeModules } from 'react-native'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
 import {
   navigate,
@@ -40,6 +40,14 @@ async function run(cmd: string): Promise<void> {
       await StatsService.syncFromDevice()
       const today = await StatsService.today()
       console.log(`${TAG} sync → today=`, JSON.stringify(today))
+      return
+    }
+    case 'auth': {
+      // Sans autorisation Temps d'écran, iOS ne lance PAS l'extension de
+      // rapport : toutes les vues restent vides. Permet de la (re)demander
+      // sans avoir à toucher l'écran.
+      const status = await ScreenTime.requestAuthorization()
+      console.log(`${TAG} authorization → ${status}`)
       return
     }
     case 'home':
@@ -95,10 +103,24 @@ function handleUrl(url: string | null) {
  * Un `id` strictement croissant évite de rejouer une commande. Serveur
  * absent = silence total (aucun coût hors dev).
  */
-const CMD_URL = 'http://localhost:8123/relock-dev-commands.json'
+/**
+ * Hôte du serveur de commandes : la machine de dev.
+ *
+ * `localhost` ne vaut que sur simulateur — sur un iPhone il désigne le
+ * TÉLÉPHONE. On réutilise donc l'hôte du bundle servi par Metro
+ * (`scriptURL` = http://192.168.x.x:8081/index.bundle…), qui est par
+ * construction l'adresse du Mac vue par l'appareil.
+ */
+function commandsUrl(): string {
+  const scriptURL = NativeModules.SourceCode?.scriptURL as string | undefined
+  const host = scriptURL?.match(/^https?:\/\/([^/:]+)/)?.[1] ?? 'localhost'
+  return `http://${host}:8123/relock-dev-commands.json`
+}
+
 let lastCommandId = 0
 
 function pollCommands(): void {
+  const CMD_URL = commandsUrl()
   // Sans serveur (dev sur iPhone, session normale), on abandonne vite :
   // pas de requête réseau ratée toutes les 1,5 s à l'infini.
   let misses = 0
@@ -136,5 +158,5 @@ export function initDevTestBridge(): void {
     .then(handleUrl)
     .catch(() => {})
   pollCommands()
-  console.log(`${TAG} prêt (relock://dev/… + polling localhost:8123)`)
+  console.log(`${TAG} prêt (relock://dev/… + polling ${commandsUrl()})`)
 }

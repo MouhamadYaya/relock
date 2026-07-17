@@ -61,7 +61,17 @@ struct RelockActivityReport: DeviceActivityReportExtension {
 // Le `token` est la SEULE identité toujours fournie — et il est Hashable.
 enum AppKey: Hashable {
   case token(ApplicationToken)
+  case web(WebDomainToken)
   case label(String)
+}
+
+/// De quoi rendre l'icône + le nom réels d'une ligne. Les sites consultés dans
+/// Safari sont comptés SÉPARÉMENT des apps par iOS (`res.cisco.com`, 3 h 48 —
+/// premier poste d'une journée) : les ignorer amputait le total d'autant.
+enum UsageIcon {
+  case app(ApplicationToken)
+  case web(WebDomainToken)
+  case none
 }
 
 struct AppUsage: Identifiable {
@@ -70,16 +80,16 @@ struct AppUsage: Identifiable {
   let seconds: Double
   let pickups: Int
   let notifications: Int
-  let token: ApplicationToken?
+  let icon: UsageIcon
 }
 
-/// Mesures d'UNE app sur UN segment.
+/// Mesures d'UNE app (ou d'un site) sur UN segment.
 private struct AppStat {
   var seconds: Double
   var pickups: Int
   var notifications: Int
   var name: String
-  var token: ApplicationToken?
+  var icon: UsageIcon
 }
 
 /// Une tranche de temps (heure ou jour) et le total des apps qu'elle contient.
@@ -117,6 +127,7 @@ struct UsageAggregate {
 ///    une app ne peut pas tourner 3 h dans une tranche d'1 h.
 func aggregateUsage(
   _ data: DeviceActivityResults<DeviceActivityData>,
+  scene: String = "?",
   now: Date = Date()
 ) async -> UsageAggregate {
   var perSegment: [Date: [AppKey: AppStat]] = [:]
@@ -136,33 +147,56 @@ func aggregateUsage(
       let cap = max(0, min(iv.end, now).timeIntervalSince(iv.start))
       segmentCap[iv.start] = cap
 
+      // MAX, pas += : deux entries décrivant le même segment sont deux vues de
+      // la même réalité (plusieurs appareils/comptes), pas deux usages à cumuler.
+      func record(_ key: AppKey, _ stat: AppStat) {
+        out.hadData = true
+        if let prev = perSegment[iv.start]?[key] {
+          perSegment[iv.start]?[key] = AppStat(
+            seconds: max(prev.seconds, stat.seconds),
+            pickups: max(prev.pickups, stat.pickups),
+            notifications: max(prev.notifications, stat.notifications),
+            name: prev.name == "App" ? stat.name : prev.name,
+            icon: {
+              if case .none = prev.icon { return stat.icon }
+              return prev.icon
+            }())
+        } else {
+          perSegment[iv.start, default: [:]][key] = stat
+        }
+      }
+
       for await category in segment.categories {
         for await app in category.applications {
           let sec = min(app.totalActivityDuration, cap)
           let pick = app.numberOfPickups
           let notif = app.numberOfNotifications
           guard sec > 0 || pick > 0 || notif > 0 else { continue }
-          out.hadData = true
           let token = app.application.token
           let name =
             app.application.localizedDisplayName
             ?? app.application.bundleIdentifier ?? "App"
-          let key: AppKey = token.map { .token($0) } ?? .label(name)
-          let stat = AppStat(
-            seconds: sec, pickups: pick, notifications: notif, name: name,
-            token: token)
-          if let prev = perSegment[iv.start]?[key] {
-            // MAX, pas +=  : deux entries décrivant le même segment sont deux
-            // vues de la même réalité, pas deux usages à cumuler.
-            perSegment[iv.start]?[key] = AppStat(
-              seconds: max(prev.seconds, stat.seconds),
-              pickups: max(prev.pickups, stat.pickups),
-              notifications: max(prev.notifications, stat.notifications),
-              name: prev.name == "App" ? stat.name : prev.name,
-              token: prev.token ?? stat.token)
-          } else {
-            perSegment[iv.start, default: [:]][key] = stat
-          }
+          record(
+            token.map { .token($0) } ?? .label(name),
+            AppStat(
+              seconds: sec, pickups: pick, notifications: notif, name: name,
+              icon: token.map { .app($0) } ?? .none))
+        }
+
+        // Sites consultés dans Safari : iOS les compte À PART des apps. Sans
+        // eux, le total de l'app est très en dessous de celui de Réglages >
+        // Temps d'écran (un domaine peut être le 1er poste de la journée).
+        for await web in category.webDomains {
+          let sec = min(web.totalActivityDuration, cap)
+          guard sec > 0 else { continue }
+          // Un domaine n'expose qu'une durée — ni activations ni notifications.
+          let token = web.webDomain.token
+          let name = web.webDomain.domain ?? "Site web"
+          record(
+            token.map { .web($0) } ?? .label(name),
+            AppStat(
+              seconds: sec, pickups: 0, notifications: 0, name: name,
+              icon: token.map { .web($0) } ?? .none))
         }
       }
     }
@@ -180,7 +214,10 @@ func aggregateUsage(
           pickups: prev.pickups + s.pickups,
           notifications: prev.notifications + s.notifications,
           name: prev.name == "App" ? s.name : prev.name,
-          token: prev.token ?? s.token)
+          icon: {
+            if case .none = prev.icon { return s.icon }
+            return prev.icon
+          }())
       } else {
         totals[key] = s
       }
@@ -197,7 +234,7 @@ func aggregateUsage(
   out.apps = totals.map { key, s in
     AppUsage(
       id: keyIdentifier(key), name: s.name, seconds: s.seconds,
-      pickups: s.pickups, notifications: s.notifications, token: s.token)
+      pickups: s.pickups, notifications: s.notifications, icon: s.icon)
   }
   .sorted { $0.seconds > $1.seconds }
 
@@ -206,7 +243,7 @@ func aggregateUsage(
 
   RelockReportLog.log.info(
     """
-    agrégat: entries=\(entryCount, privacy: .public) \
+    agrégat[\(scene, privacy: .public)]: entries=\(entryCount, privacy: .public) \
     segments=\(perSegment.count, privacy: .public) \
     apps=\(out.apps.count, privacy: .public) \
     total=\(Int(out.totalSeconds), privacy: .public)s \
@@ -225,6 +262,7 @@ func aggregateUsage(
 private func keyIdentifier(_ key: AppKey) -> String {
   switch key {
   case .token(let t): return "t\(t.hashValue)"
+  case .web(let w): return "w\(w.hashValue)"
   case .label(let l): return "l\(l)"
   }
 }
@@ -282,9 +320,10 @@ struct UsageModel {
 }
 
 private func usageModel(
-  _ data: DeviceActivityResults<DeviceActivityData>
+  _ data: DeviceActivityResults<DeviceActivityData>,
+  scene: String
 ) async -> UsageModel {
-  let agg = await aggregateUsage(data)
+  let agg = await aggregateUsage(data, scene: scene)
   var model = UsageModel()
   model.totalSeconds = agg.totalSeconds
   model.totalPickups = agg.totalPickups
@@ -308,7 +347,7 @@ struct SummaryReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> UsageModel {
-    await usageModel(data)
+    await usageModel(data, scene: "summary")
   }
 }
 
@@ -319,7 +358,7 @@ struct AppsReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> UsageModel {
-    await usageModel(data)
+    await usageModel(data, scene: "apps")
   }
 }
 
@@ -379,7 +418,7 @@ struct HourChartReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> ChartModel {
-    makeChart(await aggregateUsage(data), hourly: true)
+    makeChart(await aggregateUsage(data, scene: "chartHour"), hourly: true)
   }
 }
 
@@ -390,7 +429,7 @@ struct DayChartReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> ChartModel {
-    makeChart(await aggregateUsage(data), hourly: false)
+    makeChart(await aggregateUsage(data, scene: "chartDay"), hourly: false)
   }
 }
 
@@ -403,7 +442,7 @@ struct PillsReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> [AppUsage] {
-    await aggregateUsage(data).apps
+    await aggregateUsage(data, scene: "pills").apps
   }
 }
 
@@ -431,13 +470,20 @@ struct UsagePillsView: View {
       HStack(alignment: .top, spacing: 9) {
         ForEach(apps.prefix(12)) { app in
           VStack(spacing: 5) {
-            if let token = app.token {
+            switch app.icon {
+            case .app(let token):
               Label(token)
                 .labelStyle(.iconOnly)
                 .font(.system(size: 40))
                 .frame(width: 42, height: 42)
                 .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
-            } else {
+            case .web(let token):
+              Label(token)
+                .labelStyle(.iconOnly)
+                .font(.system(size: 40))
+                .frame(width: 42, height: 42)
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+            case .none:
               RoundedRectangle(cornerRadius: 11, style: .continuous)
                 .fill(iconBg)
                 .frame(width: 42, height: 42)
@@ -484,7 +530,7 @@ struct HeroReport: DeviceActivityReportScene {
   func makeConfiguration(
     representing data: DeviceActivityResults<DeviceActivityData>
   ) async -> HeroModel {
-    let agg = await aggregateUsage(data)
+    let agg = await aggregateUsage(data, scene: "hero")
     let cal = Calendar.current
     var model = HeroModel()
     for b in agg.buckets {

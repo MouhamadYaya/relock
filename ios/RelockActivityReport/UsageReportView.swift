@@ -78,16 +78,12 @@ struct UsageAppsView: View {
   private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
 
   var body: some View {
-    ScrollView(showsIndicators: false) {
-      appsSection
-        .padding(16)
-        // Sans cette largeur imposée, le VStack se dimensionne sur son contenu
-        // et le ScrollView le CENTRE : le titre n'était plus aligné avec ceux
-        // des autres cartes.
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    .environment(\.colorScheme, .dark)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    // Volontairement SANS ScrollView : c'est la page RN qui défile. Une vue
+    // système qui défile capte le geste et fige tout l'écran autour d'elle.
+    appsSection
+      .padding(16)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .environment(\.colorScheme, .dark)
   }
 
   private var appsSection: some View {
@@ -107,8 +103,11 @@ struct UsageAppsView: View {
         .fixedSize(horizontal: false, vertical: true)
         .padding(.vertical, 8)
       } else {
+        // 6 lignes au plus : la hauteur de cette vue est fixée côté RN (elle
+        // héberge un rapport système, non auto-dimensionnable) — au-delà, les
+        // dernières lignes seraient tronquées.
         VStack(spacing: 14) {
-          ForEach(model.apps.prefix(8)) { app in
+          ForEach(model.apps.prefix(6)) { app in
             appRow(app)
           }
         }
@@ -123,17 +122,10 @@ struct UsageAppsView: View {
     VStack(alignment: .leading, spacing: 7) {
       HStack(spacing: 10) {
         icon(app)
-        if let token = app.token {
-          Label(token).labelStyle(.titleOnly)
-            .font(.system(size: 15, weight: .medium))
-            .foregroundColor(ReportPalette.ink)
-            .lineLimit(1)
-        } else {
-          Text(app.name)
-            .font(.system(size: 15, weight: .medium))
-            .foregroundColor(ReportPalette.ink)
-            .lineLimit(1)
-        }
+        title(app)
+          .font(.system(size: 15, weight: .medium))
+          .foregroundColor(ReportPalette.ink)
+          .lineLimit(1)
         Spacer(minLength: 8)
         Text(formatDuration(app.seconds))
           .font(.system(size: 14, weight: .semibold))
@@ -154,15 +146,30 @@ struct UsageAppsView: View {
     }
   }
 
-  private func icon(_ app: AppUsage) -> some View {
-    Group {
-      if let token = app.token {
-        Label(token).labelStyle(.iconOnly).font(.system(size: 26))
-      } else {
-        RoundedRectangle(cornerRadius: 7).fill(ReportPalette.track)
-      }
+  /// Nom réel : seul iOS connaît celui d'une app non sélectionnée — il n'est
+  /// lisible qu'en rendant son `Label`, jamais sous forme de chaîne.
+  @ViewBuilder
+  private func title(_ app: AppUsage) -> some View {
+    switch app.icon {
+    case .app(let token): Label(token).labelStyle(.titleOnly)
+    case .web(let token): Label(token).labelStyle(.titleOnly)
+    case .none: Text(app.name)
     }
-    .frame(width: 30, height: 30)
+  }
+
+  @ViewBuilder
+  private func icon(_ app: AppUsage) -> some View {
+    switch app.icon {
+    case .app(let token):
+      Label(token).labelStyle(.iconOnly).font(.system(size: 26))
+        .frame(width: 30, height: 30)
+    case .web(let token):
+      Label(token).labelStyle(.iconOnly).font(.system(size: 26))
+        .frame(width: 30, height: 30)
+    case .none:
+      RoundedRectangle(cornerRadius: 7).fill(ReportPalette.track)
+        .frame(width: 30, height: 30)
+    }
   }
 
   private func metaLine(_ app: AppUsage) -> String {

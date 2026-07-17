@@ -1,6 +1,7 @@
 import DeviceActivity
 import SwiftUI
 import UIKit
+import os
 
 /// Héberge un rapport de temps d'écran (extension RelockActivityReport) dans une
 /// UIView pour RN.
@@ -106,9 +107,12 @@ private struct ReportContainer: View {
 
 @objc(ScreenTimeReportView)
 final class ScreenTimeReportView: UIView {
+  fileprivate static let log = Logger(
+    subsystem: "com.yaya.relock", category: "reportview")
+
   @objc var period: NSNumber = 0 { didSet { setNeedsRebuild() } }
   @objc var offset: NSNumber = 0 { didSet { setNeedsRebuild() } }
-  @objc var mode: NSString = "usage" { didSet { setNeedsRebuild() } }
+  @objc var mode: NSString = "summary" { didSet { setNeedsRebuild() } }
 
   private struct Config: Equatable {
     let period: Int
@@ -153,6 +157,9 @@ final class ScreenTimeReportView: UIView {
     guard config != applied else { return }
     applied = config
 
+    ScreenTimeReportView.log.info(
+      "rebuild mode=\(config.mode, privacy: .public) period=\(config.period, privacy: .public) offset=\(config.offset, privacy: .public)"
+    )
     hosting?.view.removeFromSuperview()
     let vc = UIHostingController(
       rootView: ReportContainer(
