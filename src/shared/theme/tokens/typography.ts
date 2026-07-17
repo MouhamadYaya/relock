@@ -27,19 +27,19 @@ export const typography = {
   displayLarge: {
     fontSize: 34,
     lineHeight: 42,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
   displayMedium: {
     fontSize: 30,
     lineHeight: 38,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
   displaySmall: {
     fontSize: 26,
     lineHeight: 32,
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontWeight: '500' as const,
   },
 
@@ -49,19 +49,19 @@ export const typography = {
   headlineLarge: {
     fontSize: 22,
     lineHeight: 28,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
   headlineMedium: {
     fontSize: 20,
     lineHeight: 26,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
   headlineSmall: {
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontWeight: '500' as const,
   },
 
@@ -71,19 +71,19 @@ export const typography = {
   titleLarge: {
     fontSize: 17,
     lineHeight: 22,
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontWeight: '500' as const,
   },
   titleMedium: {
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
   titleSmall: {
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontWeight: '500' as const,
   },
 
@@ -93,25 +93,25 @@ export const typography = {
   bodyLarge: {
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: fonts.regular,
+    ...fonts.regular,
     fontWeight: '400' as const,
   },
   bodyMedium: {
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: fonts.regular,
+    ...fonts.regular,
     fontWeight: '400' as const,
   },
   bodySmall: {
     fontSize: 14,
     lineHeight: 20,
-    fontFamily: fonts.regular,
+    ...fonts.regular,
     fontWeight: '400' as const,
   },
   bodyBold: {
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
 
@@ -121,19 +121,19 @@ export const typography = {
   labelLarge: {
     fontSize: 14,
     lineHeight: 20,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
   },
   labelMedium: {
     fontSize: 13,
     lineHeight: 18,
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontWeight: '500' as const,
   },
   labelSmall: {
     fontSize: 12,
     lineHeight: 16,
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontWeight: '500' as const,
   },
 
@@ -144,7 +144,7 @@ export const typography = {
     fontSize: 12,
     lineHeight: 16,
     letterSpacing: 1,
-    fontFamily: fonts.semiBold,
+    ...fonts.semiBold,
     fontWeight: '600' as const,
     textTransform: 'uppercase' as const,
   },
@@ -155,7 +155,7 @@ export const typography = {
   mono: {
     fontSize: 14,
     lineHeight: 20,
-    fontFamily: fonts.mono,
+    ...fonts.mono,
     fontWeight: '400' as const,
   },
 } as const

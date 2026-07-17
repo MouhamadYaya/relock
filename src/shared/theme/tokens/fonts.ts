@@ -3,78 +3,40 @@
  * LAYER: core/theme/tokens
  * ---------------------------------------------------------------------
  * PURPOSE:
- *   Define stable, semantic font family tokens with full cross-platform
- *   support and fallback chains for iOS/Android.
+ *   Source unique des graisses de texte de l'app.
  *
- * DESIGN GOALS:
- *   - One source of truth for all font families in the app.
- *   - Avoid raw font names in UI components.
- *   - Provide semantic font tokens (“regular”, “medium”, “semiBold” etc.).
- *   - Support monospace fonts for code/technical UI.
- *   - Provide fallback families for platform differences.
+ * ⚠️ AUCUNE `fontFamily` n'est déclarée, et c'est VOLONTAIRE.
  *
- * EXTENSION:
- *   - Add variable-font weights (InterVariable).
- *   - Add italic variants (requires Inter-Italic.ttf linked via react-native.config.js).
- *   - Add brand typography override system.
+ * L'app utilise la police SYSTÈME (San Francisco sur iOS) — celle des
+ * Réglages, de Messages, et de toutes les apps qui « font natif ». Elle n'est
+ * pas accessible par son nom : Apple la réserve, aucun `fontFamily` ne la
+ * désigne. On l'obtient en n'imposant AUCUNE famille — c'est celle que le
+ * système applique par défaut — et en ne pilotant que la graisse.
+ *
+ * Bénéfice : iOS choisit lui-même la coupe optique (Text sous 20 pt, Display
+ * au-dessus) et le crénage adapté à chaque taille, ce qu'une police embarquée
+ * ne sait pas faire.
+ *
+ * USAGE : ces tokens sont des STYLES, à étaler — jamais des noms de police.
+ *   ✅ `{ ...fonts.semiBold, fontSize: 15 }`
+ *   ❌ `{ fontFamily: fonts.semiBold }`
  * ---------------------------------------------------------------------
  */
-import { Platform } from 'react-native'
 
 export const fonts = {
-  /**
-   * INTER FAMILY (Primary UI Font)
-   * These names MUST match your linked font files via react-native.config.js.
-   *
-   * Fallbacks ensure Android uses Roboto if custom fonts fail.
-   */
-  regular: Platform.select({
-    ios: 'Inter-Regular',
-    android: 'Inter-Regular',
-    default: 'Inter-Regular',
-  }),
-  medium: Platform.select({
-    ios: 'Inter-Medium',
-    android: 'Inter-Medium',
-    default: 'Inter-Medium',
-  }),
-  semiBold: Platform.select({
-    ios: 'Inter-SemiBold',
-    android: 'Inter-SemiBold',
-    default: 'Inter-SemiBold',
-  }),
-  bold: Platform.select({
-    ios: 'Inter-Bold',
-    android: 'Inter-Bold',
-    default: 'Inter-Bold',
-  }),
+  regular: { fontWeight: '400' as const },
+  medium: { fontWeight: '500' as const },
+  semiBold: { fontWeight: '600' as const },
+  bold: { fontWeight: '700' as const },
+
+  /** Libellés en capitales (onglets, puces, badges). */
+  caps: { fontWeight: '600' as const },
 
   /**
-   * MONO FAMILY (Technical UI)
+   * Technique (valeurs, code). SF Mono n'étant pas exposée aux apps, Menlo est
+   * la monospace système la plus proche.
    */
-  mono: Platform.select({
-    ios: 'JetBrainsMono-Regular',
-    android: 'JetBrainsMono-Regular',
-    default: 'JetBrainsMono-Regular',
-  }),
-
-  /**
-   * CAPS / TAB / BADGE SPECIFIC FONT
-   * Used for uppercase tab labels, chips, badges.
-   * If you want a different weight — override here.
-   */
-  caps: Platform.select({
-    ios: 'Inter-SemiBold',
-    android: 'Inter-SemiBold',
-    default: 'Inter-SemiBold',
-  }),
-
-  /**
-   * FUTURE:
-   *   - InterVariable
-   *   - RobotoFlex fallback
-   *   - Brand custom fonts (e.g. “MyBrand-Display”)
-   */
+  mono: { fontFamily: 'Menlo' as const },
 } as const
 
 export type Fonts = typeof fonts

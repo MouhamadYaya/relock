@@ -1,4 +1,5 @@
 import { IconName } from '@assets/icons'
+import { type NavigationProp, useNavigation } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
 import {
   Alert,
@@ -8,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native'
@@ -16,19 +16,12 @@ import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery
 import { useFreshInstallPrompt } from '@/features/blocking/hooks/useFreshInstallPrompt'
 import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
 import { useRuleReconciler } from '@/features/blocking/hooks/useRuleReconciler'
-import { useToggleRuleMutation } from '@/features/blocking/hooks/useToggleRuleMutation'
-import { armRule } from '@/features/blocking/services/arm'
-import {
-  type BlockRuleView,
-  blockStatusLine,
-  isLocked,
-  RULE_TYPE_LABEL,
-  timedRunning,
-  unlockTimeLabel,
-} from '@/features/blocking/types'
+import { timedRunning } from '@/features/blocking/types'
 import { ScreenTimeHero } from '@/features/home/components/ScreenTimeHero'
+import { TryNextCard } from '@/features/home/components/TryNextCard'
 import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
 import { navigate } from '@/navigation/helpers/navigation-helpers'
+import type { HomeTabParamList } from '@/navigation/root-param-list'
 import { ROUTES } from '@/navigation/routes'
 import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
@@ -36,13 +29,6 @@ import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { showErrorToast } from '@/shared/utils/toast'
-
-const TYPE_ICON: Record<BlockRuleType, IconName> = {
-  progressive_delay: IconName.CLOCK,
-  schedule: IconName.CALENDAR,
-  daily_limit: IconName.CHART,
-}
 
 const FW = {
   400: fonts.regular,
@@ -51,11 +37,11 @@ const FW = {
   700: fonts.bold,
   800: fonts.bold,
 } as const
-const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
+const f = (w: keyof typeof FW) => FW[w]
 
 // Palette exacte de la maquette « Relock Home ».
 const C = {
-  card: '#17171D',
+  card: '#1C1C1E',
   accent: '#A5A1F5',
   onAccent: '#131318',
   ink: '#F5F5F7',
@@ -78,58 +64,11 @@ const C = {
   dangerIconBg: 'rgba(239,68,68,0.16)',
 }
 
-/** Carte de blocage individuelle avec switch. OFF → modal ; ON → reprise. */
-function BlockRow({
-  rule,
-  onResume,
-}: {
-  rule: BlockRuleView
-  onResume: (r: BlockRuleView) => void
-}) {
-  const locked = isLocked(rule) // strict en cours = incassable
-  const onToggle = (next: boolean) => {
-    if (locked) return
-    if (next) onResume(rule)
-    // OFF : on ouvre le modal du type. On NE mute PAS ici — le switch suit
-    // `rule.isActive` : si l'utilisateur met en pause il passe off, s'il ferme
-    // le modal sans agir il reste on.
-    else navigate(ROUTES.BLOCK_DETAIL, { rule })
-  }
-  return (
-    <View style={styles.blockRow}>
-      <View style={styles.blockIcon}>
-        <IconSvg
-          name={locked ? IconName.LOCK : TYPE_ICON[rule.type]}
-          size={18}
-          color={C.iconStroke}
-        />
-      </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[f(600), styles.blockTitle]} numberOfLines={1}>
-          {RULE_TYPE_LABEL[rule.type]}
-        </Text>
-        <Text style={[f(400), styles.blockSub]} numberOfLines={1}>
-          {locked
-            ? `Verrouillé jusqu'à ${unlockTimeLabel(rule)}`
-            : blockStatusLine(rule)}
-        </Text>
-      </View>
-      <Switch
-        value={rule.isActive}
-        onValueChange={onToggle}
-        disabled={locked}
-        trackColor={{ false: C.switchOff, true: C.accent }}
-        thumbColor="#FFFFFF"
-        ios_backgroundColor={C.switchOff}
-      />
-    </View>
-  )
-}
-
 export default function HomeScreen() {
+  // L'onglet Blocages est un frère : on navigue via le navigateur d'onglets.
+  const tabNav = useNavigation<NavigationProp<HomeTabParamList>>()
   const { rules, isPending: rulesPending } = useBlockRulesQuery()
   const stats = useHomeStats()
-  const toggleRule = useToggleRuleMutation()
   useFreshInstallPrompt()
   // Auto-réparation : iOS peut perdre la surveillance native (réinstall,
   // mise à jour) — on ré-arme les règles persistantes actives au lancement.
@@ -143,15 +82,6 @@ export default function HomeScreen() {
     r => r.isActive && !(r.type === 'progressive_delay' && !timedRunning(r)),
   )
   useNotificationReconciler(stats.streak, protectedToday)
-
-  const onResume = async (rule: BlockRuleView) => {
-    try {
-      if (ScreenTime.isAvailable) await armRule(rule)
-      await toggleRule.mutateAsync({ id: rule.id, isActive: true })
-    } catch (e) {
-      showErrorToast(e)
-    }
-  }
 
   // Autorisation Temps d'écran : sans elle rien ne bloque.
   const [needsScreenTime, setNeedsScreenTime] = useState(false)
@@ -302,55 +232,35 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Blocages */}
-          <View style={styles.blocksHeader}>
-            <Text style={[f(700), { fontSize: 20, color: C.ink }]}>
-              Blocages
-            </Text>
-            {visibleRules.length > 0 && (
-              <Pressable onPress={() => navigate(ROUTES.ADD_BLOCK)} hitSlop={8}>
-                <Text style={[f(600), { fontSize: 13, color: C.accent }]}>
-                  Ajouter
-                </Text>
-              </Pressable>
-            )}
-          </View>
-
-          {rulesPending ? (
-            // Chargement : surtout PAS « Aucun blocage » — l'utilisateur
-            // croirait ses règles perdues, alors qu'elles arrivent.
-            <View style={styles.emptyCard}>
-              <View style={styles.blockIcon} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <View style={[styles.skelLine, { width: '45%' }]} />
-                <View
-                  style={[styles.skelLine, { width: '70%', marginTop: 8 }]}
-                />
-              </View>
-            </View>
-          ) : visibleRules.length === 0 ? (
+          {/* La gestion des blocages vit dans son onglet : l'Accueil montre la
+              RÉCOMPENSE, pas la plomberie. Seul reste un appel à l'action, tant
+              qu'aucun blocage n'existe — il disparaît dès le premier, et
+              revient s'il n'en reste plus. Il renvoie vers l'onglet Blocages
+              (le foyer des blocages), pas directement vers la création. */}
+          {!rulesPending && visibleRules.length === 0 && (
             <Pressable
-              onPress={() => navigate(ROUTES.ADD_BLOCK)}
-              style={styles.emptyCard}
+              accessibilityRole="button"
+              accessibilityLabel="Rien ne protège ton temps — ouvrir Blocages"
+              onPress={() => tabNav.navigate(ROUTES.TAB_BLOCKS)}
+              style={styles.emptyBig}
             >
-              <View style={styles.blockIcon}>
-                <IconSvg name={IconName.PLUS} size={18} color={C.iconStroke} />
+              <View style={styles.emptyBigIcon}>
+                <IconSvg name={IconName.PLUS} size={24} color={C.iconStroke} />
               </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[f(600), styles.blockTitle]}>Aucun blocage</Text>
-                <Text style={[f(400), styles.blockSub]}>
-                  Touche pour créer ton premier blocage
-                </Text>
-              </View>
-              <IconSvg name={IconName.FORWARD} size={18} color={C.ink45} />
+              <Text style={[f(700), styles.emptyBigTitle]}>
+                Rien ne protège ton temps
+              </Text>
+              <Text style={[f(400), styles.emptyBigSub]}>
+                Ton téléphone est grand ouvert. Choisis un premier moment à
+                protéger.
+              </Text>
             </Pressable>
-          ) : (
-            <View style={styles.blocksList}>
-              {visibleRules.map(r => (
-                <BlockRow key={r.id} rule={r} onResume={onResume} />
-              ))}
-            </View>
           )}
+
+          {/* Les suggestions, elles, ne s'en vont jamais : il y a toujours un
+              moment de plus à protéger. Les deux cartes peuvent donc coexister
+              à la première ouverture. */}
+          <TryNextCard rules={rules} />
 
           {/* Alerte : Temps d'écran non autorisé */}
           {needsScreenTime && (
@@ -392,6 +302,33 @@ function fmtSaved(min: number): string {
 }
 
 const styles = StyleSheet.create({
+  // Appel à l'action agrandi : un écran vide est une invitation à agir.
+  emptyBig: {
+    marginTop: 26,
+    backgroundColor: C.card,
+    borderRadius: 22,
+    paddingVertical: 30,
+    paddingHorizontal: 22,
+    alignItems: 'center',
+  },
+  emptyBigIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 17,
+    backgroundColor: C.iconTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyBigTitle: { fontSize: 18, color: C.ink, letterSpacing: -0.3 },
+  emptyBigSub: {
+    fontSize: 13.5,
+    color: C.ink55,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 6,
+    maxWidth: 260,
+  },
   scrollContent: { flexGrow: 1 },
   container: {
     flexGrow: 1,
@@ -478,50 +415,6 @@ const styles = StyleSheet.create({
   },
   statLabel: { fontSize: 12, color: C.ink50, marginTop: 3 },
   statDivider: { width: 1, height: 30, backgroundColor: C.sep },
-
-  // Blocages
-  blocksHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 22,
-    marginBottom: 10,
-    paddingHorizontal: 2,
-  },
-  blocksList: { gap: 10 },
-  blockRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    backgroundColor: C.card,
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  blockIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: C.iconTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  blockTitle: { fontSize: 15.5, color: C.ink, letterSpacing: -0.2 },
-  blockSub: { fontSize: 13, color: C.ink45, marginTop: 2 },
-  emptyCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    backgroundColor: C.card,
-    borderRadius: 24,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  skelLine: {
-    height: 11,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
 
   // Alerte autorisation
   alertCard: {

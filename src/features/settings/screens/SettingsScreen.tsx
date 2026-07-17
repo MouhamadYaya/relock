@@ -83,11 +83,11 @@ const FW = {
   700: fonts.bold,
   800: fonts.bold,
 } as const
-const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
+const f = (w: keyof typeof FW) => FW[w]
 
 const C = {
   bg: '#0B0C10',
-  surface: '#161821',
+  surface: '#1C1C1E',
   surface2: '#1C1F2B',
   ink: '#F0F0F4',
   ink2: '#A8ABBE',

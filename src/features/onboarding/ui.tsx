@@ -6,6 +6,7 @@
 import React from 'react'
 import {
   Pressable,
+  ScrollView,
   type StyleProp,
   StyleSheet,
   Text,
@@ -39,7 +40,7 @@ const FW = {
   700: fonts.bold,
   800: fonts.bold,
 } as const
-export const f = (w: keyof typeof FW): TextStyle => ({ fontFamily: FW[w] })
+export const f = (w: keyof typeof FW): TextStyle => FW[w]
 
 /** Titre d'écran — grand, gras, aligné à gauche (accroche émotionnelle). */
 export function Title({
@@ -185,12 +186,21 @@ export function Shell({
         </View>
       )}
 
+      {/* Défilable : certaines questions ont assez d'options pour dépasser
+          l'écran — sans ça, le bouton du bas les recouvre. `flexGrow` garde
+          les écrans-récit centrés malgré le ScrollView. */}
       <Animated.View
         key={animKey}
         entering={FadeIn.duration(360)}
         style={styles.body}
       >
-        {children}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.bodyContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
       </Animated.View>
 
       {footer ? (
@@ -213,6 +223,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 26, height: 34, justifyContent: 'center' },
   body: { flex: 1 },
+  bodyContent: { flexGrow: 1, paddingBottom: 8 },
   footer: { paddingTop: 12, gap: 10 },
   title: { fontSize: 30, lineHeight: 37, color: OB.ink, letterSpacing: -0.6 },
   sub: {

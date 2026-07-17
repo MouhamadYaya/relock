@@ -43,7 +43,7 @@ export const darkTheme = {
     // ── Surface layers (cards, sheets, modals) ────────────────────
     // Each step adds ~4-6% white overlay equivalent so stacked
     // surfaces are distinguishable without drop-shadows.
-    surface: '#161821',
+    surface: '#1C1C1E',
     surfaceSecondary: '#1C1F2B',
 
     // ── Text layers ──────────────────────────────────────────────

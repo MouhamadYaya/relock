@@ -1,32 +1,63 @@
-import { IconName } from '@assets/icons'
+/**
+ * Sheet d'une protection (§6) — trois choix, pas quatre.
+ *
+ * Vocabulaire : jamais « protection », qui ne décrit rien — on nomme la chose
+ * telle qu'elle est (« la plage horaire », « la limite », « le blocage »), et on
+ * dit toujours la conséquence concrète.
+ *
+ * Friction : le bouton de suppression est INERTE 8 s, et se remplit de rouge
+ * pendant ce temps. Assez long pour laisser passer une impulsion, assez court
+ * pour ne pas se sentir prisonnier. Le délai EST la confirmation — aucune boîte
+ * de dialogue derrière. Un délai invisible passerait pour un bug : le bouton
+ * lui-même sert donc de jauge.
+ *
+ * Mode strict : quand la SESSION en cours est verrouillée, tout est éteint. Il
+ * n'y a rien à négocier — c'est l'utilisateur lucide d'hier qui a décidé.
+ *
+ * ⚠️ « Modifier » (prévu au §6) est absent : il demande un mode ÉDITION dans le
+ * flow de création, que le §7 demandait de ne pas toucher. À trancher.
+ */
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import React, { useEffect, useState } from 'react'
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 import { HalfSheet } from '@/features/blocking/components/HalfSheet'
-import { RingProgress } from '@/features/blocking/components/RingProgress'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useDeleteRuleMutation } from '@/features/blocking/hooks/useDeleteRuleMutation'
-import { useToggleRuleMutation } from '@/features/blocking/hooks/useToggleRuleMutation'
-import { armRule } from '@/features/blocking/services/arm'
 import {
-  appsSubtitle,
-  type BlockRuleView,
-  isLocked,
-  RULE_TYPE_LABEL,
-  ringInfo,
-  ringLabel,
-  scheduleActive,
-  timedRunning,
-  unlockTimeLabel,
-} from '@/features/blocking/types'
+  useResumeRuleMutation,
+  useSuspendRuleMutation,
+} from '@/features/blocking/hooks/useSuspendRuleMutation'
+import {
+  configLine,
+  IndicatorView,
+  stateText,
+} from '@/features/blocking/screens/BlocagesScreen'
+import { deriveSession, isSessionLocked } from '@/features/blocking/session'
+import type { BlockRuleView } from '@/features/blocking/types'
 import { goBack } from '@/navigation/helpers/navigation-helpers'
 import type { RootStackParamList } from '@/navigation/root-param-list'
-import { ROUTES } from '@/navigation/routes'
-import { IconSvg } from '@/shared/components/ui/IconSvg'
+import type { ROUTES } from '@/navigation/routes'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
-import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
+
+const C = {
+  group: '#111113',
+  sep: '#202024',
+  violet: '#A78BFA',
+  amber: '#E8A33D',
+  red: '#FF453A',
+  redArming: '#6A2E2C', // rouge désaturé : bouton encore inerte
+  txt: '#FFFFFF',
+  txt2: '#8E8E96',
+  txt3: '#57575E',
+}
 
 const FW = {
   400: fonts.regular,
@@ -34,305 +65,310 @@ const FW = {
   600: fonts.semiBold,
   700: fonts.bold,
 } as const
-const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
+const f = (w: keyof typeof FW) => FW[w]
 
-const C = {
-  bg: '#0B0C10',
-  surface: '#1A1D27',
-  surface2: '#242836',
-  ink: '#F0F0F4',
-  ink2: '#A8ABBE',
-  ink3: '#6B6F82',
-  accent: '#A49AFE',
-  danger: '#FF453A',
-  ambient: 'rgba(164,154,254,0.14)',
-  hair: 'rgba(255,255,255,0.06)',
-}
-
-const TYPE_ICON: Record<BlockRuleType, IconName> = {
-  progressive_delay: IconName.CLOCK,
-  schedule: IconName.CALENDAR,
-  daily_limit: IconName.CHART,
-}
+/** Délai d'inertie du bouton destructeur (secondes). */
+const ARM_SECONDS = 8
 
 type Props = NativeStackScreenProps<
   RootStackParamList,
   typeof ROUTES.BLOCK_DETAIL
 >
 
-const num = (v: unknown, d = 0): number => (typeof v === 'number' ? v : d)
+const hhmm = (d: Date) =>
+  d.getMinutes()
+    ? `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`
+    : `${d.getHours()} h`
 
-function ruleName(rule: BlockRuleView): string {
-  const custom = rule.config?.name
-  return typeof custom === 'string' && custom.trim()
-    ? custom
-    : RULE_TYPE_LABEL[rule.type]
-}
-function timeLabel(h: number, m: number): string {
-  return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`
-}
-function scheduleText(rule: BlockRuleView): string {
-  const c = rule.config ?? {}
-  return `${timeLabel(num(c.start_hour, 22), num(c.start_minute))} → ${timeLabel(num(c.end_hour, 8), num(c.end_minute))}`
-}
-function limitText(rule: BlockRuleView): string {
-  const min = num(rule.config?.limit_min, 60)
-  const h = Math.floor(min / 60)
-  const r = min % 60
-  if (h === 0) return `${r} min / jour`
-  return r === 0 ? `${h} h / jour` : `${h} h ${r} / jour`
+function durationLabel(ms: number): string {
+  const m = Math.max(0, Math.round(ms / 60_000))
+  if (m < 60) return `${m} min`
+  const h = Math.floor(m / 60)
+  const r = m % 60
+  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')}`
 }
 
-function Pill({ text, on }: { text: string; on: boolean }) {
+/** Le mot exact pour CE blocage. « Protection » ne dit pas de quoi il s'agit. */
+function ruleNoun(rule: BlockRuleView): string {
+  if (rule.type === 'daily_limit') return 'la limite'
+  if (rule.type === 'schedule') return 'la plage horaire'
+  return 'le blocage'
+}
+
+/** Durées de pause — des choix, pas une molette : un tap et c'est réglé. */
+const PAUSES: { label: string; minutes: number | null }[] = [
+  { label: '5 minutes', minutes: 5 },
+  { label: '15 minutes', minutes: 15 },
+  { label: '30 minutes', minutes: 30 },
+  { label: '1 heure', minutes: 60 },
+  { label: '2 heures', minutes: 120 },
+  { label: 'Jusqu’à ce que je reprenne', minutes: null },
+]
+
+/**
+ * Bouton destructeur à inertie : le rouge envahit le bouton en 8 s, puis il
+ * s'active. Le bouton EST la jauge — rien à ajouter à l'écran, et on voit d'un
+ * coup d'œil combien il reste.
+ */
+function DestroyRow({
+  label,
+  ready,
+  onPress,
+}: {
+  label: string
+  ready: boolean
+  onPress: () => void
+}) {
+  const fill = useSharedValue(0)
+  useEffect(() => {
+    fill.value = withTiming(1, {
+      duration: ARM_SECONDS * 1000,
+      easing: Easing.linear,
+    })
+  }, [fill])
+  const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }))
+  const color = ready ? C.red : C.redArming
   return (
-    <View
-      style={[styles.pill, { backgroundColor: on ? C.ambient : C.surface2 }]}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !ready }}
+      disabled={!ready}
+      onPress={onPress}
+      style={[styles.item, styles.destroy]}
     >
-      <Text style={[f(600), { fontSize: 12, color: on ? C.accent : C.ink3 }]}>
-        {text}
-      </Text>
-    </View>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.destroyFill, fillStyle]}
+      />
+      <Text style={[f(500), styles.itemIcon, { color }]}>⏻</Text>
+      <Text style={[f(500), styles.itemLabel, { color }]}>{label}</Text>
+    </Pressable>
   )
 }
 
-function StatusBadge({ rule }: { rule: BlockRuleView }) {
-  if (!rule.isActive) return <Pill text="En pause" on={false} />
-  if (rule.type === 'schedule') {
-    return scheduleActive(rule) ? (
-      <Pill text="Actif maintenant" on />
-    ) : (
-      <Pill
-        text={`Prochain à ${num(rule.config?.start_hour, 22)}h`}
-        on={false}
-      />
-    )
-  }
-  return <Pill text="Actif" on />
+function Row({
+  label,
+  icon,
+  note,
+  tone,
+  disabled,
+  onPress,
+  last,
+}: {
+  label: string
+  icon: string
+  note?: string
+  tone?: 'warn' | 'danger' | 'arming'
+  disabled?: boolean
+  onPress?: () => void
+  last?: boolean
+}) {
+  const color =
+    tone === 'danger'
+      ? C.red
+      : tone === 'arming'
+        ? C.redArming
+        : tone === 'warn'
+          ? C.amber
+          : disabled
+            ? C.txt3
+            : C.txt
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.item, !last && styles.itemBorder]}
+    >
+      <Text style={[f(500), styles.itemIcon, { color }]}>{icon}</Text>
+      <Text style={[f(500), styles.itemLabel, { color }]}>{label}</Text>
+      {note ? (
+        <Text
+          style={[
+            f(500),
+            styles.itemNote,
+            tone === 'arming' && { color: C.redArming },
+          ]}
+        >
+          {note}
+        </Text>
+      ) : null}
+    </Pressable>
+  )
 }
 
 export default function BlockDetailScreen({ route }: Props) {
-  // Les paramètres de navigation sont une PHOTO prise à l'ouverture : ils ne
-  // suivent ni les mutations ni les refetch. La feuille affichait donc « En
-  // pause » sur une règle relancée entre-temps — et surtout `togglePause`
-  // calculait `!rule.isActive` sur cet état périmé, écrivant l'inverse de la
-  // réalité. On relit la règle vivante dans le cache ; on ne retombe sur le
-  // paramètre que si elle en a disparu (suppression en cours).
-  const { rule: routeRule } = route.params
+  const routeRule = route.params?.rule
+  // Les paramètres de navigation sont une PHOTO prise à l'ouverture : on relit
+  // la règle vivante dans le cache (la liste est la source de vérité).
   const { rules } = useBlockRulesQuery()
-  const rule = rules.find(r => r.id === routeRule.id) ?? routeRule
   const del = useDeleteRuleMutation()
-  const toggle = useToggleRuleMutation()
+  const suspend = useSuspendRuleMutation()
+  const resume = useResumeRuleMutation()
 
-  const isSession = rule.type === 'progressive_delay'
-  // Tick : pour un « Bloquer maintenant », l'anneau, le « restant » et le
-  // passage « en cours → terminé » doivent avancer tant que la feuille est
-  // ouverte (sinon on affiche « Arrêter » sur un blocage déjà fini).
   const [now, setNow] = useState(() => new Date())
+  const [picking, setPicking] = useState(false) // choix de durée de suspension
+  const [armLeft, setArmLeft] = useState(ARM_SECONDS)
+
+  // Inertie du bouton destructeur : décompte discret jusqu'à 0.
   useEffect(() => {
-    if (!isSession) return
-    const id = setInterval(() => setNow(new Date()), 1000)
+    if (armLeft <= 0) return
+    const id = setTimeout(() => setArmLeft(v => v - 1), 1000)
+    return () => clearTimeout(id)
+  }, [armLeft])
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000)
     return () => clearInterval(id)
-  }, [isSession])
-  const locked = isLocked(rule)
-  const running = timedRunning(rule, now)
-  const ring = ringInfo(rule, now)
+  }, [])
 
-  const removeAnd = async (close: () => void) => {
-    try {
-      // Stop CIBLÉ : n'affecte jamais les autres blocages en cours.
-      if (ScreenTime.isAvailable) {
-        await ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(
-          () => {},
-        )
-      }
-      await del.mutateAsync({ id: rule.id })
-      close()
-    } catch (e) {
-      showErrorToast(e)
-    }
+  const rule = rules.find(r => r.id === routeRule?.id) ?? routeRule
+  if (!rule) return null
+
+  const s = deriveSession(rule, now)
+  const locked = isSessionLocked(rule, now)
+  const isSuspended = s.state === 'suspended'
+  const apps = rule.count ?? 0
+  // On ne peut PAS nommer les apps : la sélection Apple est un jeton opaque.
+  const consequence = apps
+    ? `${apps} app${apps > 1 ? 's' : ''} redeviendr${apps > 1 ? 'ont' : 'a'} accessible${apps > 1 ? 's' : ''} immédiatement.`
+    : 'Tes apps redeviendront accessibles immédiatement.'
+
+  const doSuspend = (minutes: number | null, close: () => void) => {
+    const until = minutes ? new Date(Date.now() + minutes * 60_000) : null
+    suspend.mutate({ rule, until }, { onError: e => showErrorToast(e) })
+    close()
   }
-
-  const confirmStop = (close: () => void) =>
-    Alert.alert(
-      'Ne vous mentez pas !',
-      'Veux-tu vraiment arrêter ce blocage ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Arrêter le blocage',
-          style: 'destructive',
-          onPress: () => removeAnd(close),
-        },
-      ],
-    )
-
-  const confirmDelete = (close: () => void) =>
-    Alert.alert('Supprimer ce blocage ?', 'Action définitive.', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: () => removeAnd(close),
-      },
-    ])
-
-  const togglePause = async (close: () => void) => {
-    const next = !rule.isActive
-    try {
-      if (ScreenTime.isAvailable) {
-        // Pause/reprise CIBLÉE : la sélection de la règle reste liée côté
-        // natif, seule SA fenêtre s'arrête ou se ré-arme.
-        if (next) await armRule(rule)
-        else await ScreenTime.stopRule(rule.id, nativeKindOf(rule.type))
-      }
-      await toggle.mutateAsync({ id: rule.id, isActive: next })
-      close()
-    } catch (e) {
-      showErrorToast(e)
+  const doResume = (close: () => void) => {
+    resume.mutate({ rule }, { onError: e => showErrorToast(e) })
+    close()
+  }
+  const doDeactivate = (close: () => void) => {
+    if (ScreenTime.isAvailable) {
+      ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(() => {})
     }
+    del.mutate({ id: rule.id }, { onError: e => showErrorToast(e) })
+    close()
   }
 
   return (
-    <HalfSheet onClose={() => goBack()}>
+    <HalfSheet onClose={goBack}>
       {close => (
-        <View>
-          {/* En-tête commun */}
+        <View style={styles.wrap}>
+          {/* En-tête : l'indicateur en grand, le nom, une ligne de contexte. */}
           <View style={styles.head}>
-            <View style={styles.icon}>
-              <IconSvg name={TYPE_ICON[rule.type]} size={22} color={C.accent} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[f(700), { fontSize: 18, color: C.ink }]}>
-                {ruleName(rule)}
-              </Text>
-              <Text
-                style={[
-                  f(400),
-                  { fontSize: 13.5, color: C.ink2, marginTop: 2 },
-                ]}
-              >
-                {appsSubtitle(rule.appIds, rule.count)}
-              </Text>
-            </View>
-          </View>
-
-          {/* Milieu selon le type */}
-          {isSession ? (
-            locked ? (
-              <View style={styles.lockCard}>
-                <IconSvg name={IconName.LOCK} size={20} color={C.accent} />
-                <Text
-                  style={[f(600), { fontSize: 15, color: C.ink, marginTop: 8 }]}
-                >
-                  Verrouillé jusqu'à {unlockTimeLabel(rule)}
+            {locked ? (
+              <View style={styles.strictBadge}>
+                <Text style={[f(700), styles.strictBadgeTxt]}>
+                  🔒 MODE STRICT
                 </Text>
-                <Text style={[f(400), styles.lockSub]}>
-                  Mode strict — impossible d'arrêter avant la fin. C'est ce que
-                  tu as choisi pour tenir.
-                </Text>
-              </View>
-            ) : running ? (
-              <View style={styles.center}>
-                <RingProgress
-                  size={136}
-                  stroke={8}
-                  fraction={ring.fraction}
-                  color={C.accent}
-                >
-                  <View style={{ alignItems: 'center' }}>
-                    <Text
-                      style={[
-                        f(700),
-                        {
-                          fontSize: 24,
-                          color: C.ink,
-                          fontVariant: ['tabular-nums'],
-                        },
-                      ]}
-                    >
-                      {ringLabel(rule, now)}
-                    </Text>
-                    <Text
-                      style={[
-                        f(400),
-                        { fontSize: 11.5, color: C.ink3, marginTop: 2 },
-                      ]}
-                    >
-                      restant
-                    </Text>
-                  </View>
-                </RingProgress>
               </View>
             ) : (
-              <Text style={[f(400), styles.doneText]}>
-                Ce blocage est terminé.
-              </Text>
-            )
-          ) : (
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>
-                  {rule.type === 'schedule' ? 'Plage' : 'Limite'}
-                </Text>
-                <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                  {rule.type === 'schedule'
-                    ? scheduleText(rule)
-                    : limitText(rule)}
-                </Text>
+              <View style={styles.bigInd}>
+                <IndicatorView ind={s.indicator} strict={s.strict} />
               </View>
-              <View style={styles.hair} />
-              <View style={styles.infoRow}>
-                <Text style={[f(500), { fontSize: 14, color: C.ink2 }]}>
-                  État
-                </Text>
-                <StatusBadge rule={rule} />
-              </View>
+            )}
+            <Text style={[f(700), styles.title]}>{s.title}</Text>
+            {/* Ce que c'est (réglages choisis), puis ce qui se passe (état). Un
+                blocage créé par erreur doit se reconnaître ici, sans fouiller. */}
+            <Text style={[f(400), styles.sub]}>{configLine(rule)}</Text>
+            <Text style={[f(500), styles.subState]}>
+              {locked && s.sessionEndsAt
+                ? `Verrouillé jusqu'à ${hhmm(s.sessionEndsAt)} · encore ${durationLabel(s.sessionEndsAt.getTime() - now.getTime())}`
+                : stateText(s, now)}
+            </Text>
+          </View>
+
+          {locked ? (
+            /* Strict : tout est éteint. Rien à négocier. */
+            <View style={styles.group}>
+              <Row
+                label="Mettre en pause"
+                icon="❙❙"
+                note="Indisponible"
+                disabled
+              />
+              <Row
+                label={`Supprimer ${ruleNoun(rule)}`}
+                icon="⏻"
+                note="Indisponible"
+                disabled
+                last
+              />
             </View>
+          ) : picking ? (
+            /* Combien de temps ? Une liste de durées : un tap et c'est réglé.
+               « Jusqu'à ce que je reprenne » couvre les vacances sans rien
+               détruire. À l'échéance, iOS remet le blocage tout seul. */
+            <View style={styles.group}>
+              {PAUSES.map(d => (
+                <Row
+                  key={d.label}
+                  label={d.label}
+                  icon="❙❙"
+                  tone="warn"
+                  onPress={() => doSuspend(d.minutes, close)}
+                />
+              ))}
+              <Row
+                label="Annuler"
+                icon="↩"
+                onPress={() => setPicking(false)}
+                last
+              />
+            </View>
+          ) : (
+            <>
+              <View style={styles.group}>
+                {isSuspended ? (
+                  <Row
+                    label="Reprendre maintenant"
+                    icon="▶"
+                    tone="warn"
+                    onPress={() => doResume(close)}
+                    last
+                  />
+                ) : (
+                  <Row
+                    label="Mettre en pause"
+                    icon="❙❙"
+                    tone="warn"
+                    note="5 min → 2 h"
+                    onPress={() => setPicking(true)}
+                    last
+                  />
+                )}
+              </View>
+
+              <View style={styles.group}>
+                <DestroyRow
+                  label={`Supprimer ${ruleNoun(rule)}`}
+                  ready={armLeft <= 0}
+                  onPress={() => doDeactivate(close)}
+                />
+              </View>
+            </>
           )}
 
-          {/* Actions */}
-          <View style={styles.actions}>
-            {isSession ? (
-              locked ? null : running ? (
-                <Pressable
-                  onPress={() => confirmStop(close)}
-                  style={styles.dangerBtn}
-                >
-                  <Text style={[f(700), { fontSize: 16, color: C.danger }]}>
-                    Arrêter le blocage
-                  </Text>
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={() => confirmDelete(close)}
-                  style={styles.dangerBtn}
-                >
-                  <Text style={[f(700), { fontSize: 16, color: C.danger }]}>
-                    Supprimer
-                  </Text>
-                </Pressable>
-              )
-            ) : (
-              <>
-                <Pressable
-                  onPress={() => togglePause(close)}
-                  style={styles.primaryBtn}
-                >
-                  <Text style={[f(700), { fontSize: 16, color: C.bg }]}>
-                    {rule.isActive ? 'Mettre en pause' : 'Reprendre'}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => confirmDelete(close)}
-                  style={styles.ghostBtn}
-                >
-                  <Text style={[f(600), { fontSize: 15, color: C.danger }]}>
-                    Supprimer
-                  </Text>
-                </Pressable>
-              </>
-            )}
-          </View>
+          <Text style={[f(400), styles.foot]}>
+            {locked
+              ? `Tu as verrouillé ce blocage${
+                  rule.createdAt ? ` à ${hhmm(new Date(rule.createdAt))}` : ''
+                }.\nIl n'y a rien à décider maintenant.`
+              : consequence}
+          </Text>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Fermer"
+            onPress={close}
+            style={styles.close}
+          >
+            <Text style={[f(700), styles.closeTxt]}>Fermer</Text>
+          </Pressable>
         </View>
       )}
     </HalfSheet>
@@ -340,70 +376,66 @@ export default function BlockDetailScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 4 },
-  icon: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: C.ambient,
-    alignItems: 'center',
-    justifyContent: 'center',
+  wrap: { paddingHorizontal: 4, paddingBottom: 4 },
+  head: { alignItems: 'center', paddingHorizontal: 10, paddingBottom: 18 },
+  bigInd: { transform: [{ scale: 1.5 }], marginBottom: 18, marginTop: 6 },
+  strictBadge: {
+    backgroundColor: 'rgba(167,139,250,0.14)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 12,
   },
-  center: { alignItems: 'center', marginTop: 26, marginBottom: 6 },
-  doneText: {
-    fontSize: 14,
-    color: C.ink3,
+  strictBadgeTxt: { fontSize: 11, color: C.violet, letterSpacing: 0.3 },
+  title: { fontSize: 20, color: C.txt, letterSpacing: -0.3 },
+  subState: {
+    fontSize: 13.5,
+    color: C.violet,
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: 5,
   },
-  lockCard: {
-    backgroundColor: C.surface,
-    borderRadius: 18,
-    padding: 20,
-    alignItems: 'center',
-    marginTop: 20,
+  destroy: { overflow: 'hidden' },
+  destroyFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,69,58,0.16)',
   },
-  lockSub: {
-    fontSize: 13,
-    color: C.ink3,
-    textAlign: 'center',
-    marginTop: 6,
-    lineHeight: 19,
+  sub: { fontSize: 13, color: C.txt2, marginTop: 4, textAlign: 'center' },
+  group: {
+    backgroundColor: C.group,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 9,
   },
-  infoCard: {
-    backgroundColor: C.surface,
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 6,
-    marginTop: 20,
-  },
-  infoRow: {
+  item: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
+    gap: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    minHeight: 52, // cible tactile ≥ 44
   },
-  hair: { height: 1, backgroundColor: C.hair },
-  pill: { borderRadius: 99, paddingVertical: 5, paddingHorizontal: 11 },
-  actions: { marginTop: 22, gap: 10 },
-  dangerBtn: {
-    height: 54,
+  itemBorder: { borderBottomWidth: 1, borderBottomColor: C.sep },
+  itemIcon: { width: 20, textAlign: 'center', fontSize: 14 },
+  itemLabel: { fontSize: 16 },
+  itemNote: { marginLeft: 'auto', fontSize: 12, color: C.txt3 },
+  foot: {
+    fontSize: 11.5,
+    color: C.txt3,
+    textAlign: 'center',
+    paddingHorizontal: 22,
+    paddingTop: 11,
+    paddingBottom: 4,
+    lineHeight: 17,
+  },
+  close: {
+    backgroundColor: C.group,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,69,58,0.12)',
+    paddingVertical: 15,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 5,
   },
-  primaryBtn: {
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: C.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostBtn: {
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  closeTxt: { fontSize: 16, color: C.txt },
 })

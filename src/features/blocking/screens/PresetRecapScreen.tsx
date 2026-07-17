@@ -1,0 +1,251 @@
+/**
+ * Récapitulatif d'un préréglage — l'utilisateur voit TOUT ce qui va être créé,
+ * puis valide d'un bouton. Rien n'est créé avant ce bouton.
+ *
+ * La seule chose qu'on ne peut pas faire à sa place : choisir les apps. Le
+ * sélecteur d'Apple rend un jeton opaque, aucune API ne permet de pré-cocher
+ * quoi que ce soit. Si une sélection existe déjà (il en a fait une un jour), on
+ * la réutilise et il n'a vraiment rien à faire ; sinon on la lui demande une
+ * fois, et c'est le seul geste.
+ */
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import React, { useEffect, useState } from 'react'
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
+import { HalfSheet } from '@/features/blocking/components/HalfSheet'
+import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
+import { findPreset, presetLines } from '@/features/blocking/presets'
+import { armRule } from '@/features/blocking/services/arm'
+import type { BlockRuleView } from '@/features/blocking/types'
+import { goBack } from '@/navigation/helpers/navigation-helpers'
+import type { RootStackParamList } from '@/navigation/root-param-list'
+import type { ROUTES } from '@/navigation/routes'
+import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
+import { fonts } from '@/shared/theme/tokens/fonts'
+import { showErrorToast } from '@/shared/utils/toast'
+import { genUUID } from '@/shared/utils/uuid'
+
+const C = {
+  group: '#111113',
+  sep: '#202024',
+  violet: '#A78BFA',
+  onViolet: '#131318',
+  txt: '#FFFFFF',
+  txt2: '#8E8E96',
+  txt3: '#57575E',
+}
+
+const FW = {
+  400: fonts.regular,
+  500: fonts.medium,
+  600: fonts.semiBold,
+  700: fonts.bold,
+} as const
+const f = (w: keyof typeof FW) => FW[w]
+
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  typeof ROUTES.PRESET_RECAP
+>
+
+export default function PresetRecapScreen({ route }: Props) {
+  const preset = findPreset(route.params.presetId)
+  const createRule = useCreateRuleMutation()
+  const [count, setCount] = useState<number | null>(null)
+  const [working, setWorking] = useState(false)
+  const [done, setDone] = useState(false)
+
+  // Combien d'apps sont déjà choisies ? C'est ce qui décide si l'utilisateur a
+  // un geste à faire ou aucun.
+  useEffect(() => {
+    if (!ScreenTime.isAvailable) {
+      setCount(0)
+      return
+    }
+    ScreenTime.getStatus()
+      .then(s => setCount(s.count))
+      .catch(() => setCount(0))
+  }, [])
+
+  if (!preset) return null
+
+  const pickApps = async () => {
+    try {
+      const auth = await ScreenTime.requestAuthorization()
+      if (auth !== 'approved') return
+      const { count: picked } = await ScreenTime.presentPicker()
+      setCount(picked)
+    } catch (e) {
+      showErrorToast(e)
+    }
+  }
+
+  const activate = async () => {
+    if (working || !count) return
+    setWorking(true)
+    // Id CLIENT : lie la mécanique native à la future ligne DB.
+    const id = genUUID()
+    let armed = false
+    try {
+      if (ScreenTime.isAvailable) {
+        const auth = await ScreenTime.requestAuthorization()
+        if (auth !== 'approved') return
+        await ScreenTime.bindSelection(id)
+        await armRule({
+          id,
+          type: preset.type,
+          config: preset.config,
+        } as BlockRuleView)
+        armed = true
+      }
+      await createRule.mutateAsync({
+        id,
+        type: preset.type,
+        appIds: [],
+        count,
+        config: preset.config,
+      })
+      setDone(true)
+    } catch (e) {
+      // La ligne DB a échoué : on désarme, sinon iOS bloquerait pour un
+      // blocage que l'app ne connaît pas — invisible et impossible à retirer.
+      if (armed) {
+        await ScreenTime.clearRuleData(id, nativeKindOf(preset.type)).catch(
+          () => {},
+        )
+      }
+      showErrorToast(e)
+    } finally {
+      setWorking(false)
+    }
+  }
+
+  if (done) {
+    return (
+      <HalfSheet onClose={goBack}>
+        {close => (
+          <View style={s.wrap}>
+            <Text style={[f(700), s.title]}>C'est en place.</Text>
+            <Text style={[f(400), s.pitch]}>
+              « {preset.title} » bloque maintenant {count} app
+              {(count ?? 0) > 1 ? 's' : ''}. Tu la retrouveras dans l'onglet
+              Blocages — pour la suspendre ou la retirer quand tu veux.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={close}
+              style={s.primary}
+            >
+              <Text style={[f(600), s.primaryTxt]}>Terminé</Text>
+            </Pressable>
+          </View>
+        )}
+      </HalfSheet>
+    )
+  }
+
+  const needsApps = count === 0
+
+  return (
+    <HalfSheet onClose={goBack}>
+      {close => (
+        <View style={s.wrap}>
+          <Text style={[f(700), s.title]}>{preset.title}</Text>
+          <Text style={[f(400), s.pitch]}>{preset.pitch}</Text>
+
+          <View style={s.group}>
+            {presetLines(preset).map((l, i) => (
+              <View key={l.label} style={[s.row, i > 0 && s.rowSep]}>
+                <Text style={[f(400), s.rowLabel]}>{l.label}</Text>
+                <Text style={[f(500), s.rowValue]}>{l.value}</Text>
+              </View>
+            ))}
+            <View style={[s.row, s.rowSep]}>
+              <Text style={[f(400), s.rowLabel]}>Apps</Text>
+              <Text style={[f(500), s.rowValue]}>
+                {count === null
+                  ? '…'
+                  : needsApps
+                    ? 'À choisir'
+                    : `${count} app${count > 1 ? 's' : ''}`}
+              </Text>
+            </View>
+          </View>
+
+          {needsApps && (
+            <Text style={[f(400), s.note]}>
+              Apple ne laisse aucune app choisir les tiennes à ta place : tu les
+              désignes toi-même, une fois.
+            </Text>
+          )}
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={count === null || working}
+            onPress={needsApps ? pickApps : activate}
+            style={[s.primary, (count === null || working) && s.primaryOff]}
+          >
+            {working ? (
+              <ActivityIndicator color={C.onViolet} />
+            ) : (
+              <Text style={[f(600), s.primaryTxt]}>
+                {needsApps ? 'Choisir les apps' : 'Activer ce blocage'}
+              </Text>
+            )}
+          </Pressable>
+
+          <Pressable accessibilityRole="button" onPress={close} style={s.ghost}>
+            <Text style={[f(500), s.ghostTxt]}>Pas maintenant</Text>
+          </Pressable>
+        </View>
+      )}
+    </HalfSheet>
+  )
+}
+
+const s = StyleSheet.create({
+  wrap: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 10 },
+  title: { fontSize: 22, color: C.txt, letterSpacing: -0.4 },
+  pitch: {
+    fontSize: 14,
+    color: C.txt2,
+    lineHeight: 20,
+    marginTop: 6,
+    marginBottom: 18,
+  },
+  group: { backgroundColor: C.group, borderRadius: 16, paddingHorizontal: 14 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 13,
+    gap: 16,
+  },
+  rowSep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.sep },
+  rowLabel: { fontSize: 14, color: C.txt2 },
+  rowValue: { fontSize: 14, color: C.txt, flexShrink: 1, textAlign: 'right' },
+  note: {
+    fontSize: 12,
+    color: C.txt3,
+    lineHeight: 17,
+    marginTop: 12,
+    paddingHorizontal: 2,
+  },
+  primary: {
+    marginTop: 18,
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: C.violet,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryOff: { opacity: 0.45 },
+  primaryTxt: { fontSize: 16, color: C.onViolet },
+  ghost: { height: 44, alignItems: 'center', justifyContent: 'center' },
+  ghostTxt: { fontSize: 14, color: C.txt2 },
+})

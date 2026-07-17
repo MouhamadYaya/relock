@@ -28,11 +28,11 @@ const FW = {
   700: fonts.bold,
   800: fonts.bold,
 } as const
-const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
+const f = (w: keyof typeof FW) => FW[w]
 
 const C = {
   bg: '#0B0C10',
-  surface: '#161821',
+  surface: '#1C1C1E',
   surface2: '#1C1F2B',
   ink: '#F0F0F4',
   ink2: '#A8ABBE',
@@ -171,16 +171,6 @@ export default function ActivityScreen() {
   const weeks = useMemo(() => lastWeeks(), [dateEpoch, reloadKey])
   // biome-ignore lint/correctness/useExhaustiveDependencies: idem
   const months = useMemo(() => lastMonths(), [dateEpoch, reloadKey])
-
-  // Voile « Chargement… » : le rapport natif ne signale pas sa fin de rendu.
-  // On l'efface après un délai borné (il est purement décoratif) — sinon il
-  // masque définitivement le message des périodes sans données.
-  const [loading, setLoading] = useState(true)
-  useEffect(() => {
-    setLoading(true)
-    const t = setTimeout(() => setLoading(false), 2500)
-    return () => clearTimeout(t)
-  }, [])
 
   // Sans autorisation Temps d'écran, iOS ne lance MÊME PAS l'extension de
   // rapport : les trois vues restent muettes et l'écran n'affichait qu'un

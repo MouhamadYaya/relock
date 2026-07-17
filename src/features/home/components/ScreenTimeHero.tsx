@@ -99,7 +99,7 @@ export function ScreenTimeHero() {
 const styles = StyleSheet.create({
   section: { marginTop: 20 },
   label: {
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontSize: 14,
     color: C.label,
     letterSpacing: -0.2,
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   // Hauteur fixe : gros total (52) + delta (24) — la vue native remplit.
   heroWrap: { height: 82, marginTop: 4, justifyContent: 'center' },
   unavailable: {
-    fontFamily: fonts.medium,
+    ...fonts.medium,
     fontSize: 14,
     color: C.muted,
     lineHeight: 20,

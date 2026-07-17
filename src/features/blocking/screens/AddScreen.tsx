@@ -22,7 +22,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+import Svg, { Circle, Path, Line as SvgLine } from 'react-native-svg'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
+import { daysLabel } from '@/features/blocking/session'
 import { NotificationService } from '@/features/notifications/notification.service'
 import {
   hasAskedNotifPermission,
@@ -67,7 +69,7 @@ const FW = {
   700: fonts.bold,
   800: fonts.bold,
 } as const
-const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
+const f = (w: keyof typeof FW) => FW[w]
 
 const C = {
   bg: '#0B0C10',
@@ -93,24 +95,29 @@ const DB_TYPE: Record<TypeKey, BlockRuleType> = {
   daily_limit: 'daily_limit',
 }
 
-const TYPES: { key: TypeKey; icon: IconName; title: string; desc: string }[] = [
+const TYPES: {
+  key: TypeKey
+  icon: IconName | 'range'
+  title: string
+  desc: string
+}[] = [
   {
     key: 'block_now',
     icon: IconName.CLOCK,
     title: 'Bloquer maintenant',
-    desc: 'Pour une durée choisie',
+    desc: 'Une fois, pour une durée choisie',
   },
   {
     key: 'schedule',
-    icon: IconName.CALENDAR,
+    icon: 'range',
     title: 'Plage horaire',
-    desc: 'Chaque jour, sur un créneau',
+    desc: 'Bloqué tous les jours sur un créneau',
   },
   {
     key: 'daily_limit',
     icon: IconName.CHART,
     title: 'Limite de temps',
-    desc: "Un quota d'usage par jour",
+    desc: 'Un quota par jour, puis bloqué',
   },
 ]
 
@@ -134,6 +141,79 @@ function fmtDuration(min: number): string {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
+/**
+ * Icône « plage horaire » : un cadran dont une TRANCHE est mise en évidence.
+ * Un calendrier ne disait rien d'un créneau — il évoquait des dates. Ici on
+ * dessine littéralement ce qu'on vend : une portion de la journée.
+ */
+function RangeGlyph({ size = 20, color }: { size?: number; color: string }) {
+  const c = 12
+  const r = 8.6
+  const pt = (deg: number): [number, number] => {
+    const a = ((deg - 90) * Math.PI) / 180
+    return [c + r * Math.cos(a), c + r * Math.sin(a)]
+  }
+  const [x1, y1] = pt(40)
+  const [x2, y2] = pt(170)
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle
+        cx={c}
+        cy={c}
+        r={r}
+        stroke={color}
+        strokeWidth={1.5}
+        opacity={0.32}
+        fill="none"
+      />
+      <Path
+        d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
+        stroke={color}
+        strokeWidth={2.6}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <SvgLine x1={c} y1={c} x2={x1} y2={y1} stroke={color} strokeWidth={1.5} />
+      <SvgLine x1={c} y1={c} x2={x2} y2={y2} stroke={color} strokeWidth={1.5} />
+      <Circle cx={c} cy={c} r={1.5} fill={color} />
+    </Svg>
+  )
+}
+
+// Deux questions DISTINCTES (§7) : « quels jours » et « combien de temps ».
+// Surtout pas « est-ce répétitif ? » — une plage l'est par définition, et la
+// question obligerait l'utilisateur à modéliser le système pour y répondre.
+const DAY_PRESETS: { label: string; days: number[] | null }[] = [
+  { label: 'Tous les jours', days: null },
+  { label: 'Lun → Ven', days: [1, 2, 3, 4, 5] },
+  { label: 'Week-end', days: [0, 6] },
+]
+const sameDays = (a: number[] | null, b: number[] | null) =>
+  a === null || b === null ? a === b : a.join() === b.join()
+
+function Chip({
+  label,
+  on,
+  onPress,
+}: {
+  label: string
+  on: boolean
+  onPress: () => void
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: on }}
+      onPress={onPress}
+      style={[styles.chip, on && styles.chipOn]}
+    >
+      <Text style={[f(600), { fontSize: 13, color: on ? C.bg : C.ink2 }]}>
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
 /** Ligne de type (étape 1) — flèche + léger scale au press. */
 function TypeRow({
   icon,
@@ -141,7 +221,7 @@ function TypeRow({
   desc,
   onPress,
 }: {
-  icon: IconName
+  icon: IconName | 'range'
   title: string
   desc: string
   onPress: () => void
@@ -162,7 +242,11 @@ function TypeRow({
       style={[styles.typeRow, style]}
     >
       <View style={styles.typeIcon}>
-        <IconSvg name={icon} size={20} color={C.accent} />
+        {icon === 'range' ? (
+          <RangeGlyph color={C.accent} />
+        ) : (
+          <IconSvg name={icon} size={20} color={C.accent} />
+        )}
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>{title}</Text>
@@ -194,6 +278,10 @@ export default function AddScreen() {
 
   const [durationMin, setDurationMin] = useState(30)
   const [strict, setStrict] = useState(false)
+  // Jours d'application (plage + limite). `null` ⇒ tous les jours.
+  // Un blocage vit jusqu'à ce que l'utilisateur le mette en pause ou le
+  // supprime : rien ne s'auto-détruit dans son dos.
+  const [days, setDays] = useState<number[] | null>(null)
   const [start, setStart] = useState(() => timeToDate(22, 0))
   const [end, setEnd] = useState(() => timeToDate(8, 0))
   const [limitMin, setLimitMin] = useState(60)
@@ -264,6 +352,9 @@ export default function AddScreen() {
   }
 
   const onSelectType = (k: TypeKey) => {
+    // Le strict n'existe que sur le timer : repartir d'un état propre évite
+    // qu'un réglage invisible ne s'applique au type suivant.
+    if (k !== 'block_now') setStrict(false)
     tapHaptic()
     setType(k)
     goStep(1)
@@ -312,19 +403,20 @@ export default function AddScreen() {
       [{ text: 'Compris' }],
     )
 
-  // Engagement EXPLICITE avant d'armer un strict : le blocage devient non
-  // annulable dans l'app jusqu'à la fin. On rend ce choix conscient (pas un
-  // simple toggle qu'on active sans réaliser).
+  // Engagement EXPLICITE avant d'armer un strict. Il n'existe QUE sur
+  // « Bloquer maintenant » : un blocage qui a une fin connue peut être
+  // verrouillé sans piéger personne. Une plage ou une limite vivent sans fin —
+  // les verrouiller reviendrait à confisquer le téléphone pour toujours.
   const confirmStrictCommitment = (): Promise<boolean> =>
     new Promise(resolve => {
       const endLabel = hhmm(new Date(Date.now() + durationMin * 60_000))
       Alert.alert(
-        'Mode strict — tu t’engages',
-        `Tu ne pourras plus arrêter ce blocage avant ${endLabel}, même en fermant Relock. C’est le but : tenir.`,
+        'Mode strict — tu t\u2019engages',
+        `Tu ne pourras plus arrêter ce blocage avant ${endLabel}, même en fermant Relock. C'est le but : tenir.`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           {
-            text: 'Je m’engage',
+            text: 'Je m\u2019engage',
             style: 'destructive',
             onPress: () => resolve(true),
           },
@@ -334,18 +426,24 @@ export default function AddScreen() {
     })
 
   const buildConfig = (): Record<string, unknown> => {
-    const base = name.trim() ? { name: name.trim() } : {}
+    // `strict` n'existe que sur le timer. `days` n'est écrit que si on s'écarte
+    // du défaut (tous les jours), pour garder une config lisible.
+    const base: Record<string, unknown> = {
+      ...(name.trim() ? { name: name.trim() } : {}),
+    }
     if (type === 'block_now')
       return { ...base, mode: 'block_now', duration_min: durationMin, strict }
+    const recurrence = { ...(days ? { days } : {}) }
     if (type === 'schedule')
       return {
         ...base,
+        ...recurrence,
         start_hour: start.getHours(),
         start_minute: start.getMinutes(),
         end_hour: end.getHours(),
         end_minute: end.getMinutes(),
       }
-    return { ...base, limit_min: limitMin }
+    return { ...base, ...recurrence, limit_min: limitMin }
   }
 
   const summary = (): string => {
@@ -353,7 +451,7 @@ export default function AddScreen() {
     if (type === 'block_now')
       return `${apps} · bloquée${count > 1 ? 's' : ''} ${fmtDuration(durationMin)}${strict ? ' · mode strict' : ''}`
     if (type === 'schedule')
-      return `${apps} · chaque jour ${hhmm(start)} → ${hhmm(end)}`
+      return `${apps} · ${daysLabel(days).toLowerCase()} ${hhmm(start)} → ${hhmm(end)}`
     return `${apps} · limite ${fmtDuration(limitMin)} / jour`
   }
 
@@ -367,6 +465,7 @@ export default function AddScreen() {
         start.getMinutes(),
         end.getHours(),
         end.getMinutes(),
+        days ?? [],
       )
     else await ScreenTime.startDailyLimit(ruleId, limitMin)
   }
@@ -419,8 +518,8 @@ export default function AddScreen() {
         return
       }
     }
-    // Blocage strict = engagement irréversible dans l'app → double confirmation.
-    if (type === 'block_now' && strict) {
+    // Strict = engagement irréversible dans l'app (sur les 3 types) → confirmation.
+    if (strict) {
       const committed = await confirmStrictCommitment()
       if (!committed) return
     }
@@ -506,7 +605,7 @@ export default function AddScreen() {
             <View style={styles.panel} onLayout={measure(0)}>
               <Text style={[f(700), styles.h1]}>Nouveau blocage</Text>
               <Text style={[f(400), styles.sub]}>Quel type de blocage ?</Text>
-              <View style={{ gap: 14, marginTop: 24 }}>
+              <View style={{ gap: 18, marginTop: 28, paddingBottom: 12 }}>
                 {TYPES.map(tp => (
                   <TypeRow
                     key={tp.key}
@@ -570,44 +669,6 @@ export default function AddScreen() {
                       />
                     </View>
                   </View>
-                  <View style={[styles.card, styles.strictCard]}>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <View style={styles.strictTitleRow}>
-                        <Text
-                          style={[f(600), { fontSize: 15.5, color: C.ink }]}
-                        >
-                          Mode strict
-                        </Text>
-                        <Pressable onPress={explainStrict} hitSlop={12}>
-                          <View style={styles.help}>
-                            <Text
-                              style={[f(700), { fontSize: 12, color: C.ink2 }]}
-                            >
-                              ?
-                            </Text>
-                          </View>
-                        </Pressable>
-                      </View>
-                      <Text
-                        style={[
-                          f(400),
-                          { fontSize: 13, color: C.ink2, marginTop: 3 },
-                        ]}
-                      >
-                        Impossible d'arrêter avant la fin.
-                      </Text>
-                    </View>
-                    <Switch
-                      value={strict}
-                      onValueChange={v => {
-                        tapHaptic()
-                        setStrict(v)
-                      }}
-                      trackColor={{ false: C.surface2, true: C.accent }}
-                      thumbColor="#FFFFFF"
-                      ios_backgroundColor={C.surface2}
-                    />
-                  </View>
                 </>
               )}
 
@@ -639,7 +700,7 @@ export default function AddScreen() {
                     />
                   </View>
                   <Text style={[f(400), styles.hint]}>
-                    Chaque jour {hhmm(start)} → {hhmm(end)}.
+                    {daysLabel(days)} · {hhmm(start)} → {hhmm(end)}.
                   </Text>
                 </View>
               )}
@@ -664,6 +725,68 @@ export default function AddScreen() {
                       onChange={(_e, d) => d && setLimitMin(dateToMinutes(d))}
                     />
                   </View>
+                </View>
+              )}
+
+              {/* Jours — plage & limite seulement : un timer est éphémère par
+                  nature, la question ne se pose pas. */}
+              {type !== 'block_now' && (
+                <View style={styles.card}>
+                  <Text style={[f(600), styles.cfgLabel]}>Jours</Text>
+                  <View style={styles.chips}>
+                    {DAY_PRESETS.map(p => (
+                      <Chip
+                        key={p.label}
+                        label={p.label}
+                        on={sameDays(days, p.days)}
+                        onPress={() => {
+                          tapHaptic()
+                          setDays(p.days)
+                        }}
+                      />
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Mode strict — timer UNIQUEMENT : seul un blocage à fin connue
+                  peut être verrouillé sans devenir une prison. */}
+              {type === 'block_now' && (
+                <View style={[styles.card, styles.strictCard]}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={styles.strictTitleRow}>
+                      <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
+                        Mode strict
+                      </Text>
+                      <Pressable onPress={explainStrict} hitSlop={12}>
+                        <View style={styles.help}>
+                          <Text
+                            style={[f(700), { fontSize: 12, color: C.ink2 }]}
+                          >
+                            ?
+                          </Text>
+                        </View>
+                      </Pressable>
+                    </View>
+                    <Text
+                      style={[
+                        f(400),
+                        { fontSize: 13, color: C.ink2, marginTop: 3 },
+                      ]}
+                    >
+                      Impossible d'arrêter avant la fin, même en fermant Relock.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={strict}
+                    onValueChange={v => {
+                      tapHaptic()
+                      setStrict(v)
+                    }}
+                    trackColor={{ false: C.surface2, true: C.accent }}
+                    thumbColor="#FFFFFF"
+                    ios_backgroundColor={C.surface2}
+                  />
                 </View>
               )}
 
@@ -804,7 +927,7 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: C.surface,
     borderRadius: 18,
-    padding: 16,
+    padding: 20,
   },
   typeIcon: {
     width: 44,
@@ -827,7 +950,6 @@ const styles = StyleSheet.create({
     height: 48,
     fontSize: 15,
     color: C.ink,
-    marginBottom: 14,
   },
   backBtn: {
     width: 36,
@@ -837,7 +959,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  card: { backgroundColor: C.surface, borderRadius: 20, padding: 18 },
+  card: {
+    backgroundColor: C.surface,
+    borderRadius: 20,
+    padding: 18,
+    marginTop: 14,
+  },
   cardHeadRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -845,8 +972,18 @@ const styles = StyleSheet.create({
   },
   pickerWrap: { alignItems: 'center', marginTop: 2 },
   hint: { fontSize: 12.5, color: C.ink3, marginTop: 8, lineHeight: 17 },
+  cfgLabel: { fontSize: 15, color: C.ink, marginBottom: 10 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    paddingVertical: 8,
+    paddingHorizontal: 13,
+    borderRadius: 999,
+    backgroundColor: C.surface2,
+  },
+  chipOn: { backgroundColor: C.accent },
+  cfgSep: { height: 1, backgroundColor: C.hair, marginVertical: 16 },
+  cfgHint: { fontSize: 12.5, color: C.ink2, marginTop: 12, lineHeight: 18 },
   strictCard: {
-    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -868,7 +1005,6 @@ const styles = StyleSheet.create({
   },
   hairline: { height: 1, backgroundColor: C.hair, marginVertical: 12 },
   appsCard: {
-    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,

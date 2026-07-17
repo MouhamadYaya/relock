@@ -36,7 +36,7 @@ const FW = {
   700: fonts.bold,
   800: fonts.bold,
 } as const
-const f = (w: keyof typeof FW) => ({ fontFamily: FW[w] })
+const f = (w: keyof typeof FW) => FW[w]
 
 const C = {
   bg: '#08090C',
