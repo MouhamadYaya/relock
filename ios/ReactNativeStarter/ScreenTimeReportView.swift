@@ -175,4 +175,16 @@ final class ScreenTimeReportView: UIView {
     super.layoutSubviews()
     hosting?.view.frame = bounds
   }
+
+  /// Un rapport est purement DÉCORATIF : aucun tap, aucun geste. On refuse
+  /// tout toucher pour qu'il traverse jusqu'au ScrollView de l'écran.
+  ///
+  /// Indispensable : la vue système du rapport vit hors process et capte les
+  /// gestes de sa zone. Le défilement ne marchait alors que dans les rares
+  /// interstices non couverts — « on ne peut scroller qu'en touchant
+  /// certaines zones ». `pointerEvents` de React Native ne peut rien ici :
+  /// cette vue n'est pas une vue RN, la prop est ignorée.
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    nil
+  }
 }

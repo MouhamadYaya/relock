@@ -55,7 +55,9 @@ struct UsageSummaryView: View {
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
-    .padding(16)
+    // Marge VERTICALE seulement : l'écran n'a plus de conteneur de fond, les
+    // cartes s'alignent donc directement sur les filtres au-dessus.
+    .padding(.vertical, 6)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .environment(\.colorScheme, .dark)
   }
@@ -81,7 +83,7 @@ struct UsageAppsView: View {
     // Volontairement SANS ScrollView : c'est la page RN qui défile. Une vue
     // système qui défile capte le geste et fige tout l'écran autour d'elle.
     appsSection
-      .padding(16)
+      .padding(.vertical, 6)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       .environment(\.colorScheme, .dark)
   }
@@ -209,7 +211,7 @@ struct UsageChartView: View {
         .foregroundColor(ReportPalette.ink2)
       chartCard
     }
-    .padding(16)
+    .padding(.vertical, 6)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .environment(\.colorScheme, .dark)
   }

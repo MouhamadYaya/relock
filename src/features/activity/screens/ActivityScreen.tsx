@@ -492,21 +492,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCircleActive: { backgroundColor: C.accent },
-  reportCard: {
-    flex: 1,
-    marginTop: 8,
-    marginBottom: 12,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 20,
-  },
+  // Pas de conteneur de fond : les cartes du rapport se suffisent à elles-mêmes
+  // et s'alignent directement sur les filtres au-dessus.
+  reportCard: { flex: 1, marginTop: 4, marginBottom: 12 },
   reportContent: { paddingBottom: 8 },
   authCard: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
     gap: 10,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 20,
   },
   authIcon: {
     width: 52,
@@ -527,10 +525,11 @@ const styles = StyleSheet.create({
   // Hauteurs calées sur le contenu des vues natives : hébergeant un rapport
   // système rendu hors process, elles ne peuvent pas s'auto-dimensionner.
   // Résumé = date + total + libellé + 2 stats ; graphe = titre + carte de
-  // 128 pt + axe X ; classement = en-tête + 6 lignes au plus.
-  summary: { height: 172 },
-  chart: { height: 230 },
-  apps: { height: 470 },
+  // 128 pt + axe X ; classement = en-tête + 6 lignes au plus. Marges des
+  // vues comprises (6 pt en haut et en bas).
+  summary: { height: 152 },
+  chart: { height: 212 },
+  apps: { height: 452 },
   reportLoading: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
