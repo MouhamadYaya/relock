@@ -117,7 +117,44 @@ function commandsUrl(): string {
   return `http://${host}:8123/relock-dev-commands.json`
 }
 
+/**
+ * Sonde de persistance (dev) : MMKV charge-t-il vraiment, ou l'app vit-elle
+ * sur le repli mémoire (rien ne persiste) ? Résultat envoyé au Mac sur le
+ * port 8124 — visible dans le journal d'un simple `python3 -m http.server`.
+ */
+function probeStorage(): void {
+  let r: string
+  try {
+    const { createMMKV } = require('react-native-mmkv')
+    const s = createMMKV({ id: 'mmkv-storage' })
+    // Marqueur inter-lancements : 'seen' au 2e démarrage ⇔ la persistance
+    // disque fonctionne vraiment (pas un magasin RAM qui ment).
+    const persisted = s.getString('dev.probe.persist') ?? 'none'
+    s.set('dev.probe.persist', 'seen')
+    let base = '?'
+    try {
+      const { NitroModules } = require('react-native-nitro-modules')
+      base = NitroModules.createHybridObject(
+        'MMKVPlatformContext',
+      ).getBaseDirectory()
+    } catch (e2) {
+      base = `ctx-fail:${String(e2)}`
+    }
+    r = `persist=${persisted} onboarding=${s.getString('onboarding.done.v3') ?? 'null'} base=${base}`
+  } catch (e) {
+    r = `FAIL ${String(e)}`
+  }
+  const host =
+    (NativeModules.SourceCode?.scriptURL as string | undefined)?.match(
+      /^https?:\/\/([^/:]+)/,
+    )?.[1] ?? 'localhost'
+  fetch(
+    `http://${host}:8124/storage-probe?r=${encodeURIComponent(r).slice(0, 800)}`,
+  ).catch(() => {})
+}
+
 let lastCommandId = 0
+let baselined = false
 
 function pollCommands(): void {
   const CMD_URL = commandsUrl()
@@ -130,13 +167,18 @@ function pollCommands(): void {
       if (!res.ok) return
       misses = 0
       const body = (await res.json()) as { id?: number; cmd?: string }
-      if (
-        typeof body.id !== 'number' ||
-        body.id <= lastCommandId ||
-        typeof body.cmd !== 'string'
-      ) {
+      if (typeof body.id !== 'number' || typeof body.cmd !== 'string') return
+      // Premier contact du LANCEMENT : la commande déjà présente est du
+      // passé — on la prend comme référence SANS l'exécuter. Sinon chaque
+      // démarrage rejouait le dernier ordre (ex. « activity ») et
+      // court-circuitait l'écran initial, onboarding compris.
+      if (!baselined) {
+        baselined = true
+        lastCommandId = body.id
+        console.log(`${TAG} référence #${body.id} (ignorée)`)
         return
       }
+      if (body.id <= lastCommandId) return
       lastCommandId = body.id
       console.log(`${TAG} exécute #${body.id}: ${body.cmd}`)
       await run(body.cmd)
@@ -158,5 +200,6 @@ export function initDevTestBridge(): void {
     .then(handleUrl)
     .catch(() => {})
   pollCommands()
+  probeStorage()
   console.log(`${TAG} prêt (relock://dev/… + polling ${commandsUrl()})`)
 }

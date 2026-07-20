@@ -9,9 +9,10 @@ export const constants = {
   AUTH_TOKEN: 'auth.token',
   RQ_CACHE: 'rq.cache.v1',
   REFRESH_TOKEN: 'auth.refreshToken', // ← add this line
-  // v2 : nouvel onboarding premium → la clé change pour qu'il s'affiche une
-  // fois, même sur un appareil où l'ancien avait déjà été validé.
-  ONBOARDING_DONE: 'onboarding.done.v2',
+  // v3 : refonte complète de l'onboarding (rituel, permissions bloquantes…)
+  // → la clé change pour qu'il s'affiche une fois, même sur un appareil où
+  // l'ancien avait déjà été validé.
+  ONBOARDING_DONE: 'onboarding.done.v3',
   APP_PREFERENCES_STORE: 'app.preferences',
   IS_FIRST_TIME_OPEN_KEY: 'user.isFirstTimeOpen',
   HIDE_USE_CAMERA_KEY: 'user.hideUseCamera',

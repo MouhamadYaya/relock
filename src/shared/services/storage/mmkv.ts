@@ -134,7 +134,15 @@ try {
     key => _mmkvStorage.delete(key),
     () => _mmkvStorage.clearAll(),
   )
-} catch {
+} catch (e) {
+  // Repli mémoire = PERTE DE PERSISTANCE totale (onboarding, session, réglages
+  // oubliés à chaque relance). Ne doit jamais arriver en production : on le
+  // rend bruyant pour ne plus jamais le découvrir des semaines plus tard.
+  console.error(
+    '[storage] MMKV indisponible, repli EN MÉMOIRE (rien ne persiste) :',
+    e,
+  )
+
   const memory = new Map<string, string>()
   const navMemory = new Map<string, string>()
 

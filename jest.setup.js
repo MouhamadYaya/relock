@@ -23,6 +23,14 @@ jest.mock('react-native-bootsplash', () => ({
   getVisibilityStatus: jest.fn().mockResolvedValue('hidden'),
 }))
 
+// Module natif absent de l'environnement de test (TurboModule RNHapticFeedback)
+jest.mock('react-native-haptic-feedback', () => ({
+  __esModule: true,
+  default: { trigger: jest.fn() },
+  trigger: jest.fn(),
+  HapticFeedbackTypes: {},
+}))
+
 jest.mock('react-native-worklets', () => {
   const mockSerializable = {
     set: jest.fn(),
@@ -51,7 +59,50 @@ jest.mock('react-native-reanimated', () => {
   const _React = require('react')
   const { View, Text, Image, ScrollView } = require('react-native')
 
+  // Animations d'entrée/sortie (FadeInRight.duration(340).delay(80)…) :
+  // objet chaînable, chaque méthode renvoie l'animation elle-même.
+  const makeLayoutAnimation = () => {
+    const anim = {}
+    for (const m of [
+      'duration',
+      'delay',
+      'springify',
+      'damping',
+      'easing',
+      'withInitialValues',
+      'build',
+    ]) {
+      anim[m] = jest.fn(() => anim)
+    }
+    return anim
+  }
+  const layoutAnimations = {}
+  for (const name of [
+    'FadeIn',
+    'FadeInDown',
+    'FadeInUp',
+    'FadeInLeft',
+    'FadeInRight',
+    'FadeOut',
+    'FadeOutDown',
+    'FadeOutUp',
+    'FadeOutLeft',
+    'FadeOutRight',
+    'ZoomIn',
+    'ZoomOut',
+    'SlideInDown',
+    'SlideInUp',
+    'SlideOutDown',
+    'SlideOutUp',
+  ]) {
+    layoutAnimations[name] = makeLayoutAnimation()
+  }
+
   return {
+    ...layoutAnimations,
+    interpolate: jest.fn(() => 0),
+    interpolateColor: jest.fn(() => '#000000'),
+    Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     default: {
       View,
       Text,
