@@ -65,6 +65,45 @@ export const BlockRulesService = {
     if (error) throw normalizeError(error)
   },
 
+  /**
+   * SUSPENDRE une protection (temporaire — la règle est conservée).
+   * `until` = échéance de reprise ; `null` = « jusqu'à ce que je reprenne »
+   * (le cas « je pars en vacances » : rien à recréer au retour).
+   * On patche la config sans écraser le reste (durée de vie, strict, jours…).
+   */
+  async suspend(id: string, until: Date | null): Promise<void> {
+    const { data } = await supabase
+      .from('block_rules')
+      .select('config')
+      .eq('id', id)
+      .maybeSingle()
+    const config = {
+      ...((data?.config as Record<string, unknown>) ?? {}),
+      suspended_until: until ? until.toISOString() : null,
+    }
+    const { error } = await supabase
+      .from('block_rules')
+      .update({ is_active: false, config })
+      .eq('id', id)
+    if (error) throw normalizeError(error)
+  },
+
+  /** REPRENDRE une protection suspendue : l'échéance n'a plus lieu d'être. */
+  async resume(id: string): Promise<void> {
+    const { data } = await supabase
+      .from('block_rules')
+      .select('config')
+      .eq('id', id)
+      .maybeSingle()
+    const config = { ...((data?.config as Record<string, unknown>) ?? {}) }
+    delete config.suspended_until
+    const { error } = await supabase
+      .from('block_rules')
+      .update({ is_active: true, config })
+      .eq('id', id)
+    if (error) throw normalizeError(error)
+  },
+
   /** Suppression définitive d'une règle (action « Arrêter le blocage »). */
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from('block_rules').delete().eq('id', id)

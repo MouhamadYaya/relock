@@ -20,8 +20,11 @@ export function _resetReconcilerForTests() {
  *
  * - Les « Bloquer maintenant » (timed) ne sont PAS ré-armés : les relancer
  *   repartirait pour une durée complète.
- * - Ré-armer une limite/jour est sans danger : le seuil compte l'usage depuis
- *   minuit (`includesPastActivity`), il n'y a plus de « quota neuf » offert.
+ * - Une limite/jour DÉJÀ ARMÉE côté iOS n'est pas touchée : chaque
+ *   stop+start recrée ses seuils, et `includesPastActivity` (censé garder le
+ *   compte depuis minuit) est le point le moins fiable de DeviceActivity.
+ *   Zéro churn = zéro occasion pour iOS de perdre le compteur. On n'arme que
+ *   ce qui manque réellement (réinstallation, reset système).
  * - Ré-armer une plage horaire est idempotent (ré-application immédiate si on
  *   est dans la fenêtre, purge du blocage fantôme sinon).
  */
@@ -35,9 +38,14 @@ export function useRuleReconciler(rules: BlockRuleView[], ready: boolean) {
     reconciledThisLaunch = true
 
     const rearm = async () => {
+      const armed = new Set(
+        await ScreenTime.armedActivities().catch(() => [] as string[]),
+      )
       for (const rule of rules) {
         if (!rule.isActive) continue
         if (rule.type !== 'schedule' && rule.type !== 'daily_limit') continue
+        if (rule.type === 'daily_limit' && armed.has(`limit.${rule.id}`))
+          continue
         try {
           await armRule(rule)
         } catch {

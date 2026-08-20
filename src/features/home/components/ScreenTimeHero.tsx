@@ -26,13 +26,27 @@ const C = {
 }
 
 export function ScreenTimeHero() {
+  // Le contenu du rapport est rendu HORS process : il peut mourir pendant que
+  // l'app est en arrière-plan, et il date d'« aujourd'hui » au moment du
+  // rendu. À chaque retour au premier plan, on remonte les vues À NEUF
+  // (epoch dans la clé) : connexion fraîche, chiffres du bon jour. C'est ce
+  // qui empêche les pilules de disparaître après un aller-retour.
+  const [epoch, setEpoch] = useState(0)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', st => {
+      if (st === 'active') setEpoch(e => e + 1)
+    })
+    return () => sub.remove()
+  }, [])
+
   // Squelettes le temps que iOS calcule et rende les scènes (asynchrone),
   // puis on les retire — la vue native a un fond transparent.
   const [showSkeleton, setShowSkeleton] = useState(true)
   useEffect(() => {
+    setShowSkeleton(true)
     const t = setTimeout(() => setShowSkeleton(false), 2500)
     return () => clearTimeout(t)
-  }, [])
+  }, [epoch])
 
   // Sans autorisation Temps d'écran, iOS ne rend RIEN dans la vue du rapport :
   // l'Accueil affichait alors un trou muet sous le titre. On dit pourquoi.
@@ -67,30 +81,29 @@ export function ScreenTimeHero() {
           </Text>
         </View>
       ) : (
-        <>
-          {/* Total du jour + delta vs hier — rendu natif (extension rapport). */}
-          <View style={styles.heroWrap}>
-            {showSkeleton && (
-              <View style={styles.heroSkeleton} pointerEvents="none">
-                <View style={styles.skelBig} />
-                <View style={styles.skelSmall} />
-              </View>
-            )}
-            <ScreenTimeReport mode="hero" style={styles.report} />
-          </View>
-
-          {/* Pilules par app (aujourd'hui) — rendu natif. */}
-          <View style={styles.pillsWrap}>
-            {showSkeleton && (
-              <View style={styles.skeletonRow} pointerEvents="none">
+        // UN SEUL rapport pour le total + le delta + les pilules. Deux vues
+        // distantes qui calculaient en même temps se faisaient la course dans
+        // une extension bornée à 6 Mo : l'une gagnait, l'autre restait blanche,
+        // au hasard (parfois le total, parfois les pilules). Une vue = pas de
+        // course.
+        <View style={styles.homeBlock}>
+          {showSkeleton && (
+            <View style={styles.homeSkeleton} pointerEvents="none">
+              <View style={styles.skelBig} />
+              <View style={styles.skelSmall} />
+              <View style={styles.skeletonRow}>
                 {[0, 1, 2, 3, 4].map(i => (
                   <View key={i} style={styles.skel} />
                 ))}
               </View>
-            )}
-            <ScreenTimeReport mode="pills" style={styles.report} />
-          </View>
-        </>
+            </View>
+          )}
+          <ScreenTimeReport
+            key={`home-${epoch}-${authorized}`}
+            mode="home"
+            style={styles.report}
+          />
+        </View>
       )}
     </View>
   )
@@ -104,15 +117,17 @@ const styles = StyleSheet.create({
     color: C.label,
     letterSpacing: -0.2,
   },
-  // Hauteur fixe : gros total (52) + delta (24) — la vue native remplit.
+  // Hauteur fixe : la vue native remplit (héro 82 + gap 14 + pilules 80).
+  // Doit coller aux hauteurs de HomeSectionView côté extension.
   heroWrap: { height: 82, marginTop: 4, justifyContent: 'center' },
+  homeBlock: { height: 176, marginTop: 4 },
   unavailable: {
     ...fonts.medium,
     fontSize: 14,
     color: C.muted,
     lineHeight: 20,
   },
-  heroSkeleton: { ...StyleSheet.absoluteFillObject, gap: 8 },
+  homeSkeleton: { ...StyleSheet.absoluteFillObject, gap: 8 },
   skelBig: {
     width: 150,
     height: 44,
@@ -125,13 +140,12 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: C.skel,
   },
-  pillsWrap: { height: 80, marginTop: 14 },
   report: { flex: 1 },
   skeletonRow: {
-    ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 9,
+    marginTop: 20,
   },
   skel: { width: 66, height: 74, borderRadius: 16, backgroundColor: C.skel },
 })

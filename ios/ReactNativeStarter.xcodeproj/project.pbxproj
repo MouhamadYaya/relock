@@ -25,6 +25,7 @@
 		68E19F8399DC4AD8AE3D4AD6 /* Inter-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 09245AC1DD1546958697DF20 /* Inter-Medium.ttf */; };
 		75A0FC4477D368589469663B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23BE557DFCBF1E290B255014 /* Foundation.framework */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		80D8BF1D0BA3C5709AACC0DC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5105764AAD7F928DECAA495 /* ExpoModulesProvider.swift */; };
 		8143C8043D2840B199B5CCE6 /* Inter-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E765D1D4EDC64EF9ACA97354 /* Inter-Bold.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		9571C7B669E6791135EE028E /* RelockActivityReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D892459F17F45426D89F11D2 /* RelockActivityReport.swift */; };
@@ -129,6 +130,7 @@
 		9275E3DCA17F1B2CFB757E9D /* RelockShield.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShield.entitlements; path = RelockShield/RelockShield.entitlements; sourceTree = "<group>"; };
 		98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = ScreenTimeReportViewManager.mm; path = ReactNativeStarter/ScreenTimeReportViewManager.mm; sourceTree = "<group>"; };
 		99267AE42A73E61E98DE0728 /* RelockShield.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockShield.swift; path = RelockShield/RelockShield.swift; sourceTree = "<group>"; };
+		A5105764AAD7F928DECAA495 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-ReactNativeStarter/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		A673B73E1554D473DCDADCDD /* RelockShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB1CE0000000000000000001 /* RelockWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockWidgets.swift; path = RelockWidgets/RelockWidgets.swift; sourceTree = "<group>"; };
 		AB1CE0000000000000000002 /* RelockBlockAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockBlockAttributes.swift; path = RelockWidgets/RelockBlockAttributes.swift; sourceTree = "<group>"; };
@@ -270,6 +272,14 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
+		7C059F15F2C2095FC89BFC4C /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				AC3A63C6457F71134C9CC437 /* ReactNativeStarter */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
@@ -291,6 +301,7 @@
 				E65742DCF3A66016DC6279AC /* RelockShieldAction */,
 				AB1CE0000000000000000009 /* RelockWidgets */,
 				33DAABF8B1BCA960EF052B1B /* RelockActivityReport */,
+				7C059F15F2C2095FC89BFC4C /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -318,6 +329,14 @@
 				AB1CE0000000000000000003 /* Info.plist */,
 			);
 			name = RelockWidgets;
+			sourceTree = "<group>";
+		};
+		AC3A63C6457F71134C9CC437 /* ReactNativeStarter */ = {
+			isa = PBXGroup;
+			children = (
+				A5105764AAD7F928DECAA495 /* ExpoModulesProvider.swift */,
+			);
+			name = ReactNativeStarter;
 			sourceTree = "<group>";
 		};
 		AD08869FAC5A4C82A789B950 /* Resources */ = {
@@ -359,6 +378,7 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ReactNativeStarter" */;
 			buildPhases = (
 				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
+				3801AF0B456E3DA4AE10801C /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
@@ -574,7 +594,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli')\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -592,6 +612,30 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ReactNativeStarter/Pods-ReactNativeStarter-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		3801AF0B456E3DA4AE10801C /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/ReactNativeStarter/ReactNativeStarter.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-ReactNativeStarter/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-ReactNativeStarter/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-ReactNativeStarter/expo-configure-project.sh\"\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -646,6 +690,7 @@
 				0CF7C5D8BB8B78E3539478DC /* ScreenTimeReportView.swift in Sources */,
 				325143E77DE7C2351A0B913B /* ScreenTimeReportViewManager.swift in Sources */,
 				B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */,
+				80D8BF1D0BA3C5709AACC0DC /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -749,6 +794,7 @@
 					"$(inherited)",
 					"-ObjC",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock;
 				PRODUCT_NAME = ReactNativeStarter;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -778,6 +824,7 @@
 					"$(inherited)",
 					"-ObjC",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock;
 				PRODUCT_NAME = ReactNativeStarter;
 				SWIFT_VERSION = 5.0;
@@ -802,6 +849,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShieldAction;
 				PRODUCT_NAME = RelockShieldAction;
 				SDKROOT = iphoneos;
@@ -829,6 +877,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockActivityReport;
 				PRODUCT_NAME = RelockActivityReport;
 				SDKROOT = iphoneos;
@@ -855,6 +904,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShieldAction;
 				PRODUCT_NAME = RelockShieldAction;
 				SDKROOT = iphoneos;
@@ -881,6 +931,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShield;
 				PRODUCT_NAME = RelockShield;
 				SDKROOT = iphoneos;
@@ -908,6 +959,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockMonitor;
 				PRODUCT_NAME = RelockMonitor;
 				SDKROOT = iphoneos;
@@ -990,6 +1042,7 @@
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_VERSION = 5.0;
 				USE_HERMES = true;
 			};
 			name = Debug;
@@ -1057,6 +1110,7 @@
 				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -1079,6 +1133,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShield;
 				PRODUCT_NAME = RelockShield;
 				SDKROOT = iphoneos;
@@ -1105,6 +1160,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockMonitor;
 				PRODUCT_NAME = RelockMonitor;
 				SDKROOT = iphoneos;
@@ -1130,6 +1186,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockWidgets;
 				PRODUCT_NAME = RelockWidgets;
 				SDKROOT = iphoneos;
@@ -1155,6 +1212,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockWidgets;
 				PRODUCT_NAME = RelockWidgets;
 				SDKROOT = iphoneos;
@@ -1182,6 +1240,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockActivityReport;
 				PRODUCT_NAME = RelockActivityReport;
 				SDKROOT = iphoneos;

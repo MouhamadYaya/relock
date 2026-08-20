@@ -1,4 +1,5 @@
 package com.reactnativestarter
+import expo.modules.ReactActivityDelegateWrapper
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity
@@ -19,5 +20,5 @@ class MainActivity : ReactActivity() {
   }
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =
-    DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+    ReactActivityDelegateWrapper(this, BuildConfig.IS_NEW_ARCHITECTURE_ENABLED, DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled))
 }

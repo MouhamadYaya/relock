@@ -7,8 +7,10 @@ import React from 'react'
 import ActivityScreen from '@/features/activity/screens/ActivityScreen'
 import AuthScreen from '@/features/auth/screens/AuthScreen'
 import AddScreen from '@/features/blocking/screens/AddScreen'
+import BlocagesScreen from '@/features/blocking/screens/BlocagesScreen'
 import BlockDetailScreen from '@/features/blocking/screens/BlockDetailScreen'
 import PauseRitualScreen from '@/features/blocking/screens/PauseRitualScreen'
+import PresetRecapScreen from '@/features/blocking/screens/PresetRecapScreen'
 import HomeScreen from '@/features/home/screens/HomeScreen'
 import StoryScreen from '@/features/home/screens/StoryScreen'
 import OnboardingFlow from '@/features/onboarding/OnboardingFlow'
@@ -30,10 +32,17 @@ const HALF_SHEET_OPTIONS = {
 } as const
 
 export const HomeTabs = createBottomTabNavigator<HomeTabParamList>({
+  // Un seul onglet a son rapport de temps d'écran VIVANT à la fois. Ces
+  // rapports sont des vues DISTANTES rendues hors process : en faire tourner
+  // plusieurs en parallèle (Accueil + Activité) sature l'extension (6 Mo) et
+  // en laisse au hasard une blanche. On laisse donc React Navigation détacher
+  // l'onglet inactif — la vue native se reconstruit À NEUF au retour (cf.
+  // ScreenTimeReportView), donc aucun risque de surface morte réaffichée.
   screenOptions: { headerShown: false },
   tabBar: props => <AnimatedTabBar {...props} />,
   screens: {
     [ROUTES.TAB_HOME]: HomeScreen,
+    [ROUTES.TAB_BLOCKS]: BlocagesScreen,
     [ROUTES.TAB_ACTIVITY]: ActivityScreen,
   },
 })
@@ -51,6 +60,10 @@ export const RootStack = createNativeStackNavigator<RootStackParamList>({
     },
     [ROUTES.BLOCK_DETAIL]: {
       screen: BlockDetailScreen,
+      options: HALF_SHEET_OPTIONS,
+    },
+    [ROUTES.PRESET_RECAP]: {
+      screen: PresetRecapScreen,
       options: HALF_SHEET_OPTIONS,
     },
     [ROUTES.SETTINGS]: SettingsScreen,

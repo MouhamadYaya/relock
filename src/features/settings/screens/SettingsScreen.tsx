@@ -55,9 +55,18 @@ function showNativeDiagnostics() {
         `Journal : ${d.eventLogCount} événement(s)`,
         `Résistances (total) : ${d.totalResisted}`,
         `Fenêtres actives : ${d.activeWindows.join(', ') || 'aucune'}`,
+        // La vérité d'iOS, pas la nôtre : une règle absente d'ici ne
+        // bloquera jamais rien, quoi qu'en dise la DB.
+        `Armées côté iOS : ${d.armedActivities?.join(', ') || 'AUCUNE'}`,
         `Moniteur réveillé : ${d.monitorLastWakeAt}`,
         `  → ${d.monitorLastWakeWhat}`,
+        `Bouclier affiché : ${d.shieldShownTotal ?? 0}× (dernier : ${d.shieldLastShownAt ?? 'jamais'})`,
         `Bouclier tapé : ${d.shieldLastActionAt}`,
+        `Quotas du jour : ${
+          Object.entries(d.limitProgress ?? {})
+            .map(([k, v]) => `${k.slice(14, 22)}…=${v}`)
+            .join(', ') || 'aucun palier franchi'
+        }`,
         '',
         ...d.eventLogTail.map(e => `· ${e.kind} (${e.at})`),
       ]

@@ -32,6 +32,7 @@ export const ROUTES = {
   // HOME → TABS (only two, + central FAB in the bar)
   //
   TAB_HOME: 'TAB_HOME',
+  TAB_BLOCKS: 'TAB_BLOCKS',
   TAB_ACTIVITY: 'TAB_ACTIVITY',
 
   //
@@ -39,6 +40,7 @@ export const ROUTES = {
   //
   ADD_BLOCK: 'ADD_BLOCK',
   BLOCK_DETAIL: 'BLOCK_DETAIL',
+  PRESET_RECAP: 'PRESET_RECAP',
   SETTINGS: 'SETTINGS',
   HOME_STORY: 'HOME_STORY',
 

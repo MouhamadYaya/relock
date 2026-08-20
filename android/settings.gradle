@@ -6,14 +6,25 @@ pluginManagement {
     }
     // React Native Gradle Settings plugin (autolinking)
     includeBuild("../node_modules/@react-native/gradle-plugin")
+
+  def expoPluginsPath = new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })")
+    }.standardOutput.asText.get().trim(),
+    "../android/expo-gradle-plugin"
+  ).absolutePath
+  includeBuild(expoPluginsPath)
 }
 
 plugins {
     id("com.facebook.react.settings")
+
+id("expo-autolinking-settings")
 }
 
 extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
-    ex.autolinkLibrariesFromCommand()
+    ex.autolinkLibrariesFromCommand(expoAutolinking.rnConfigCommand)
 }
 
 rootProject.name = "ReactNativeStarter"
@@ -21,3 +32,6 @@ include(":app")
 
 // Needed so the included build is visible for dependency substitution too
 includeBuild("../node_modules/@react-native/gradle-plugin")
+expoAutolinking.useExpoModules()
+expoAutolinking.useExpoVersionCatalog()
+includeBuild(expoAutolinking.reactNativeGradlePlugin)

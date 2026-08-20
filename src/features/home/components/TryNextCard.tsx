@@ -52,7 +52,9 @@ export function TryNextCard({ rules }: { rules: BlockRuleView[] }) {
   const preset = pool[step % pool.length]
 
   return (
-    <View style={s.card}>
+    // Le titre vit HORS de la carte, comme les autres sections de l'Accueil :
+    // il annonce le bloc, il n'en fait pas partie.
+    <View style={s.wrap}>
       <Text style={[f(700), s.title]}>Essayez ceci ensuite</Text>
 
       <Animated.View
@@ -79,21 +81,15 @@ export function TryNextCard({ rules }: { rules: BlockRuleView[] }) {
 }
 
 const s = StyleSheet.create({
-  card: {
-    marginTop: 26,
-    backgroundColor: C.card,
-    borderRadius: 22,
-    paddingVertical: 20,
-    paddingHorizontal: 18,
-  },
-  title: { fontSize: 18, color: C.ink, letterSpacing: -0.3, marginBottom: 14 },
+  wrap: { marginTop: 26 },
+  title: { fontSize: 18, color: C.ink, letterSpacing: -0.3, marginBottom: 12 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.accentTint,
-    borderRadius: 16,
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    backgroundColor: C.card,
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
     gap: 12,
   },
   rowPressed: { opacity: 0.6 },

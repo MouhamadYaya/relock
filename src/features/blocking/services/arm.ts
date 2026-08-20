@@ -1,3 +1,4 @@
+import { ruleDays } from '@/features/blocking/session'
 import type { BlockRuleView } from '@/features/blocking/types'
 import { ScreenTime } from '@/shared/native/screen-time'
 
@@ -17,6 +18,7 @@ export async function armRule(rule: BlockRuleView): Promise<void> {
       n(c.start_minute),
       n(c.end_hour),
       n(c.end_minute),
+      ruleDays(rule) ?? [],
     )
   } else if (rule.type === 'daily_limit') {
     await ScreenTime.startDailyLimit(rule.id, n(c.limit_min, 60))

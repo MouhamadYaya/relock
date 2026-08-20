@@ -7,6 +7,7 @@ import type { BlockRuleView } from '@/features/blocking/types'
 import { ROUTES } from '@/navigation/routes'
 
 export type BlockDetailParams = { rule: BlockRuleView }
+export type PresetRecapParams = { presetId: string }
 
 export type StoryScreenParams = {
   id: string
@@ -22,6 +23,7 @@ export type StoryScreenParams = {
 /** Bottom tab navigator screens. */
 export type HomeTabParamList = {
   [ROUTES.TAB_HOME]: undefined
+  [ROUTES.TAB_BLOCKS]: undefined
   [ROUTES.TAB_ACTIVITY]: undefined
 }
 
@@ -37,6 +39,7 @@ export type RootStackParamList = {
   [ROUTES.ROOT_ONBOARDING]: undefined
   [ROUTES.ADD_BLOCK]: undefined
   [ROUTES.BLOCK_DETAIL]: BlockDetailParams
+  [ROUTES.PRESET_RECAP]: PresetRecapParams
   [ROUTES.SETTINGS]: undefined
   [ROUTES.HOME_STORY]: StoryScreenParams
   [ROUTES.PAUSE_RITUAL]: PauseRitualParams | undefined

@@ -38,11 +38,13 @@ struct RelockActivityReport: DeviceActivityReportExtension {
     DayUsageReport { model in
       UsageReportView(model: model)
     }
-    PillsReport { apps in
-      UsagePillsView(apps: apps)
-    }
-    HeroReport { model in
-      HeroTotalView(model: model)
+    // Accueil : UNE seule scène pour le total + le delta + les pilules.
+    // Deux scènes distinctes (héro et pilules) = deux DeviceActivityReport qui
+    // calculent EN MÊME TEMPS dans une extension bornée à 6 Mo : l'un des deux
+    // perdait la course et restait blanc, au hasard. Une scène = un rapport =
+    // plus de course.
+    HomeReport { model in
+      HomeSectionView(model: model)
     }
   }
 }
@@ -98,6 +100,11 @@ struct UsageBucket {
 /// Résultat brut d'un rapport, indépendant de la vue qui le consomme.
 struct UsageAggregate {
   var apps: [AppUsage] = []
+  /// Apps par jour (clé = début du segment). Le héro de l'Accueil en a besoin :
+  /// il couvre [hier→aujourd'hui] pour le delta, mais ses pilules ne doivent
+  /// montrer QUE le jour même — `apps` (cumul sur toute la plage) mélangerait
+  /// les deux.
+  var perDayApps: [Date: [AppUsage]] = [:]
   var buckets: [UsageBucket] = []
   var totalSeconds: Double = 0
   var totalPickups: Int = 0
@@ -225,6 +232,13 @@ func aggregateUsage(
     // (deux apps peuvent être comptées en parallèle : image dans l'image…).
     let cap = segmentCap[start] ?? segSeconds
     out.buckets.append(UsageBucket(start: start, seconds: min(segSeconds, cap)))
+    // Détail par jour, trié — sert aux pilules de l'Accueil (jour courant seul).
+    out.perDayApps[start] = stats.map { key, s in
+      AppUsage(
+        id: keyIdentifier(key), name: s.name, seconds: s.seconds,
+        pickups: s.pickups, notifications: s.notifications, icon: s.icon)
+    }
+    .sorted { $0.seconds > $1.seconds }
   }
   out.buckets.sort { $0.start < $1.start }
 
@@ -598,6 +612,63 @@ struct HeroTotalView: View {
           .foregroundColor(color)
         }
       }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .environment(\.colorScheme, .dark)
+  }
+}
+
+// MARK: - Scène : bloc « Temps d'écran » de l'Accueil (total + delta + pilules)
+//
+// Filtre hôte : [hier 00:00 → fin d'aujourd'hui] en segments QUOTIDIENS. Un
+// SEUL rapport rend tout le bloc : plus de course entre deux vues distantes.
+
+struct HomeModel {
+  var hero = HeroModel()
+  var pills: [AppUsage] = []
+}
+
+struct HomeReport: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("TodayHome")
+  let content: (HomeModel) -> HomeSectionView
+
+  func makeConfiguration(
+    representing data: DeviceActivityResults<DeviceActivityData>
+  ) async -> HomeModel {
+    let agg = await aggregateUsage(data, scene: "home")
+    let cal = Calendar.current
+    var model = HomeModel()
+    for b in agg.buckets {
+      if cal.isDateInToday(b.start) {
+        model.hero.todaySeconds += b.seconds
+      } else if cal.isDateInYesterday(b.start) {
+        model.hero.yesterdaySeconds = (model.hero.yesterdaySeconds ?? 0) + b.seconds
+      }
+    }
+    // Pilules : le JOUR COURANT uniquement (la clé de segment tombant
+    // aujourd'hui), jamais le cumul hier+aujourd'hui.
+    if let todayKey = agg.perDayApps.keys.first(where: { cal.isDateInToday($0) }) {
+      model.pills = agg.perDayApps[todayKey] ?? []
+    }
+    RelockReportLog.log.info(
+      "home: today=\(Int(model.hero.todaySeconds), privacy: .public)s pills=\(model.pills.count, privacy: .public)"
+    )
+    return model
+  }
+}
+
+/// Total + delta EN HAUT, rangée de pilules EN BAS — l'ordre et les hauteurs
+/// de la maquette RN, dans une seule vue native.
+struct HomeSectionView: View {
+  let model: HomeModel
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      HeroTotalView(model: model.hero)
+        .frame(height: 82, alignment: .topLeading)
+      Spacer().frame(height: 14)
+      UsagePillsView(apps: model.pills)
+        .frame(height: 80, alignment: .top)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .environment(\.colorScheme, .dark)

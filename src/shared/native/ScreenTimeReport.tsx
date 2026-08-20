@@ -18,7 +18,7 @@ type ReportProps = ViewProps & {
    * elle-même. Accueil : « hero » (total du jour + delta) et « pills »
    * (rangée du jour).
    */
-  mode?: 'usage' | 'pills' | 'hero'
+  mode?: 'usage' | 'home'
   /** Affiché si la vue native est absente OU si son rendu échoue. */
   fallback?: React.ReactNode
 }
@@ -50,7 +50,7 @@ export const isScreenTimeReportAvailable = hasNativeView(NAME)
 type NativeProps = ViewProps & {
   period?: number
   offset?: number
-  mode?: 'usage' | 'pills' | 'hero'
+  mode?: 'usage' | 'home'
 }
 
 const NativeReport: React.ComponentType<NativeProps> | null =

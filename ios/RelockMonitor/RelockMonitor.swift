@@ -108,6 +108,7 @@ final class RelockMonitor: DeviceActivityMonitor {
     for raw in activeWindows() {
       guard let ruleId = raw.split(separator: ".").dropFirst().first
       else { continue }
+      if isSuspended(String(ruleId)) { continue }
       guard let sel = loadRuleSelection(String(ruleId)) else { continue }
       apps.formUnion(sel.applicationTokens)
       cats.formUnion(sel.categoryTokens)
@@ -126,12 +127,81 @@ final class RelockMonitor: DeviceActivityMonitor {
     }
   }
 
+  /// Avancement du quota du jour (25/50/75/100 %) partagé avec l'app.
+  /// iOS ne sait pas dire « où en est le compteur ? » : seul un seuil franchi
+  /// est notifiable. On ne redescend jamais dans la même journée — un
+  /// ré-armement peut rejouer un palier déjà dépassé.
+  private func setLimitProgress(_ ruleId: String, _ pct: Int) {
+    guard let d = defaults else { return }
+    let key = "limitProgress.\(ruleId)"
+    let today = Self.dayKey()
+    Self.withGroupLock {
+      let parts = (d.string(forKey: key) ?? "").split(
+        separator: ":", maxSplits: 1)
+      let prev =
+        parts.count == 2 && String(parts[0]) == today
+        ? Int(parts[1]) ?? 0 : 0
+      guard pct > prev else { return }
+      d.set("\(today):\(pct)", forKey: key)
+      d.synchronize()
+    }
+  }
+
+  /// Une règle suspendue garde sa surveillance — ses fenêtres continuent de
+  /// s'ouvrir et de se fermer — mais son bouclier est MASQUÉ. C'est ce qui
+  /// permet à iOS de reprendre tout seul à l'échéance, app fermée : rien à
+  /// reconstruire, il suffit de lever le masque.
+  /// Valeur : timestamp de reprise, 0 = « jusqu'à ce que tu reprennes ».
+  private func isSuspended(_ ruleId: String) -> Bool {
+    guard let v = defaults?.object(forKey: "suspendedUntil.\(ruleId)") as? Double
+    else { return false }
+    return v == 0 || v > Date().timeIntervalSince1970
+  }
+
+  /// Jours d'application d'une plage (0 = dimanche … 6 = samedi), posés par
+  /// l'app à l'armement. Absent ⇒ tous les jours.
+  ///
+  /// C'est ici que « lun→ven » se joue : un DeviceActivitySchedule ne sait pas
+  /// l'exprimer, et armer une activité par jour mangerait 5 des 20 activités
+  /// qu'iOS accorde à toute l'app. La fenêtre s'ouvre donc tous les jours et on
+  /// la laisse passer sans bouclier les jours non retenus.
+  private func dayAllows(_ ruleId: String) -> Bool {
+    guard let days = defaults?.array(forKey: "days.\(ruleId)") as? [Int],
+      !days.isEmpty
+    else { return true }
+    return days.contains(Calendar.current.component(.weekday, from: Date()) - 1)
+  }
+
   // MARK: - Callbacks DeviceActivity
 
   override func intervalDidStart(for activity: DeviceActivityName) {
     super.intervalDidStart(for: activity)
     Self.log.info("intervalDidStart \(activity.rawValue, privacy: .public)")
     heartbeat("intervalDidStart \(activity.rawValue)")
+
+    // Réveil d'une suspension : cette activité ne protège rien, elle ne sert
+    // qu'à sonner à l'échéance. On lève le masque et le bouclier revient —
+    // sans que l'app ait eu besoin d'être ouverte. ⚠️ Avant tout le reste :
+    // « resume.<id> » n'est pas une fenêtre de blocage.
+    if activity.rawValue.hasPrefix("resume."),
+      let id = ruleId(from: activity.rawValue)
+    {
+      defaults?.removeObject(forKey: "suspendedUntil.\(id)")
+      defaults?.synchronize()
+      recomputeShield()
+      logEvent(kind: "resume", activity: activity.rawValue)
+      DeviceActivityCenter().stopMonitoring([activity])
+      return
+    }
+    // Jour non retenu (« lun→ven ») : la fenêtre s'ouvre, mais elle ne protège
+    // rien. `intervalDidStart` tombe au DÉBUT de la session — c'est donc bien
+    // le bon jour qu'on teste, même pour une plage de nuit qui finit demain.
+    if activity.rawValue.hasPrefix("sched."),
+      let id = ruleId(from: activity.rawValue), !dayAllows(id)
+    {
+      Self.log.info("jour non retenu — \(activity.rawValue, privacy: .public)")
+      return
+    }
     // Une limite de temps ne bloque qu'au SEUIL, pas au début de journée.
     if !activity.rawValue.hasPrefix("limit.") {
       setWindow(activity.rawValue, active: true)
@@ -158,6 +228,7 @@ final class RelockMonitor: DeviceActivityMonitor {
       let id = ruleId(from: activity.rawValue)
     {
       defaults?.removeObject(forKey: "limitReached.\(id)")
+      defaults?.removeObject(forKey: "limitProgress.\(id)")
     }
   }
 
@@ -166,19 +237,30 @@ final class RelockMonitor: DeviceActivityMonitor {
     activity: DeviceActivityName
   ) {
     super.eventDidReachThreshold(event, activity: activity)
+    heartbeat("eventDidReachThreshold \(activity.rawValue) \(event.rawValue)")
+    guard let id = ruleId(from: activity.rawValue) else { return }
+
+    // Palier intermédiaire : on informe l'app de l'avancement, RIEN DE PLUS.
+    // Bloquer ici viderait le quota à 25 % — le contraire de la promesse.
+    if let pct = ["p25": 25, "p50": 50, "p75": 75][event.rawValue] {
+      Self.log.info(
+        "palier \(pct, privacy: .public) % — \(activity.rawValue, privacy: .public)"
+      )
+      setLimitProgress(id, pct)
+      return
+    }
+
     Self.log.info(
       "eventDidReachThreshold \(activity.rawValue, privacy: .public) — LIMITE ATTEINTE → blocage"
     )
-    heartbeat("eventDidReachThreshold \(activity.rawValue)")
     // Limite de temps atteinte → blocage jusqu'à la fin de journée.
+    setLimitProgress(id, 100)
     setWindow(activity.rawValue, active: true)
     recomputeShield()
     logEvent(kind: "limit_reached", activity: activity.rawValue)
     // Mémorise « atteinte AUJOURD'HUI » : si l'utilisateur met en pause puis
     // reprend le même jour, l'app re-bloque aussitôt (pas de quota neuf).
-    if let id = ruleId(from: activity.rawValue) {
-      defaults?.set(Self.dayKey(), forKey: "limitReached.\(id)")
-    }
+    defaults?.set(Self.dayKey(), forKey: "limitReached.\(id)")
   }
 
   // MARK: - Journal d'événements (remonté vers Supabase par l'app, pull-ack)

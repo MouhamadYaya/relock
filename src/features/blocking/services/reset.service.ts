@@ -3,9 +3,9 @@
  *
  * 1. Au lancement : purge le blocage résiduel au niveau système (le bouclier
  *    et la surveillance DeviceActivity survivent à la suppression de l'app).
- * 2. Une fois connecté : l'utilisateur CHOISIT — reprendre son historique
- *    cloud ou repartir de zéro. Jamais de destruction silencieuse (nouvel
- *    iPhone ≠ nouveau compte).
+ * 2. Une fois connecté : l'historique du compte est effacé. Une réinstallation
+ *    rend l'app neuve — c'est la contrepartie du mode strict : rien ne
+ *    survit à une désinstallation, ni les blocages, ni la série.
  */
 
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -24,21 +24,12 @@ export async function runInstallReset(): Promise<void> {
   }
 }
 
-/**
- * Une (ré)installation fraîche attend-elle une décision de l'utilisateur ?
- * ⚠️ On ne détruit JAMAIS l'historique cloud silencieusement : installer
- * l'app sur un nouvel appareil ne doit pas effacer le compte.
- */
+/** Une (ré)installation fraîche attend-elle encore sa remise à zéro ? */
 export function hasPendingFreshInstall(): boolean {
   return kvStorage.getString(PENDING) === '1'
 }
 
-/** L'utilisateur garde son historique : on lève simplement le drapeau. */
-export function keepCloudData(): void {
-  kvStorage.delete(PENDING)
-}
-
-/** L'utilisateur repart de zéro : efface règles, stats et événements du compte. */
+/** Repart de zéro : efface règles, stats et événements du compte. */
 export async function wipeCloudData(): Promise<boolean> {
   const { data } = await supabase.auth.getUser()
   const uid = data.user?.id

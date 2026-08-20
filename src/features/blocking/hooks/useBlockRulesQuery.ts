@@ -11,8 +11,8 @@ export function useBlockRulesQuery() {
     // Clé portée par l'utilisateur (le cache est persisté sur MMKV : sans ça,
     // les règles d'un compte peuvent réapparaître sous un autre).
     queryKey: [...blockingKeys.rules(), userId ?? 'anon'],
-    // Réinstallation : AUCUN wipe automatique ici — l'utilisateur décide
-    // via le dialogue de l'Accueil (useFreshInstallPrompt).
+    // Réinstallation : le wipe n'est pas fait ici mais au lancement
+    // (useFreshInstallReset) — cette requête ne fait que lire.
     queryFn: () => BlockRulesService.list(),
     // Sans session, RLS renvoie une liste VIDE sans erreur : sans ce garde,
     // l'Accueil affiche « Aucun blocage » et met ce vide en cache.

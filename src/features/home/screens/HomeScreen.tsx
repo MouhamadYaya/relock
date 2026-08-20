@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
-import { useFreshInstallPrompt } from '@/features/blocking/hooks/useFreshInstallPrompt'
+import { useFreshInstallReset } from '@/features/blocking/hooks/useFreshInstallReset'
 import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
 import { useRuleReconciler } from '@/features/blocking/hooks/useRuleReconciler'
 import { timedRunning } from '@/features/blocking/types'
@@ -69,7 +69,7 @@ export default function HomeScreen() {
   const tabNav = useNavigation<NavigationProp<HomeTabParamList>>()
   const { rules, isPending: rulesPending } = useBlockRulesQuery()
   const stats = useHomeStats()
-  useFreshInstallPrompt()
+  useFreshInstallReset()
   // Auto-réparation : iOS peut perdre la surveillance native (réinstall,
   // mise à jour) — on ré-arme les règles persistantes actives au lancement.
   useRuleReconciler(rules, !rulesPending)
@@ -140,16 +140,43 @@ export default function HomeScreen() {
               hitSlop={10}
               style={styles.gear}
             >
-              <IconSvg name={IconName.SETTINGS} size={21} color={C.ink55} />
+              <IconSvg name={IconName.SETTINGS} size={22} color={C.ink85} />
             </Pressable>
           </View>
 
           {/* Hero : temps d'écran du jour + delta + pilules par app */}
           <ScreenTimeHero />
 
-          {/* Titre motivant, minimaliste, au-dessus de la série */}
+          {/* L'alerte passe AVANT la série : sans cette autorisation rien ne
+              bloque, donc la série ne veut rien dire. On ne décore pas un
+              tableau de bord posé sur une app qui ne fait rien. */}
+          {needsScreenTime && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Activer le contrôle du temps d'écran"
+              onPress={requestScreenTimeAuth}
+              style={styles.alertCard}
+            >
+              <View style={styles.alertIcon}>
+                <IconSvg name={IconName.MONITOR} size={18} color={C.danger} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[f(700), { fontSize: 14.5, color: C.dangerInk }]}>
+                  Active le contrôle du temps d'écran
+                </Text>
+                <Text style={[f(400), styles.alertSub]}>
+                  Sans cette autorisation, Relock ne peut pas bloquer tes apps.
+                  Appuie pour l'activer.
+                </Text>
+              </View>
+              <IconSvg name={IconName.FORWARD} size={18} color={C.danger} />
+            </Pressable>
+          )}
+
+          {/* Le titre DIT la règle : « ne casse pas la chaîne » suppose qu'on
+              sache déjà ce qu'est la chaîne et ce qui la casse. */}
           <Text style={[f(700), styles.streakHeading]}>
-            Ne casse pas la chaîne
+            Un blocage par jour garde ta chaîne
           </Text>
 
           {/* Carte série (avec stats intégrées) */}
@@ -159,7 +186,7 @@ export default function HomeScreen() {
                 Série en cours
               </Text>
               <Text style={[f(500), { fontSize: 13, color: C.ink35 }]}>
-                Record · {Math.max(stats.record, stats.streak)} j
+                Record · {Math.max(stats.record, stats.streak)} j 🔥
               </Text>
             </View>
 
@@ -175,34 +202,37 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            {/* Semaine — cercles L→D */}
+            {/* Semaine — cercles L→D. Le jour actuel porte un anneau détaché :
+                un simple contour de la même couleur disparaissait sur un jour
+                déjà tenu. */}
             <View style={styles.week}>
               {stats.week.map((w, i) => (
                 <View
                   key={`${w.d}-${i}`}
-                  style={[
-                    styles.dayCircle,
-                    {
-                      backgroundColor: w.done ? C.accent : C.subtleBg,
-                    },
-                    w.today && styles.dayToday,
-                  ]}
+                  style={[styles.dayWrap, w.today && styles.dayTodayRing]}
                 >
-                  <Text
+                  <View
                     style={[
-                      f(600),
-                      {
-                        fontSize: 12,
-                        color: w.done
-                          ? C.onAccent
-                          : w.today
-                            ? C.ink85
-                            : C.ink32,
-                      },
+                      styles.dayCircle,
+                      { backgroundColor: w.done ? C.accent : C.subtleBg },
                     ]}
                   >
-                    {w.d}
-                  </Text>
+                    <Text
+                      style={[
+                        f(600),
+                        {
+                          fontSize: 12,
+                          color: w.done
+                            ? C.onAccent
+                            : w.today
+                              ? C.ink85
+                              : C.ink32,
+                        },
+                      ]}
+                    >
+                      {w.d}
+                    </Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -261,30 +291,6 @@ export default function HomeScreen() {
               moment de plus à protéger. Les deux cartes peuvent donc coexister
               à la première ouverture. */}
           <TryNextCard rules={rules} />
-
-          {/* Alerte : Temps d'écran non autorisé */}
-          {needsScreenTime && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Activer le contrôle du temps d'écran"
-              onPress={requestScreenTimeAuth}
-              style={styles.alertCard}
-            >
-              <View style={styles.alertIcon}>
-                <IconSvg name={IconName.MONITOR} size={18} color={C.danger} />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[f(700), { fontSize: 14.5, color: C.dangerInk }]}>
-                  Active le contrôle du temps d'écran
-                </Text>
-                <Text style={[f(400), styles.alertSub]}>
-                  Sans cette autorisation, Relock ne peut pas bloquer tes apps.
-                  Appuie pour l'activer.
-                </Text>
-              </View>
-              <IconSvg name={IconName.FORWARD} size={18} color={C.danger} />
-            </Pressable>
-          )}
 
           <View style={{ height: 8 }} />
         </View>
@@ -394,10 +400,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayToday: {
+  // L'anneau se détache du disque : violet plus clair + un vrai jour entre les
+  // deux, sinon il se fond dans le remplissage d'un jour déjà tenu.
+  dayWrap: {
+    padding: 2.5,
+    borderRadius: 999,
     borderWidth: 2,
-    borderColor: C.accent,
+    borderColor: 'transparent',
   },
+  dayTodayRing: { borderColor: '#DAD7FF' },
   streakDivider: {
     height: 1,
     backgroundColor: C.sep,

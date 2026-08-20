@@ -149,10 +149,24 @@ function ReloadIcon({ color, size = 19 }: { color: string; size?: number }) {
 
 export default function ActivityScreen() {
   const [seg, setSeg] = useState(2) // Jour par défaut
-  // Décalage en unités de la période courante (jours/semaines/mois). 0 = actuel.
-  const [offset, setOffset] = useState(0)
+  // Un décalage PAR période : les trois vues natives restent montées en
+  // parallèle, chacune garde donc sa position dans le temps.
+  const [offsets, setOffsets] = useState<Record<number, number>>({
+    0: 0,
+    1: 0,
+    2: 0,
+  })
   const [reloadKey, setReloadKey] = useState(0)
   const period = 2 - seg // Jour(2)->0, Semaine(1)->1, Mois(0)->2
+  const offset = offsets[period] ?? 0
+  const setOffset = (v: number) => setOffsets(o => ({ ...o, [period]: v }))
+  // Une vue par période, montée à la PREMIÈRE visite puis JAMAIS démontée :
+  // changer de segment ne reconstruit rien, ça bascule la visibilité. C'est
+  // ce qui rend l'écran incapable d'être vide au retour sur un segment déjà
+  // vu — le rapport y est encore, vivant.
+  const [visited, setVisited] = useState<Record<number, boolean>>({
+    [2 - 2]: true,
+  })
 
   // Les listes de dates sont recalculées à chaque rechargement ET au retour au
   // premier plan : figées au montage, elles proposaient encore « hier » comme
@@ -188,7 +202,7 @@ export default function ActivityScreen() {
 
   const selectSegment = (i: number) => {
     setSeg(i)
-    setOffset(0) // chaque période repart sur « actuel »
+    setOffsets(o => ({ ...o, [2 - i]: 0 })) // la période repart sur « actuel »
   }
 
   // Dev : pilotage des filtres par le pont de test (validation scriptée).
@@ -198,7 +212,7 @@ export default function ActivityScreen() {
       'relock-dev-activity-period',
       (p: { period: number; offset: number }) => {
         setSeg(2 - p.period)
-        setOffset(p.offset)
+        setOffsets(o => ({ ...o, [p.period]: p.offset }))
       },
     )
     return () => sub.remove()
@@ -349,7 +363,13 @@ export default function ActivityScreen() {
             </Text>
           </Pressable>
         ) : (
+          // UNE seule vue. Sa clé change à chaque changement de période, de
+          // décalage, de retour au premier plan (dateEpoch) ou d'appui sur ⟳ :
+          // React la remonte donc À NEUF, ce qui force une connexion de rendu
+          // fraîche à l'extension. Un seul rapport vivant à la fois = jamais de
+          // course, et jamais de surface distante morte réaffichée.
           <ScreenTimeReport
+            key={`${period}-${offset}-${dateEpoch}-${reloadKey}`}
             style={styles.report}
             mode="usage"
             period={period}

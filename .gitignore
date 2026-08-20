@@ -83,3 +83,8 @@ yarn-error.log
 .claude/settings.local.json
 .claude/agent-memory-local/
 
+
+# Expo
+.expo
+dist/
+web-build/

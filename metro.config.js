@@ -1,15 +1,18 @@
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config')
+// Config Metro basée sur Expo (nécessaire depuis l'intégration expo-dev-client :
+// `expo start` sert l'entrée virtuelle `.expo/.virtual-metro-entry` que
+// l'AppDelegate charge en DEBUG). On conserve le transformer SVG maison.
+const { getDefaultConfig } = require('expo/metro-config')
 
-module.exports = (async () => {
-  const defaultConfig = await getDefaultConfig(__dirname)
+const config = getDefaultConfig(__dirname)
 
-  return mergeConfig(defaultConfig, {
-    transformer: {
-      babelTransformerPath: require.resolve('react-native-svg-transformer'),
-    },
-    resolver: {
-      assetExts: defaultConfig.resolver.assetExts.filter(ext => ext !== 'svg'),
-      sourceExts: [...defaultConfig.resolver.sourceExts, 'svg'],
-    },
-  })
-})()
+// SVG en composant React (react-native-svg-transformer), repris de l'ancienne
+// config RN CLI : on sort `svg` des assets et on l'ajoute aux sources.
+config.transformer.babelTransformerPath = require.resolve(
+  'react-native-svg-transformer',
+)
+config.resolver.assetExts = config.resolver.assetExts.filter(
+  ext => ext !== 'svg',
+)
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'svg']
+
+module.exports = config

@@ -33,6 +33,7 @@ RCT_EXTERN_METHOD(startSchedule
                   startMinute : (nonnull NSNumber *)startMinute
                   endHour : (nonnull NSNumber *)endHour
                   endMinute : (nonnull NSNumber *)endMinute
+                  days : (nonnull NSArray *)days
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
@@ -48,6 +49,17 @@ RCT_EXTERN_METHOD(stopRule
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(suspendRule
+                  : (nonnull NSString *)ruleId until
+                  : (nonnull NSNumber *)until resolver
+                  : (RCTPromiseResolveBlock)resolve rejecter
+                  : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(resumeRule
+                  : (nonnull NSString *)ruleId resolver
+                  : (RCTPromiseResolveBlock)resolve rejecter
+                  : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(clearRuleData
                   : (nonnull NSString *)ruleId
                   kind : (nonnull NSString *)kind
@@ -57,6 +69,10 @@ RCT_EXTERN_METHOD(clearRuleData
 RCT_EXTERN_METHOD(stopBlocking
                   : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(limitSteps
+                  : (RCTPromiseResolveBlock)resolve rejecter
+                  : (RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(getStatus
                   : (RCTPromiseResolveBlock)resolve
@@ -102,6 +118,10 @@ RCT_EXTERN_METHOD(setCelebrationsEnabled
                   : (BOOL)enabled
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(armedActivities
+                  : (RCTPromiseResolveBlock)resolve rejecter
+                  : (RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(getDiagnostics
                   : (RCTPromiseResolveBlock)resolve

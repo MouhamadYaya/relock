@@ -1,26 +1,32 @@
 import UIKit
+import Expo
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import RNBootSplash
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: ExpoAppDelegate {
   var window: UIWindow?
 
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
-  func application(
+  override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     let delegate = ReactNativeDelegate()
-    let factory = RCTReactNativeFactory(delegate: delegate)
+    let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
+    // Indispensable avec expo-dev-client : lie la factory à ExpoAppDelegate
+    // pour que le dev-launcher puisse (re)créer la vue racine. Sans cet appel
+    // (oublié par le codemod `install-expo-modules`), `recreateRootView`
+    // plante en assertion au démarrage. Voir ExpoAppDelegate.bindReactNativeFactory.
+    bindReactNativeFactory(factory)
 
     window = UIWindow(frame: UIScreen.main.bounds)
 
@@ -30,28 +36,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: launchOptions
     )
 
-    return true
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   /// Deep links (`relock://…`) → RN Linking. Sert notamment au pont de test
   /// dev piloté par `xcrun simctl openurl` (voir src/session/dev-test-bridge).
-  func application(
+  ///
+  /// `ExpoAppDelegate` définit déjà cette méthode (routage expo-dev-client,
+  /// expo-linking) : on DOIT donc l'`override` et appeler `super` en premier.
+  /// Le `||` court-circuite — si expo a traité l'URL, RCTLinkingManager n'est
+  /// pas rappelé (pas de double livraison) ; sinon on route vers RN Linking.
+  override func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    RCTLinkingManager.application(app, open: url, options: options)
+    super.application(app, open: url, options: options)
+      || RCTLinkingManager.application(app, open: url, options: options)
   }
 }
 
-class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
+class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
   override func sourceURL(for bridge: RCTBridge) -> URL? {
-    self.bundleURL()
+    // needed to return the correct URL for expo-dev-client.
+    bridge.bundleURL ?? bundleURL()
   }
 
   override func bundleURL() -> URL? {
 #if DEBUG
-    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif

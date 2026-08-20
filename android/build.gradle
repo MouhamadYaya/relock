@@ -24,3 +24,4 @@ allprojects {
         mavenCentral()
     }
 }
+apply plugin: "expo-root-project"

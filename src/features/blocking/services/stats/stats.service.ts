@@ -72,9 +72,14 @@ export const StatsService = {
 
     // Regroupe par jour EN PRÉSERVANT L'ORDRE (le journal est du plus ancien au
     // plus récent, donc les jours y sont contigus et croissants).
-    //  • resistedPerDay : tap « Fermer » sur le bouclier (ouvertures évitées) ;
+    //  • shownPerDay    : AFFICHAGES du bouclier = tentatives d'ouverture
+    //    arrêtées. C'est LA mesure des « ouvertures évitées » : le geste
+    //    naturel devant le mur est de balayer vers l'accueil sans toucher
+    //    aucun bouton — seul l'affichage en garde la trace ;
+    //  • resistedPerDay : tap « Fermer » (renoncement explicite) ;
     //  • countPerDay    : nb d'events du jour → sert à l'ack ciblé ;
     //  • dayOrder       : jours dans l'ordre chronologique.
+    const shownPerDay: Record<string, number> = {}
     const resistedPerDay: Record<string, number> = {}
     const countPerDay: Record<string, number> = {}
     const dayOrder: string[] = []
@@ -89,6 +94,9 @@ export const StatsService = {
       if (e.kind === 'resisted') {
         resistedPerDay[day] = (resistedPerDay[day] ?? 0) + 1
       }
+      if (e.kind === 'shield_shown') {
+        shownPerDay[day] = (shownPerDay[day] ?? 0) + 1
+      }
     }
 
     // ACK PAR JOUR, immédiatement après chaque upsert validé. L'écriture est un
@@ -101,6 +109,10 @@ export const StatsService = {
     // du jour courant.
     for (const date of dayOrder) {
       const resisted = resistedPerDay[date] ?? 0
+      const shown = shownPerDay[date] ?? 0
+      // Un tap « Fermer » arrive sur un bouclier affiché : ne pas compter
+      // l'ouverture deux fois.
+      const avoided = Math.max(shown, resisted)
       const { data: existing } = await supabase
         .from('daily_stats')
         .select('interceptions_count,opens_stopped,time_saved_minutes')
@@ -110,11 +122,11 @@ export const StatsService = {
         {
           user_id: userId,
           date,
-          interceptions_count: (existing?.interceptions_count ?? 0) + resisted,
+          interceptions_count: (existing?.interceptions_count ?? 0) + avoided,
           opens_stopped: (existing?.opens_stopped ?? 0) + resisted,
           time_saved_minutes:
             (existing?.time_saved_minutes ?? 0) +
-            resisted * MIN_SAVED_PER_RESIST,
+            avoided * MIN_SAVED_PER_RESIST,
           streak_respected: true,
         },
         { onConflict: 'user_id,date' },
@@ -164,20 +176,39 @@ export const StatsService = {
     // ci-dessus ne comptent plus).
     if (rows.length - expiredTimed.length <= 0) return
 
-    const date = today()
-    const { data: existing } = await supabase
+    // Un jour compte parce qu'un blocage EXISTAIT ce jour-là — pas parce que
+    // l'app a été ouverte. Sans ce rattrapage, une journée où tout marchait
+    // mais où l'utilisateur n'a pas lancé Relock cassait sa chaîne : le punir
+    // de ne pas avoir ouvert l'app est exactement l'inverse du but.
+    const live = rows.filter(r => !expiredTimed.some(e => e.id === r.id))
+    const oldest = Math.min(
+      ...live.map(r => new Date(r.created_at ?? Date.now()).getTime()),
+    )
+
+    // Les jours où au moins un blocage encore vivant existait déjà. Bornés à
+    // 30 : au-delà, on ne réécrit pas l'histoire.
+    const days: string[] = []
+    for (let i = 0; i < 30; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      d.setHours(23, 59, 59, 999)
+      if (d.getTime() < oldest) break
+      days.push(ymd(d))
+    }
+    if (days.length === 0) return
+
+    const { data: known } = await supabase
       .from('daily_stats')
-      .select('id,streak_respected')
-      .eq('date', date)
-      .maybeSingle()
-    if (existing?.streak_respected) return
+      .select('date,streak_respected')
+      .in('date', days)
+    const already = new Set(
+      (known ?? []).filter(r => r.streak_respected).map(r => r.date),
+    )
+    const missing = days.filter(d => !already.has(d))
+    if (missing.length === 0) return
 
     await supabase.from('daily_stats').upsert(
-      {
-        user_id: userId,
-        date,
-        streak_respected: true,
-      },
+      missing.map(date => ({ user_id: userId, date, streak_respected: true })),
       { onConflict: 'user_id,date' },
     )
   },

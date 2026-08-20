@@ -44,18 +44,37 @@ interface BlocusScreenTimeNative {
     minutes: number,
     strict: boolean,
   ): Promise<boolean>
-  /** Blocage récurrent quotidien sur une plage horaire. */
+  /**
+   * Blocage récurrent sur une plage horaire.
+   * `days` : 0 = dimanche … 6 = samedi. Vide ⇒ tous les jours.
+   */
   startSchedule(
     ruleId: string,
     startHour: number,
     startMinute: number,
     endHour: number,
     endMinute: number,
+    days: number[],
   ): Promise<boolean>
   /** Blocage quand l'usage quotidien des apps de la règle atteint `minutes`. */
   startDailyLimit(ruleId: string, minutes: number): Promise<boolean>
+  /**
+   * Avancement du quota du jour par règle (id → 0…1). Granularité : les paliers
+   * 25/50/75/100 % — iOS ne notifie qu'un seuil franchi, jamais un compteur.
+   */
+  limitSteps(): Promise<Record<string, number>>
+  /** Activités DeviceActivity réellement armées côté iOS (vérité système). */
+  armedActivities(): Promise<string[]>
   /** Arrête UNE règle (pause) sans toucher aux autres blocages. */
   stopRule(ruleId: string, kind: NativeKind): Promise<boolean>
+  /**
+   * Suspend une règle : bouclier masqué, surveillance CONSERVÉE — c'est ce qui
+   * permet à iOS de reprendre seul à l'échéance, app fermée.
+   * `untilSec` : timestamp de reprise en secondes, 0 ⇒ jusqu'à reprise manuelle.
+   */
+  suspendRule(ruleId: string, untilSec: number): Promise<boolean>
+  /** Reprise manuelle : lève le masque et annule le réveil programmé. */
+  resumeRule(ruleId: string): Promise<boolean>
   /** Suppression définitive : stop + oubli de la sélection de la règle. */
   clearRuleData(ruleId: string, kind: NativeKind): Promise<boolean>
   /** Réinitialisation globale (réservé au reset d'installation). */
@@ -84,6 +103,13 @@ export interface ScreenTimeDiagnostics {
   monitorLastWakeAt: string
   monitorLastWakeWhat: string
   shieldLastActionAt: string
+  /** Activités réellement armées côté iOS (la vérité système). */
+  armedActivities: string[]
+  /** Affichages du bouclier (= tentatives d'ouverture arrêtées). */
+  shieldShownTotal: number
+  shieldLastShownAt: string
+  /** Paliers de quota franchis aujourd'hui, clé « limitProgress.<id> ». */
+  limitProgress: Record<string, string>
 }
 
 const native = NativeModules.BlocusScreenTime as
@@ -116,12 +142,26 @@ export const ScreenTime = {
     startMinute: number,
     endHour: number,
     endMinute: number,
+    days: number[] = [],
   ) =>
-    ensure().startSchedule(ruleId, startHour, startMinute, endHour, endMinute),
+    ensure().startSchedule(
+      ruleId,
+      startHour,
+      startMinute,
+      endHour,
+      endMinute,
+      days,
+    ),
   startDailyLimit: (ruleId: string, minutes: number) =>
     ensure().startDailyLimit(ruleId, minutes),
+  limitSteps: () => (native ? native.limitSteps() : Promise.resolve({})),
+  armedActivities: () =>
+    native ? native.armedActivities() : Promise.resolve([]),
   stopRule: (ruleId: string, kind: NativeKind) =>
     ensure().stopRule(ruleId, kind),
+  suspendRule: (ruleId: string, untilSec: number) =>
+    ensure().suspendRule(ruleId, untilSec),
+  resumeRule: (ruleId: string) => ensure().resumeRule(ruleId),
   clearRuleData: (ruleId: string, kind: NativeKind) =>
     ensure().clearRuleData(ruleId, kind),
   stopBlocking: () => ensure().stopBlocking(),

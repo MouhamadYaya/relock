@@ -39,7 +39,7 @@ async function main() {
       'generate',
       tmp,
       '--platforms=android,ios',
-      '--background=#111827',
+      '--background=#000000',
       '--logo-width=160',
       '--assets-output',
       outDir,

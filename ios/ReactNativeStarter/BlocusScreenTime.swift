@@ -68,9 +68,38 @@ final class BlocusScreenTime: NSObject {
   // jour ici et par RelockMonitor. Arrêter une règle n'affecte donc jamais
   // les autres. ⚠️ Les helpers miroir vivent dans RelockMonitor.swift.
 
+  /// iOS n'autorise que 20 activités pour l'app ET ses extensions réunies.
+  /// Au-delà, `startMonitoring` échoue — autant le dire en français plutôt que
+  /// de laisser passer un « monitor_failed » que personne ne comprend.
+  @available(iOS 16.0, *)
+  static func rejectMonitoring(
+    _ error: Error, _ reject: RCTPromiseRejectBlock
+  ) {
+    if let m = error as? DeviceActivityCenter.MonitoringError,
+      case .excessiveActivities = m
+    {
+      reject(
+        "too_many_rules",
+        "iOS ne peut surveiller que 20 blocages à la fois. Retires-en un pour en créer un autre.",
+        error)
+      return
+    }
+    reject("monitor_failed", error.localizedDescription, error)
+  }
+
   static func activityName(kind: String, ruleId: String) -> String {
     let prefix = kind == "schedule" ? "sched" : (kind == "limit" ? "limit" : "timed")
     return "\(prefix).\(ruleId)"
+  }
+
+  /// La base, plus les variantes par jour d'un ancien schéma (« sched.<id>.3 »).
+  /// On n'en CRÉE plus — iOS n'accorde que 20 activités à toute l'app, et une
+  /// activité par jour en mangeait 5 pour une seule règle « lun→ven ». On les
+  /// arrête encore pour purger les appareils qui en ont d'un build précédent.
+  private func allActivityNames(kind: String, ruleId: String) -> [String] {
+    let base = Self.activityName(kind: kind, ruleId: ruleId)
+    guard kind == "schedule" else { return [base] }
+    return [base] + (1...7).map { "\(base).\($0)" }
   }
 
   /// Clé de jour local « yyyy-MM-dd » (miroir de `RelockMonitor.dayKey`) pour
@@ -128,6 +157,17 @@ final class BlocusScreenTime: NSObject {
     return decoded
   }
 
+  /// Une règle suspendue garde sa surveillance — ses fenêtres continuent de
+  /// s'ouvrir et de se fermer — mais son bouclier est MASQUÉ. C'est ce qui
+  /// permet à iOS de reprendre tout seul à l'échéance, app fermée : rien à
+  /// reconstruire, il suffit de lever le masque.
+  /// Valeur : timestamp de reprise, 0 = « jusqu'à ce que tu reprennes ».
+  private func isSuspended(_ ruleId: String) -> Bool {
+    guard let v = defaults?.object(forKey: "suspendedUntil.\(ruleId)") as? Double
+    else { return false }
+    return v == 0 || v > Date().timeIntervalSince1970
+  }
+
   /// Union des sélections des fenêtres actuellement actives → bouclier.
   @available(iOS 16.0, *)
   private func recomputeShield() {
@@ -137,6 +177,7 @@ final class BlocusScreenTime: NSObject {
     for raw in activeWindows() {
       guard let ruleId = raw.split(separator: ".").dropFirst().first
       else { continue }
+      if isSuspended(String(ruleId)) { continue }
       guard let sel = loadRuleSelection(String(ruleId)) else { continue }
       apps.formUnion(sel.applicationTokens)
       cats.formUnion(sel.categoryTokens)
@@ -223,14 +264,22 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else { resolve("unsupported"); return }
-    let status = AuthorizationCenter.shared.authorizationStatus
-    if Self.isAuthorized(status) {
+    #if targetEnvironment(simulator)
+      // Family Controls n'existe pas sur simulateur : on se déclare autorisé
+      // pour que l'aperçu à chiffres fictifs (Accueil + Activité) s'affiche.
+      // Jamais compilé pour l'iPhone.
       resolve("approved")
-    } else if status == .denied {
-      resolve("denied")
-    } else {
-      resolve("notDetermined")
-    }
+      return
+    #else
+      let status = AuthorizationCenter.shared.authorizationStatus
+      if Self.isAuthorized(status) {
+        resolve("approved")
+      } else if status == .denied {
+        resolve("denied")
+      } else {
+        resolve("notDetermined")
+      }
+    #endif
   }
 
   // MARK: - Sélecteur d'apps Apple
@@ -348,11 +397,12 @@ final class BlocusScreenTime: NSObject {
 
   // MARK: - Mécanique 2 : Plage horaire quotidienne (par règle)
 
-  @objc(startSchedule:startHour:startMinute:endHour:endMinute:resolver:rejecter:)
+  @objc(startSchedule:startHour:startMinute:endHour:endMinute:days:resolver:rejecter:)
   func startSchedule(
     _ ruleId: String,
     startHour: NSNumber, startMinute: NSNumber,
     endHour: NSNumber, endMinute: NSNumber,
+    days: [NSNumber],
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -362,41 +412,67 @@ final class BlocusScreenTime: NSObject {
     guard let sel = loadRuleSelection(ruleId), selectionCount(sel) > 0 else {
       reject("empty_selection", "Aucune app liée à cette règle", nil); return
     }
-    let raw = Self.activityName(kind: "schedule", ruleId: ruleId)
-    let activity = DeviceActivityName(raw)
+    let base = Self.activityName(kind: "schedule", ruleId: ruleId)
+    let sh = startHour.intValue, sm = startMinute.intValue
+    let eh = endHour.intValue, em = endMinute.intValue
+    let startM = sh * 60 + sm
+    let endM = eh * 60 + em
+    let crosses = startM > endM // fenêtre de nuit (22 h → 7 h)
+    // JS : 0 = dimanche … 6 = samedi. iOS : 1 = dimanche … 7 = samedi.
+    let jsDays = Set(days.map { $0.intValue })
+    func allows(_ iosWeekday: Int) -> Bool {
+      jsDays.isEmpty || jsDays.contains(iosWeekday - 1)
+    }
+
+    // Les jours vivent dans l'App Group, pas dans le calendrier d'iOS : un
+    // DeviceActivitySchedule ne sait pas exprimer « lun→ven », et armer une
+    // activité par jour coûterait 5 des 20 activités qu'iOS accorde à TOUTE
+    // l'app (extensions comprises) — plafond atteint dès la 4ᵉ règle. La
+    // fenêtre s'ouvre donc chaque jour, et c'est le moniteur qui décide si
+    // elle protège.
+    if jsDays.isEmpty {
+      defaults?.removeObject(forKey: "days.\(ruleId)")
+    } else {
+      defaults?.set(jsDays.sorted(), forKey: "days.\(ruleId)")
+    }
+
+    // Purge l'ancien découpage par jour s'il traîne d'un build précédent.
+    let names = allActivityNames(kind: "schedule", ruleId: ruleId)
+    center.stopMonitoring(names.map { DeviceActivityName($0) })
+
+    let activity = DeviceActivityName(base)
     let schedule = DeviceActivitySchedule(
-      intervalStart: DateComponents(
-        hour: startHour.intValue, minute: startMinute.intValue),
-      intervalEnd: DateComponents(
-        hour: endHour.intValue, minute: endMinute.intValue),
+      intervalStart: DateComponents(hour: sh, minute: sm),
+      intervalEnd: DateComponents(hour: eh, minute: em),
       repeats: true)
+
     do {
-      center.stopMonitoring([activity])
       try center.startMonitoring(activity, during: schedule)
+
       // iOS ne rejoue PAS `intervalDidStart` pour une fenêtre DÉJÀ en cours.
       // Si « maintenant » tombe dans la plage (création ou reprise en plein
-      // créneau), on applique le bouclier immédiatement — sinon rien ne serait
-      // bloqué jusqu'au prochain passage à l'heure de début.
+      // créneau), on applique le bouclier immédiatement.
       let cal = Calendar.current
+      let now = Date()
       let nowM =
-        cal.component(.hour, from: Date()) * 60
-        + cal.component(.minute, from: Date())
-      let startM = startHour.intValue * 60 + startMinute.intValue
-      let endM = endHour.intValue * 60 + endMinute.intValue
-      let inside =
-        startM <= endM
-        ? (nowM >= startM && nowM < endM)
-        : (nowM >= startM || nowM < endM)  // plage qui traverse minuit
-      if inside {
-        setWindow(raw, active: true)
-        recomputeShield()
-      } else if activeWindows().contains(raw) {
-        // Auto-réparation : fenêtre restée active hors plage (fin de fenêtre
-        // manquée par le moniteur : téléphone éteint, extension tuée…) → on
-        // purge le blocage fantôme au ré-armement.
-        setWindow(raw, active: false)
-        recomputeShield()
+        cal.component(.hour, from: now) * 60 + cal.component(.minute, from: now)
+      let nowW = cal.component(.weekday, from: now)
+      var inside = false
+      if !crosses {
+        inside = nowM >= startM && nowM < endM && allows(nowW)
+      } else if nowM >= startM {
+        inside = allows(nowW)
+      } else if nowM < endM {
+        // Après minuit : c'est la session de LA VEILLE qui tourne — c'est donc
+        // le jour de la veille qui doit être autorisé.
+        inside = allows(nowW == 1 ? 7 : nowW - 1)
       }
+
+      // Auto-réparation : une variante de l'ancien schéma encore marquée
+      // active est un fantôme — elle bloquerait sans que rien ne la referme.
+      for n in names where n != base { setWindow(n, active: false) }
+      setWindow(base, active: inside)
+      recomputeShield()
       resolve(true)
     } catch {
       reject("monitor_failed", error.localizedDescription, error)
@@ -429,33 +505,44 @@ final class BlocusScreenTime: NSObject {
     // Seuil en heures+minutes : la sémantique de DateComponents au-delà de
     // 59 min n'est pas garantie par DeviceActivity.
     let mins = max(1, minutes.intValue)
-    let threshold = DateComponents(hour: mins / 60, minute: mins % 60)
-    let event: DeviceActivityEvent
-    if #available(iOS 17.4, *) {
-      // `includesPastActivity` : le seuil compte l'usage depuis MINUIT, même
-      // si la surveillance (re)démarre en cours de journée. Sans lui, chaque
-      // ré-armement (création, pause/reprise, relance de l'app) remettait le
-      // compteur d'iOS à zéro → une limite de 5 min ne se déclenchait jamais
-      // dès que l'app relançait la surveillance. C'est aussi la sémantique
-      // attendue d'une « limite PAR JOUR » (comme Temps d'écran d'Apple).
-      event = DeviceActivityEvent(
-        applications: selection.applicationTokens,
-        categories: selection.categoryTokens,
-        webDomains: selection.webDomainTokens,
-        threshold: threshold,
-        includesPastActivity: true)
-    } else {
-      event = DeviceActivityEvent(
+
+    // `includesPastActivity` : le seuil compte l'usage depuis MINUIT, même si
+    // la surveillance (re)démarre en cours de journée. Sans lui, chaque
+    // ré-armement (création, pause/reprise, relance de l'app) remettait le
+    // compteur d'iOS à zéro → une limite de 5 min ne se déclenchait jamais.
+    // C'est aussi la sémantique attendue d'une « limite PAR JOUR ».
+    func event(after m: Int) -> DeviceActivityEvent {
+      let threshold = DateComponents(hour: m / 60, minute: m % 60)
+      if #available(iOS 17.4, *) {
+        return DeviceActivityEvent(
+          applications: selection.applicationTokens,
+          categories: selection.categoryTokens,
+          webDomains: selection.webDomainTokens,
+          threshold: threshold,
+          includesPastActivity: true)
+      }
+      return DeviceActivityEvent(
         applications: selection.applicationTokens,
         categories: selection.categoryTokens,
         webDomains: selection.webDomainTokens,
         threshold: threshold)
     }
+
+    // Paliers intermédiaires : ils ne bloquent RIEN, ils donnent seulement de
+    // l'avance à l'utilisateur (« 50 % de ton quota »). iOS ne sait pas dire
+    // « où en est le compteur ? » — seul un seuil franchi est notifiable, d'où
+    // ces jalons. Un palier sous la minute ou confondu avec la limite est
+    // ignoré : DeviceActivity rejette un seuil nul.
+    var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+    for (name, frac) in [("p25", 0.25), ("p50", 0.5), ("p75", 0.75)] {
+      let m = Int((Double(mins) * frac).rounded())
+      if m >= 1 && m < mins { events[.init(name)] = event(after: m) }
+    }
+    events[.init("limitReached")] = event(after: mins)
+
     do {
       center.stopMonitoring([activity])
-      try center.startMonitoring(
-        activity, during: schedule,
-        events: [DeviceActivityEvent.Name("limitReached"): event])
+      try center.startMonitoring(activity, during: schedule, events: events)
       if defaults?.string(forKey: "limitReached.\(ruleId)") == Self.dayKey() {
         // Limite DÉJÀ atteinte aujourd'hui (marqueur posé par le moniteur) :
         // on re-bloque immédiatement — pas de quota neuf en re-armant.
@@ -484,9 +571,10 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else { resolve(true); return }
-    let raw = Self.activityName(kind: kind, ruleId: ruleId)
-    center.stopMonitoring([DeviceActivityName(raw)])
-    setWindow(raw, active: false)
+    // Toutes les variantes : une plage à jours choisis vit en plusieurs activités.
+    let names = allActivityNames(kind: kind, ruleId: ruleId)
+    center.stopMonitoring(names.map { DeviceActivityName($0) })
+    for n in names { setWindow(n, active: false) }
     recomputeShield()
     // Pause d'un minuté → son compte à rebours n'a plus lieu d'être affiché.
     if kind == "timed", #available(iOS 16.2, *) { endBlockActivities() }
@@ -494,6 +582,58 @@ final class BlocusScreenTime: NSObject {
   }
 
   /// Suppression définitive d'une règle : stop + oubli de sa sélection.
+  /// Suspend une règle : le bouclier est masqué mais la surveillance CONTINUE.
+  /// `until` = timestamp de reprise (0 ⇒ « jusqu'à ce que tu reprennes »).
+  /// À échéance, une activité « resume.<id> » réveille le moniteur qui lève le
+  /// masque : la protection revient toute seule, app fermée.
+  @objc(suspendRule:until:resolver:rejecter:)
+  func suspendRule(
+    _ ruleId: String,
+    until: NSNumber,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else { resolve(true); return }
+    let ts = until.doubleValue
+    defaults?.set(ts, forKey: "suspendedUntil.\(ruleId)")
+    let wake = DeviceActivityName("resume.\(ruleId)")
+    center.stopMonitoring([wake])
+    if ts > Date().timeIntervalSince1970 {
+      let at = Date(timeIntervalSince1970: ts)
+      let cal = Calendar.current
+      // DeviceActivity impose une fenêtre d'au moins 15 min : elle ne sert
+      // qu'à porter le réveil, `intervalDidStart` la referme aussitôt.
+      let schedule = DeviceActivitySchedule(
+        intervalStart: cal.dateComponents([.hour, .minute], from: at),
+        intervalEnd: cal.dateComponents(
+          [.hour, .minute], from: at.addingTimeInterval(15 * 60)),
+        repeats: false)
+      // Si le plafond des 20 activités est atteint, le réveil n'est pas posé :
+      // la suspension tient quand même, elle sera simplement levée au retour
+      // dans l'app (`resumeExpiredSuspensions`) plutôt que par iOS.
+      do { try center.startMonitoring(wake, during: schedule) } catch {
+        NSLog("[Relock] réveil de suspension non programmé : \(error)")
+      }
+    }
+    recomputeShield()
+    resolve(true)
+  }
+
+  /// Reprise manuelle : on lève le masque et on annule le réveil programmé.
+  @objc(resumeRule:resolver:rejecter:)
+  func resumeRule(
+    _ ruleId: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else { resolve(true); return }
+    defaults?.removeObject(forKey: "suspendedUntil.\(ruleId)")
+    defaults?.removeObject(forKey: "days.\(ruleId)")
+    center.stopMonitoring([DeviceActivityName("resume.\(ruleId)")])
+    recomputeShield()
+    resolve(true)
+  }
+
   @objc(clearRuleData:kind:resolver:rejecter:)
   func clearRuleData(
     _ ruleId: String,
@@ -502,12 +642,15 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else { resolve(true); return }
-    let raw = Self.activityName(kind: kind, ruleId: ruleId)
-    center.stopMonitoring([DeviceActivityName(raw)])
-    setWindow(raw, active: false)
+    let names = allActivityNames(kind: kind, ruleId: ruleId)
+    center.stopMonitoring(names.map { DeviceActivityName($0) })
+    for n in names { setWindow(n, active: false) }
     defaults?.removeObject(forKey: "selection.\(ruleId)")
-    // Suppression (≠ pause) : on oublie aussi le marqueur « limite atteinte ».
+    // Suppression (≠ pause) : on oublie aussi le quota du jour.
     defaults?.removeObject(forKey: "limitReached.\(ruleId)")
+    defaults?.removeObject(forKey: "limitProgress.\(ruleId)")
+    defaults?.removeObject(forKey: "suspendedUntil.\(ruleId)")
+    center.stopMonitoring([DeviceActivityName("resume.\(ruleId)")])
     recomputeShield()
     if kind == "timed", #available(iOS 16.2, *) { endBlockActivities() }
     resolve(true)
@@ -529,6 +672,29 @@ final class BlocusScreenTime: NSObject {
   }
 
   // MARK: - Statut + journal d'événements (pour les stats)
+
+  /// Avancement du quota du jour par règle (0 → 1), écrit par le moniteur aux
+  /// paliers 25/50/75/100 %. Les entrées d'un jour passé sont ignorées : le
+  /// quota repart à neuf chaque matin.
+  @objc(limitSteps:rejecter:)
+  func limitSteps(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    var out: [String: NSNumber] = [:]
+    guard let d = defaults else { resolve(out); return }
+    let today = Self.dayKey()
+    let prefix = "limitProgress."
+    for (key, value) in d.dictionaryRepresentation() where key.hasPrefix(prefix) {
+      guard let raw = value as? String else { continue }
+      let parts = raw.split(separator: ":", maxSplits: 1)
+      guard parts.count == 2, String(parts[0]) == today, let pct = Int(parts[1])
+      else { continue }
+      out[String(key.dropFirst(prefix.count))] = NSNumber(
+        value: Double(pct) / 100.0)
+    }
+    resolve(out)
+  }
 
   @objc(getStatus:rejecter:)
   func getStatus(
@@ -711,6 +877,18 @@ final class BlocusScreenTime: NSObject {
   /// journal, traces de vie des extensions. Le sandbox iOS rend plusieurs
   /// pannes SILENCIEUSES (extension jamais réveillée, App Group divergent,
   /// build périmé) — ce rapport les rend observables depuis l'app.
+  /// Activités DeviceActivity réellement armées côté iOS. C'est la vérité du
+  /// système, pas la nôtre : une règle « active » en DB dont l'activité
+  /// n'apparaît pas ici ne bloquera jamais rien.
+  @objc(armedActivities:rejecter:)
+  func armedActivities(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else { resolve([]); return }
+    resolve(center.activities.map { $0.rawValue })
+  }
+
   @objc(getDiagnostics:rejecter:)
   func getDiagnostics(
     _ resolve: @escaping RCTPromiseResolveBlock,
@@ -751,6 +929,22 @@ final class BlocusScreenTime: NSObject {
       "totalResisted": defaults?.integer(forKey: "totalResisted") ?? 0,
       "activeWindows": defaults?.stringArray(forKey: "activeWindows") ?? [],
       "monitorLastWakeAt": when("monitor.lastWakeAt"),
+      "shieldShownTotal": defaults?.integer(forKey: "shieldShownTotal") ?? 0,
+      "shieldLastShownAt": when("shield.lastShownAt"),
+      "armedActivities": {
+        if #available(iOS 16.0, *) {
+          return center.activities.map { $0.rawValue }
+        }
+        return [String]()
+      }(),
+      "limitProgress": {
+        var out: [String: String] = [:]
+        for (key, value) in defaults?.dictionaryRepresentation() ?? [:]
+        where key.hasPrefix("limitProgress.") {
+          out[key] = value as? String ?? "?"
+        }
+        return out
+      }(),
       "monitorLastWakeWhat": defaults?.string(forKey: "monitor.lastWakeWhat")
         ?? "—",
       "shieldLastActionAt": when("shield.lastActionAt"),
