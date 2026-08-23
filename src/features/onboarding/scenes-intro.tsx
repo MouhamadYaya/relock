@@ -350,7 +350,6 @@ function AppRow({
   )
 }
 
-/** Ligne 2 du titre héros : « qui » en blanc, le reste au dégradé signature — sur une seule ligne, donc via un texte SVG à tspans (RN ne sait pas mélanger les couleurs dans un même <Text>). */
 /**
  * Un <Text> RN natif imbriqué (pas de SVG) : react-native-svg ne fiabilise
  * pas `textLength`/`lengthAdjust` sur du texte à tspans multiples (constaté
@@ -413,7 +412,7 @@ export function SceneWelcome({
           top: 0,
           left: 0,
           right: 0,
-          height: v(40),
+          height: Math.max(44, v(40)),
         }}
       />
 
