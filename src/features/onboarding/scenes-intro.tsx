@@ -1,3 +1,4 @@
+import { IconName } from '@assets/icons'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   Pressable,
@@ -21,7 +22,16 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
-import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, {
+  Circle,
+  Defs,
+  LinearGradient,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg'
+import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import {
   Footnote,
@@ -90,6 +100,285 @@ export function SceneIgnition({ onDone }: { onDone: () => void }) {
 }
 
 // ─── Acte 0 · La promesse ───────────────────────────────────────────────
+//
+// Reproduction fidèle de la maquette `design/welcome/welcomeimg.png` :
+// mockup de téléphone (démo de l'écran « Apps bloquées » + stats), gros
+// titre à deux tons, puis CTA. Toutes les cotes du mockup sont dérivées
+// d'une seule échelle `v()` calquée sur la largeur de la maquette source
+// (863 px) pour rester fidèles à ses proportions sur n'importe quel écran.
+
+const WELCOME_RED = '#FA4F72'
+const WELCOME_FRAME_BORDER = 'rgba(205,199,224,0.55)'
+const WELCOME_SURFACE = 'rgba(255,255,255,0.05)'
+
+function BadgeBase({
+  size,
+  radius,
+  children,
+}: {
+  size: number
+  radius: number
+  children: React.ReactNode
+}) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        overflow: 'hidden',
+      }}
+    >
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        {children}
+      </Svg>
+    </View>
+  )
+}
+
+function BadgeTikTok({ size }: { size: number }) {
+  const note =
+    'M16.6 3c.4 2.3 1.9 3.9 4.2 4.2v3.2c-1.6 0-3-.5-4.2-1.4v6.4a5.6 5.6 0 11-4.8-5.5v3.3a2.4 2.4 0 102.1 2.4V3h2.7z'
+  return (
+    <BadgeBase size={size} radius={size * 0.28}>
+      <Rect width={24} height={24} fill="#000000" />
+      <Path d={note} fill="#25F4EE" transform="translate(-0.9,-0.5)" />
+      <Path d={note} fill="#FE2C55" transform="translate(0.9,0.5)" />
+      <Path d={note} fill="#FFFFFF" />
+    </BadgeBase>
+  )
+}
+
+function BadgeInstagram({ size }: { size: number }) {
+  return (
+    <BadgeBase size={size} radius={size * 0.28}>
+      <Defs>
+        <LinearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <Stop offset="0%" stopColor="#FEDA75" />
+          <Stop offset="34%" stopColor="#D62976" />
+          <Stop offset="68%" stopColor="#962FBF" />
+          <Stop offset="100%" stopColor="#4F5BD5" />
+        </LinearGradient>
+      </Defs>
+      <Rect width={24} height={24} fill="url(#igGrad)" />
+      <Rect
+        x={5}
+        y={5}
+        width={14}
+        height={14}
+        rx={4.4}
+        stroke="#fff"
+        strokeWidth={1.7}
+        fill="none"
+      />
+      <Circle
+        cx={12}
+        cy={12}
+        r={3.6}
+        stroke="#fff"
+        strokeWidth={1.7}
+        fill="none"
+      />
+      <Circle cx={16.3} cy={7.7} r={1.1} fill="#fff" />
+    </BadgeBase>
+  )
+}
+
+function BadgeYouTube({ size }: { size: number }) {
+  return (
+    <BadgeBase size={size} radius={size * 0.28}>
+      <Rect width={24} height={24} fill="#FFFFFF" />
+      <Rect x={2} y={6.5} width={20} height={11} rx={5} fill="#FF0033" />
+      <Path d="M10.2 9.3l5.4 2.7-5.4 2.7z" fill="#fff" />
+    </BadgeBase>
+  )
+}
+
+function BadgeSnapchat({ size }: { size: number }) {
+  return (
+    <BadgeBase size={size} radius={size * 0.28}>
+      <Rect width={24} height={24} fill="#FFFC00" />
+      <Path
+        d="M12 4.4c2.7 0 4.6 2 4.6 4.9 0 .9-.1 1.8-.3 2.6.5.2 1 .2 1.5.1.3 0 .5.2.4.5-.1.4-.6.7-1.2 1 .1.3.2.5.1.8-.1.3-.5.5-1 .7.1.2.1.5-.1.7-.3.3-.9.4-1.5.3-.4.5-1.2.8-2.2.8h-.1c-.8.8-1.7 1.2-2.5 1.2h0c-.8 0-1.7-.4-2.5-1.2H7c-1 0-1.8-.3-2.2-.8-.6.1-1.2 0-1.5-.3-.2-.2-.2-.5-.1-.7-.5-.2-.9-.4-1-.7-.1-.3 0-.5.1-.8-.6-.3-1.1-.6-1.2-1-.1-.3.1-.5.4-.5.5.1 1 .1 1.5-.1-.2-.8-.3-1.7-.3-2.6 0-2.9 1.9-4.9 4.6-4.9z"
+        fill="#fff"
+      />
+    </BadgeBase>
+  )
+}
+
+const BLOCKED_APPS: {
+  id: string
+  name: string
+  Badge: React.ComponentType<{ size: number }>
+}[] = [
+  { id: 'tiktok', name: 'TikTok', Badge: BadgeTikTok },
+  { id: 'instagram', name: 'Instagram', Badge: BadgeInstagram },
+  { id: 'youtube', name: 'YouTube', Badge: BadgeYouTube },
+  { id: 'snapchat', name: 'Snapchat', Badge: BadgeSnapchat },
+]
+
+function NoEntryIcon({ size, color }: { size: number; color: string }) {
+  const c = size / 2
+  const r = c - 1.6
+  const o = r * 0.66
+  return (
+    <Svg width={size} height={size}>
+      <Circle
+        cx={c}
+        cy={c}
+        r={r}
+        stroke={color}
+        strokeWidth={1.8}
+        fill="none"
+      />
+      <Path
+        d={`M${c - o} ${c - o} L${c + o} ${c + o}`}
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  )
+}
+
+function SparkleIcon({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 2c.7 3.7 2.5 5.5 6.2 6.2-3.7.7-5.5 2.5-6.2 6.2-.7-3.7-2.5-5.5-6.2-6.2C9.5 7.5 11.3 5.7 12 2z"
+        fill={color}
+      />
+    </Svg>
+  )
+}
+
+function ProgressRing({
+  size,
+  strokeWidth,
+}: {
+  size: number
+  strokeWidth: number
+}) {
+  const r = (size - strokeWidth) / 2
+  const c = size / 2
+  const circumference = 2 * Math.PI * r
+  const progress = 0.94
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size}>
+        <Defs>
+          <LinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor={OB.grad[0]} />
+            <Stop offset="100%" stopColor={OB.grad[2]} />
+          </LinearGradient>
+        </Defs>
+        <Circle
+          cx={c}
+          cy={c}
+          r={r}
+          stroke="rgba(255,255,255,0.14)"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <Circle
+          cx={c}
+          cy={c}
+          r={r}
+          stroke="url(#ringGrad)"
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={circumference * (1 - progress)}
+          transform={`rotate(-90 ${c} ${c})`}
+        />
+      </Svg>
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { alignItems: 'center', justifyContent: 'center' },
+        ]}
+      >
+        <IconSvg name={IconName.CLOCK} size={size * 0.32} color={OB.ink} />
+      </View>
+    </View>
+  )
+}
+
+function AppRow({
+  name,
+  Badge,
+  iconSize,
+  nameFs,
+  subFs,
+  noEntrySize,
+}: {
+  name: string
+  Badge: React.ComponentType<{ size: number }>
+  iconSize: number
+  nameFs: number
+  subFs: number
+  noEntrySize: number
+}) {
+  return (
+    <View
+      className="flex-row items-center"
+      style={{ paddingVertical: subFs * 0.6, gap: iconSize * 0.24 }}
+    >
+      <Badge size={iconSize} />
+      <View className="flex-1" style={{ gap: nameFs * 0.14 }}>
+        <Text
+          numberOfLines={1}
+          style={{
+            ...fonts.semiBold,
+            fontSize: nameFs,
+            color: OB.ink,
+            letterSpacing: -0.2,
+          }}
+        >
+          {name}
+        </Text>
+        <View className="flex-row items-center" style={{ gap: subFs * 0.3 }}>
+          <IconSvg name={IconName.LOCK} size={subFs * 0.85} color={OB.accent} />
+          <Text style={{ ...fonts.medium, fontSize: subFs, color: OB.accent }}>
+            Bloquée
+          </Text>
+        </View>
+      </View>
+      <NoEntryIcon size={noEntrySize} color={WELCOME_RED} />
+    </View>
+  )
+}
+
+/**
+ * Un <Text> RN natif imbriqué (pas de SVG) : react-native-svg ne fiabilise
+ * pas `textLength`/`lengthAdjust` sur du texte à tspans multiples (constaté
+ * à l'écran — dépassement silencieux), alors que le moteur de texte natif
+ * enroule et centre correctement quel que soit l'appareil. Couleur unie
+ * (au lieu du dégradé signature) : compromis assumé pour cette fiabilité.
+ */
+function HeroLine2({
+  fontSize,
+  lineHeight,
+}: {
+  fontSize: number
+  lineHeight: number
+}) {
+  return (
+    <Text
+      style={{
+        ...fonts.bold,
+        fontSize,
+        lineHeight,
+        letterSpacing: -1.2,
+        textAlign: 'center',
+      }}
+    >
+      <Text style={{ color: OB.ink }}>qui </Text>
+      <Text style={{ color: OB.grad[1] }}>te volent ton temps.</Text>
+    </Text>
+  )
+}
 
 export function SceneWelcome({
   onNext,
@@ -98,43 +387,222 @@ export function SceneWelcome({
   onNext: () => void
   onHaveAccount: () => void
 }) {
-  const breath = useSharedValue(1)
-  useEffect(() => {
-    breath.value = withRepeat(
-      withSequence(
-        withTiming(1.04, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1,
-      true,
-    )
-  }, [breath])
-  const moonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: breath.value }],
-  }))
+  const { width: windowW, height: windowH } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
+  // Échelle dérivée de la maquette (863×1750, hors barre de statut) : chaque
+  // cote ci-dessous reprend directement une mesure faite sur l'image. On
+  // plafonne aussi par la hauteur dispo pour ne jamais déborder sous la
+  // poignée d'accueil sur les écrans plus compacts.
+  const availableH = windowH - insets.top - insets.bottom - 12
+  const scale = Math.min(windowW / 863, availableH / 1750)
+  const v = (n: number) => n * scale
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.welcomeTopRow}>
-        <GhostLink label="J'ai déjà un compte" onPress={onHaveAccount} dim />
-      </View>
-      <View style={styles.welcomeCenter}>
-        <Reveal index={0}>
-          <Animated.View style={moonStyle}>
-            <Moon size={128} glow />
-          </Animated.View>
-        </Reveal>
-        <Reveal index={1} style={styles.welcomeTitleBlock}>
-          <Text style={styles.h1}>Reprends</Text>
-          <GradientLine text="des années de ta vie." size={34} />
-        </Reveal>
-        <Reveal index={2}>
-          <Text style={styles.sub}>
-            Relock bloque ce qui te vole ton temps, et te le rend.
+    <View className="flex-1 px-5">
+      {/* Zone tactile invisible, dans la marge vide au-dessus du mockup :
+          reprend l'accès « J'ai déjà un compte » sans rien ajouter au
+          rendu visuel (absent de la maquette à reproduire à l'identique). */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="J'ai déjà un compte"
+        onPress={onHaveAccount}
+        hitSlop={8}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: Math.max(44, v(40)),
+        }}
+      />
+
+      <Reveal index={0} className="items-center" style={{ marginTop: v(40) }}>
+        <View
+          style={{
+            width: v(480),
+            borderRadius: v(60),
+            borderWidth: v(9),
+            borderColor: WELCOME_FRAME_BORDER,
+            backgroundColor: '#0A0A10',
+            paddingHorizontal: v(28),
+            paddingTop: v(10),
+            paddingBottom: v(24),
+          }}
+        >
+          <View
+            className="self-center"
+            style={{
+              width: v(140),
+              height: v(26),
+              borderRadius: v(13),
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              marginTop: v(4),
+              marginBottom: v(42),
+            }}
+          />
+
+          <View className="flex-row items-center justify-between">
+            <View style={{ width: v(32) }} />
+            <Text style={{ ...fonts.bold, fontSize: v(30), color: OB.ink }}>
+              Relock
+            </Text>
+            <IconSvg name={IconName.SETTINGS} size={v(32)} color={OB.ink} />
+          </View>
+
+          <View
+            className="flex-row items-center"
+            style={{ gap: v(18), marginTop: v(46) }}
+          >
+            <View
+              className="items-center justify-center"
+              style={{
+                width: v(64),
+                height: v(64),
+                borderRadius: v(32),
+                backgroundColor: 'rgba(164,154,254,0.24)',
+              }}
+            >
+              <IconSvg name={IconName.LOCK} size={v(30)} color={OB.accent} />
+            </View>
+            <Text
+              style={{
+                ...fonts.bold,
+                fontSize: v(54),
+                color: OB.ink,
+                letterSpacing: -1,
+              }}
+            >
+              Apps bloquées
+            </Text>
+          </View>
+          <Text
+            style={{
+              ...fonts.regular,
+              fontSize: v(21),
+              color: OB.ink55,
+              marginTop: v(18),
+            }}
+          >
+            Reste concentré sur l'essentiel.
           </Text>
-        </Reveal>
-      </View>
-      <Reveal index={3} style={styles.bottom}>
+
+          <View
+            style={{
+              marginTop: v(40),
+              borderRadius: v(28),
+              backgroundColor: WELCOME_SURFACE,
+              paddingHorizontal: v(20),
+              paddingVertical: v(6),
+            }}
+          >
+            {BLOCKED_APPS.map((app, i) => (
+              <React.Fragment key={app.id}>
+                <AppRow
+                  name={app.name}
+                  Badge={app.Badge}
+                  iconSize={v(58)}
+                  nameFs={v(24)}
+                  subFs={v(19)}
+                  noEntrySize={v(28)}
+                />
+                {i < BLOCKED_APPS.length - 1 ? (
+                  <View
+                    style={{
+                      height: StyleSheet.hairlineWidth,
+                      backgroundColor: OB.hairline,
+                    }}
+                  />
+                ) : null}
+              </React.Fragment>
+            ))}
+          </View>
+
+          <View
+            style={{
+              marginTop: v(36),
+              borderRadius: v(28),
+              backgroundColor: WELCOME_SURFACE,
+              paddingHorizontal: v(28),
+              paddingVertical: v(28),
+            }}
+          >
+            <View className="flex-row items-center" style={{ gap: v(24) }}>
+              <ProgressRing size={v(148)} strokeWidth={v(18)} />
+              <View style={{ gap: v(4) }}>
+                <Text
+                  style={{ ...fonts.regular, fontSize: v(25), color: OB.ink55 }}
+                >
+                  Temps récupéré
+                </Text>
+                <GradientLine text="2h 47" size={v(52)} align="left" />
+                <Text
+                  style={{ ...fonts.regular, fontSize: v(25), color: OB.ink55 }}
+                >
+                  Aujourd'hui
+                </Text>
+              </View>
+            </View>
+            <View
+              style={{
+                height: StyleSheet.hairlineWidth,
+                backgroundColor: OB.hairline,
+                marginVertical: v(24),
+              }}
+            />
+            <View className="flex-row items-center" style={{ gap: v(8) }}>
+              <SparkleIcon size={v(20)} color={OB.accent} />
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+                style={{
+                  ...fonts.medium,
+                  fontSize: v(24),
+                  color: OB.accent,
+                  flexShrink: 1,
+                }}
+              >
+                Bravo, tu reprends le contrôle.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Reveal>
+
+      <Reveal index={1} className="items-center" style={{ marginTop: v(66) }}>
+        <Text
+          style={{
+            ...fonts.bold,
+            fontSize: v(70),
+            lineHeight: v(70) * 1.06,
+            letterSpacing: -1.2,
+            color: OB.ink,
+            textAlign: 'center',
+          }}
+        >
+          Bloque les apps
+        </Text>
+        <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
+      </Reveal>
+
+      <Reveal index={2} style={{ marginTop: v(42) }}>
+        <Text
+          style={{
+            ...fonts.regular,
+            fontSize: v(27),
+            lineHeight: v(36),
+            color: OB.ink55,
+            textAlign: 'center',
+          }}
+        >
+          Relock bloque les distractions,{'\n'}et t'aide à récupérer ce qui
+          compte vraiment.
+        </Text>
+      </Reveal>
+
+      <View className="flex-1" />
+
+      <Reveal index={3} className="gap-2 pb-2.5">
         <Pill label="Commencer" onPress={onNext} />
       </Reveal>
     </View>
@@ -207,8 +675,8 @@ function PhoneDemo() {
 
   return (
     <Animated.View style={[styles.phone, frameStyle]}>
-      <View style={styles.phoneScreen}>
-        <View style={styles.phoneStatus}>
+      <View className="flex-1 overflow-hidden">
+        <View className="z-[2] flex-row items-center justify-between px-4 pt-3 pb-2">
           <Text style={styles.phoneClock}>23:47</Text>
           <View style={styles.phonePill}>
             <Text style={styles.phonePillText}>Pour toi</Text>
@@ -218,7 +686,8 @@ function PhoneDemo() {
           {FEED_BLOCKS.concat(FEED_BLOCKS).map((b, i) => (
             <View
               key={`${b.c}-${i}`}
-              style={[styles.feedBlock, { height: b.h, backgroundColor: b.c }]}
+              className="mx-3 mb-2.5 rounded-[14px]"
+              style={{ height: b.h, backgroundColor: b.c }}
             />
           ))}
         </Animated.View>
@@ -237,8 +706,8 @@ function PhoneDemo() {
 
 export function SceneDemo({ onNext }: { onNext: () => void }) {
   return (
-    <View style={styles.scene}>
-      <View style={styles.demoCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center">
         <Reveal index={0}>
           <Text style={styles.h1}>Voilà ce qui se passe</Text>
           <GradientLine text="à 23 h 47." size={32} />
@@ -252,7 +721,7 @@ export function SceneDemo({ onNext }: { onNext: () => void }) {
           </Text>
         </Reveal>
       </View>
-      <Reveal index={3} style={styles.bottom}>
+      <Reveal index={3} className="gap-2 pb-2.5">
         <Pill label="Je veux ça" onPress={onNext} />
       </Reveal>
     </View>
@@ -271,8 +740,8 @@ export function SceneName({
   onNext: () => void
 }) {
   return (
-    <View style={styles.scene}>
-      <View style={styles.questionTop}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 pt-3">
         <Reveal index={0}>
           <Text style={styles.h1}>Comment tu t'appelles ?</Text>
         </Reveal>
@@ -292,7 +761,7 @@ export function SceneName({
           />
         </Reveal>
       </View>
-      <Reveal index={3} style={styles.bottom}>
+      <Reveal index={3} className="gap-2 pb-2.5">
         <Pill label="Continuer" onPress={onNext} disabled={false} />
         <GhostLink label="Passer" onPress={onNext} dim />
       </Reveal>
@@ -369,22 +838,22 @@ export function SceneHours({
   const fillStyle = useAnimatedStyle(() => ({ width: pos.value + 14 }))
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.questionTop}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 pt-3">
         <Reveal index={0}>
           <Text style={styles.h1}>Combien d'heures par jour, à ton avis ?</Text>
         </Reveal>
         <Reveal index={1}>
           <Text style={styles.subLeft}>Une estimation honnête suffit.</Text>
         </Reveal>
-        <Reveal index={2} style={styles.hoursHero}>
+        <Reveal index={2} className="items-center mt-10">
           <GradientLine
             text={`${hours}${hours >= MAX_H ? '+' : ''}`}
             size={104}
           />
           <Text style={styles.hoursUnit}>heures par jour</Text>
         </Reveal>
-        <Reveal index={3} style={styles.sliderRow}>
+        <Reveal index={3} className="flex-row items-center gap-3 mt-[34px]">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Moins"
@@ -394,7 +863,10 @@ export function SceneHours({
             <Text style={styles.stepText}>−</Text>
           </Pressable>
           <GestureDetector gesture={pan}>
-            <View style={[styles.track, { width: trackW + 28 }]}>
+            <View
+              className="justify-center h-[30px]"
+              style={{ width: trackW + 28 }}
+            >
               <Animated.View style={[styles.trackFill, fillStyle]} />
               <Animated.View style={[styles.thumb, thumbStyle]} />
             </View>
@@ -409,7 +881,7 @@ export function SceneHours({
           </Pressable>
         </Reveal>
       </View>
-      <Reveal index={4} style={styles.bottom}>
+      <Reveal index={4} className="gap-2 pb-2.5">
         <Pill label="Continuer" onPress={onNext} />
         <GhostLink
           label="Je ne sais pas"
@@ -448,8 +920,8 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
   }, [])
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.demoCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center">
         <Reveal index={0}>
           <Text style={styles.h1}>Deux semaines.</Text>
           <Text style={styles.h1Dim}>
@@ -488,16 +960,20 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
               <Circle cx={296} cy={152} r={7} fill={OB.accent} />
             ) : null}
           </Svg>
-          <View style={styles.chartLegend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: OB.ink28 }]} />
+          <View className="flex-row justify-center gap-[18px] mt-1">
+            <View className="flex-row items-center gap-[7px]">
+              <View
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: OB.ink28 }}
+              />
               <Text style={styles.legendText}>
                 Ton temps d'écran, sans rien
               </Text>
             </View>
-            <View style={styles.legendItem}>
+            <View className="flex-row items-center gap-[7px]">
               <View
-                style={[styles.legendDot, { backgroundColor: OB.accent }]}
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: OB.accent }}
               />
               <Text style={styles.legendText}>Avec Relock</Text>
             </View>
@@ -507,7 +983,7 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
           <StudyLine text="En moyenne, on consulte son téléphone plus de 140 fois par jour." />
         </Reveal>
       </View>
-      <Reveal index={3} style={styles.bottom}>
+      <Reveal index={3} className="gap-2 pb-2.5">
         <Pill label="Continuer" onPress={onNext} />
         <Footnote text="Projection basée sur tes blocages planifiés. Pas une promesse magique." />
       </Reveal>
@@ -524,8 +1000,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#000000',
   },
-  scene: { flex: 1, paddingHorizontal: 20 },
-  bottom: { gap: 8, paddingBottom: 10 },
 
   h1: {
     ...fonts.bold,
@@ -557,17 +1031,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  welcomeTopRow: { alignItems: 'flex-end', paddingTop: 4 },
-  welcomeCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  welcomeTitleBlock: { alignItems: 'center', alignSelf: 'stretch', gap: 2 },
-
-  demoCenter: { flex: 1, justifyContent: 'center' },
-
   phone: {
     alignSelf: 'center',
     width: 218,
@@ -578,16 +1041,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0B10',
     overflow: 'hidden',
   },
-  phoneScreen: { flex: 1, overflow: 'hidden' },
-  phoneStatus: {
-    zIndex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
   phoneClock: { ...fonts.semiBold, fontSize: 13, color: OB.ink70 },
   phonePill: {
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -596,7 +1049,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   phonePillText: { ...fonts.medium, fontSize: 11, color: OB.ink55 },
-  feedBlock: { marginHorizontal: 12, marginBottom: 10, borderRadius: 14 },
   shield: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(5,5,7,0.97)',
@@ -615,7 +1067,6 @@ const styles = StyleSheet.create({
   },
   shieldBtnText: { ...fonts.semiBold, fontSize: 13, color: OB.onAccent },
 
-  questionTop: { flex: 1, paddingTop: 12 },
   nameInput: {
     ...fonts.semiBold,
     fontSize: 26,
@@ -625,14 +1076,7 @@ const styles = StyleSheet.create({
     borderBottomColor: OB.accentDim,
   },
 
-  hoursHero: { alignItems: 'center', marginTop: 40 },
   hoursUnit: { ...fonts.medium, fontSize: 15, color: OB.ink40, marginTop: 2 },
-  sliderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 34,
-  },
   stepBtn: {
     width: 44,
     height: 44,
@@ -642,10 +1086,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepText: { ...fonts.semiBold, fontSize: 22, color: OB.ink70, marginTop: -2 },
-  track: {
-    height: 30,
-    justifyContent: 'center',
-  },
   trackFill: {
     position: 'absolute',
     left: 0,
@@ -669,13 +1109,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 6,
   },
-  chartLegend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 18,
-    marginTop: 4,
-  },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { ...fonts.medium, fontSize: 12.5, color: OB.ink55 },
 })

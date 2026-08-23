@@ -25,15 +25,17 @@ type RevealProps = {
   /** Rang dans la cascade : chaque cran ajoute ~60 ms de retard. */
   index?: number
   style?: StyleProp<ViewStyle>
+  className?: string
   children: React.ReactNode
 }
 
 /** Entrée en cascade : fondu + légère montée, décalés par rang. */
-export function Reveal({ index = 0, style, children }: RevealProps) {
+export function Reveal({ index = 0, style, className, children }: RevealProps) {
   return (
     <Animated.View
       entering={FadeInDown.duration(420).delay(80 + index * 60)}
       style={style}
+      className={className}
     >
       {children}
     </Animated.View>
