@@ -6,13 +6,16 @@ import { NotificationService } from '@/features/notifications/notification.servi
 import { ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import {
+  AppleMark,
   Footnote,
   GhostLink,
+  GoogleMark,
   GradientLine,
   MockDialog,
   Moon,
   Pill,
   RedAlert,
+  Starfield,
 } from './bits'
 import { Reveal } from './motion'
 import { haptic, OB } from './tokens'
@@ -177,29 +180,39 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
 export function SceneSignin({ onNext }: { onNext: () => void }) {
   return (
     <View style={styles.scene}>
-      <View style={styles.permTop}>
-        <Reveal index={0} style={{ alignItems: 'center', marginTop: 10 }}>
-          <Moon size={76} glow />
+      <Starfield count={40} />
+      <View style={[styles.permTop, styles.signinCenter]}>
+        <Reveal index={0} style={styles.signinMoon}>
+          <Moon size={210} glow />
         </Reveal>
         <Reveal index={1}>
-          <Text style={[styles.h1, styles.center]}>
-            Sauvegarde ta progression.
-          </Text>
+          <GradientLine text="Sauvegarde ta" size={32} weight="800" />
+          <GradientLine text="progression." size={32} weight="800" />
         </Reveal>
         <Reveal index={2}>
-          <Text style={[styles.subLeft, styles.center]}>
-            Ta série et tes statistiques te suivront, même si tu changes
-            d'iPhone.
+          <Text style={[styles.subLeft, styles.center, styles.signinSub]}>
+            Retrouve tes habitudes, tes blocages et tes statistiques,
+            synchronisés en toute sécurité sur tous tes appareils.
           </Text>
         </Reveal>
         <Reveal index={3} style={styles.signinBtns}>
-          <Pill label=" Continuer avec Apple" onPress={onNext} />
-          <Pill label="Continuer avec Google" onPress={onNext} kind="ghost" />
+          <Pill
+            label="Continuer avec Apple"
+            onPress={onNext}
+            icon={<AppleMark />}
+            glow
+          />
+          <Pill
+            label="Continuer avec Google"
+            onPress={onNext}
+            kind="ghost"
+            icon={<GoogleMark />}
+          />
+        </Reveal>
+        <Reveal index={4} style={styles.signinLater}>
+          <GhostLink label="Plus tard" onPress={onNext} dim underline />
         </Reveal>
       </View>
-      <Reveal index={4} style={styles.bottom}>
-        <GhostLink label="Plus tard" onPress={onNext} dim />
-      </Reveal>
     </View>
   )
 }
@@ -420,7 +433,11 @@ const styles = StyleSheet.create({
 
   permTop: { flex: 1, paddingTop: 12 },
 
-  signinBtns: { gap: 10, marginTop: 30 },
+  signinCenter: { justifyContent: 'center' },
+  signinSub: { paddingHorizontal: 30 },
+  signinMoon: { alignItems: 'center', marginBottom: 28 },
+  signinBtns: { gap: 12, marginTop: 40 },
+  signinLater: { marginTop: 22 },
 
   paywallTopRow: { alignItems: 'flex-end', paddingTop: 2 },
   paywallBody: { flex: 1 },

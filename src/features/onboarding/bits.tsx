@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import {
   Image,
   Pressable,
@@ -71,6 +71,40 @@ export function HaloBackdrop({ intensity = 1 }: { intensity?: number }) {
   )
 }
 
+/** Semis d'étoiles fixe, discret — fond des écrans « élevés » (artefact, connexion). */
+export function Starfield({ count = 34 }: { count?: number }) {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        key: `s${i}`,
+        x: (i * 137.5) % 100,
+        y: ((i * 61.8) % 88) + 4,
+        r: 0.6 + ((i * 7) % 10) / 9,
+        o: 0.25 + ((i * 13) % 10) / 22,
+      })),
+    [count],
+  )
+  return (
+    <Svg
+      pointerEvents="none"
+      style={StyleSheet.absoluteFill}
+      width="100%"
+      height="100%"
+    >
+      {stars.map(s => (
+        <Circle
+          key={s.key}
+          cx={`${s.x}%`}
+          cy={`${s.y}%`}
+          r={s.r}
+          fill="#FFFFFF"
+          opacity={s.o}
+        />
+      ))}
+    </Svg>
+  )
+}
+
 // ─── Lune ────────────────────────────────────────────────────────────────
 
 const MOON = require('../../../assets/moon.png')
@@ -85,7 +119,9 @@ export function Moon({
   glow?: boolean
   style?: StyleProp<ViewStyle>
 }) {
-  const g = size * 2.1
+  const g = size * 1.6
+  const blobR = size * 0.56
+  const offset = size * 0.22
   return (
     <View
       style={[{ width: size, height: size }, styles.moonWrap, style]}
@@ -102,13 +138,29 @@ export function Moon({
           }}
         >
           <Defs>
-            <RadialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor={OB.accent} stopOpacity={0.34} />
-              <Stop offset="60%" stopColor={OB.accent} stopOpacity={0.1} />
-              <Stop offset="100%" stopColor={OB.accent} stopOpacity={0} />
+            <RadialGradient id="moonGlowL" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={OB.grad[1]} stopOpacity={0.75} />
+              <Stop offset="50%" stopColor={OB.grad[0]} stopOpacity={0.36} />
+              <Stop offset="100%" stopColor={OB.grad[0]} stopOpacity={0} />
+            </RadialGradient>
+            <RadialGradient id="moonGlowR" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={OB.grad[2]} stopOpacity={0.72} />
+              <Stop offset="50%" stopColor={OB.grad[2]} stopOpacity={0.34} />
+              <Stop offset="100%" stopColor={OB.grad[2]} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Circle cx={g / 2} cy={g / 2} r={g / 2} fill="url(#moonGlow)" />
+          <Circle
+            cx={g / 2 - offset}
+            cy={g / 2}
+            r={blobR}
+            fill="url(#moonGlowL)"
+          />
+          <Circle
+            cx={g / 2 + offset}
+            cy={g / 2}
+            r={blobR}
+            fill="url(#moonGlowR)"
+          />
         </Svg>
       ) : null}
       <Image
@@ -176,12 +228,16 @@ export function Pill({
   onPress,
   kind = 'primary',
   disabled = false,
+  icon,
+  glow = false,
 }: {
   label: string
   sub?: string
   onPress: () => void
   kind?: PillKind
   disabled?: boolean
+  icon?: React.ReactNode
+  glow?: boolean
 }) {
   const scale = useSharedValue(1)
   const aStyle = useAnimatedStyle(() => ({
@@ -210,21 +266,25 @@ export function Pill({
           kind === 'ghost' && styles.pillGhost,
           kind === 'danger' && styles.pillDanger,
           disabled && styles.pillDisabled,
+          glow && styles.pillGlow,
           aStyle,
         ]}
       >
-        <Text
-          style={[
-            styles.pillLabel,
-            kind === 'primary'
-              ? styles.pillLabelPrimary
-              : styles.pillLabelGhost,
-            kind === 'danger' && styles.pillLabelDanger,
-            disabled && styles.pillLabelDisabled,
-          ]}
-        >
-          {label}
-        </Text>
+        <View style={styles.pillRow}>
+          {icon}
+          <Text
+            style={[
+              styles.pillLabel,
+              kind === 'primary'
+                ? styles.pillLabelPrimary
+                : styles.pillLabelGhost,
+              kind === 'danger' && styles.pillLabelDanger,
+              disabled && styles.pillLabelDisabled,
+            ]}
+          >
+            {label}
+          </Text>
+        </View>
         {sub ? <Text style={styles.pillSub}>{sub}</Text> : null}
       </Animated.View>
     </Pressable>
@@ -236,10 +296,12 @@ export function GhostLink({
   label,
   onPress,
   dim = false,
+  underline = false,
 }: {
   label: string
   onPress: () => void
   dim?: boolean
+  underline?: boolean
 }) {
   return (
     <Pressable
@@ -251,10 +313,60 @@ export function GhostLink({
       }}
       hitSlop={10}
     >
-      <Text style={[styles.ghostLink, dim && { color: OB.ink40 }]}>
+      <Text
+        style={[
+          styles.ghostLink,
+          dim && { color: OB.ink40 },
+          underline && styles.ghostLinkUnderline,
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
+  )
+}
+
+// ─── Marques tierces (Apple / Google) ───────────────────────────────────
+
+/** Glyphe Apple — mono, hérite de la couleur du texte du bouton. */
+export function AppleMark({
+  size = 20,
+  color = '#0B0B10',
+}: {
+  size?: number
+  color?: string
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 384 512">
+      <Path
+        fill={color}
+        d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
+      />
+    </Svg>
+  )
+}
+
+/** Glyphe Google « G » — couleurs de marque officielles, non teintable. */
+export function GoogleMark({ size = 20 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path
+        fill="#FFC107"
+        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20c11.045 0 20-8.955 20-20 0-1.341-.138-2.65-.389-3.917z"
+      />
+      <Path
+        fill="#FF3D00"
+        d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+      />
+      <Path
+        fill="#4CAF50"
+        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+      />
+      <Path
+        fill="#1976D2"
+        d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+      />
+    </Svg>
   )
 }
 
@@ -490,12 +602,20 @@ const styles = StyleSheet.create({
   },
   pillPrimary: { backgroundColor: OB.ink },
   pillGhost: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(20,18,32,0.4)',
     borderWidth: 1,
-    borderColor: OB.hairline,
+    borderColor: 'rgba(164,154,254,0.28)',
   },
   pillDanger: { backgroundColor: OB.accent },
   pillDisabled: { backgroundColor: 'rgba(255,255,255,0.09)' },
+  pillGlow: {
+    shadowColor: OB.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  pillRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pillLabel: { ...fonts.semiBold, fontSize: 17, letterSpacing: -0.2 },
   pillLabelPrimary: { color: '#0B0B10' },
   pillLabelGhost: { color: OB.ink },
@@ -514,6 +634,9 @@ const styles = StyleSheet.create({
     color: OB.ink55,
     textAlign: 'center',
     paddingVertical: 10,
+  },
+  ghostLinkUnderline: {
+    textDecorationLine: 'underline',
   },
 
   choice: {
