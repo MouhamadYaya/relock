@@ -28,6 +28,7 @@ import Svg, {
   Defs,
   LinearGradient,
   Path,
+  RadialGradient,
   Rect,
   Stop,
 } from 'react-native-svg'
@@ -380,6 +381,46 @@ function HeroLine2({
   )
 }
 
+/**
+ * Halo « projecteur » derrière le mockup, plus large et plus vif que
+ * `HaloBackdrop` (fond commun de l'onboarding) : la maquette de cet écran
+ * en fait un élément central, pas une simple nappe de fond en haut d'écran.
+ */
+function WelcomeGlow({
+  top,
+  width,
+  height,
+}: {
+  top: number
+  width: number
+  height: number
+}) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top,
+        left: (width - width * 2.1) / 2,
+        width: width * 2.1,
+        height,
+      }}
+    >
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id="welcomeGlow" cx="50%" cy="38%" r="55%">
+            <Stop offset="0%" stopColor={OB.accent} stopOpacity={0.55} />
+            <Stop offset="40%" stopColor={OB.accent} stopOpacity={0.28} />
+            <Stop offset="70%" stopColor="#5B7FE0" stopOpacity={0.14} />
+            <Stop offset="100%" stopColor={OB.bg} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#welcomeGlow)" />
+      </Svg>
+    </View>
+  )
+}
+
 export function SceneWelcome({
   onNext,
   onHaveAccount,
@@ -402,6 +443,8 @@ export function SceneWelcome({
 
   return (
     <View className="flex-1 px-5">
+      <WelcomeGlow top={v(40) - v(80)} width={windowW} height={v(1050)} />
+
       {/* Zone tactile invisible, dans la marge vide au-dessus du mockup :
           reprend l'accès « J'ai déjà un compte » sans rien ajouter au
           rendu visuel (absent de la maquette à reproduire à l'identique). */}
