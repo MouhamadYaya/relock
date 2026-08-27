@@ -415,14 +415,26 @@ function WelcomeGlow({
     >
       <Svg width={width} height={height}>
         <Defs>
-          <RadialGradient id="welcomeGlow" cx="50%" cy="38%" r="55%">
-            <Stop offset="0%" stopColor={OB.accent} stopOpacity={0.55} />
-            <Stop offset="40%" stopColor={OB.accent} stopOpacity={0.28} />
-            <Stop offset="70%" stopColor="#5B7FE0" stopOpacity={0.14} />
-            <Stop offset="100%" stopColor={OB.bg} stopOpacity={0} />
+          {/* Deux halos superposés plutôt qu'un radial uni : la maquette
+              passe du violet (gauche) au bleu (droite) derrière le mockup —
+              un seul dégradé radial ne peut pas porter cette teinte qui
+              varie selon l'angle, deux taches de couleur qui se chevauchent
+              recréent le même effet. */}
+          <RadialGradient id="welcomeGlowLeft" cx="38%" cy="42%" r="52%">
+            <Stop offset="0%" stopColor={OB.grad[0]} stopOpacity={0.62} />
+            <Stop offset="45%" stopColor={OB.grad[0]} stopOpacity={0.32} />
+            <Stop offset="75%" stopColor={OB.grad[0]} stopOpacity={0.12} />
+            <Stop offset="100%" stopColor={OB.grad[0]} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="welcomeGlowRight" cx="64%" cy="46%" r="50%">
+            <Stop offset="0%" stopColor={OB.grad[2]} stopOpacity={0.58} />
+            <Stop offset="45%" stopColor={OB.grad[2]} stopOpacity={0.3} />
+            <Stop offset="75%" stopColor={OB.grad[2]} stopOpacity={0.12} />
+            <Stop offset="100%" stopColor={OB.grad[2]} stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Rect width={width} height={height} fill="url(#welcomeGlow)" />
+        <Rect width={width} height={height} fill="url(#welcomeGlowLeft)" />
+        <Rect width={width} height={height} fill="url(#welcomeGlowRight)" />
       </Svg>
     </View>
   )
