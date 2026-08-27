@@ -424,235 +424,232 @@ function WelcomeGlow({
   )
 }
 
-export function SceneWelcome({
-  onNext,
-  onHaveAccount,
-}: {
-  onNext: () => void
-  onHaveAccount: () => void
-}) {
+export function SceneWelcome({ onNext }: { onNext: () => void }) {
   const { width: windowW, height: windowH } = useWindowDimensions()
   const insets = useSafeAreaInsets()
-  // Échelle dérivée de la maquette (863×2400, hors barre de statut) : chaque
-  // cote ci-dessous reprend directement une mesure faite sur l'image. On
-  // plafonne aussi par la hauteur dispo pour ne jamais déborder sous la
-  // poignée d'accueil sur les écrans plus compacts (hauteur de canevas
-  // mesurée à l'écran, pas la hauteur brute de la maquette : le rendu
-  // natif prend plus de place que l'image source une fois les paddings
-  // et le CTA — à taille fixe, non mise à l'échelle — additionnés).
   const availableH = windowH - insets.top - insets.bottom - 12
-  const scale = Math.min(windowW / 863, availableH / 2400)
+  const widthScale = windowW / 863
+
+  // Un canevas-hauteur codé en dur (« la maquette mesure 2400 ») s'est avéré
+  // peu fiable d'un appareil à l'autre (polices système, densité, marges de
+  // sécurité…) : au lieu de deviner, on mesure la hauteur RÉELLEMENT rendue
+  // à l'échelle "pleine largeur", puis on corrige l'échelle une fois si ça
+  // dépasse l'espace disponible. Convergent en un aller-retour (la 2de
+  // mesure ne fait que confirmer, `measuredH` n'est donc capturé qu'une
+  // fois — cf. la garde dans l'onLayout).
+  const [measuredH, setMeasuredH] = useState<number | null>(null)
+  const scale =
+    measuredH && measuredH > availableH
+      ? widthScale * (availableH / measuredH)
+      : widthScale
   const v = (n: number) => n * scale
 
   return (
     <View style={{ flex: 1, paddingHorizontal: 20 }}>
-      {/* Zone tactile invisible, dans la marge vide au-dessus du mockup :
-          reprend l'accès « J'ai déjà un compte » sans rien ajouter au
-          rendu visuel (absent de la maquette à reproduire à l'identique). */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="J'ai déjà un compte"
-        onPress={onHaveAccount}
-        hitSlop={8}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: Math.max(44, v(40)),
+      <View
+        onLayout={e => {
+          if (measuredH === null) setMeasuredH(e.nativeEvent.layout.height)
         }}
-      />
-
-      <Reveal index={0} style={{ alignItems: 'center', marginTop: v(40) }}>
-        <WelcomeGlow top={-v(80)} width={v(480) * 2.3} height={v(1050)} />
-        <View
-          style={{
-            width: v(480),
-            borderRadius: v(60),
-            borderWidth: v(9),
-            borderColor: WELCOME_FRAME_BORDER,
-            backgroundColor: '#0A0A10',
-            paddingHorizontal: v(28),
-            paddingTop: v(10),
-            paddingBottom: v(24),
-          }}
-        >
+      >
+        <Reveal index={0} style={{ alignItems: 'center', marginTop: v(40) }}>
+          <WelcomeGlow top={-v(80)} width={v(480) * 2.3} height={v(1050)} />
           <View
-            className="self-center"
             style={{
-              width: v(140),
-              height: v(26),
-              borderRadius: v(13),
-              backgroundColor: 'rgba(0,0,0,0.85)',
-              marginTop: v(4),
-              marginBottom: v(42),
+              width: v(480),
+              borderRadius: v(60),
+              borderWidth: v(9),
+              borderColor: WELCOME_FRAME_BORDER,
+              backgroundColor: '#0A0A10',
+              paddingHorizontal: v(28),
+              paddingTop: v(10),
+              paddingBottom: v(24),
             }}
-          />
-
-          <View className="flex-row items-center justify-between">
-            <View style={{ width: v(32) }} />
-            <Text style={{ ...fonts.bold, fontSize: v(30), color: OB.ink }}>
-              Relock
-            </Text>
-            <IconSvg name={IconName.SETTINGS} size={v(32)} color={OB.ink} />
-          </View>
-
-          <View
-            className="flex-row items-center"
-            style={{ gap: v(18), marginTop: v(46) }}
           >
             <View
-              className="items-center justify-center"
+              className="self-center"
               style={{
-                width: v(64),
-                height: v(64),
-                borderRadius: v(32),
-                backgroundColor: 'rgba(164,154,254,0.24)',
+                width: v(140),
+                height: v(26),
+                borderRadius: v(13),
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                marginTop: v(4),
+                marginBottom: v(42),
               }}
+            />
+
+            <View className="flex-row items-center justify-between">
+              <View style={{ width: v(32) }} />
+              <Text style={{ ...fonts.bold, fontSize: v(30), color: OB.ink }}>
+                Relock
+              </Text>
+              <IconSvg name={IconName.SETTINGS} size={v(32)} color={OB.ink} />
+            </View>
+
+            <View
+              className="flex-row items-center"
+              style={{ gap: v(18), marginTop: v(46) }}
             >
-              <IconSvg name={IconName.LOCK} size={v(30)} color={OB.accent} />
+              <View
+                className="items-center justify-center"
+                style={{
+                  width: v(64),
+                  height: v(64),
+                  borderRadius: v(32),
+                  backgroundColor: 'rgba(164,154,254,0.24)',
+                }}
+              >
+                <IconSvg name={IconName.LOCK} size={v(30)} color={OB.accent} />
+              </View>
+              <Text
+                style={{
+                  ...fonts.bold,
+                  fontSize: v(54),
+                  color: OB.ink,
+                  letterSpacing: -1,
+                }}
+              >
+                Apps bloquées
+              </Text>
             </View>
             <Text
               style={{
-                ...fonts.bold,
-                fontSize: v(54),
-                color: OB.ink,
-                letterSpacing: -1,
+                ...fonts.regular,
+                fontSize: v(21),
+                color: OB.ink55,
+                marginTop: v(18),
               }}
             >
-              Apps bloquées
+              Reste concentré sur l'essentiel.
             </Text>
-          </View>
-          <Text
-            style={{
-              ...fonts.regular,
-              fontSize: v(21),
-              color: OB.ink55,
-              marginTop: v(18),
-            }}
-          >
-            Reste concentré sur l'essentiel.
-          </Text>
 
-          <View
-            style={{
-              marginTop: v(40),
-              borderRadius: v(28),
-              backgroundColor: WELCOME_SURFACE,
-              paddingHorizontal: v(20),
-              paddingVertical: v(6),
-            }}
-          >
-            {BLOCKED_APPS.map((app, i) => (
-              <React.Fragment key={app.id}>
-                <AppRow
-                  name={app.name}
-                  Badge={app.Badge}
-                  iconSize={v(58)}
-                  nameFs={v(24)}
-                  subFs={v(19)}
-                  noEntrySize={v(28)}
-                />
-                {i < BLOCKED_APPS.length - 1 ? (
-                  <View
-                    style={{
-                      height: StyleSheet.hairlineWidth,
-                      backgroundColor: OB.hairline,
-                    }}
+            <View
+              style={{
+                marginTop: v(40),
+                borderRadius: v(28),
+                backgroundColor: WELCOME_SURFACE,
+                paddingHorizontal: v(20),
+                paddingVertical: v(6),
+              }}
+            >
+              {BLOCKED_APPS.map((app, i) => (
+                <React.Fragment key={app.id}>
+                  <AppRow
+                    name={app.name}
+                    Badge={app.Badge}
+                    iconSize={v(58)}
+                    nameFs={v(24)}
+                    subFs={v(19)}
+                    noEntrySize={v(28)}
                   />
-                ) : null}
-              </React.Fragment>
-            ))}
-          </View>
+                  {i < BLOCKED_APPS.length - 1 ? (
+                    <View
+                      style={{
+                        height: StyleSheet.hairlineWidth,
+                        backgroundColor: OB.hairline,
+                      }}
+                    />
+                  ) : null}
+                </React.Fragment>
+              ))}
+            </View>
 
-          <View
-            style={{
-              marginTop: v(36),
-              borderRadius: v(28),
-              backgroundColor: WELCOME_SURFACE,
-              paddingHorizontal: v(28),
-              paddingVertical: v(28),
-            }}
-          >
-            <View className="flex-row items-center" style={{ gap: v(24) }}>
-              <ProgressRing size={v(148)} strokeWidth={v(18)} />
-              <View style={{ gap: v(4) }}>
+            <View
+              style={{
+                marginTop: v(36),
+                borderRadius: v(28),
+                backgroundColor: WELCOME_SURFACE,
+                paddingHorizontal: v(28),
+                paddingVertical: v(28),
+              }}
+            >
+              <View className="flex-row items-center" style={{ gap: v(24) }}>
+                <ProgressRing size={v(148)} strokeWidth={v(18)} />
+                <View style={{ gap: v(4) }}>
+                  <Text
+                    style={{
+                      ...fonts.regular,
+                      fontSize: v(25),
+                      color: OB.ink55,
+                    }}
+                  >
+                    Temps récupéré
+                  </Text>
+                  <GradientLine text="2h 47" size={v(52)} align="left" />
+                  <Text
+                    style={{
+                      ...fonts.regular,
+                      fontSize: v(25),
+                      color: OB.ink55,
+                    }}
+                  >
+                    Aujourd'hui
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  height: StyleSheet.hairlineWidth,
+                  backgroundColor: OB.hairline,
+                  marginVertical: v(24),
+                }}
+              />
+              <View className="flex-row items-center" style={{ gap: v(8) }}>
+                <SparkleIcon size={v(20)} color={OB.accent} />
                 <Text
-                  style={{ ...fonts.regular, fontSize: v(25), color: OB.ink55 }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                  style={{
+                    ...fonts.medium,
+                    fontSize: v(24),
+                    color: OB.accent,
+                    flexShrink: 1,
+                  }}
                 >
-                  Temps récupéré
-                </Text>
-                <GradientLine text="2h 47" size={v(52)} align="left" />
-                <Text
-                  style={{ ...fonts.regular, fontSize: v(25), color: OB.ink55 }}
-                >
-                  Aujourd'hui
+                  Bravo, tu reprends le contrôle.
                 </Text>
               </View>
             </View>
-            <View
-              style={{
-                height: StyleSheet.hairlineWidth,
-                backgroundColor: OB.hairline,
-                marginVertical: v(24),
-              }}
-            />
-            <View className="flex-row items-center" style={{ gap: v(8) }}>
-              <SparkleIcon size={v(20)} color={OB.accent} />
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-                style={{
-                  ...fonts.medium,
-                  fontSize: v(24),
-                  color: OB.accent,
-                  flexShrink: 1,
-                }}
-              >
-                Bravo, tu reprends le contrôle.
-              </Text>
-            </View>
           </View>
-        </View>
-      </Reveal>
+        </Reveal>
 
-      <Reveal index={1} style={{ alignItems: 'center', marginTop: v(66) }}>
-        <Text
-          style={{
-            ...fonts.bold,
-            fontSize: v(70),
-            lineHeight: v(70) * 1.06,
-            letterSpacing: -1.2,
-            color: OB.ink,
-            textAlign: 'center',
-          }}
-        >
-          Bloque les apps
-        </Text>
-        <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
-      </Reveal>
+        <Reveal index={1} style={{ alignItems: 'center', marginTop: v(66) }}>
+          <Text
+            style={{
+              ...fonts.bold,
+              fontSize: v(70),
+              lineHeight: v(70) * 1.06,
+              letterSpacing: -1.2,
+              color: OB.ink,
+              textAlign: 'center',
+            }}
+          >
+            Bloque les apps
+          </Text>
+          <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
+        </Reveal>
 
-      <Reveal index={2} style={{ marginTop: v(42) }}>
-        <Text
-          style={{
-            ...fonts.regular,
-            fontSize: v(27),
-            lineHeight: v(36),
-            color: OB.ink55,
-            textAlign: 'center',
-          }}
-        >
-          Relock bloque les distractions,{'\n'}et t'aide à récupérer ce qui
-          compte vraiment.
-        </Text>
-      </Reveal>
+        <Reveal index={2} style={{ marginTop: v(42) }}>
+          <Text
+            style={{
+              ...fonts.regular,
+              fontSize: v(27),
+              lineHeight: v(36),
+              color: OB.ink55,
+              textAlign: 'center',
+            }}
+          >
+            Relock bloque les distractions,{'\n'}et t'aide à récupérer ce qui
+            compte vraiment.
+          </Text>
+        </Reveal>
 
-      <View className="flex-1" />
+        <View style={{ height: v(70) }} />
 
-      <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Commencer" onPress={onNext} />
-      </Reveal>
+        <Reveal index={3} style={{ paddingBottom: 10 }}>
+          <Pill label="Commencer" onPress={onNext} />
+        </Reveal>
+      </View>
     </View>
   )
 }
