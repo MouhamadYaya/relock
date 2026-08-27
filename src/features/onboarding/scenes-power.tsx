@@ -209,9 +209,6 @@ export function SceneSignin({ onNext }: { onNext: () => void }) {
             icon={<GoogleMark />}
           />
         </Reveal>
-        <Reveal index={4} style={styles.signinLater}>
-          <GhostLink label="Plus tard" onPress={onNext} dim underline />
-        </Reveal>
       </View>
     </View>
   )
@@ -436,8 +433,7 @@ const styles = StyleSheet.create({
   signinCenter: { justifyContent: 'center' },
   signinSub: { paddingHorizontal: 30 },
   signinMoon: { alignItems: 'center', marginBottom: 28 },
-  signinBtns: { gap: 12, marginTop: 40 },
-  signinLater: { marginTop: 22 },
+  signinBtns: { gap: 12, marginTop: 64 },
 
   paywallTopRow: { alignItems: 'flex-end', paddingTop: 2 },
   paywallBody: { flex: 1 },
