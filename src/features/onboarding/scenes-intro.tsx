@@ -324,7 +324,11 @@ function AppRow({
   return (
     <View
       className="flex-row items-center"
-      style={{ paddingVertical: subFs * 0.6, gap: iconSize * 0.24 }}
+      // paddingVertical dérivé de iconSize (pas subFs) : mesuré sur la
+      // maquette, le pas entre deux lignes fait ~106 unités de canevas pour
+      // une icône de 58 — un padding fondé sur subFs (~0.6× 19) donnait des
+      // lignes 24 % trop compactes.
+      style={{ paddingVertical: iconSize * 0.414, gap: iconSize * 0.24 }}
     >
       <Badge size={iconSize} />
       <View className="flex-1" style={{ gap: nameFs * 0.14 }}>
@@ -579,7 +583,7 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
               }}
             >
               <View className="flex-row items-center" style={{ gap: v(24) }}>
-                <ProgressRing size={v(148)} strokeWidth={v(18)} />
+                <ProgressRing size={v(131)} strokeWidth={v(16)} />
                 <View style={{ gap: v(4) }}>
                   <Text
                     style={{
@@ -590,7 +594,7 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
                   >
                     Temps récupéré
                   </Text>
-                  <GradientLine text="2h 47" size={v(52)} align="left" />
+                  <GradientLine text="2h 47" size={v(58)} align="left" />
                   <Text
                     style={{
                       ...fonts.regular,
