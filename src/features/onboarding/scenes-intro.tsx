@@ -396,15 +396,19 @@ function WelcomeGlow({
   height: number
 }) {
   return (
-    // Pas de `left` calculé à la main : positionné en absolu SANS le fixer
-    // sur l'axe horizontal, il hérite du `alignItems: 'center'` du Reveal
-    // parent — exactement ce qui centre déjà le mockup lui-même, donc les
-    // deux restent alignés quels que soient le padding et l'échelle.
+    // Centrage explicite (left 50% + marge négative de la moitié de la
+    // largeur) plutôt que de compter sur `alignItems` du parent : constaté
+    // à l'écran, Yoga ne centre pas de façon fiable un enfant en position
+    // absolute sur son axe croisé (contrairement à un enfant en flux
+    // normal, comme le mockup lui-même) — le halo se retrouvait collé à
+    // gauche alors que le téléphone était bien centré.
     <View
       pointerEvents="none"
       style={{
         position: 'absolute',
         top,
+        left: '50%',
+        marginLeft: -width / 2,
         width,
         height,
       }}
