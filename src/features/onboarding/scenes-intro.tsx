@@ -396,13 +396,16 @@ function WelcomeGlow({
   height: number
 }) {
   return (
+    // Pas de `left` calculé à la main : positionné en absolu SANS le fixer
+    // sur l'axe horizontal, il hérite du `alignItems: 'center'` du Reveal
+    // parent — exactement ce qui centre déjà le mockup lui-même, donc les
+    // deux restent alignés quels que soient le padding et l'échelle.
     <View
       pointerEvents="none"
       style={{
         position: 'absolute',
         top,
-        left: (width - width * 2.1) / 2,
-        width: width * 2.1,
+        width,
         height,
       }}
     >
@@ -442,9 +445,7 @@ export function SceneWelcome({
   const v = (n: number) => n * scale
 
   return (
-    <View className="flex-1 px-5">
-      <WelcomeGlow top={v(40) - v(80)} width={windowW} height={v(1050)} />
-
+    <View style={{ flex: 1, paddingHorizontal: 20 }}>
       {/* Zone tactile invisible, dans la marge vide au-dessus du mockup :
           reprend l'accès « J'ai déjà un compte » sans rien ajouter au
           rendu visuel (absent de la maquette à reproduire à l'identique). */}
@@ -462,7 +463,8 @@ export function SceneWelcome({
         }}
       />
 
-      <Reveal index={0} className="items-center" style={{ marginTop: v(40) }}>
+      <Reveal index={0} style={{ alignItems: 'center', marginTop: v(40) }}>
+        <WelcomeGlow top={-v(80)} width={v(480) * 2.3} height={v(1050)} />
         <View
           style={{
             width: v(480),
@@ -615,7 +617,7 @@ export function SceneWelcome({
         </View>
       </Reveal>
 
-      <Reveal index={1} className="items-center" style={{ marginTop: v(66) }}>
+      <Reveal index={1} style={{ alignItems: 'center', marginTop: v(66) }}>
         <Text
           style={{
             ...fonts.bold,
