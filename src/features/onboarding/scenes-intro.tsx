@@ -389,12 +389,15 @@ export function SceneWelcome({
 }) {
   const { width: windowW, height: windowH } = useWindowDimensions()
   const insets = useSafeAreaInsets()
-  // Échelle dérivée de la maquette (863×1750, hors barre de statut) : chaque
+  // Échelle dérivée de la maquette (863×2400, hors barre de statut) : chaque
   // cote ci-dessous reprend directement une mesure faite sur l'image. On
   // plafonne aussi par la hauteur dispo pour ne jamais déborder sous la
-  // poignée d'accueil sur les écrans plus compacts.
+  // poignée d'accueil sur les écrans plus compacts (hauteur de canevas
+  // mesurée à l'écran, pas la hauteur brute de la maquette : le rendu
+  // natif prend plus de place que l'image source une fois les paddings
+  // et le CTA — à taille fixe, non mise à l'échelle — additionnés).
   const availableH = windowH - insets.top - insets.bottom - 12
-  const scale = Math.min(windowW / 863, availableH / 1750)
+  const scale = Math.min(windowW / 863, availableH / 2400)
   const v = (n: number) => n * scale
 
   return (
