@@ -413,7 +413,7 @@ function WelcomeGlow({
         height,
       }}
     >
-      <Svg width="100%" height="100%">
+      <Svg width={width} height={height}>
         <Defs>
           <RadialGradient id="welcomeGlow" cx="50%" cy="38%" r="55%">
             <Stop offset="0%" stopColor={OB.accent} stopOpacity={0.55} />
@@ -422,7 +422,7 @@ function WelcomeGlow({
             <Stop offset="100%" stopColor={OB.bg} stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Rect width="100%" height="100%" fill="url(#welcomeGlow)" />
+        <Rect width={width} height={height} fill="url(#welcomeGlow)" />
       </Svg>
     </View>
   )
