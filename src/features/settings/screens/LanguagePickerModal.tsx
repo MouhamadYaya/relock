@@ -1,11 +1,11 @@
 // src/features/settings/screens/LanguagePickerModal.tsx
 
 import { IconName } from '@assets/icons'
+import { router } from 'expo-router'
 import React, { memo, useCallback } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import i18n from '@/i18n/i18n'
 import { useT } from '@/i18n/useT'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
 import HalfSheet from '@/shared/components/ui/HalfSheet'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { Text } from '@/shared/components/ui/Text'
@@ -120,11 +120,11 @@ export default function LanguagePickerModal() {
 
   const currentLang = i18n.language
 
-  const handleClose = useCallback(() => goBack(), [])
+  const handleClose = useCallback(() => router.back(), [])
 
   const handleSelect = useCallback((code: string) => {
     i18n.changeLanguage(code)
-    goBack()
+    router.back()
   }, [])
 
   return (

@@ -24,8 +24,6 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg'
-import type { RootStackParamList } from '@/navigation/root-param-list'
-import { ROUTES } from '@/navigation/routes'
 import { AppLogo } from '@/shared/components/ui/AppLogo'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
@@ -53,9 +51,12 @@ const STROKE = 12
 const R = 104
 const CIRC = 2 * Math.PI * R
 
+// Not currently wired to any route (kept for future re-use) — local param
+// type instead of the app-wide param list so this file compiles standalone.
+type PauseRitualParams = { appName?: string; seconds?: number }
 type Props = NativeStackScreenProps<
-  RootStackParamList,
-  typeof ROUTES.PAUSE_RITUAL
+  { PauseRitual: PauseRitualParams | undefined },
+  'PauseRitual'
 >
 
 export default function PauseRitualScreen({ navigation, route }: Props) {

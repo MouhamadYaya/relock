@@ -3,43 +3,36 @@
  * LAYER: app/services/auth
  * ---------------------------------------------------------------------
  * PURPOSE:
- *   Zod schemas for validating all Auth-related API responses and request
- *   payloads. Ensures domain correctness before data enters the app.
+ *   Zod schemas for validating Supabase Auth responses before they enter
+ *   the app (Sign in with Apple / Google — no password flow here).
  *
  * RESPONSIBILITIES:
- *   - Validate login request.
- *   - Validate login response.
- *   - Validate refresh-token response.
+ *   - Validate the `{ session, user }` result of `signInWithIdToken`.
+ *   - Validate the generic session-check response (`useAuthSessionQuery`).
  *
  * DATA-FLOW:
- *   AuthService.login()
- *      → zLoginRequest.safeParse()
- *      → transport.mutate('auth/login')
- *      → zLoginResponse.parse(response)
+ *   AuthService.signInWithApple() / signInWithGoogle()
+ *      → supabase.auth.signInWithIdToken(...)
+ *      → zSupabaseAuthResult.parse(data)
  *      → AuthMapper.toAuthSession(...)
- *
- * EXTENSION GUIDELINES:
- *   - Add schemas for registration, reset-password, MFA, etc.
  * ---------------------------------------------------------------------
  */
 import { z } from 'zod'
 
-export const zLoginRequest = z.object({
-  email: z.string().email(),
-  password: z.string(),
-})
-
-export const zLoginResponse = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string().optional(),
+export const zSupabaseAuthResult = z.object({
+  session: z.object({
+    access_token: z.string(),
+    refresh_token: z.string(),
+  }),
   user: z.object({
     id: z.string(),
-    email: z.string().email(),
+    // Google always returns an email; Apple only on the very first sign-in
+    // (Supabase persists it server-side after that, but we stay defensive).
+    email: z.string().email().optional().nullable(),
   }),
 })
 
-export type LoginRequest = z.infer<typeof zLoginRequest>
-export type LoginResponse = z.infer<typeof zLoginResponse>
+export type SupabaseAuthResult = z.infer<typeof zSupabaseAuthResult>
 
 export const zSessionResponse = z.object({
   userId: z.string().or(z.number()),

@@ -1,5 +1,5 @@
 import { IconName } from '@assets/icons'
-import { type NavigationProp, useNavigation } from '@react-navigation/native'
+import { router } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import {
   Alert,
@@ -20,10 +20,6 @@ import { timedRunning } from '@/features/blocking/types'
 import { ScreenTimeHero } from '@/features/home/components/ScreenTimeHero'
 import { TryNextCard } from '@/features/home/components/TryNextCard'
 import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
-import { navigate } from '@/navigation/helpers/navigation-helpers'
-import type { HomeTabParamList } from '@/navigation/root-param-list'
-import { ROUTES } from '@/navigation/routes'
-import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -65,8 +61,6 @@ const C = {
 }
 
 export default function HomeScreen() {
-  // L'onglet Blocages est un frère : on navigue via le navigateur d'onglets.
-  const tabNav = useNavigation<NavigationProp<HomeTabParamList>>()
   const { rules, isPending: rulesPending } = useBlockRulesQuery()
   const stats = useHomeStats()
   useFreshInstallReset()
@@ -136,7 +130,7 @@ export default function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Réglages"
-              onPress={() => navigate(ROUTES.SETTINGS)}
+              onPress={() => router.push('/settings')}
               hitSlop={10}
               style={styles.gear}
             >
@@ -271,7 +265,7 @@ export default function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Rien ne protège ton temps — ouvrir Blocages"
-              onPress={() => tabNav.navigate(ROUTES.TAB_BLOCKS)}
+              onPress={() => router.navigate('/(tabs)/blocks')}
               style={styles.emptyBig}
             >
               <View style={styles.emptyBigIcon}>
@@ -340,7 +334,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: TAB_BAR_CLEARANCE,
+    paddingBottom: 32,
   },
   header: {
     flexDirection: 'row',

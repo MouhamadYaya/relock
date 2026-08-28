@@ -1,6 +1,6 @@
-import { IconName } from '@assets/icons'
 import React, { useEffect, useRef, useState } from 'react'
 import {
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -28,10 +28,10 @@ import Svg, {
   Defs,
   LinearGradient,
   Path,
+  RadialGradient,
   Rect,
   Stop,
 } from 'react-native-svg'
-import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import {
   Footnote,
@@ -102,253 +102,11 @@ export function SceneIgnition({ onDone }: { onDone: () => void }) {
 // ─── Acte 0 · La promesse ───────────────────────────────────────────────
 //
 // Reproduction fidèle de la maquette `design/welcome/welcomeimg.png` :
-// mockup de téléphone (démo de l'écran « Apps bloquées » + stats), gros
-// titre à deux tons, puis CTA. Toutes les cotes du mockup sont dérivées
+// capture d'écran réelle du mockup de téléphone (design/welcome/
+// phoneOnwelcome.png, cf. WelcomeGlow/PHONE_W plus bas), gros titre à
+// deux tons, puis CTA. Le titre, le sous-titre et le CTA restent dérivés
 // d'une seule échelle `v()` calquée sur la largeur de la maquette source
 // (863 px) pour rester fidèles à ses proportions sur n'importe quel écran.
-
-const WELCOME_RED = '#FA4F72'
-const WELCOME_FRAME_BORDER = 'rgba(205,199,224,0.55)'
-const WELCOME_SURFACE = 'rgba(255,255,255,0.05)'
-
-function BadgeBase({
-  size,
-  radius,
-  children,
-}: {
-  size: number
-  radius: number
-  children: React.ReactNode
-}) {
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: radius,
-        overflow: 'hidden',
-      }}
-    >
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        {children}
-      </Svg>
-    </View>
-  )
-}
-
-function BadgeTikTok({ size }: { size: number }) {
-  const note =
-    'M16.6 3c.4 2.3 1.9 3.9 4.2 4.2v3.2c-1.6 0-3-.5-4.2-1.4v6.4a5.6 5.6 0 11-4.8-5.5v3.3a2.4 2.4 0 102.1 2.4V3h2.7z'
-  return (
-    <BadgeBase size={size} radius={size * 0.28}>
-      <Rect width={24} height={24} fill="#000000" />
-      <Path d={note} fill="#25F4EE" transform="translate(-0.9,-0.5)" />
-      <Path d={note} fill="#FE2C55" transform="translate(0.9,0.5)" />
-      <Path d={note} fill="#FFFFFF" />
-    </BadgeBase>
-  )
-}
-
-function BadgeInstagram({ size }: { size: number }) {
-  return (
-    <BadgeBase size={size} radius={size * 0.28}>
-      <Defs>
-        <LinearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <Stop offset="0%" stopColor="#FEDA75" />
-          <Stop offset="34%" stopColor="#D62976" />
-          <Stop offset="68%" stopColor="#962FBF" />
-          <Stop offset="100%" stopColor="#4F5BD5" />
-        </LinearGradient>
-      </Defs>
-      <Rect width={24} height={24} fill="url(#igGrad)" />
-      <Rect
-        x={5}
-        y={5}
-        width={14}
-        height={14}
-        rx={4.4}
-        stroke="#fff"
-        strokeWidth={1.7}
-        fill="none"
-      />
-      <Circle
-        cx={12}
-        cy={12}
-        r={3.6}
-        stroke="#fff"
-        strokeWidth={1.7}
-        fill="none"
-      />
-      <Circle cx={16.3} cy={7.7} r={1.1} fill="#fff" />
-    </BadgeBase>
-  )
-}
-
-function BadgeYouTube({ size }: { size: number }) {
-  return (
-    <BadgeBase size={size} radius={size * 0.28}>
-      <Rect width={24} height={24} fill="#FFFFFF" />
-      <Rect x={2} y={6.5} width={20} height={11} rx={5} fill="#FF0033" />
-      <Path d="M10.2 9.3l5.4 2.7-5.4 2.7z" fill="#fff" />
-    </BadgeBase>
-  )
-}
-
-function BadgeSnapchat({ size }: { size: number }) {
-  return (
-    <BadgeBase size={size} radius={size * 0.28}>
-      <Rect width={24} height={24} fill="#FFFC00" />
-      <Path
-        d="M12 4.4c2.7 0 4.6 2 4.6 4.9 0 .9-.1 1.8-.3 2.6.5.2 1 .2 1.5.1.3 0 .5.2.4.5-.1.4-.6.7-1.2 1 .1.3.2.5.1.8-.1.3-.5.5-1 .7.1.2.1.5-.1.7-.3.3-.9.4-1.5.3-.4.5-1.2.8-2.2.8h-.1c-.8.8-1.7 1.2-2.5 1.2h0c-.8 0-1.7-.4-2.5-1.2H7c-1 0-1.8-.3-2.2-.8-.6.1-1.2 0-1.5-.3-.2-.2-.2-.5-.1-.7-.5-.2-.9-.4-1-.7-.1-.3 0-.5.1-.8-.6-.3-1.1-.6-1.2-1-.1-.3.1-.5.4-.5.5.1 1 .1 1.5-.1-.2-.8-.3-1.7-.3-2.6 0-2.9 1.9-4.9 4.6-4.9z"
-        fill="#fff"
-      />
-    </BadgeBase>
-  )
-}
-
-const BLOCKED_APPS: {
-  id: string
-  name: string
-  Badge: React.ComponentType<{ size: number }>
-}[] = [
-  { id: 'tiktok', name: 'TikTok', Badge: BadgeTikTok },
-  { id: 'instagram', name: 'Instagram', Badge: BadgeInstagram },
-  { id: 'youtube', name: 'YouTube', Badge: BadgeYouTube },
-  { id: 'snapchat', name: 'Snapchat', Badge: BadgeSnapchat },
-]
-
-function NoEntryIcon({ size, color }: { size: number; color: string }) {
-  const c = size / 2
-  const r = c - 1.6
-  const o = r * 0.66
-  return (
-    <Svg width={size} height={size}>
-      <Circle
-        cx={c}
-        cy={c}
-        r={r}
-        stroke={color}
-        strokeWidth={1.8}
-        fill="none"
-      />
-      <Path
-        d={`M${c - o} ${c - o} L${c + o} ${c + o}`}
-        stroke={color}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-    </Svg>
-  )
-}
-
-function SparkleIcon({ size, color }: { size: number; color: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Path
-        d="M12 2c.7 3.7 2.5 5.5 6.2 6.2-3.7.7-5.5 2.5-6.2 6.2-.7-3.7-2.5-5.5-6.2-6.2C9.5 7.5 11.3 5.7 12 2z"
-        fill={color}
-      />
-    </Svg>
-  )
-}
-
-function ProgressRing({
-  size,
-  strokeWidth,
-}: {
-  size: number
-  strokeWidth: number
-}) {
-  const r = (size - strokeWidth) / 2
-  const c = size / 2
-  const circumference = 2 * Math.PI * r
-  const progress = 0.94
-  return (
-    <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size}>
-        <Defs>
-          <LinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor={OB.grad[0]} />
-            <Stop offset="100%" stopColor={OB.grad[2]} />
-          </LinearGradient>
-        </Defs>
-        <Circle
-          cx={c}
-          cy={c}
-          r={r}
-          stroke="rgba(255,255,255,0.14)"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        <Circle
-          cx={c}
-          cy={c}
-          r={r}
-          stroke="url(#ringGrad)"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={circumference * (1 - progress)}
-          transform={`rotate(-90 ${c} ${c})`}
-        />
-      </Svg>
-      <View
-        style={[
-          StyleSheet.absoluteFillObject,
-          { alignItems: 'center', justifyContent: 'center' },
-        ]}
-      >
-        <IconSvg name={IconName.CLOCK} size={size * 0.32} color={OB.ink} />
-      </View>
-    </View>
-  )
-}
-
-function AppRow({
-  name,
-  Badge,
-  iconSize,
-  nameFs,
-  subFs,
-  noEntrySize,
-}: {
-  name: string
-  Badge: React.ComponentType<{ size: number }>
-  iconSize: number
-  nameFs: number
-  subFs: number
-  noEntrySize: number
-}) {
-  return (
-    <View
-      className="flex-row items-center"
-      style={{ paddingVertical: subFs * 0.6, gap: iconSize * 0.24 }}
-    >
-      <Badge size={iconSize} />
-      <View className="flex-1" style={{ gap: nameFs * 0.14 }}>
-        <Text
-          numberOfLines={1}
-          style={{
-            ...fonts.semiBold,
-            fontSize: nameFs,
-            color: OB.ink,
-            letterSpacing: -0.2,
-          }}
-        >
-          {name}
-        </Text>
-        <View className="flex-row items-center" style={{ gap: subFs * 0.3 }}>
-          <IconSvg name={IconName.LOCK} size={subFs * 0.85} color={OB.accent} />
-          <Text style={{ ...fonts.medium, fontSize: subFs, color: OB.accent }}>
-            Bloquée
-          </Text>
-        </View>
-      </View>
-      <NoEntryIcon size={noEntrySize} color={WELCOME_RED} />
-    </View>
-  )
-}
 
 /**
  * Un <Text> RN natif imbriqué (pas de SVG) : react-native-svg ne fiabilise
@@ -380,231 +138,163 @@ function HeroLine2({
   )
 }
 
-export function SceneWelcome({
-  onNext,
-  onHaveAccount,
+// Largeur (en unités de canevas 863, comme `v()`) occupée par la capture
+// d'écran du mockup de téléphone — calibrée sur la silhouette opaque de
+// `assets/welcome-phone-mockup.png` (760/941 de sa largeur totale, ombre
+// portée comprise) pour occuper la même largeur dans la composition que
+// l'ancien mockup reconstruit en JSX. Réutilisée par WelcomeGlow pour que
+// le halo reste proportionné à la taille réelle de l'image.
+const PHONE_W = 594
+
+/**
+ * Halo « projecteur » derrière le mockup, plus large et plus vif que
+ * `HaloBackdrop` (fond commun de l'onboarding) : la maquette de cet écran
+ * en fait un élément central, pas une simple nappe de fond en haut d'écran.
+ */
+function WelcomeGlow({
+  top,
+  width,
+  height,
 }: {
-  onNext: () => void
-  onHaveAccount: () => void
+  top: number
+  width: number
+  height: number
 }) {
+  return (
+    // Centrage explicite (left 50% + marge négative de la moitié de la
+    // largeur) plutôt que de compter sur `alignItems` du parent : constaté
+    // à l'écran, Yoga ne centre pas de façon fiable un enfant en position
+    // absolute sur son axe croisé (contrairement à un enfant en flux
+    // normal, comme le mockup lui-même) — le halo se retrouvait collé à
+    // gauche alors que le téléphone était bien centré.
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top,
+        left: '50%',
+        marginLeft: -width / 2,
+        width,
+        height,
+      }}
+    >
+      <Svg width={width} height={height}>
+        <Defs>
+          {/* Deux halos superposés plutôt qu'un radial uni : la maquette
+              passe du violet (gauche) au bleu (droite) derrière le mockup —
+              un seul dégradé radial ne peut pas porter cette teinte qui
+              varie selon l'angle, deux taches de couleur qui se chevauchent
+              recréent le même effet. */}
+          <RadialGradient id="welcomeGlowLeft" cx="38%" cy="42%" r="52%">
+            <Stop offset="0%" stopColor={OB.grad[0]} stopOpacity={0.62} />
+            <Stop offset="45%" stopColor={OB.grad[0]} stopOpacity={0.32} />
+            <Stop offset="75%" stopColor={OB.grad[0]} stopOpacity={0.12} />
+            <Stop offset="100%" stopColor={OB.grad[0]} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="welcomeGlowRight" cx="64%" cy="46%" r="50%">
+            <Stop offset="0%" stopColor={OB.grad[2]} stopOpacity={0.58} />
+            <Stop offset="45%" stopColor={OB.grad[2]} stopOpacity={0.3} />
+            <Stop offset="75%" stopColor={OB.grad[2]} stopOpacity={0.12} />
+            <Stop offset="100%" stopColor={OB.grad[2]} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width={width} height={height} fill="url(#welcomeGlowLeft)" />
+        <Rect width={width} height={height} fill="url(#welcomeGlowRight)" />
+      </Svg>
+    </View>
+  )
+}
+
+export function SceneWelcome({ onNext }: { onNext: () => void }) {
   const { width: windowW, height: windowH } = useWindowDimensions()
   const insets = useSafeAreaInsets()
-  // Échelle dérivée de la maquette (863×1750, hors barre de statut) : chaque
-  // cote ci-dessous reprend directement une mesure faite sur l'image. On
-  // plafonne aussi par la hauteur dispo pour ne jamais déborder sous la
-  // poignée d'accueil sur les écrans plus compacts.
   const availableH = windowH - insets.top - insets.bottom - 12
-  const scale = Math.min(windowW / 863, availableH / 1750)
+  const widthScale = windowW / 863
+
+  // Un canevas-hauteur codé en dur (« la maquette mesure 2400 ») s'est avéré
+  // peu fiable d'un appareil à l'autre (polices système, densité, marges de
+  // sécurité…) : au lieu de deviner, on mesure la hauteur RÉELLEMENT rendue
+  // à l'échelle "pleine largeur", puis on corrige l'échelle une fois si ça
+  // dépasse l'espace disponible. Convergent en un aller-retour (la 2de
+  // mesure ne fait que confirmer, `measuredH` n'est donc capturé qu'une
+  // fois — cf. la garde dans l'onLayout).
+  const [measuredH, setMeasuredH] = useState<number | null>(null)
+  const scale =
+    measuredH && measuredH > availableH
+      ? widthScale * (availableH / measuredH)
+      : widthScale
   const v = (n: number) => n * scale
 
   return (
-    <View className="flex-1 px-5">
-      {/* Zone tactile invisible, dans la marge vide au-dessus du mockup :
-          reprend l'accès « J'ai déjà un compte » sans rien ajouter au
-          rendu visuel (absent de la maquette à reproduire à l'identique). */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="J'ai déjà un compte"
-        onPress={onHaveAccount}
-        hitSlop={8}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: Math.max(44, v(40)),
+    <View style={{ flex: 1, paddingHorizontal: 20 }}>
+      <View
+        onLayout={e => {
+          if (measuredH === null) setMeasuredH(e.nativeEvent.layout.height)
         }}
-      />
-
-      <Reveal index={0} className="items-center" style={{ marginTop: v(40) }}>
-        <View
-          style={{
-            width: v(480),
-            borderRadius: v(60),
-            borderWidth: v(9),
-            borderColor: WELCOME_FRAME_BORDER,
-            backgroundColor: '#0A0A10',
-            paddingHorizontal: v(28),
-            paddingTop: v(10),
-            paddingBottom: v(24),
-          }}
-        >
-          <View
-            className="self-center"
-            style={{
-              width: v(140),
-              height: v(26),
-              borderRadius: v(13),
-              backgroundColor: 'rgba(0,0,0,0.85)',
-              marginTop: v(4),
-              marginBottom: v(42),
-            }}
+      >
+        <Reveal index={0} style={{ alignItems: 'center', marginTop: v(40) }}>
+          {/* Capture d'écran réelle (design/welcome/phoneOnwelcome.png) à la
+              place d'un mockup reconstruit en JSX : après plusieurs passes
+              de mesure au pixel sur la maquette, l'image source reste plus
+              fidèle qu'une reconstitution manuelle. PHONE_W (594) est
+              calibré sur la silhouette opaque de cette image (760/941 de sa
+              largeur totale, marge de l'ombre portée incluse) pour occuper
+              la même largeur que le mockup précédent dans la composition ;
+              la hauteur suit par aspectRatio (941×1672, celui du fichier). */}
+          <WelcomeGlow
+            top={-v(99)}
+            width={v(PHONE_W) * 2.3}
+            height={v(PHONE_W) * 2.1875}
           />
+          <Image
+            source={require('../../../assets/welcome-phone-mockup.png')}
+            // Hauteur explicite plutôt que `aspectRatio` seul : sur cette
+            // image locale, `aspectRatio` sans hauteur numérique se faisait
+            // ignorer (l'image se dimensionnait à sa taille intrinsèque,
+            // débordant largement l'écran) — width + height calculée à la
+            // main lève l'ambiguïté.
+            style={{ width: v(PHONE_W), height: v(PHONE_W) * (1672 / 941) }}
+            resizeMode="contain"
+          />
+        </Reveal>
 
-          <View className="flex-row items-center justify-between">
-            <View style={{ width: v(32) }} />
-            <Text style={{ ...fonts.bold, fontSize: v(30), color: OB.ink }}>
-              Relock
-            </Text>
-            <IconSvg name={IconName.SETTINGS} size={v(32)} color={OB.ink} />
-          </View>
-
-          <View
-            className="flex-row items-center"
-            style={{ gap: v(18), marginTop: v(46) }}
+        <Reveal index={1} style={{ alignItems: 'center', marginTop: v(66) }}>
+          <Text
+            style={{
+              ...fonts.bold,
+              fontSize: v(70),
+              lineHeight: v(70) * 1.06,
+              letterSpacing: -1.2,
+              color: OB.ink,
+              textAlign: 'center',
+            }}
           >
-            <View
-              className="items-center justify-center"
-              style={{
-                width: v(64),
-                height: v(64),
-                borderRadius: v(32),
-                backgroundColor: 'rgba(164,154,254,0.24)',
-              }}
-            >
-              <IconSvg name={IconName.LOCK} size={v(30)} color={OB.accent} />
-            </View>
-            <Text
-              style={{
-                ...fonts.bold,
-                fontSize: v(54),
-                color: OB.ink,
-                letterSpacing: -1,
-              }}
-            >
-              Apps bloquées
-            </Text>
-          </View>
+            Bloque les apps
+          </Text>
+          <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
+        </Reveal>
+
+        <Reveal index={2} style={{ marginTop: v(42) }}>
           <Text
             style={{
               ...fonts.regular,
-              fontSize: v(21),
+              fontSize: v(27),
+              lineHeight: v(36),
               color: OB.ink55,
-              marginTop: v(18),
+              textAlign: 'center',
             }}
           >
-            Reste concentré sur l'essentiel.
+            Relock bloque les distractions,{'\n'}et t'aide à récupérer ce qui
+            compte vraiment.
           </Text>
+        </Reveal>
 
-          <View
-            style={{
-              marginTop: v(40),
-              borderRadius: v(28),
-              backgroundColor: WELCOME_SURFACE,
-              paddingHorizontal: v(20),
-              paddingVertical: v(6),
-            }}
-          >
-            {BLOCKED_APPS.map((app, i) => (
-              <React.Fragment key={app.id}>
-                <AppRow
-                  name={app.name}
-                  Badge={app.Badge}
-                  iconSize={v(58)}
-                  nameFs={v(24)}
-                  subFs={v(19)}
-                  noEntrySize={v(28)}
-                />
-                {i < BLOCKED_APPS.length - 1 ? (
-                  <View
-                    style={{
-                      height: StyleSheet.hairlineWidth,
-                      backgroundColor: OB.hairline,
-                    }}
-                  />
-                ) : null}
-              </React.Fragment>
-            ))}
-          </View>
+        <View style={{ height: v(70) }} />
 
-          <View
-            style={{
-              marginTop: v(36),
-              borderRadius: v(28),
-              backgroundColor: WELCOME_SURFACE,
-              paddingHorizontal: v(28),
-              paddingVertical: v(28),
-            }}
-          >
-            <View className="flex-row items-center" style={{ gap: v(24) }}>
-              <ProgressRing size={v(148)} strokeWidth={v(18)} />
-              <View style={{ gap: v(4) }}>
-                <Text
-                  style={{ ...fonts.regular, fontSize: v(25), color: OB.ink55 }}
-                >
-                  Temps récupéré
-                </Text>
-                <GradientLine text="2h 47" size={v(52)} align="left" />
-                <Text
-                  style={{ ...fonts.regular, fontSize: v(25), color: OB.ink55 }}
-                >
-                  Aujourd'hui
-                </Text>
-              </View>
-            </View>
-            <View
-              style={{
-                height: StyleSheet.hairlineWidth,
-                backgroundColor: OB.hairline,
-                marginVertical: v(24),
-              }}
-            />
-            <View className="flex-row items-center" style={{ gap: v(8) }}>
-              <SparkleIcon size={v(20)} color={OB.accent} />
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-                style={{
-                  ...fonts.medium,
-                  fontSize: v(24),
-                  color: OB.accent,
-                  flexShrink: 1,
-                }}
-              >
-                Bravo, tu reprends le contrôle.
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Reveal>
-
-      <Reveal index={1} className="items-center" style={{ marginTop: v(66) }}>
-        <Text
-          style={{
-            ...fonts.bold,
-            fontSize: v(70),
-            lineHeight: v(70) * 1.06,
-            letterSpacing: -1.2,
-            color: OB.ink,
-            textAlign: 'center',
-          }}
-        >
-          Bloque les apps
-        </Text>
-        <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
-      </Reveal>
-
-      <Reveal index={2} style={{ marginTop: v(42) }}>
-        <Text
-          style={{
-            ...fonts.regular,
-            fontSize: v(27),
-            lineHeight: v(36),
-            color: OB.ink55,
-            textAlign: 'center',
-          }}
-        >
-          Relock bloque les distractions,{'\n'}et t'aide à récupérer ce qui
-          compte vraiment.
-        </Text>
-      </Reveal>
-
-      <View className="flex-1" />
-
-      <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Commencer" onPress={onNext} />
-      </Reveal>
+        <Reveal index={3} style={{ paddingBottom: 10 }}>
+          <Pill label="Commencer" onPress={onNext} />
+        </Reveal>
+      </View>
     </View>
   )
 }

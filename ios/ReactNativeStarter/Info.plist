@@ -34,6 +34,16 @@
 				<string>relock</string>
 			</array>
 		</dict>
+		<!--
+			Sign in with Google: reversed form of GOOGLE_IOS_CLIENT_ID (.env).
+			Keep these two in sync if the OAuth client is ever recreated.
+		-->
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.894706345603-lgu5th2v330r3fl569ostmkpp07fq9h8</string>
+			</array>
+		</dict>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

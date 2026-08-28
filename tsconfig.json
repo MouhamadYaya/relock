@@ -5,8 +5,12 @@
     "jsx": "react-native",
     "esModuleInterop": true,
     "paths": {
-      "@/*": ["src/*"],
-      "@assets/*": ["assets/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@assets/*": [
+        "assets/*"
+      ]
     }
   },
   "include": [
@@ -15,7 +19,13 @@
     "assets",
     "scripts",
     "src/shared/types",
-    "types"
+    "types",
+    "nativewind-env.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ],
-  "exclude": ["node_modules", "Pods"]
+  "exclude": [
+    "node_modules",
+    "Pods"
+  ]
 }

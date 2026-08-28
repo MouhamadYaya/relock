@@ -1,8 +1,8 @@
+import { router } from 'expo-router'
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
 import i18n from '@/i18n/i18n'
 import { useT } from '@/i18n/useT'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { Button } from '@/shared/components/ui/Button'
 import { ScreenHeader } from '@/shared/components/ui/ScreenHeader'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
@@ -12,7 +12,7 @@ export default function LanguageScreen() {
   const { theme } = useTheme()
   const t = useT()
 
-  const handleBack = useCallback(() => goBack(), [])
+  const handleBack = useCallback(() => router.back(), [])
   const handleEnglish = useCallback(() => i18n.changeLanguage('en'), [])
   const handleRussian = useCallback(() => i18n.changeLanguage('ru'), [])
   const handleGerman = useCallback(() => i18n.changeLanguage('de'), [])

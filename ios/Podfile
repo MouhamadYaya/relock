@@ -62,6 +62,72 @@ target 'ReactNativeStarter' do
         if phase.respond_to?(:name) && phase.name.to_s.start_with?('[CP-User]')
           phase.always_out_of_date = '1'
         end
+        # expo-constants génère `bash -l -c "$PODS_TARGET_SRCROOT/../scripts/get-app-config-ios.sh"` :
+        # le chemin passe par deux parsers shell successifs (le "Run Script" de Xcode,
+        # puis `bash -c`) et perd sa protection au 2e passage — cassé dès que le chemin
+        # du projet contient un espace ("Relock APP"). On appelle le script directement
+        # (sans -c) pour qu'il ne soit tokenisé qu'une fois.
+        if phase.respond_to?(:name) && phase.name.to_s == '[CP-User] Generate app.config for prebuilt Constants.manifest'
+          phase.shell_script = 'bash -l "$PODS_TARGET_SRCROOT/../scripts/get-app-config-ios.sh"'
+        end
+      end
+    end
+    # fmt 11.0.2 (épinglé par react-native/third-party-podspecs/fmt.podspec) ne
+    # compile plus avec le Clang de Xcode 26 : son astuce de vérification de
+    # format string À LA COMPILATION (macro FMT_STRING/basic_format_string
+    # consteval) est rejetée ("call to consteval function … is not a constant
+    # expression"). `FMT_USE_CONSTEVAL`/`FMT_CONSTEVAL` sont redéfinis sans garde
+    # `#ifndef` dans base.h : un -D en ligne de commande ne suffit pas, il faut
+    # patcher le fichier vendu. On désactive cette seule vérification compile-time
+    # — le formatage à l'exécution n'est pas affecté, seule la validation anticipée
+    # du format string l'est (elle ne portait que sur des logs internes RN/Folly).
+    fmt_header = File.join(Pod::Config.instance.installation_root.to_s, 'Pods/fmt/include/fmt/base.h')
+    if File.exist?(fmt_header)
+      contents = File.read(fmt_header)
+      patched = contents.gsub('#if FMT_USE_CONSTEVAL', '#if 0  // patched by Podfile post_install: Xcode 26 Clang rejects fmt\'s consteval check')
+      File.write(fmt_header, patched) if patched != contents
+    end
+    # RCT-Folly's folly/lang/New.h choisit entre une opérator new/delete
+    # "builtin" et une variante "library" (::operator new/delete) selon la
+    # constante compile-time `cpp_aligned_new_`, dérivée de la macro
+    # feature-test `__cpp_aligned_new`. Avec le build system "Explicit
+    # Modules" de Xcode 26, le module libc++ précompilé et partagé entre
+    # cibles ne recalcule pas correctement cette macro par cible : elle
+    # ressort à `false` pour certains fichiers (ex. react-native-blur) alors
+    # que le deployment target (15.1) supporte largement l'allocation
+    # alignée (dispo depuis iOS 11). Folly retombe alors sur le chemin
+    # "library", dont l'annotation de disponibilité iOS 11 est rejetée par
+    # erreur en contexte de substitution SFINAE ("Call to consteval
+    # function… / only available on iOS 11 or newer"). On force la
+    # constante à `true` — l'allocation alignée est réellement supportée à
+    # l'exécution sur nos cibles (min iOS 15.1), seule la détection
+    # compile-time est cassée par ce bug de toolchain.
+    folly_new_header = File.join(Pod::Config.instance.installation_root.to_s, 'Pods/RCT-Folly/folly/lang/New.h')
+    if File.exist?(folly_new_header)
+      contents = File.read(folly_new_header)
+      patched = contents.sub(
+        "#if defined(__cpp_aligned_new)\nconstexpr auto cpp_aligned_new_ = __cpp_aligned_new >= 201606;\n#else\nconstexpr auto cpp_aligned_new_ = false;\n#endif",
+        "// patched by Podfile post_install: Xcode 26 Explicit Modules miscomputes\n" \
+        "// __cpp_aligned_new per-target; aligned allocation is actually supported\n" \
+        "// (min iOS 15.1 >> iOS 11).\nconstexpr auto cpp_aligned_new_ = true;"
+      )
+      # Même toolchain, symptôme voisin : `__builtin_operator_new`/`_del` de
+      # ce Clang prétendent supporter le niveau de fonctionnalité 201802L
+      # (FOLLY_HAS_BUILTIN) mais ne résolvent pas les surcharges combinées
+      # alignées+nothrow que Folly leur demande ("no matching function for
+      # call to object of type… op_new_builtin_fn_ / op_del_builtin_fn_").
+      # On force le chemin "library" (::operator new/delete), valide et
+      # disponible à notre cible (min iOS 15.1).
+      patched = patched.sub(
+        "constexpr auto op_new_builtin_ =\n    FOLLY_HAS_BUILTIN(__builtin_operator_new) >= 201802L;\nconstexpr auto op_del_builtin_ =\n    FOLLY_HAS_BUILTIN(__builtin_operator_del) >= 201802L;",
+        "// patched by Podfile post_install: this Clang's __builtin_operator_new/\n" \
+        "// _del don't resolve Folly's combined aligned+nothrow overloads —\n" \
+        "// force the ::operator new/delete library path instead.\n" \
+        "constexpr auto op_new_builtin_ = false;\nconstexpr auto op_del_builtin_ = false;"
+      )
+      if patched != contents
+        File.chmod(0644, folly_new_header) # CocoaPods vend ce fichier en lecture seule
+        File.write(folly_new_header, patched)
       end
     end
   end

@@ -1,10 +1,10 @@
 // src/features/settings/screens/ThemePickerModal.tsx
 
 import { IconName } from '@assets/icons'
+import { router } from 'expo-router'
 import React, { memo, useCallback } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { useT } from '@/i18n/useT'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
 import HalfSheet from '@/shared/components/ui/HalfSheet'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { Text } from '@/shared/components/ui/Text'
@@ -113,12 +113,12 @@ export default function ThemePickerModal() {
   const sp = theme.spacing
   const ty = theme.typography
 
-  const handleClose = useCallback(() => goBack(), [])
+  const handleClose = useCallback(() => router.back(), [])
 
   const handleSelect = useCallback(
     (selected: ThemeMode) => {
       setTheme(selected)
-      goBack()
+      router.back()
     },
     [setTheme],
   )

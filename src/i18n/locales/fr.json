@@ -6,25 +6,12 @@
     "offline_banner": "Tu es hors ligne. Données en cache affichées.",
     "loading": "Chargement…"
   },
-  "auth": {
-    "a11y_toggle_theme": "Changer le thème",
-    "welcome": "Content de te revoir",
-    "subtitle": "Connecte-toi pour continuer",
-    "mock_demo_hint": "Démo : les champs sont pré-remplis — appuie sur Se connecter (API mock).",
-    "or": "OU",
-    "email": "E-mail",
-    "email_placeholder": "toi@exemple.com",
-    "password": "Mot de passe",
-    "forgot_password": "Oublié ?",
-    "password_placeholder": "••••••••",
-    "signing_in": "Connexion…",
-    "sign_in": "Se connecter",
-    "no_account": "Pas encore de compte ?",
-    "sign_up": "S'inscrire",
-    "terms_prefix": "En continuant, tu acceptes nos",
-    "terms_of_service": "Conditions d'utilisation",
-    "and": "et",
-    "privacy_policy": "Politique de confidentialité"
+  "navigation": {
+    "tabs": {
+      "home": "Accueil",
+      "blocks": "Bloquer",
+      "activity": "Activité"
+    }
   },
   "home": {
     "title": "Accueil",

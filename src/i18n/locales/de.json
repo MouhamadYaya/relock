@@ -6,25 +6,12 @@
     "offline_banner": "Kein Internet. Gecachte Daten werden angezeigt.",
     "loading": "Laden…"
   },
-  "auth": {
-    "a11y_toggle_theme": "Farbschema umschalten",
-    "welcome": "Willkommen zurück",
-    "subtitle": "Melde dich an, um fortzufahren",
-    "mock_demo_hint": "Demo: Felder sind vorausgefüllt — auf Anmelden tippen (Mock-API).",
-    "or": "ODER",
-    "email": "E-Mail",
-    "email_placeholder": "du@beispiel.de",
-    "password": "Passwort",
-    "forgot_password": "Vergessen?",
-    "password_placeholder": "••••••••",
-    "signing_in": "Anmelden…",
-    "sign_in": "Anmelden",
-    "no_account": "Noch kein Konto?",
-    "sign_up": "Registrieren",
-    "terms_prefix": "Mit der Fortfahren stimmst du unseren",
-    "terms_of_service": "Nutzungsbedingungen",
-    "and": "und der",
-    "privacy_policy": "Datenschutzrichtlinie"
+  "navigation": {
+    "tabs": {
+      "home": "Start",
+      "blocks": "Blockieren",
+      "activity": "Aktivität"
+    }
   },
   "home": {
     "stat_done": "Erledigt",

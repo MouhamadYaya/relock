@@ -7,6 +7,7 @@
  * Deux sections (+ une 3ᵉ si quelque chose est suspendu) couvrent 100 % des
  * règles — voir `session.ts` pour le modèle règle/session.
  */
+import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg'
@@ -23,9 +24,6 @@ import {
   suspendedUntil,
 } from '@/features/blocking/session'
 import type { BlockRuleView } from '@/features/blocking/types'
-import { navigate } from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
-import { TAB_BAR_CLEARANCE } from '@/navigation/tabs/AnimatedTabBar'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
@@ -528,9 +526,9 @@ export default function BlocagesScreen() {
   const running = sessions.filter(s => s.state === 'running')
   const upcoming = sessions.filter(s => s.state === 'upcoming')
   const suspended = sessions.filter(s => s.state === 'suspended')
-  const openAdd = () => navigate(ROUTES.ADD_BLOCK)
+  const openAdd = () => router.push('/add-block')
   const openSheet = (s: RuleSession) =>
-    navigate(ROUTES.BLOCK_DETAIL, { rule: s.rule })
+    router.push({ pathname: '/block-detail', params: { id: s.rule.id } })
 
   return (
     <ScreenWrapper>
@@ -645,7 +643,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 7 },
     elevation: 8,
   },
-  scroll: { paddingTop: 8, paddingBottom: TAB_BAR_CLEARANCE },
+  scroll: { paddingTop: 8, paddingBottom: 32 },
   timeline: { position: 'relative' },
   // Une ligne à peine là : elle structure sans réclamer l'attention.
   rail: {

@@ -6,25 +6,12 @@
     "offline_banner": "Нет соединения. Отображаются кэшированные данные.",
     "loading": "Загрузка…"
   },
-  "auth": {
-    "a11y_toggle_theme": "Переключить тему оформления",
-    "welcome": "С возвращением",
-    "subtitle": "Войдите, чтобы продолжить",
-    "mock_demo_hint": "Демо: поля заполнены — нажмите «Войти» (mock API).",
-    "or": "ИЛИ",
-    "email": "Email",
-    "email_placeholder": "you@example.com",
-    "password": "Пароль",
-    "forgot_password": "Забыли?",
-    "password_placeholder": "••••••••",
-    "signing_in": "Входим…",
-    "sign_in": "Войти",
-    "no_account": "Нет аккаунта?",
-    "sign_up": "Зарегистрироваться",
-    "terms_prefix": "Продолжая, вы принимаете наши",
-    "terms_of_service": "Условия использования",
-    "and": "и",
-    "privacy_policy": "Политику конфиденциальности"
+  "navigation": {
+    "tabs": {
+      "home": "Главная",
+      "blocks": "Блокировка",
+      "activity": "Активность"
+    }
   },
   "home": {
     "stat_done": "Готово",

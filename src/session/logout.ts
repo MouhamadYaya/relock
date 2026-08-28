@@ -6,16 +6,13 @@
  * - clears offline queue + in-memory snapshot cache
  * - clears QueryClient in-memory cache (if available)
  * - clears persisted navigation state
- * - resets navigation to ROOT_AUTH
  *
  * Concurrent calls share one in-flight operation so rapid 401s + UI never skip cleanup.
  */
 
 import type { QueryClient } from '@tanstack/react-query'
 import { constants } from '@/config/constants'
-import { resetRoot } from '@/navigation/helpers/navigation-helpers'
 import { clearNavigationPersistence } from '@/navigation/persistence/navigation-persistence'
-import { ROUTES } from '@/navigation/routes'
 import { getSessionQueryClient } from '@/session/session-bridge'
 import { offlineQueue } from '@/shared/services/api/offline/offline-queue'
 import { cacheEngine } from '@/shared/services/storage/cache-engine'
@@ -62,9 +59,5 @@ async function runLogout(qc?: QueryClient): Promise<void> {
     // ignore: we still must reset navigation
   } finally {
     clearNavigationPersistence()
-    resetRoot({
-      index: 0,
-      routes: [{ name: ROUTES.ROOT_AUTH as never }],
-    })
   }
 }

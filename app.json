@@ -14,6 +14,13 @@
     },
     "android": {
       "package": "com.yaya.relock"
+    },
+    "plugins": [
+      "expo-router",
+      "@react-native-google-signin/google-signin"
+    ],
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }

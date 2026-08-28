@@ -55,7 +55,7 @@ Use path alias `@/` only (e.g. `@/navigation/`, `@/session/`, `@/config/`, `@/i1
 ## Conventions
 
 - **Theme:** tokens only (no raw colors/spacing/fonts in UI).
-- **Styles:** `StyleSheet.create()` with theme tokens; avoid inline styles except for dynamic values.
+- **Styles:** `StyleSheet.create()` with theme tokens is still the default for existing components. NativeWind (Tailwind for RN) is installed and allowed for new/simple layout work (`className="flex-1 p-4 gap-2"` etc.) — see [.claude/rules/styling.md](.claude/rules/styling.md). Do not express semantic colors via Tailwind color classes; colors stay on `useTheme()` since light/dark switching is runtime JS, not static Tailwind classes.
 - **Server state:** React Query; keys in feature `api/keys.ts`; mutations with `meta.tags` and targeted invalidation.
 - **Global UI state:** Zustand only; no server data in stores.
 - **Validation:** Zod for API and domain models.
@@ -67,7 +67,7 @@ Use path alias `@/` only (e.g. `@/navigation/`, `@/session/`, `@/config/`, `@/i1
 
 - Do not add new dependencies without an agreed process.
 - **Never change package versions in `package.json` or `package-lock.json`.** Do not upgrade, downgrade, or replace any dependency. If a version mismatch is causing a bug, fix the consuming code to match the installed version — do not touch the package files.
-- No Tailwind, NativeWind, or Styled Components.
+- No Styled Components. NativeWind/Tailwind is allowed (installed 2026-08-22) — layout/spacing utilities only, never for semantic colors (those stay on theme tokens).
 - No `fetch`; use project HTTP/transport layer only.
 - No raw colors or spacing in UI; use theme tokens.
 - No server data in Zustand; no feature logic in `src/shared/components/ui/` or `src/shared/stores/`.

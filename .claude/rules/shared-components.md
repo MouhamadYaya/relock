@@ -11,7 +11,7 @@ Components here are **stateless, themed primitives**. They form the UI kit used 
 ## Must
 - Accept only display-level props (text, callbacks, style overrides). No data-fetching, no React Query hooks, no Zustand selectors inside these files.
 - Use `useTheme()` for every color, spacing, radius, and typography value. No raw hex or numeric literals in `StyleSheet.create()`.
-- Use `StyleSheet.create()`. Inline styles only for values that are dynamically computed at render time.
+- Use `StyleSheet.create()`. Inline styles only for values that are dynamically computed at render time. Do not use NativeWind `className` here — these are the themed UI-kit primitives; NativeWind layout utilities belong in feature screens/components that consume this kit (see [styling.md](styling.md)).
 - Place feature-agnostic primitives (Button, Text, ScreenWrapper, OfflineBanner, …) in `ui/`. There is no `features/` sub-dir here — a domain-shaped component either belongs in `ui/` (if truly generic) or in the feature that owns it. If two features share it, promote to `ui/` or keep it in the feature closest to the data and accept the dependency direction.
 
 ## Must not
