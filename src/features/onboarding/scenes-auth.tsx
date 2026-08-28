@@ -1,6 +1,11 @@
 import * as AppleAuthentication from 'expo-apple-authentication'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Image, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated'
 import Svg, {
   Circle,
   ClipPath,
@@ -13,9 +18,9 @@ import Svg, {
   Stop,
 } from 'react-native-svg'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { GradientLine, Pill } from './bits'
+import { GradientLine } from './bits'
 import { Reveal } from './motion'
-import { OB } from './tokens'
+import { haptic, OB } from './tokens'
 
 // ─── Acte 5 · Compte (Apple / Google, avant le paywall) ─────────────────
 
@@ -27,7 +32,7 @@ const MOON = require('@assets/moon.png')
  * — l'asset partagé seul rendait ce côté trop terne face à la maquette.
  */
 function AuthOrb({ size }: { size: number }) {
-  const g = size * 2.3
+  const g = size * 1.9
   const r = size / 2
   return (
     <View style={{ width: size, height: size }} pointerEvents="none">
@@ -42,8 +47,8 @@ function AuthOrb({ size }: { size: number }) {
       >
         <Defs>
           <RadialGradient id="authOrbGlow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="#5B8CFF" stopOpacity={0.5} />
-            <Stop offset="45%" stopColor={OB.accent} stopOpacity={0.22} />
+            <Stop offset="0%" stopColor="#5B8CFF" stopOpacity={0.3} />
+            <Stop offset="45%" stopColor={OB.accent} stopOpacity={0.13} />
             <Stop offset="100%" stopColor={OB.accent} stopOpacity={0} />
           </RadialGradient>
         </Defs>
@@ -83,9 +88,9 @@ function AuthOrb({ size }: { size: number }) {
           cy={r}
           r={r - 1.1}
           stroke="url(#authRim)"
-          strokeWidth={2.2}
+          strokeWidth={1.6}
           fill="none"
-          opacity={0.9}
+          opacity={0.65}
         />
       </Svg>
     </View>
@@ -109,12 +114,12 @@ function AuthBackdrop() {
     <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
       <Defs>
         <LinearGradient id="authSky" x1="0%" y1="0%" x2="0%" y2="100%">
-          <Stop offset="0%" stopColor="#161233" />
+          <Stop offset="0%" stopColor="#0E0C1E" />
           <Stop offset="100%" stopColor={OB.bg} />
         </LinearGradient>
-        <RadialGradient id="authHalo" cx="50%" cy="32%" r="68%">
-          <Stop offset="0%" stopColor={OB.halo} stopOpacity={0.95} />
-          <Stop offset="55%" stopColor={OB.halo} stopOpacity={0.4} />
+        <RadialGradient id="authHalo" cx="50%" cy="30%" r="46%">
+          <Stop offset="0%" stopColor={OB.halo} stopOpacity={0.55} />
+          <Stop offset="55%" stopColor={OB.halo} stopOpacity={0.18} />
           <Stop offset="100%" stopColor={OB.bg} stopOpacity={0} />
         </RadialGradient>
       </Defs>
@@ -183,6 +188,69 @@ function LockGlyph() {
 }
 
 /**
+ * Bouton de connexion sociale — même geste (ressort + haptique) que `Pill`,
+ * mais avec un fond qui reste lisible sur le fond sombre de cet écran :
+ * le `kind="ghost"` de `Pill` (quasi transparent) s'y fondait complètement.
+ */
+function SocialButton({
+  label,
+  icon,
+  onPress,
+  disabled = false,
+  variant,
+}: {
+  label: string
+  icon: React.ReactNode
+  onPress: () => void
+  disabled?: boolean
+  variant: 'light' | 'dark'
+}) {
+  const scale = useSharedValue(1)
+  const aStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPressIn={() => {
+        scale.value = withSpring(0.965, { damping: 20, stiffness: 400 })
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 16, stiffness: 300 })
+      }}
+      onPress={() => {
+        haptic.tap()
+        onPress()
+      }}
+    >
+      <Animated.View
+        style={[
+          styles.socialBtn,
+          variant === 'light' ? styles.socialBtnLight : styles.socialBtnDark,
+          disabled && styles.socialBtnDisabled,
+          aStyle,
+        ]}
+      >
+        <View style={styles.socialBtnRow}>
+          {icon}
+          <Text
+            style={
+              variant === 'light'
+                ? styles.socialBtnLabelDark
+                : styles.socialBtnLabelLight
+            }
+          >
+            {label}
+          </Text>
+        </View>
+      </Animated.View>
+    </Pressable>
+  )
+}
+
+/**
  * Écran de compte, juste avant le paywall : la sphère lumineuse de
  * l'artefact réapparaît ici pour ancrer « sauvegarder » à « élévation ».
  * Sign in with Apple / Google — pas de mot de passe, pas de formulaire.
@@ -211,46 +279,48 @@ export function SceneAuth({
   return (
     <View style={styles.scene}>
       <AuthBackdrop />
-      <View style={styles.top}>
-        <Reveal index={0}>
-          <AuthOrb size={168} />
-        </Reveal>
-        <Reveal index={1} style={styles.title}>
-          <GradientLine text="Sauvegarde ta" size={35} />
-          <GradientLine text="progression." size={35} />
-        </Reveal>
-        <Reveal index={2}>
-          <Text style={styles.sub}>
-            Retrouve tes habitudes, tes blocages{'\n'}
-            et tes statistiques, synchronisés{'\n'}
-            en toute sécurité sur tous tes appareils.
-          </Text>
+      <View style={styles.content}>
+        <View style={styles.top}>
+          <Reveal index={0}>
+            <AuthOrb size={168} />
+          </Reveal>
+          <Reveal index={1} style={styles.title}>
+            <GradientLine text="Sauvegarde ta" size={35} />
+            <GradientLine text="progression." size={35} />
+          </Reveal>
+          <Reveal index={2}>
+            <Text style={styles.sub}>
+              Retrouve tes habitudes, tes blocages{'\n'}
+              et tes statistiques, synchronisés{'\n'}
+              en toute sécurité sur tous tes appareils.
+            </Text>
+          </Reveal>
+        </View>
+        <Reveal index={3} style={styles.bottom}>
+          {appleAvailable && (
+            <SocialButton
+              label="Continuer avec Apple"
+              icon={<AppleGlyph />}
+              onPress={onApple}
+              disabled={busy}
+              variant="light"
+            />
+          )}
+          <SocialButton
+            label="Continuer avec Google"
+            icon={<GoogleGlyph />}
+            onPress={onGoogle}
+            disabled={busy}
+            variant="dark"
+          />
+          <View style={styles.footnoteRow}>
+            <LockGlyph />
+            <Text style={styles.footnoteText}>
+              Tes données d'activité restent privées.
+            </Text>
+          </View>
         </Reveal>
       </View>
-      <Reveal index={3} style={styles.bottom}>
-        {appleAvailable && (
-          <Pill
-            label="Continuer avec Apple"
-            icon={<AppleGlyph />}
-            onPress={onApple}
-            disabled={busy}
-            glow
-          />
-        )}
-        <Pill
-          label="Continuer avec Google"
-          icon={<GoogleGlyph />}
-          onPress={onGoogle}
-          disabled={busy}
-          kind="ghost"
-        />
-        <View style={styles.footnoteRow}>
-          <LockGlyph />
-          <Text style={styles.footnoteText}>
-            Tes données d'activité restent privées.
-          </Text>
-        </View>
-      </Reveal>
     </View>
   )
 }
@@ -258,7 +328,11 @@ export function SceneAuth({
 // ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  scene: { flex: 1, paddingHorizontal: 20 },
+  // Pas de padding ici : `AuthBackdrop` est un enfant absoluteFill direct de
+  // `scene` — un padding sur ce parent l'aurait resserré (position:absolute
+  // se cale sur le bord de padding en RN), tronquant le fond aux bords.
+  scene: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 20 },
   top: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { marginTop: 26, alignSelf: 'stretch' },
   sub: {
@@ -270,6 +344,47 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   bottom: { gap: 10, paddingBottom: 10 },
+
+  socialBtn: {
+    minHeight: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  socialBtnLight: {
+    backgroundColor: OB.ink,
+    shadowColor: OB.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  socialBtnDark: {
+    backgroundColor: '#1B1830',
+    borderWidth: 1.4,
+    borderColor: 'rgba(180, 170, 255, 0.4)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  socialBtnDisabled: { opacity: 0.5 },
+  socialBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  socialBtnLabelDark: {
+    ...fonts.semiBold,
+    fontSize: 17,
+    letterSpacing: -0.2,
+    color: '#0B0B10',
+  },
+  socialBtnLabelLight: {
+    ...fonts.semiBold,
+    fontSize: 17,
+    letterSpacing: -0.2,
+    color: OB.ink,
+  },
+
   footnoteRow: {
     flexDirection: 'row',
     alignItems: 'center',
