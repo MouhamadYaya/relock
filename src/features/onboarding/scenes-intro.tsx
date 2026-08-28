@@ -248,7 +248,12 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
           />
           <Image
             source={require('../../../assets/welcome-phone-mockup.png')}
-            style={{ width: v(PHONE_W), aspectRatio: 941 / 1672 }}
+            // Hauteur explicite plutôt que `aspectRatio` seul : sur cette
+            // image locale, `aspectRatio` sans hauteur numérique se faisait
+            // ignorer (l'image se dimensionnait à sa taille intrinsèque,
+            // débordant largement l'écran) — width + height calculée à la
+            // main lève l'ambiguïté.
+            style={{ width: v(PHONE_W), height: v(PHONE_W) * (1672 / 941) }}
             resizeMode="contain"
           />
         </Reveal>
