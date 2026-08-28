@@ -85,7 +85,9 @@ export function Moon({
   glow?: boolean
   style?: StyleProp<ViewStyle>
 }) {
-  const g = size * 2.1
+  const g = size * 1.6
+  const blobR = size * 0.56
+  const offset = size * 0.22
   return (
     <View
       style={[{ width: size, height: size }, styles.moonWrap, style]}
@@ -102,13 +104,29 @@ export function Moon({
           }}
         >
           <Defs>
-            <RadialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor={OB.accent} stopOpacity={0.34} />
-              <Stop offset="60%" stopColor={OB.accent} stopOpacity={0.1} />
-              <Stop offset="100%" stopColor={OB.accent} stopOpacity={0} />
+            <RadialGradient id="moonGlowL" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={OB.grad[1]} stopOpacity={0.75} />
+              <Stop offset="50%" stopColor={OB.grad[0]} stopOpacity={0.36} />
+              <Stop offset="100%" stopColor={OB.grad[0]} stopOpacity={0} />
+            </RadialGradient>
+            <RadialGradient id="moonGlowR" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={OB.grad[2]} stopOpacity={0.72} />
+              <Stop offset="50%" stopColor={OB.grad[2]} stopOpacity={0.34} />
+              <Stop offset="100%" stopColor={OB.grad[2]} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Circle cx={g / 2} cy={g / 2} r={g / 2} fill="url(#moonGlow)" />
+          <Circle
+            cx={g / 2 - offset}
+            cy={g / 2}
+            r={blobR}
+            fill="url(#moonGlowL)"
+          />
+          <Circle
+            cx={g / 2 + offset}
+            cy={g / 2}
+            r={blobR}
+            fill="url(#moonGlowR)"
+          />
         </Svg>
       ) : null}
       <Image
