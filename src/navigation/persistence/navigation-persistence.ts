@@ -28,14 +28,36 @@ export function clearNavigationPersistence() {
 
 /** Flips once `useRestoreLastPath` has read (and possibly applied) the stored path. */
 let restoreDecided = false
+const restoreListeners = new Set<() => void>()
+
+function markRestoreDecided() {
+  if (restoreDecided) return
+  restoreDecided = true
+  for (const listener of restoreListeners) listener()
+}
 
 /** Saves the active path on every navigation, once restoration has had its chance to read it. */
 export function usePersistLastPath() {
   const pathname = usePathname()
+  const pathnameRef = useRef(pathname)
+  pathnameRef.current = pathname
+
   useEffect(() => {
     if (!restoreDecided) return
     persistLastPath(pathname)
   }, [pathname])
+
+  // Covers the case where restoration settles without the pathname ever
+  // changing (no deep link, no stored path to replace to) — the effect
+  // above would then never re-run, so persistence needs to be nudged here.
+  useEffect(() => {
+    if (restoreDecided) return
+    const onReady = () => persistLastPath(pathnameRef.current)
+    restoreListeners.add(onReady)
+    return () => {
+      restoreListeners.delete(onReady)
+    }
+  }, [])
 }
 
 /**
@@ -57,7 +79,7 @@ export function useRestoreLastPath(enabled: boolean) {
         if (lastPath) router.replace(lastPath as Href)
       })
       .finally(() => {
-        restoreDecided = true
+        markRestoreDecided()
       })
   }, [enabled])
 }
