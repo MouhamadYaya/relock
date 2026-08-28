@@ -26,10 +26,14 @@ export function clearNavigationPersistence() {
   navigationStorage.delete(KEY)
 }
 
-/** Saves the active path on every navigation. */
+/** Flips once `useRestoreLastPath` has read (and possibly applied) the stored path. */
+let restoreDecided = false
+
+/** Saves the active path on every navigation, once restoration has had its chance to read it. */
 export function usePersistLastPath() {
   const pathname = usePathname()
   useEffect(() => {
+    if (!restoreDecided) return
     persistLastPath(pathname)
   }, [pathname])
 }
@@ -46,10 +50,14 @@ export function useRestoreLastPath(enabled: boolean) {
     if (!enabled || didRestore.current) return
     didRestore.current = true
 
-    Linking.getInitialURL().then(url => {
-      if (url) return
-      const lastPath = loadLastPath()
-      if (lastPath) router.replace(lastPath as Href)
-    })
+    Linking.getInitialURL()
+      .then(url => {
+        if (url) return
+        const lastPath = loadLastPath()
+        if (lastPath) router.replace(lastPath as Href)
+      })
+      .finally(() => {
+        restoreDecided = true
+      })
   }, [enabled])
 }

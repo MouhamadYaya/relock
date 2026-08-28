@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react'
+import * as AppleAuthentication from 'expo-apple-authentication'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
 import Svg, {
   Circle,
@@ -18,7 +19,7 @@ import { OB } from './tokens'
 
 // ─── Acte 5 · Compte (Apple / Google, avant le paywall) ─────────────────
 
-const MOON = require('../../../assets/moon.png')
+const MOON = require('@assets/moon.png')
 
 /**
  * Sphère de l'écran de compte : reprend l'image de `Moon` (bits.tsx) mais
@@ -195,6 +196,18 @@ export function SceneAuth({
   onGoogle: () => void
   busy?: boolean
 }) {
+  const [appleAvailable, setAppleAvailable] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    AppleAuthentication.isAvailableAsync().then(available => {
+      if (mounted) setAppleAvailable(available)
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   return (
     <View style={styles.scene}>
       <AuthBackdrop />
@@ -215,13 +228,15 @@ export function SceneAuth({
         </Reveal>
       </View>
       <Reveal index={3} style={styles.bottom}>
-        <Pill
-          label="Continuer avec Apple"
-          icon={<AppleGlyph />}
-          onPress={onApple}
-          disabled={busy}
-          glow
-        />
+        {appleAvailable && (
+          <Pill
+            label="Continuer avec Apple"
+            icon={<AppleGlyph />}
+            onPress={onApple}
+            disabled={busy}
+            glow
+          />
+        )}
         <Pill
           label="Continuer avec Google"
           icon={<GoogleGlyph />}

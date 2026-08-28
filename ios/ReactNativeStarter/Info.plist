@@ -35,17 +35,13 @@
 			</array>
 		</dict>
 		<!--
-			Sign in with Google: replace with the REVERSED form of
-			GOOGLE_IOS_CLIENT_ID (.env) — e.g. a client ID of
-			123-abc.apps.googleusercontent.com becomes
-			com.googleusercontent.apps.123-abc. Get it from Google Cloud
-			Console → Credentials → OAuth client ID (iOS). Until replaced,
-			this placeholder is inert (no scheme collision, no crash).
+			Sign in with Google: reversed form of GOOGLE_IOS_CLIENT_ID (.env).
+			Keep these two in sync if the OAuth client is ever recreated.
 		-->
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.REPLACE_ME</string>
+				<string>com.googleusercontent.apps.894706345603-lgu5th2v330r3fl569ostmkpp07fq9h8</string>
 			</array>
 		</dict>
 	</array>

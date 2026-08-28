@@ -16,7 +16,7 @@ Navigation runs on **Expo Router** (file-based routing, `expo-router` ~6.x on Ex
 - **Imperative navigation** outside a screen's own render (services, event handlers): `import { router } from 'expo-router'` → `router.push(...)`, `router.navigate(...)`, `router.replace(...)`, `router.back()`.
 
 ## Provider order (must match `app/_layout.tsx`)
-```
+```tsx
 i18n side-effect import  ← module-level, above the component
 GestureHandlerRootView
   SafeAreaProvider

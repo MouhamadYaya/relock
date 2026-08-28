@@ -74,8 +74,9 @@ function AppShell() {
   // Android: exit app from root-level leaves (main tabs, onboarding).
   useBackButtonHandler(
     pathname =>
-      pathname === '/(tabs)/home' ||
-      pathname === '/(tabs)/activity' ||
+      pathname === '/home' ||
+      pathname === '/blocks' ||
+      pathname === '/activity' ||
       pathname === '/onboarding',
   )
 
