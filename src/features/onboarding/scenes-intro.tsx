@@ -217,8 +217,19 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
   // à l'échelle "pleine largeur", puis on corrige l'échelle une fois si ça
   // dépasse l'espace disponible. Convergent en un aller-retour (la 2de
   // mesure ne fait que confirmer, `measuredH` n'est donc capturé qu'une
-  // fois — cf. la garde dans l'onLayout).
+  // fois — cf. la garde dans l'onLayout). Invalidée par l'effet ci-dessous
+  // dès que la fenêtre ou les safe-area insets changent (rotation, iPad en
+  // split-view…), sinon une mesure figée à l'ancienne orientation fausserait
+  // l'échelle recalculée avec le nouveau `widthScale`.
   const [measuredH, setMeasuredH] = useState<number | null>(null)
+  // Dépendances volontaires — le corps ne les lit pas, il ne fait que
+  // réinitialiser measuredH quand l'une d'elles change (pattern React
+  // « reset state on prop change »), pour redéclencher une mesure fraîche
+  // via l'onLayout.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: voir ci-dessus
+  useEffect(() => {
+    setMeasuredH(null)
+  }, [windowW, windowH, insets.top, insets.bottom])
   const scale =
     measuredH && measuredH > availableH
       ? widthScale * (availableH / measuredH)
