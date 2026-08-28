@@ -9,7 +9,4 @@ export type AuthSession = {
   email: string
 }
 
-export type {
-  LoginRequest,
-  LoginResponse,
-} from '@/features/auth/services/auth/auth.schemas'
+export type { SupabaseAuthResult } from '@/features/auth/services/auth/auth.schemas'

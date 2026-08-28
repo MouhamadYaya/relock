@@ -1,15 +1,19 @@
-import { CommonActions } from '@react-navigation/native'
-import { DeviceEventEmitter, Linking, NativeModules } from 'react-native'
-import { StatsService } from '@/features/blocking/services/stats/stats.service'
+import { router } from 'expo-router'
 import {
-  navigate,
-  navigationRef,
-} from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
+  DeviceEventEmitter,
+  DevSettings,
+  Linking,
+  NativeModules,
+} from 'react-native'
+import { constants } from '@/config/constants'
+import { StatsService } from '@/features/blocking/services/stats/stats.service'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { kvStorage } from '@/shared/services/storage/mmkv'
 
 /** Événement interne (dev) : force période/décalage de l'écran Activité. */
 export const DEV_EVENT_ACTIVITY_PERIOD = 'relock-dev-activity-period'
+/** Événement interne (dev) : saute l'onboarding directement à une étape. */
+export const DEV_EVENT_ONBOARDING_JUMP = 'relock-dev-onboarding-jump'
 
 /**
  * DEV uniquement : pont de pilotage par deep link, pour tester l'app SANS
@@ -51,22 +55,30 @@ async function run(cmd: string): Promise<void> {
       return
     }
     case 'home':
-      navigationRef.dispatch(
-        CommonActions.navigate(ROUTES.ROOT_APP, { screen: ROUTES.TAB_HOME }),
-      )
+      router.navigate('/(tabs)/home')
       console.log(`${TAG} navigate home`)
       return
     case 'activity':
-      navigationRef.dispatch(
-        CommonActions.navigate(ROUTES.ROOT_APP, {
-          screen: ROUTES.TAB_ACTIVITY,
-        }),
-      )
+      router.navigate('/(tabs)/activity')
       console.log(`${TAG} navigate activity`)
       return
     case 'settings':
-      navigate(ROUTES.SETTINGS)
+      router.navigate('/settings')
       console.log(`${TAG} navigate settings`)
+      return
+    case 'onboarding-reset':
+      // Efface le drapeau et relance le bundle JS : l'app redémarre sur
+      // l'onboarding (utile pour la QA visuelle d'un écran narratif donné).
+      kvStorage.delete(constants.ONBOARDING_DONE)
+      console.log(`${TAG} onboarding réinitialisé, rechargement…`)
+      DevSettings.reload()
+      return
+    case 'onboarding-complete':
+      // Symétrique de `onboarding-reset` : remet le drapeau pour revenir
+      // directement à l'app principale après une QA visuelle.
+      kvStorage.setString(constants.ONBOARDING_DONE, '1')
+      console.log(`${TAG} onboarding marqué terminé, rechargement…`)
+      DevSettings.reload()
       return
     default: {
       // `activity-period/<période 0|1|2>/<décalage>` : pilote les filtres
@@ -78,6 +90,14 @@ async function run(cmd: string): Promise<void> {
           offset: Number(m[2]),
         })
         console.log(`${TAG} activity period=${m[1]} offset=${m[2]}`)
+        return
+      }
+      // `onboarding/<step id>` : saute directement à une étape narrative
+      // (ex. `onboarding/auth`) sans rejouer tout le parcours à chaque reload.
+      const om = cmd.match(/^onboarding\/([a-z]+)$/)
+      if (om) {
+        DeviceEventEmitter.emit(DEV_EVENT_ONBOARDING_JUMP, { step: om[1] })
+        console.log(`${TAG} onboarding jump=${om[1]}`)
         return
       }
       console.log(`${TAG} commande inconnue: ${cmd}`)

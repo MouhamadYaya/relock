@@ -3,34 +3,27 @@
  * LAYER: app/services/auth
  * ---------------------------------------------------------------------
  * PURPOSE:
- *   Convert raw validated DTOs (from API) into domain-friendly models,
- *   ensuring UI never sees transport-level shapes.
- *
- * RESPONSIBILITIES:
- *   - Map LoginResponse → AuthSession model.
- *   - Normalize missing/optional fields.
+ *   Convert raw validated Supabase auth results into domain-friendly
+ *   models, ensuring UI never sees transport-level shapes.
  *
  * DATA-FLOW:
  *   validated DTO (auth.schemas)
  *      → AuthMapper.toAuthSession()
  *         → domain model
  *         → UI / stores / service consumers
- *
- * EXTENSION GUIDELINES:
- *   - Add mappers for registration, MFA, profile update, etc.
  * ---------------------------------------------------------------------
  */
 
 import type { AuthSession } from '@/features/auth/types'
-import type { LoginResponse } from './auth.schemas'
+import type { SupabaseAuthResult } from './auth.schemas'
 
 export const AuthMapper = {
-  toAuthSession(dto: LoginResponse): AuthSession {
+  toAuthSession(dto: SupabaseAuthResult): AuthSession {
     return {
-      token: dto.accessToken,
-      refreshToken: dto.refreshToken,
+      token: dto.session.access_token,
+      refreshToken: dto.session.refresh_token,
       userId: dto.user.id,
-      email: dto.user.email,
+      email: dto.user.email ?? '',
     }
   },
 }

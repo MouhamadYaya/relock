@@ -172,38 +172,6 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
   )
 }
 
-// ─── Acte 4 · Sauvegarde (factice, en attendant OAuth) ──────────────────
-
-export function SceneSignin({ onNext }: { onNext: () => void }) {
-  return (
-    <View style={styles.scene}>
-      <View style={styles.permTop}>
-        <Reveal index={0} style={{ alignItems: 'center', marginTop: 10 }}>
-          <Moon size={76} glow />
-        </Reveal>
-        <Reveal index={1}>
-          <Text style={[styles.h1, styles.center]}>
-            Sauvegarde ta progression.
-          </Text>
-        </Reveal>
-        <Reveal index={2}>
-          <Text style={[styles.subLeft, styles.center]}>
-            Ta série et tes statistiques te suivront, même si tu changes
-            d'iPhone.
-          </Text>
-        </Reveal>
-        <Reveal index={3} style={styles.signinBtns}>
-          <Pill label=" Continuer avec Apple" onPress={onNext} />
-          <Pill label="Continuer avec Google" onPress={onNext} kind="ghost" />
-        </Reveal>
-      </View>
-      <Reveal index={4} style={styles.bottom}>
-        <GhostLink label="Plus tard" onPress={onNext} dim />
-      </Reveal>
-    </View>
-  )
-}
-
 // ─── Acte 5 · Paywall (niveau Opal, paiement non branché) ───────────────
 
 const TIMELINE = [
@@ -419,8 +387,6 @@ const styles = StyleSheet.create({
   },
 
   permTop: { flex: 1, paddingTop: 12 },
-
-  signinBtns: { gap: 10, marginTop: 30 },
 
   paywallTopRow: { alignItems: 'flex-end', paddingTop: 2 },
   paywallBody: { flex: 1 },

@@ -1,4 +1,5 @@
 import { IconName } from '@assets/icons'
+import { router } from 'expo-router'
 import React from 'react'
 import {
   Alert,
@@ -18,8 +19,6 @@ import {
 } from '@/features/notifications/prefs'
 import { useProfile, useUpdateName } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
-import { goBack, navigate } from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -246,7 +245,7 @@ export default function SettingsScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Retour à l'accueil"
-              onPress={() => goBack()}
+              onPress={() => router.back()}
               hitSlop={8}
               style={styles.backBtn}
             >
@@ -285,13 +284,13 @@ export default function SettingsScreen() {
               icon={IconName.MOON}
               label="Apparence"
               value={THEME_LABEL[mode] ?? 'Sombre'}
-              onPress={() => navigate(ROUTES.MODAL_THEME_PICKER)}
+              onPress={() => router.push('/theme-picker')}
             />
             <Row
               icon={IconName.GLOBE}
               label="Langue"
               value={LANGUAGE_LABEL[i18n.language] ?? i18n.language}
-              onPress={() => navigate(ROUTES.MODAL_LANGUAGE_PICKER)}
+              onPress={() => router.push('/language-picker')}
               last
             />
           </View>

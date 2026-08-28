@@ -37,8 +37,8 @@ export function SceneBeat({ onNext }: { onNext: () => void }) {
   }, [])
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.beatCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center gap-3">
         <Animated.Text
           entering={FadeInDown.duration(700).easing(Easing.out(Easing.cubic))}
           style={styles.beatLine}
@@ -55,7 +55,7 @@ export function SceneBeat({ onNext }: { onNext: () => void }) {
         ) : null}
       </View>
       {stage >= 2 ? (
-        <Animated.View entering={FadeIn.duration(400)} style={styles.bottom}>
+        <Animated.View entering={FadeIn.duration(400)} className="gap-2 pb-2.5">
           <Pill label="Voir la vérité" onPress={onNext} />
         </Animated.View>
       ) : null}
@@ -121,12 +121,12 @@ export function SceneMirror({
   }))
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.mirrorCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center">
         <Reveal index={0}>
           <Text style={styles.mirrorLabel}>À ce rythme, tu perds environ</Text>
         </Reveal>
-        <Animated.View style={[styles.mirrorHero, pulseStyle]}>
+        <Animated.View className="items-center mt-3.5" style={pulseStyle}>
           <GradientLine text={`${n} jours`} size={76} />
           <Text style={styles.mirrorPerYear}>par an</Text>
         </Animated.View>
@@ -137,7 +137,7 @@ export function SceneMirror({
         </Reveal>
       </View>
       {settled ? (
-        <Animated.View entering={FadeIn.duration(400)} style={styles.bottom}>
+        <Animated.View entering={FadeIn.duration(400)} className="gap-2 pb-2.5">
           <Pill label="Je veux changer ça" onPress={onNext} />
           <Footnote
             text={`Calcul : ${hours} h par jour × 365, converties en journées de 24 h.`}
@@ -152,8 +152,8 @@ export function SceneMirror({
 
 export function SceneReversal({ onNext }: { onNext: () => void }) {
   return (
-    <View style={styles.scene}>
-      <View style={styles.beatCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center gap-3">
         <Reveal index={0}>
           <Text style={styles.reversalTitle}>Tu n'es pas le problème.</Text>
         </Reveal>
@@ -167,7 +167,7 @@ export function SceneReversal({ onNext }: { onNext: () => void }) {
           <StudyLine text="Merci pour ton honnêteté. On peut construire, maintenant." />
         </Reveal>
       </View>
-      <Reveal index={3} style={styles.bottom}>
+      <Reveal index={3} className="gap-2 pb-2.5">
         <Pill label="Construire mon plan" onPress={onNext} />
       </Reveal>
     </View>
@@ -193,8 +193,8 @@ export function ScenePlan({
       : apps.slice(0, 2).join(' et ') +
         (apps.length > 2 ? ', entre autres' : '')
   return (
-    <View style={styles.scene}>
-      <View style={styles.beatCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center gap-3">
         <Reveal index={0}>
           <Text style={styles.reversalTitle}>Ton plan, en une phrase.</Text>
         </Reveal>
@@ -206,7 +206,7 @@ export function ScenePlan({
           </Text>
         </Reveal>
       </View>
-      <Reveal index={2} style={styles.bottom}>
+      <Reveal index={2} className="gap-2 pb-2.5">
         <Pill label="Générer mon plan" onPress={onNext} />
       </Reveal>
     </View>
@@ -247,15 +247,15 @@ export function SceneLoading({ onDone }: { onDone: () => void }) {
   const checked = Math.floor((pct / 100) * LOAD_STEPS.length)
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.loadingCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center">
         <GradientLine text={`${pct} %`} size={64} />
         <View style={styles.loadTrack}>
           <View style={[styles.loadFill, { width: `${pct}%` }]} />
         </View>
-        <View style={styles.loadList}>
+        <View className="mt-7 gap-3.5">
           {LOAD_STEPS.map((s, i) => (
-            <View key={s} style={styles.loadRow}>
+            <View key={s} className="flex-row items-center gap-3">
               <View
                 style={[styles.loadDot, i < checked && styles.loadDotDone]}
               />
@@ -289,9 +289,9 @@ export function SceneSuccess({
 }) {
   const list = apps.length === 0 ? 'Tes apps à scroll' : apps.join(', ')
   return (
-    <View style={styles.scene}>
-      <View style={styles.successTop}>
-        <Reveal index={0} style={{ alignItems: 'center' }}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 pt-[26px] gap-[18px]">
+        <Reveal index={0} className="items-center">
           <Moon size={84} glow />
         </Reveal>
         <Reveal index={1}>
@@ -299,7 +299,7 @@ export function SceneSuccess({
             Ton plan est prêt{name ? `, ${name}` : ''}.
           </Text>
         </Reveal>
-        <View style={styles.successCards}>
+        <View className="gap-2.5 mt-2">
           {[
             { k: 'Apps bloquées', v: list },
             { k: 'Fenêtre critique', v: momentLabel },
@@ -312,7 +312,7 @@ export function SceneSuccess({
           ))}
         </View>
       </View>
-      <Reveal index={5} style={styles.bottom}>
+      <Reveal index={5} className="gap-2 pb-2.5">
         <Pill label="Sceller mon engagement" onPress={onNext} />
       </Reveal>
     </View>
@@ -417,8 +417,8 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
   }))
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.ritualCenter}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 items-center justify-center">
         <Reveal index={0}>
           <Text style={styles.reversalTitle}>
             {locked ? 'Engagement scellé.' : 'Scellons ton engagement.'}
@@ -431,7 +431,11 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
               : "Maintiens la lune jusqu'au verrou."}
           </Text>
         </Reveal>
-        <Reveal index={2} style={styles.ritualStage}>
+        <Reveal
+          index={2}
+          className="items-center justify-center mt-10"
+          style={{ width: RING_R * 2 + 20, height: RING_R * 2 + 20 }}
+        >
           <Svg
             width={RING_R * 2 + 20}
             height={RING_R * 2 + 20}
@@ -486,10 +490,6 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
 // ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  scene: { flex: 1, paddingHorizontal: 20 },
-  bottom: { gap: 8, paddingBottom: 10 },
-
-  beatCenter: { flex: 1, justifyContent: 'center', gap: 12 },
   beatLine: {
     ...fonts.bold,
     fontSize: 30,
@@ -499,14 +499,12 @@ const styles = StyleSheet.create({
   },
   beatAccent: { color: OB.accent },
 
-  mirrorCenter: { flex: 1, justifyContent: 'center' },
   mirrorLabel: {
     ...fonts.medium,
     fontSize: 17,
     color: OB.ink55,
     textAlign: 'center',
   },
-  mirrorHero: { alignItems: 'center', marginTop: 14 },
   mirrorPerYear: {
     ...fonts.semiBold,
     fontSize: 19,
@@ -554,7 +552,6 @@ const styles = StyleSheet.create({
   },
   planAccent: { color: OB.accent },
 
-  loadingCenter: { flex: 1, justifyContent: 'center' },
   loadTrack: {
     height: 6,
     borderRadius: 3,
@@ -563,8 +560,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   loadFill: { height: 6, borderRadius: 3, backgroundColor: OB.accent },
-  loadList: { marginTop: 28, gap: 14 },
-  loadRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   loadDot: {
     width: 18,
     height: 18,
@@ -576,7 +571,6 @@ const styles = StyleSheet.create({
   loadText: { ...fonts.medium, fontSize: 15, color: OB.ink40 },
   loadTextDone: { color: OB.ink },
 
-  successTop: { flex: 1, paddingTop: 26, gap: 18 },
   successTitle: {
     ...fonts.bold,
     fontSize: 28,
@@ -584,7 +578,6 @@ const styles = StyleSheet.create({
     color: OB.ink,
     textAlign: 'center',
   },
-  successCards: { gap: 10, marginTop: 8 },
   successCard: {
     backgroundColor: OB.card,
     borderRadius: 18,
@@ -594,20 +587,12 @@ const styles = StyleSheet.create({
   successK: { ...fonts.medium, fontSize: 12.5, color: OB.ink40 },
   successV: { ...fonts.semiBold, fontSize: 16, color: OB.ink, marginTop: 3 },
 
-  ritualCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   ritualSub: {
     ...fonts.regular,
     fontSize: 16,
     color: OB.ink55,
     textAlign: 'center',
     marginTop: 10,
-  },
-  ritualStage: {
-    width: RING_R * 2 + 20,
-    height: RING_R * 2 + 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 40,
   },
   particle: {
     position: 'absolute',

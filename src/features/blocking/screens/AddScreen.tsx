@@ -1,5 +1,6 @@
 import { IconName } from '@assets/icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { router } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
@@ -30,7 +31,6 @@ import {
   hasAskedNotifPermission,
   markNotifPermissionAsked,
 } from '@/features/notifications/prefs'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
@@ -338,7 +338,7 @@ export default function AddScreen() {
       SCREEN_H,
       { duration: 240, easing: Easing.in(Easing.cubic) },
       fin => {
-        if (fin) runOnJS(goBack)()
+        if (fin) runOnJS(router.back)()
       },
     )
   }

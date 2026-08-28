@@ -9,17 +9,24 @@ import type {
   WebViewNavigation,
   WebViewProgressEvent,
 } from 'react-native-webview/lib/WebViewTypes'
-import type { RootStackParamList } from '@/navigation/root-param-list'
-import { ROUTES } from '@/navigation/routes'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { Text } from '@/shared/components/ui/Text'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { useTheme } from '@/shared/theme/useTheme'
 
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  typeof ROUTES.HOME_STORY
->
+// Not currently wired to any route (kept for future re-use) — local param
+// type instead of the app-wide param list so this file compiles standalone.
+type StoryScreenParams = {
+  id: string
+  title: string
+  url?: string
+  points?: number
+  author?: string
+  numComments?: number
+  time: string
+  domain?: string
+}
+type Props = NativeStackScreenProps<{ Story: StoryScreenParams }, 'Story'>
 
 // ─── Layout constants (derived from design tokens, never raw numbers) ─────────
 const HEADER_HEIGHT = spacing.xxxxxl // 56 — matches ScreenHeader

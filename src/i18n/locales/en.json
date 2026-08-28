@@ -6,25 +6,12 @@
     "offline_banner": "You're offline. Showing cached data.",
     "loading": "Loading…"
   },
-  "auth": {
-    "a11y_toggle_theme": "Toggle color theme",
-    "welcome": "Welcome back",
-    "subtitle": "Sign in to continue to your account",
-    "mock_demo_hint": "Demo: fields are pre-filled — tap Sign in (mock API).",
-    "or": "OR",
-    "email": "Email",
-    "email_placeholder": "you@example.com",
-    "password": "Password",
-    "forgot_password": "Forgot?",
-    "password_placeholder": "••••••••",
-    "signing_in": "Signing in…",
-    "sign_in": "Sign in",
-    "no_account": "Don't have an account?",
-    "sign_up": "Sign up",
-    "terms_prefix": "By continuing, you agree to our",
-    "terms_of_service": "Terms of Service",
-    "and": "and",
-    "privacy_policy": "Privacy Policy"
+  "navigation": {
+    "tabs": {
+      "home": "Home",
+      "blocks": "Block",
+      "activity": "Activity"
+    }
   },
   "home": {
     "stat_done": "Done",

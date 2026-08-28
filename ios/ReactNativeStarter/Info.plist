@@ -34,6 +34,20 @@
 				<string>relock</string>
 			</array>
 		</dict>
+		<!--
+			Sign in with Google: replace with the REVERSED form of
+			GOOGLE_IOS_CLIENT_ID (.env) — e.g. a client ID of
+			123-abc.apps.googleusercontent.com becomes
+			com.googleusercontent.apps.123-abc. Get it from Google Cloud
+			Console → Credentials → OAuth client ID (iOS). Until replaced,
+			this placeholder is inert (no scheme collision, no crash).
+		-->
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE_ME</string>
+			</array>
+		</dict>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

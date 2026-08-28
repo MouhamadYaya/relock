@@ -17,7 +17,7 @@
  * ⚠️ « Modifier » (prévu au §6) est absent : il demande un mode ÉDITION dans le
  * flow de création, que le §7 demandait de ne pas toucher. À trancher.
  */
-import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, {
@@ -40,9 +40,6 @@ import {
 } from '@/features/blocking/screens/BlocagesScreen'
 import { deriveSession, isSessionLocked } from '@/features/blocking/session'
 import type { BlockRuleView } from '@/features/blocking/types'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
-import type { RootStackParamList } from '@/navigation/root-param-list'
-import type { ROUTES } from '@/navigation/routes'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -69,11 +66,6 @@ const f = (w: keyof typeof FW) => FW[w]
 
 /** Délai d'inertie du bouton destructeur (secondes). */
 const ARM_SECONDS = 8
-
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  typeof ROUTES.BLOCK_DETAIL
->
 
 const hhmm = (d: Date) =>
   d.getMinutes()
@@ -200,10 +192,9 @@ function Row({
   )
 }
 
-export default function BlockDetailScreen({ route }: Props) {
-  const routeRule = route.params?.rule
-  // Les paramètres de navigation sont une PHOTO prise à l'ouverture : on relit
-  // la règle vivante dans le cache (la liste est la source de vérité).
+export default function BlockDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>()
+  // La règle vivante vient toujours du cache (la liste est la source de vérité).
   const { rules } = useBlockRulesQuery()
   const del = useDeleteRuleMutation()
   const suspend = useSuspendRuleMutation()
@@ -225,7 +216,7 @@ export default function BlockDetailScreen({ route }: Props) {
     return () => clearInterval(id)
   }, [])
 
-  const rule = rules.find(r => r.id === routeRule?.id) ?? routeRule
+  const rule = rules.find(r => r.id === id)
   if (!rule) return null
 
   const s = deriveSession(rule, now)
@@ -255,7 +246,7 @@ export default function BlockDetailScreen({ route }: Props) {
   }
 
   return (
-    <HalfSheet onClose={goBack}>
+    <HalfSheet onClose={() => router.back()}>
       {close => (
         <View style={styles.wrap}>
           {/* En-tête : l'indicateur en grand, le nom, une ligne de contexte. */}

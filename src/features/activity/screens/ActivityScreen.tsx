@@ -1,4 +1,5 @@
 import { IconName } from '@assets/icons'
+import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
@@ -12,8 +13,6 @@ import {
   View,
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
-import { navigate } from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTimeReport } from '@/shared/native/ScreenTimeReport'
@@ -237,7 +236,7 @@ export default function ActivityScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Réglages"
-              onPress={() => navigate(ROUTES.SETTINGS)}
+              onPress={() => router.push('/settings')}
               hitSlop={8}
               style={styles.iconBtn}
             >
@@ -368,24 +367,31 @@ export default function ActivityScreen() {
           // React la remonte donc À NEUF, ce qui force une connexion de rendu
           // fraîche à l'extension. Un seul rapport vivant à la fois = jamais de
           // course, et jamais de surface distante morte réaffichée.
-          <ScreenTimeReport
-            key={`${period}-${offset}-${dateEpoch}-${reloadKey}`}
-            style={styles.report}
-            mode="usage"
-            period={period}
-            offset={offset}
-            fallback={
-              <View style={[styles.report, styles.fallback]}>
-                <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                  Disponible sur iPhone
-                </Text>
-                <Text style={[f(400), styles.fallbackSub]}>
-                  Le vrai temps d'écran par app (avec les icônes) est fourni par
-                  iOS et ne s'affiche que sur un iPhone physique.
-                </Text>
-              </View>
-            }
-          />
+          //
+          // Fond explicite : tant que l'extension DeviceActivityReport n'a
+          // rien à peindre (calcul en cours, extension tuée), elle ne rend
+          // rien — sans ce fond, ce blanc système serait échantillonné par la
+          // tab bar Liquid Glass (iOS 26) et la ferait paraître blanche.
+          <View style={[styles.report, { backgroundColor: C.bg }]}>
+            <ScreenTimeReport
+              key={`${period}-${offset}-${dateEpoch}-${reloadKey}`}
+              style={styles.report}
+              mode="usage"
+              period={period}
+              offset={offset}
+              fallback={
+                <View style={[styles.report, styles.fallback]}>
+                  <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
+                    Disponible sur iPhone
+                  </Text>
+                  <Text style={[f(400), styles.fallbackSub]}>
+                    Le vrai temps d'écran par app (avec les icônes) est fourni
+                    par iOS et ne s'affiche que sur un iPhone physique.
+                  </Text>
+                </View>
+              }
+            />
+          </View>
         )}
       </View>
     </ScreenWrapper>

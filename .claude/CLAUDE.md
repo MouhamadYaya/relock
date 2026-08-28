@@ -93,12 +93,12 @@ npm run android:build:release   # Android
 ## Coding Rules
 
 - Use path aliases `@/` (maps to `src/`) and `@assets/` (maps to `assets/`) only (e.g. `@/navigation/`, `@/shared/components/ui/`, `@assets/icons/logo.svg`); no deep relative imports; `npm run check:imports`.
-- Prefer `StyleSheet.create()` over inline styles; inline only for dynamic values; no raw colors/spacing/fonts — theme tokens only.
+- Prefer `StyleSheet.create()` over inline styles; inline only for dynamic values; no raw colors/spacing/fonts — theme tokens only. NativeWind `className` is allowed for layout/spacing utilities on new code; semantic colors still go through `useTheme()`, never Tailwind color classes (see [.claude/rules/styling.md](rules/styling.md)).
 - No `any`; use `unknown` and type guards when uncertain.
 - Async: handle loading, success, and error; React Query for server state; mutations with `meta.tags` and targeted invalidation.
 - Platform-specific code: use `Platform.select()` or `.ios.tsx`/`.android.tsx`.
 - User-facing strings via `src/i18n/`; `useT()` / `t()`.
-- No new dependencies without RFC/agreed process. No Tailwind, NativeWind, Redux, Styled Components.
+- No new dependencies without RFC/agreed process. No Redux, Styled Components. NativeWind/Tailwind is installed and allowed (see rule above).
 - Ask for missing context when unclear.
 - Use full file paths when outputting code.
 
@@ -149,7 +149,7 @@ Same **topic-to-doc** matrix as [AGENTS.md#documentation-map](../AGENTS.md#docum
 | [AGENTS.md](../AGENTS.md) | Agents/humans: rules, where code lives, doc map |
 | This file | Claude Code stack reference + commands |
 | [docs/development.md](../docs/development.md) | Hooks, architecture, icons, i18n, npm scripts |
-| [.claude/rules/](rules/) | Scoped agent rules: assets, navigation, state, react-query, performance, security, i18n, testing, features, shared-components, shared-services, config |
+| [.claude/rules/](rules/) | Scoped agent rules: assets, navigation, state, react-query, performance, security, i18n, testing, features, shared-components, shared-services, config, styling |
 | [docs/OPERATIONS.md](../docs/OPERATIONS.md) | Sentry, Maestro, CI, OTA, publishing |
 | [docs/OFFLINE.md](../docs/OFFLINE.md) | Offline stack |
 | [docs/permissions-bare-rn.md](../docs/permissions-bare-rn.md) | Permission catalog |
@@ -168,7 +168,7 @@ Figma MCP is configured for design-to-code (get_design_context, etc.). Use for F
 - Do NOT use `fetch`; use project HTTP/transport only.
 - Do NOT put feature logic in `src/shared/components/ui/` or `src/shared/stores/`.
 - Do NOT use raw colors/spacing/fonts in UI; use theme tokens.
-- Do NOT use Tailwind, NativeWind, or Styled Components.
+- Do NOT use Styled Components. NativeWind/Tailwind is allowed for layout/spacing — never for semantic colors.
 - Do NOT create screens outside feature structure; use `src/features/<feature>/screens/`.
 - Do NOT use deep relative imports; use path aliases only (enforced by check:imports).
 - Do NOT forget to run `npm run gen:icons` and `npm run check:icons` when adding/changing SVGs under assets.

@@ -30,8 +30,13 @@ class AppDelegate: ExpoAppDelegate {
 
     window = UIWindow(frame: UIScreen.main.bounds)
 
+    // "main" — pas "ReactNativeStarter" — car `expo-router/entry` (désormais
+    // le point d'entrée JS, cf. package.json `main`) enregistre le composant
+    // racine via `expo.registerRootComponent`, qui appelle toujours
+    // `AppRegistry.registerComponent('main', …)`, quel que soit le nom de
+    // l'app dans app.json.
     factory.startReactNative(
-      withModuleName: "ReactNativeStarter",
+      withModuleName: "main",
       in: window,
       launchOptions: launchOptions
     )

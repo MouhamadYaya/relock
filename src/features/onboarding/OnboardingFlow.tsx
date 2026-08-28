@@ -1,14 +1,12 @@
-import React, { useCallback, useRef, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  navigationRef,
-  resetRoot,
-} from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
-import { getPostOnboardingRoute, setOnboardingDone } from '@/session/bootstrap'
+import { completeOnboarding } from '@/session/bootstrap'
+import { DEV_EVENT_ONBOARDING_JUMP } from '@/session/dev-test-bridge'
+import { useSocialSignIn } from '@/session/useSocialSignIn'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { showErrorToast } from '@/shared/utils/toast'
 import {
   BackBtn,
   ChoiceCard,
@@ -18,6 +16,7 @@ import {
   StudyLine,
 } from './bits'
 import { enterBack, enterFwd, exitBack, exitFwd, Reveal } from './motion'
+import { SceneAuth } from './scenes-auth'
 import {
   SceneDemo,
   SceneHours,
@@ -31,7 +30,6 @@ import {
   SceneNotifs,
   ScenePaywall,
   ScenePermission,
-  SceneSignin,
 } from './scenes-power'
 import {
   SceneBeat,
@@ -75,7 +73,7 @@ type StepId =
   | 'ritual'
   | 'permission'
   | 'notifs'
-  | 'signin'
+  | 'auth'
   | 'paywall'
   | 'artifact'
 
@@ -98,7 +96,7 @@ const STEPS: StepId[] = [
   'ritual',
   'permission',
   'notifs',
-  'signin',
+  'auth',
   'paywall',
   'artifact',
 ]
@@ -170,18 +168,51 @@ export default function OnboardingFlow() {
     setIndex(i => Math.max(0, i - 1))
   }, [])
 
-  const finish = useCallback(() => {
-    setOnboardingDone()
-    if (navigationRef.isReady()) {
-      resetRoot({ index: 0, routes: [{ name: getPostOnboardingRoute() }] })
+  const {
+    signInWithApple,
+    signInWithGoogle,
+    pending: authPending,
+  } = useSocialSignIn()
+
+  const handleAppleSignIn = useCallback(async () => {
+    const result = await signInWithApple()
+    if (result.ok) {
+      goNext()
+    } else if (!result.canceled) {
+      showErrorToast(result.error)
     }
+  }, [signInWithApple, goNext])
+
+  const handleGoogleSignIn = useCallback(async () => {
+    const result = await signInWithGoogle()
+    if (result.ok) {
+      goNext()
+    } else if (!result.canceled) {
+      showErrorToast(result.error)
+    }
+  }, [signInWithGoogle, goNext])
+
+  // DEV uniquement : saut direct à une étape (QA visuelle scriptée via
+  // `relock://dev/onboarding/<step>`) sans rejouer tout le parcours.
+  useEffect(() => {
+    if (!__DEV__) return
+    const sub = DeviceEventEmitter.addListener(
+      DEV_EVENT_ONBOARDING_JUMP,
+      ({ step: target }: { step: string }) => {
+        const i = STEPS.indexOf(target as StepId)
+        if (i >= 0) {
+          dirRef.current = 'fwd'
+          setIndex(i)
+        }
+      },
+    )
+    return () => sub.remove()
   }, [])
 
-  const haveAccount = useCallback(() => {
-    setOnboardingDone()
-    if (navigationRef.isReady()) {
-      resetRoot({ index: 0, routes: [{ name: ROUTES.ROOT_AUTH }] })
-    }
+  const finish = useCallback(() => {
+    // Stack.Protected (app/_layout.tsx) redirects to the app on its own
+    // once onboardingDone flips — matches the previous getPostOnboardingRoute().
+    completeOnboarding()
   }, [])
 
   const toggleApp = (a: string) => {
@@ -195,7 +226,7 @@ export default function OnboardingFlow() {
       case 'ignition':
         return <SceneIgnition onDone={goNext} />
       case 'welcome':
-        return <SceneWelcome onNext={goNext} onHaveAccount={haveAccount} />
+        return <SceneWelcome onNext={goNext} />
       case 'demo':
         return <SceneDemo onNext={goNext} />
       case 'name':
@@ -298,8 +329,14 @@ export default function OnboardingFlow() {
         return <ScenePermission onNext={goNext} />
       case 'notifs':
         return <SceneNotifs onNext={goNext} />
-      case 'signin':
-        return <SceneSignin onNext={goNext} />
+      case 'auth':
+        return (
+          <SceneAuth
+            onApple={handleAppleSignIn}
+            onGoogle={handleGoogleSignIn}
+            busy={authPending}
+          />
+        )
       case 'paywall':
         return <ScenePaywall onDone={goNext} onSkip={goNext} />
       case 'artifact':
@@ -313,28 +350,35 @@ export default function OnboardingFlow() {
 
   return (
     <View
-      style={[styles.root, { paddingTop: isIgnition ? 0 : insets.top + 6 }]}
+      className="flex-1"
+      style={{
+        backgroundColor: OB.bg,
+        paddingTop: isIgnition ? 0 : insets.top + 6,
+      }}
     >
-      {!isIgnition && step !== 'artifact' ? <HaloBackdrop /> : null}
+      {!isIgnition && step !== 'artifact' && step !== 'auth' ? (
+        <HaloBackdrop />
+      ) : null}
       {inDiagnostic ? (
-        <View style={styles.header}>
+        <View className="flex-row items-center gap-3.5 px-5 pb-1.5">
           {canBack ? (
             <BackBtn onPress={goBack} />
           ) : (
-            <View style={styles.headerSpacer} />
+            <View className="w-[38px]" />
           )}
           <OBProgress
             step={DIAGNOSTIC.indexOf(step) + 1}
             total={DIAGNOSTIC.length}
           />
-          <View style={styles.headerSpacer} />
+          <View className="w-[38px]" />
         </View>
       ) : null}
       <Animated.View
         key={step}
         entering={dirRef.current === 'fwd' ? enterFwd : enterBack}
         exiting={dirRef.current === 'fwd' ? exitFwd : exitBack}
-        style={[styles.stepHost, { paddingBottom: insets.bottom + 6 }]}
+        className="flex-1"
+        style={{ paddingBottom: insets.bottom + 6 }}
       >
         {scene}
       </Animated.View>
@@ -357,8 +401,8 @@ function QuestionScene({
   onNext?: () => void
 }) {
   return (
-    <View style={styles.question}>
-      <View style={styles.questionBody}>
+    <View className="flex-1 px-5">
+      <View className="flex-1 pt-3">
         <Reveal index={0}>
           <Text style={styles.qTitle}>{title}</Text>
         </Reveal>
@@ -366,9 +410,9 @@ function QuestionScene({
           <Text style={styles.qSub}>{sub}</Text>
         </Reveal>
         <View>{children}</View>
-        {extra ? <View style={styles.qExtra}>{extra}</View> : null}
+        {extra ? <View className="mt-1.5">{extra}</View> : null}
       </View>
-      <View style={styles.qBottom}>
+      <View className="pb-2.5">
         <Pill
           label="Continuer"
           onPress={onNext ?? (() => {})}
@@ -380,19 +424,6 @@ function QuestionScene({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: OB.bg },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 20,
-    paddingBottom: 6,
-  },
-  headerSpacer: { width: 38 },
-  stepHost: { flex: 1 },
-
-  question: { flex: 1, paddingHorizontal: 20 },
-  questionBody: { flex: 1, paddingTop: 12 },
   qTitle: {
     ...fonts.bold,
     fontSize: 30,
@@ -408,6 +439,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 22,
   },
-  qExtra: { marginTop: 6 },
-  qBottom: { paddingBottom: 10 },
 })

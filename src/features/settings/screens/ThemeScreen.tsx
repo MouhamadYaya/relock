@@ -3,10 +3,10 @@
  * LAYER: app/features/settings/screens
  */
 
+import { router } from 'expo-router'
 import React, { memo, useCallback } from 'react'
 import { View } from 'react-native'
 import { useT } from '@/i18n/useT'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
 import { Button } from '@/shared/components/ui/Button'
 import { ScreenHeader } from '@/shared/components/ui/ScreenHeader'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
@@ -32,7 +32,7 @@ export default function ThemeScreen() {
   const { theme, setTheme } = useTheme()
   const t = useT()
 
-  const handleBack = useCallback(() => goBack(), [])
+  const handleBack = useCallback(() => router.back(), [])
 
   return (
     <ScreenWrapper

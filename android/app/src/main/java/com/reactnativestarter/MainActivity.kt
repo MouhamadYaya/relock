@@ -10,7 +10,10 @@ import com.zoontek.rnbootsplash.RNBootSplash
 
 class MainActivity : ReactActivity() {
 
-  override fun getMainComponentName(): String = "ReactNativeStarter"
+  // "main" — pas "ReactNativeStarter" — car `expo-router/entry` (point d'entrée
+  // JS via package.json `main`) enregistre toujours le composant racine sous
+  // "main" via `expo.registerRootComponent`, quel que soit le nom de l'app.
+  override fun getMainComponentName(): String = "main"
 
   override fun onCreate(savedInstanceState: Bundle?) {
     RNBootSplash.init(this, R.style.BootTheme) // <- bootsplash theme name

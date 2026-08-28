@@ -8,6 +8,7 @@ module.exports = {
     '^@supabase/supabase-js$': '<rootDir>/jest/supabaseJsMock.js',
     '^@react-native-community/datetimepicker$':
       '<rootDir>/jest/datetimepickerMock.js',
+    '\\.css$': '<rootDir>/jest/emptyMock.js',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@react-native|react-native|@react-navigation|react-native-reanimated|react-native-gesture-handler|react-native-haptic-feedback|react-native-safe-area-context|react-native-config|@shopify/flash-list|react-native-webview)/)',

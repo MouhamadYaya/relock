@@ -10,13 +10,12 @@
  * On ne suggère jamais un blocage déjà en place — une suggestion qu'on a déjà
  * suivie ne suggère plus rien, elle fait de la publicité.
  */
+import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { availablePresets, presetDetail } from '@/features/blocking/presets'
 import type { BlockRuleView } from '@/features/blocking/types'
-import { navigate } from '@/navigation/helpers/navigation-helpers'
-import { ROUTES } from '@/navigation/routes'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 const ROTATE_MS = 10_000
@@ -65,7 +64,12 @@ export function TryNextCard({ rules }: { rules: BlockRuleView[] }) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${preset.title} — ${presetDetail(preset)}`}
-          onPress={() => navigate(ROUTES.PRESET_RECAP, { presetId: preset.id })}
+          onPress={() =>
+            router.push({
+              pathname: '/preset-recap',
+              params: { presetId: preset.id },
+            })
+          }
           style={({ pressed }) => [s.row, pressed && s.rowPressed]}
         >
           <View style={s.rowText}>

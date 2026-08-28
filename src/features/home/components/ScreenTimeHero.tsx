@@ -5,6 +5,7 @@ import {
   ScreenTimeReport,
 } from '@/shared/native/ScreenTimeReport'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { useTheme } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 /**
@@ -26,6 +27,8 @@ const C = {
 }
 
 export function ScreenTimeHero() {
+  const { theme } = useTheme()
+
   // Le contenu du rapport est rendu HORS process : il peut mourir pendant que
   // l'app est en arrière-plan, et il date d'« aujourd'hui » au moment du
   // rendu. À chaque retour au premier plan, on remonte les vues À NEUF
@@ -75,7 +78,12 @@ export function ScreenTimeHero() {
       <Text style={styles.label}>Temps d'écran aujourd'hui</Text>
 
       {authorized === false ? (
-        <View style={styles.heroWrap}>
+        <View
+          style={[
+            styles.heroWrap,
+            { backgroundColor: theme.colors.background },
+          ]}
+        >
           <Text style={styles.unavailable}>
             Autorise le Temps d'écran pour voir tes vraies données.
           </Text>
@@ -86,7 +94,18 @@ export function ScreenTimeHero() {
         // une extension bornée à 6 Mo : l'une gagnait, l'autre restait blanche,
         // au hasard (parfois le total, parfois les pilules). Une vue = pas de
         // course.
-        <View style={styles.homeBlock}>
+        //
+        // Fond explicite (et pas juste transparent) : la vue native de
+        // l'extension DeviceActivityReport ne peint RIEN tant qu'elle n'a pas
+        // de données (pas d'autorisation, calcul en cours, extension tuée) —
+        // sans ce fond, ce blanc système serait échantillonné par la tab bar
+        // Liquid Glass (iOS 26) et la ferait paraître blanche.
+        <View
+          style={[
+            styles.homeBlock,
+            { backgroundColor: theme.colors.background },
+          ]}
+        >
           {showSkeleton && (
             <View style={styles.homeSkeleton} pointerEvents="none">
               <View style={styles.skelBig} />

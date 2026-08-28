@@ -8,7 +8,7 @@
  * la réutilise et il n'a vraiment rien à faire ; sinon on la lui demande une
  * fois, et c'est le seul geste.
  */
-import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
@@ -22,9 +22,6 @@ import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMu
 import { findPreset, presetLines } from '@/features/blocking/presets'
 import { armRule } from '@/features/blocking/services/arm'
 import type { BlockRuleView } from '@/features/blocking/types'
-import { goBack } from '@/navigation/helpers/navigation-helpers'
-import type { RootStackParamList } from '@/navigation/root-param-list'
-import type { ROUTES } from '@/navigation/routes'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -48,13 +45,9 @@ const FW = {
 } as const
 const f = (w: keyof typeof FW) => FW[w]
 
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  typeof ROUTES.PRESET_RECAP
->
-
-export default function PresetRecapScreen({ route }: Props) {
-  const preset = findPreset(route.params.presetId)
+export default function PresetRecapScreen() {
+  const { presetId } = useLocalSearchParams<{ presetId: string }>()
+  const preset = findPreset(presetId)
   const createRule = useCreateRuleMutation()
   const [count, setCount] = useState<number | null>(null)
   const [working, setWorking] = useState(false)
@@ -127,7 +120,7 @@ export default function PresetRecapScreen({ route }: Props) {
 
   if (done) {
     return (
-      <HalfSheet onClose={goBack}>
+      <HalfSheet onClose={() => router.back()}>
         {close => (
           <View style={s.wrap}>
             <Text style={[f(700), s.title]}>C'est en place.</Text>
@@ -152,7 +145,7 @@ export default function PresetRecapScreen({ route }: Props) {
   const needsApps = count === 0
 
   return (
-    <HalfSheet onClose={goBack}>
+    <HalfSheet onClose={() => router.back()}>
       {close => (
         <View style={s.wrap}>
           <Text style={[f(700), s.title]}>{preset.title}</Text>

@@ -1,69 +1,55 @@
 /**
- * React Navigation state persistence (MMKV via navigationStorage).
- * @see https://reactnavigation.org/docs/state-persistence/
+ * Lightweight nav-state persistence for Expo Router (MMKV via
+ * `navigationStorage`): remembers only the last visited path and returns to
+ * it once at cold start. Trades full stack restoration (e.g. a reopened
+ * modal) for simplicity — resuming on the right tab covers the main case.
  */
 
-import type { NavigationState, PartialState } from '@react-navigation/native'
-
+import type { Href } from 'expo-router'
+import { router, usePathname } from 'expo-router'
+import { useEffect, useRef } from 'react'
+import { Linking } from 'react-native'
 import { constants } from '@/config/constants'
-import { ROUTES } from '@/navigation/routes'
-import { getInitialRoute } from '@/session/bootstrap'
 import { navigationStorage } from '@/shared/services/storage/mmkv'
 
 const KEY = constants.NAVIGATION_STATE_V1
 
-const ROOT_NAMES = new Set<string>([
-  ROUTES.ROOT_APP,
-  ROUTES.ROOT_AUTH,
-  ROUTES.ROOT_ONBOARDING,
-])
-
-function getRootRouteName(
-  state: NavigationState | PartialState<NavigationState>,
-): string | undefined {
-  if (!state.routes || state.index === undefined) return undefined
-  const route = state.routes[state.index]
-  return route && typeof route.name === 'string' ? route.name : undefined
+function loadLastPath(): string | undefined {
+  return navigationStorage.getString(KEY) || undefined
 }
 
-/**
- * Restored tree must match session bootstrap (token + onboarding), otherwise we drop it.
- */
-export function isRestoredStateAllowed(
-  state: NavigationState | PartialState<NavigationState>,
-): boolean {
-  const rootName = getRootRouteName(state)
-  if (!rootName || !ROOT_NAMES.has(rootName)) return false
-  const expected = getInitialRoute()
-  return rootName === expected
-}
-
-export function loadPersistedNavigationState():
-  | NavigationState
-  | PartialState<NavigationState>
-  | undefined {
-  const raw = navigationStorage.getString(KEY)
-  if (!raw) return undefined
-  try {
-    const parsed = JSON.parse(raw) as unknown
-    if (!parsed || typeof parsed !== 'object') return undefined
-    const state = parsed as PartialState<NavigationState>
-    if (!isRestoredStateAllowed(state)) return undefined
-    return state
-  } catch {
-    return undefined
-  }
-}
-
-export function persistNavigationState(state: NavigationState | undefined) {
-  if (state === undefined) return
-  try {
-    navigationStorage.setString(KEY, JSON.stringify(state))
-  } catch {
-    // ignore: non-serializable or storage failure
-  }
+function persistLastPath(path: string) {
+  navigationStorage.setString(KEY, path)
 }
 
 export function clearNavigationPersistence() {
   navigationStorage.delete(KEY)
+}
+
+/** Saves the active path on every navigation. */
+export function usePersistLastPath() {
+  const pathname = usePathname()
+  useEffect(() => {
+    persistLastPath(pathname)
+  }, [pathname])
+}
+
+/**
+ * Restores the last visited path once at cold start — skipped if a cold-start
+ * deep link is already driving the initial navigation, or while `enabled` is
+ * false (e.g. onboarding/auth not yet complete).
+ */
+export function useRestoreLastPath(enabled: boolean) {
+  const didRestore = useRef(false)
+
+  useEffect(() => {
+    if (!enabled || didRestore.current) return
+    didRestore.current = true
+
+    Linking.getInitialURL().then(url => {
+      if (url) return
+      const lastPath = loadLastPath()
+      if (lastPath) router.replace(lastPath as Href)
+    })
+  }, [enabled])
 }

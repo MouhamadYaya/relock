@@ -176,12 +176,16 @@ export function Pill({
   onPress,
   kind = 'primary',
   disabled = false,
+  icon,
+  glow = false,
 }: {
   label: string
   sub?: string
   onPress: () => void
   kind?: PillKind
   disabled?: boolean
+  icon?: React.ReactNode
+  glow?: boolean
 }) {
   const scale = useSharedValue(1)
   const aStyle = useAnimatedStyle(() => ({
@@ -210,21 +214,25 @@ export function Pill({
           kind === 'ghost' && styles.pillGhost,
           kind === 'danger' && styles.pillDanger,
           disabled && styles.pillDisabled,
+          glow && styles.pillGlow,
           aStyle,
         ]}
       >
-        <Text
-          style={[
-            styles.pillLabel,
-            kind === 'primary'
-              ? styles.pillLabelPrimary
-              : styles.pillLabelGhost,
-            kind === 'danger' && styles.pillLabelDanger,
-            disabled && styles.pillLabelDisabled,
-          ]}
-        >
-          {label}
-        </Text>
+        <View style={styles.pillRow}>
+          {icon}
+          <Text
+            style={[
+              styles.pillLabel,
+              kind === 'primary'
+                ? styles.pillLabelPrimary
+                : styles.pillLabelGhost,
+              kind === 'danger' && styles.pillLabelDanger,
+              disabled && styles.pillLabelDisabled,
+            ]}
+          >
+            {label}
+          </Text>
+        </View>
         {sub ? <Text style={styles.pillSub}>{sub}</Text> : null}
       </Animated.View>
     </Pressable>
@@ -236,10 +244,12 @@ export function GhostLink({
   label,
   onPress,
   dim = false,
+  underline = false,
 }: {
   label: string
   onPress: () => void
   dim?: boolean
+  underline?: boolean
 }) {
   return (
     <Pressable
@@ -251,7 +261,13 @@ export function GhostLink({
       }}
       hitSlop={10}
     >
-      <Text style={[styles.ghostLink, dim && { color: OB.ink40 }]}>
+      <Text
+        style={[
+          styles.ghostLink,
+          dim && { color: OB.ink40 },
+          underline && styles.ghostLinkUnderline,
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
@@ -490,12 +506,20 @@ const styles = StyleSheet.create({
   },
   pillPrimary: { backgroundColor: OB.ink },
   pillGhost: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(20,18,32,0.4)',
     borderWidth: 1,
-    borderColor: OB.hairline,
+    borderColor: 'rgba(164,154,254,0.28)',
   },
   pillDanger: { backgroundColor: OB.accent },
   pillDisabled: { backgroundColor: 'rgba(255,255,255,0.09)' },
+  pillGlow: {
+    shadowColor: OB.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  pillRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pillLabel: { ...fonts.semiBold, fontSize: 17, letterSpacing: -0.2 },
   pillLabelPrimary: { color: '#0B0B10' },
   pillLabelGhost: { color: OB.ink },
@@ -514,6 +538,9 @@ const styles = StyleSheet.create({
     color: OB.ink55,
     textAlign: 'center',
     paddingVertical: 10,
+  },
+  ghostLinkUnderline: {
+    textDecorationLine: 'underline',
   },
 
   choice: {

@@ -22,6 +22,10 @@ export const env = {
   USE_MOCK_API: parseEnvBool(Config.USE_MOCK_API),
   SUPABASE_URL: (Config.SUPABASE_URL ?? '').trim(),
   SUPABASE_ANON_KEY: (Config.SUPABASE_ANON_KEY ?? '').trim(),
+  /** Google Cloud OAuth "Web client ID" — required by Supabase's Google provider and by `GoogleSignin.configure` (it's what makes the returned idToken usable server-side). */
+  GOOGLE_WEB_CLIENT_ID: (Config.GOOGLE_WEB_CLIENT_ID ?? '').trim(),
+  /** Google Cloud OAuth "iOS client ID" — passed to `GoogleSignin.configure`; its reversed form is also the native URL scheme (Info.plist). */
+  GOOGLE_IOS_CLIENT_ID: (Config.GOOGLE_IOS_CLIENT_ID ?? '').trim(),
   /** Compte Supabase de dev pour `DEV_SKIP_AUTH` (jamais utilisé en release). */
   DEV_LOGIN_EMAIL: (Config.DEV_LOGIN_EMAIL ?? '').trim(),
   DEV_LOGIN_PASSWORD: (Config.DEV_LOGIN_PASSWORD ?? '').trim(),
