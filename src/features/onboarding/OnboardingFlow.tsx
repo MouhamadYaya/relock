@@ -315,7 +315,9 @@ export default function OnboardingFlow() {
     <View
       style={[styles.root, { paddingTop: isIgnition ? 0 : insets.top + 6 }]}
     >
-      {!isIgnition && step !== 'artifact' ? <HaloBackdrop /> : null}
+      {!isIgnition && step !== 'artifact' && step !== 'signin' ? (
+        <HaloBackdrop />
+      ) : null}
       {inDiagnostic ? (
         <View style={styles.header}>
           {canBack ? (
