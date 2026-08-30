@@ -81,6 +81,10 @@ Use path alias `@/` only (e.g. `@/navigation/`, `@/session/`, `@/config/`, `@/i1
 - **New API/query:** feature `services/` + `api/keys.ts`; use transport from `src/shared/services/api/`; validate with Zod; expose domain types from `features/<name>/types/`.
 - **New shared UI:** `src/shared/components/ui/`; feature-specific UI in the feature’s `components/`.
 
+## Relock visual language
+
+Before modifying any Relock UI, read [`docs/RELOCK_VISUAL_SYSTEM.md`](docs/RELOCK_VISUAL_SYSTEM.md) and preserve its visual language. Reuse the shared Relock Material tokens, keep purple rare and intentional, and validate material, hierarchy, accessibility, and responsive behavior before delivery.
+
 ## Documentation map
 
 **Canonical topic-to-doc matrix:** this table. The root [README.md](README.md) is the landing page (quick start, setup, env); keep it to short links—do not duplicate this full inventory there.
@@ -91,6 +95,8 @@ Use path alias `@/` only (e.g. `@/navigation/`, `@/session/`, `@/config/`, `@/i1
 | **AGENTS.md** (this file) | Cursor / generic agents — follow first for edits |
 | [.claude/CLAUDE.md](.claude/CLAUDE.md) | Claude Code — same rules; stack reference |
 | [docs/development.md](docs/development.md) | Developer reference: hooks, architecture, icons, i18n, npm scripts |
+| [docs/RELOCK_VISUAL_SYSTEM.md](docs/RELOCK_VISUAL_SYSTEM.md) | Permanent Relock visual language, material, hierarchy, motion, and accessibility rules |
+| [docs/HOME_V2_VISUAL_AUDIT.md](docs/HOME_V2_VISUAL_AUDIT.md) | Home V2 reference comparison, fidelity checklist, device validation, and remaining gaps |
 | [.claude/rules/](../.claude/rules/) | Scoped agent rules: assets, navigation, state, react-query, performance, security, i18n, testing, features, shared-components, shared-services, config |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Sentry, Maestro, GitHub Actions, OTA policy, publishing checklist |
 | [docs/OFFLINE.md](docs/OFFLINE.md) | Offline stack (NetInfo, transport, mutation queue, Query + MMKV persistence) |

@@ -1,115 +1,221 @@
-// Carte héro Accueil — nouvel utilisateur (aucun blocage). Maquette
-// « HomePourNewUser » : titre + pitch, lune décorative, CTA plein.
-//
-// La colonne de texte est en `flex: 1` et la lune vit dans une zone réservée
-// de largeur FIXE (pas en position absolue par-dessus le texte) : sur un
-// écran plus étroit (iPhone 17 Pro vs Max), le texte ne peut donc jamais
-// glisser sous la lune — la mise en page reste sûre par construction, pas
-// par un réglage de taille qui casse sur un autre device.
 import { router } from 'expo-router'
 import React from 'react'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+  Image,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native'
+import Svg, {
+  Defs,
+  LinearGradient,
+  RadialGradient,
+  Rect,
+  Stop,
+} from 'react-native-svg'
+import { PressableScale } from '@/shared/components/ui/PressableScale'
+import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
-const C = {
-  card: '#0E0D16',
-  cardBorder: 'rgba(148,158,181,0.16)',
-  ink: '#F5F5F7',
-  ink65: 'rgba(224,224,235,0.62)',
-  accent: '#8B7CF6',
-  onAccent: '#161226',
+const { colors, layout, radius, shadow, typography } = relockMaterial
+const FW = {
+  400: fonts.regular,
+  600: fonts.semiBold,
+  800: fonts.bold,
+} as const
+const f = (weight: keyof typeof FW) => FW[weight]
+
+function HeroMaterial() {
+  return (
+    <View pointerEvents="none" style={styles.materialFill}>
+      <Svg width="100%" height="100%" preserveAspectRatio="none">
+        <Defs>
+          <LinearGradient id="hero-surface" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={colors.surfaceHeroTop} />
+            <Stop offset="1" stopColor={colors.surfaceHeroBottom} />
+          </LinearGradient>
+          <RadialGradient id="hero-bloom" cx="78%" cy="30%" r="66%">
+            <Stop
+              offset="0"
+              stopColor={colors.moonHaloSolid}
+              stopOpacity={0.08}
+            />
+            <Stop offset="1" stopColor={colors.moonHaloSolid} stopOpacity={0} />
+          </RadialGradient>
+          <LinearGradient id="hero-rim" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor={colors.onAccent} stopOpacity={0.09} />
+            <Stop
+              offset="0.52"
+              stopColor={colors.moonHaloSolid}
+              stopOpacity={0.11}
+            />
+            <Stop offset="1" stopColor={colors.onAccent} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#hero-surface)" />
+        <Rect width="100%" height="100%" fill="url(#hero-bloom)" />
+        <Rect width="100%" height="1" fill="url(#hero-rim)" />
+      </Svg>
+    </View>
+  )
 }
 
-const FW = { 400: fonts.regular, 700: fonts.bold, 800: fonts.bold } as const
-const f = (w: keyof typeof FW) => FW[w]
+function MoonArtwork() {
+  return (
+    <View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={styles.moonZone}
+    >
+      <Image
+        source={require('@assets/home-demilune2.png')}
+        style={styles.moon}
+        resizeMode="contain"
+        accessible={false}
+      />
+    </View>
+  )
+}
+
+function GradientAction() {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel="Créer ma première protection"
+      onPress={() => router.push('/add-block')}
+      style={styles.action}
+    >
+      <View pointerEvents="none" style={styles.materialFill}>
+        <Svg width="100%" height="100%" preserveAspectRatio="none">
+          <Defs>
+            <LinearGradient id="hero-action" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor={colors.accentVioletDeep} />
+              <Stop offset="0.55" stopColor={colors.accentViolet} />
+              <Stop offset="1" stopColor={colors.accentBlue} />
+            </LinearGradient>
+            <LinearGradient id="action-highlight" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={colors.onAccent} stopOpacity={0.09} />
+              <Stop offset="1" stopColor={colors.onAccent} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect width="100%" height="100%" fill="url(#hero-action)" />
+          <Rect width="100%" height="50%" fill="url(#action-highlight)" />
+        </Svg>
+      </View>
+      <Text style={[f(600), styles.actionLabel]}>
+        Créer ma première protection
+      </Text>
+      <Text aria-hidden style={[f(600), styles.actionArrow]}>
+        →
+      </Text>
+    </PressableScale>
+  )
+}
 
 export function EmptyProtectionCard() {
-  return (
-    <View style={s.shadowWrap}>
-      <View style={s.card}>
-        <View style={s.top}>
-          <View style={s.textCol}>
-            <Text style={[f(800), s.title]}>
-              Ton attention{'\n'}n'est pas encore{'\n'}protégée
-            </Text>
-            <Text style={[f(400), s.sub]}>
-              Crée ta première protection{'\n'}pour commencer à reprendre{'\n'}
-              le contrôle.
-            </Text>
-          </View>
-          <View style={s.moonZone}>
-            <Image
-              source={require('@assets/home-demilune2.png')}
-              style={s.moon}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
+  const { width } = useWindowDimensions()
+  const contentWidth = Math.min(width, layout.contentMaxWidth)
+  const heroWidth = contentWidth - layout.screenHorizontal * 2
+  const heroHeight = Math.max(
+    layout.heroMinHeight,
+    Math.min(layout.heroMaxHeight, heroWidth * layout.heroAspectRatio),
+  )
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Créer ma première protection"
-          onPress={() => router.push('/add-block')}
-          style={s.cta}
-        >
-          <Text style={[f(700), s.ctaTxt]}>Créer ma première protection</Text>
-        </Pressable>
+  return (
+    <View style={styles.shadowWrap}>
+      <View style={[styles.card, { height: heroHeight }]}>
+        <HeroMaterial />
+        <MoonArtwork />
+
+        <View style={styles.content}>
+          <View style={styles.copy}>
+            <Text style={[f(800), styles.title]}>
+              Ton attention{`\n`}n'est pas encore{`\n`}protégée
+            </Text>
+            <Text style={[f(400), styles.description]}>
+              Crée ta première protection{`\n`}pour commencer à reprendre
+              {`\n`}le contrôle.
+            </Text>
+          </View>
+
+          <GradientAction />
+        </View>
       </View>
     </View>
   )
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   shadowWrap: {
-    marginTop: 20,
-    borderRadius: 24,
-    shadowColor: '#000000',
-    shadowOpacity: 0.4,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    borderRadius: radius.hero,
+    ...shadow.hero,
   },
   card: {
-    backgroundColor: C.card,
-    borderRadius: 24,
+    borderRadius: radius.hero,
     borderWidth: 1,
-    borderColor: C.cardBorder,
-    padding: 22,
+    borderColor: colors.borderSubtle,
     overflow: 'hidden',
   },
-  top: { flexDirection: 'row', alignItems: 'flex-start' },
-  textCol: { flex: 1, minWidth: 0 },
-  title: { fontSize: 24, color: C.ink, letterSpacing: -0.5, lineHeight: 29 },
-  sub: {
-    fontSize: 14,
-    color: C.ink65,
-    lineHeight: 20,
-    marginTop: 10,
+  materialFill: {
+    ...StyleSheet.absoluteFillObject,
   },
   moonZone: {
-    width: 118,
-    height: 175,
-    marginLeft: -8,
-  },
-  moon: {
     position: 'absolute',
-    right: -34,
-    top: -8,
-    width: 175,
-    height: 175,
-  },
-  cta: {
-    marginTop: 20,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: C.accent,
+    width: layout.heroMoonSize,
+    height: layout.heroMoonSize,
+    right: layout.heroMoonRight,
+    top: layout.heroMoonTop,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: C.accent,
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
   },
-  ctaTxt: { fontSize: 16, color: C.onAccent, letterSpacing: -0.1 },
+  moon: {
+    width: layout.heroMoonSize,
+    height: layout.heroMoonSize,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: layout.heroPaddingHorizontal,
+    paddingTop: layout.heroPaddingTop,
+    paddingBottom: layout.heroPaddingBottom,
+  },
+  copy: {
+    flex: 1,
+    width: layout.heroCopyWidth,
+    zIndex: 1,
+  },
+  title: {
+    fontSize: typography.heroTitleSize,
+    lineHeight: typography.heroTitleLineHeight,
+    color: colors.textPrimary,
+    letterSpacing: -0.45,
+    marginBottom: layout.heroTitleBottom,
+  },
+  description: {
+    fontSize: typography.heroBodySize,
+    lineHeight: typography.heroBodyLineHeight,
+    color: colors.textSecondary,
+    marginBottom: layout.heroDescriptionBottom,
+  },
+  action: {
+    height: layout.primaryActionHeight,
+    borderRadius: radius.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    ...shadow.glow,
+  },
+  actionLabel: {
+    fontSize: typography.buttonSize,
+    lineHeight: typography.buttonLineHeight,
+    color: colors.onBrightAccent,
+  },
+  actionArrow: {
+    position: 'absolute',
+    right: layout.primaryActionArrowRight,
+    fontSize: typography.sectionTitleSize,
+    lineHeight: typography.sectionTitleLineHeight,
+    color: colors.onBrightAccent,
+  },
 })

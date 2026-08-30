@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useExtendTimedBlockMutation } from '@/features/blocking/hooks/useExtendTimedBlockMutation'
 import { useFreshInstallReset } from '@/features/blocking/hooks/useFreshInstallReset'
@@ -23,12 +24,14 @@ import { buildSessions, type RuleSession } from '@/features/blocking/session'
 import { ActiveProtectionCard } from '@/features/home/components/ActiveProtectionCard'
 import { DailyResultsCard } from '@/features/home/components/DailyResultsCard'
 import { EmptyProtectionCard } from '@/features/home/components/EmptyProtectionCard'
+import { HomeAmbientBackground } from '@/features/home/components/HomeAmbientBackground'
 import { QuickStartRail } from '@/features/home/components/QuickStartRail'
 import { ScreenTimeHero } from '@/features/home/components/ScreenTimeHero'
 import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
 
@@ -41,19 +44,10 @@ const FW = {
 } as const
 const f = (w: keyof typeof FW) => FW[w]
 
-const C = {
-  accent: '#9E86F2',
-  ink: '#F5F5F7',
-  ink85: 'rgba(224,224,235,0.65)',
-  danger: '#F87171',
-  dangerInk: '#FCA5A5',
-  dangerInk2: 'rgba(252,165,165,0.75)',
-  dangerBg: 'rgba(239,68,68,0.10)',
-  dangerBorder: 'rgba(248,113,113,0.35)',
-  dangerIconBg: 'rgba(239,68,68,0.16)',
-}
+const { colors, layout, radius, typography } = relockMaterial
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets()
   const { rules, isPending: rulesPending } = useBlockRulesQuery()
   const stats = useHomeStats()
   useFreshInstallReset()
@@ -76,7 +70,12 @@ export default function HomeScreen() {
     () => buildSessions(rules, now, limitSteps),
     [rules, now, limitSteps],
   )
+  // Tant que les règles n'ont pas encore chargé, `rules` vaut `[]` par
+  // défaut : `hasAnyBlockage` seul y lirait à tort « aucun blocage » et
+  // ferait clignoter un utilisateur protégé sur l'état « nouvel
+  // utilisateur » le temps du premier chargement.
   const hasAnyBlockage = sessions.length > 0
+  const isActive = !rulesPending && hasAnyBlockage
 
   // Priorité au « Bloquer maintenant » en cours pour piloter l'anneau/apps/
   // +15 min ; une plage horaire simultanément active s'affiche en ligne
@@ -84,7 +83,12 @@ export default function HomeScreen() {
   const running = sessions.filter(s => s.state === 'running')
   const runningTimed = running.find(s => s.rule.type === 'progressive_delay')
   const runningSchedule = running.find(s => s.rule.type === 'schedule')
-  const primary = runningTimed ?? runningSchedule ?? null
+  // Une limite quotidienne est toujours « en cours » tant que la règle est
+  // active (cf. deriveSession) : sans ce dernier repli, un utilisateur dont
+  // la SEULE protection est une limite se voyait afficher « Aucune
+  // protection active » alors qu'elle protège réellement.
+  const runningLimit = running.find(s => s.rule.type === 'daily_limit')
+  const primary = runningTimed ?? runningSchedule ?? runningLimit ?? null
   const scheduleFooter =
     primary && primary.rule.type !== 'schedule'
       ? (runningSchedule ?? null)
@@ -145,12 +149,24 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper
+      disableTopInset
+      statusBarProps={{
+        backgroundColor: colors.transparent,
+        translucent: true,
+      }}
+    >
+      <HomeAmbientBackground />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.container}>
+        <View
+          style={[
+            styles.container,
+            { paddingTop: insets.top + layout.headerTop },
+          ]}
+        >
           {/* Header : logo + série + réglages */}
           <View style={styles.header}>
             <Image
@@ -160,12 +176,14 @@ export default function HomeScreen() {
               accessibilityLabel="Relock"
             />
             <View style={styles.headerActions}>
-              <Image
-                source={require('@assets/home-flamme.png')}
-                style={styles.flame}
-                resizeMode="contain"
-                accessibilityLabel={`Série de ${stats.streak} jour${stats.streak > 1 ? 's' : ''}`}
-              />
+              {stats.streak > 0 && (
+                <Image
+                  source={require('@assets/home-flamme.png')}
+                  style={styles.flame}
+                  resizeMode="contain"
+                  accessibilityLabel={`Série de ${stats.streak} jour${stats.streak > 1 ? 's' : ''}`}
+                />
+              )}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Réglages"
@@ -173,23 +191,28 @@ export default function HomeScreen() {
                 hitSlop={10}
                 style={styles.gear}
               >
-                <IconSvg name={IconName.SETTINGS} size={20} color={C.ink85} />
+                <IconSvg
+                  name={IconName.SETTINGS}
+                  size={layout.headerIconSize}
+                  color={colors.textPrimary}
+                />
               </Pressable>
             </View>
           </View>
 
-          {hasAnyBlockage ? (
-            <ScreenTimeHero />
-          ) : (
-            <View style={styles.welcome}>
-              <Text style={[f(700), styles.welcomeKicker]}>
-                Bienvenue dans Relock
-              </Text>
-              <Text style={[f(400), styles.welcomeSub]}>
-                Commence par protéger un premier{'\n'}moment de ta journée.
-              </Text>
-            </View>
-          )}
+          {!rulesPending &&
+            (isActive ? (
+              <ScreenTimeHero />
+            ) : (
+              <View style={styles.welcome}>
+                <Text style={[f(600), styles.welcomeKicker]}>
+                  Bienvenue dans Relock
+                </Text>
+                <Text style={[f(400), styles.welcomeSub]}>
+                  Commence par protéger un premier{'\n'}moment de ta journée.
+                </Text>
+              </View>
+            ))}
 
           {/* L'alerte passe AVANT le reste : sans cette autorisation rien ne
               bloque, donc ce qui suit ne veut rien dire. */}
@@ -201,10 +224,14 @@ export default function HomeScreen() {
               style={styles.alertCard}
             >
               <View style={styles.alertIcon}>
-                <IconSvg name={IconName.MONITOR} size={18} color={C.danger} />
+                <IconSvg
+                  name={IconName.MONITOR}
+                  size={typography.sectionTitleSize}
+                  color={colors.alertText}
+                />
               </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[f(700), { fontSize: 14.5, color: C.dangerInk }]}>
+              <View style={styles.alertCopy}>
+                <Text style={[f(700), styles.alertTitle]}>
                   Active le contrôle du temps d'écran
                 </Text>
                 <Text style={[f(400), styles.alertSub]}>
@@ -212,12 +239,16 @@ export default function HomeScreen() {
                   Appuie pour l'activer.
                 </Text>
               </View>
-              <IconSvg name={IconName.FORWARD} size={18} color={C.danger} />
+              <IconSvg
+                name={IconName.FORWARD}
+                size={typography.sectionTitleSize}
+                color={colors.alertText}
+              />
             </Pressable>
           )}
 
           {!rulesPending &&
-            (hasAnyBlockage ? (
+            (isActive ? (
               <ActiveProtectionCard
                 primaryRule={primary?.rule ?? null}
                 scheduleFooterRule={scheduleFooter?.rule ?? null}
@@ -230,17 +261,16 @@ export default function HomeScreen() {
               <EmptyProtectionCard />
             ))}
 
-          {hasAnyBlockage ? (
-            <DailyResultsCard
-              savedMinutesWeek={stats.savedMinutesWeek}
-              interceptions={stats.interceptions}
-              isPending={stats.isPending}
-            />
-          ) : (
-            <QuickStartRail rules={rules} />
-          )}
-
-          <View style={{ height: 8 }} />
+          {!rulesPending &&
+            (isActive ? (
+              <DailyResultsCard
+                savedMinutesWeek={stats.savedMinutesWeek}
+                interceptions={stats.interceptions}
+                isPending={stats.isPending}
+              />
+            ) : (
+              <QuickStartRail rules={rules} />
+            ))}
         </View>
       </ScrollView>
     </ScreenWrapper>
@@ -248,60 +278,90 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { flexGrow: 1 },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 26,
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: layout.screenHorizontal,
+    paddingBottom: layout.bottomNavigationClearance + layout.scrollBottom,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  brandLogo: { width: 122, height: 23 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  flame: { width: 24, height: 24 },
+  brandLogo: {
+    width: layout.headerLogoWidth,
+    height: layout.headerLogoHeight,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: layout.welcomeCopyGap,
+  },
+  flame: {
+    width: layout.headerFlameSize,
+    height: layout.headerFlameSize,
+  },
   gear: {
-    width: 32,
-    height: 32,
+    width: layout.headerActionSize,
+    height: layout.headerActionSize,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  welcome: { marginTop: 18 },
-  welcomeKicker: { fontSize: 15, color: C.accent, letterSpacing: -0.2 },
+  welcome: {
+    marginTop: layout.headerBottom,
+    marginBottom: layout.welcomeBottom,
+  },
+  welcomeKicker: {
+    fontSize: typography.welcomeTitleSize,
+    lineHeight: typography.welcomeTitleLineHeight,
+    color: colors.accentViolet,
+  },
   welcomeSub: {
-    fontSize: 14,
-    color: 'rgba(224,224,235,0.58)',
-    lineHeight: 19,
-    marginTop: 4,
+    fontSize: typography.welcomeBodySize,
+    color: colors.textSecondary,
+    lineHeight: typography.welcomeBodyLineHeight,
+    marginTop: layout.welcomeCopyGap,
   },
 
   // Alerte autorisation
   alertCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: C.dangerBg,
+    gap: layout.panelPadding,
+    marginBottom: layout.sectionGap,
+    padding: layout.panelPadding,
+    borderRadius: radius.action,
+    backgroundColor: colors.alertBackground,
     borderWidth: 1,
-    borderColor: C.dangerBorder,
+    borderColor: colors.alertBorder,
   },
   alertIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    backgroundColor: C.dangerIconBg,
+    width: layout.headerActionSize,
+    height: layout.headerActionSize,
+    borderRadius: radius.compact,
+    backgroundColor: colors.alertBackground,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  alertCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  alertTitle: {
+    fontSize: typography.welcomeBodySize,
+    lineHeight: typography.welcomeBodyLineHeight,
+    color: colors.alertText,
+  },
   alertSub: {
-    fontSize: 12.5,
-    color: C.dangerInk2,
-    marginTop: 3,
-    lineHeight: 17,
+    fontSize: typography.quickTitleSize - 3,
+    color: colors.alertTextMuted,
+    marginTop: layout.welcomeCopyGap,
+    lineHeight: typography.welcomeBodyLineHeight - 3,
   },
 })

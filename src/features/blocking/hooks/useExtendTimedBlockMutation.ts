@@ -26,16 +26,26 @@ export function useExtendTimedBlockMutation() {
       const newDuration = num(c.duration_min, 30) + addMinutes
       try {
         await BlockRulesService.extendTimedBlock(rule.id, newDuration)
-        if (ScreenTime.isAvailable && rule.createdAt) {
-          const end = new Date(rule.createdAt).getTime() + newDuration * 60_000
-          const remainingMin = Math.max(
-            1,
-            Math.ceil((end - Date.now()) / 60_000),
-          )
-          await ScreenTime.startTimedBlock(rule.id, remainingMin, !!c.strict)
-        }
       } catch (e) {
         throw normalizeError(e)
+      }
+      // Persistée : on invalide dès maintenant, sans attendre l'issue du
+      // réarmement natif ci-dessous. Sinon un échec natif fait échouer toute
+      // la mutation (`onSuccess` jamais appelé) alors que la BDD a déjà la
+      // nouvelle durée — l'UI resterait figée sur l'ancien décompte tant
+      // qu'un autre refetch ne survient pas, en plus de rejouer la
+      // conservation volontaire de l'extension déjà persistée.
+      await invalidateByTags(qc, BLOCKING_TAGS, [blockingKeys.tagMap])
+      if (ScreenTime.isAvailable && rule.createdAt) {
+        const end = new Date(rule.createdAt).getTime() + newDuration * 60_000
+        const remainingMin = Math.max(1, Math.ceil((end - Date.now()) / 60_000))
+        try {
+          await ScreenTime.startTimedBlock(rule.id, remainingMin, !!c.strict)
+        } catch (e) {
+          // Échec natif distinct : remonté à l'appelant (toast d'erreur) —
+          // mais l'extension BDD reste, et l'UI la reflète déjà ci-dessus.
+          throw normalizeError(e)
+        }
       }
     },
     onSuccess: async () => {
