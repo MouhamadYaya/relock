@@ -46,7 +46,7 @@ const HALF_SHEET_OPTIONS = {
 
 function AppShell() {
   const t = useT()
-  const navigationTheme = useNavigationTheme()
+  const navigationTheme = useNavigationTheme({ forceDark: true })
 
   const onboardingDone = useAppGateStore(s => s.onboardingDone)
 

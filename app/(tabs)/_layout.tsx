@@ -26,24 +26,15 @@ export default function TabLayout() {
           selected: { color: tabColors.textPrimary },
         }}
       >
-        <NativeTabs.Trigger
-          name="home"
-          options={{ disableTransparentOnScrollEdge: true }}
-        >
+        <NativeTabs.Trigger name="home">
           <Icon sf="house.fill" drawable="ic_tab_home" />
           <Label>{t('navigation.tabs.home')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="blocks"
-          options={{ disableTransparentOnScrollEdge: true }}
-        >
+        <NativeTabs.Trigger name="blocks">
           <Icon sf="hand.raised.fill" drawable="ic_tab_blocks" />
           <Label>{t('navigation.tabs.blocks')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="activity"
-          options={{ disableTransparentOnScrollEdge: true }}
-        >
+        <NativeTabs.Trigger name="activity">
           <Icon sf="chart.bar.fill" drawable="ic_tab_activity" />
           <Label>{t('navigation.tabs.activity')}</Label>
         </NativeTabs.Trigger>

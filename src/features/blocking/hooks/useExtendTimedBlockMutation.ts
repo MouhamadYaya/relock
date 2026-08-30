@@ -26,20 +26,24 @@ export function useExtendTimedBlockMutation() {
       const newDuration = num(c.duration_min, 30) + addMinutes
       try {
         await BlockRulesService.extendTimedBlock(rule.id, newDuration)
-        if (ScreenTime.isAvailable && rule.createdAt) {
-          const end = new Date(rule.createdAt).getTime() + newDuration * 60_000
-          const remainingMin = Math.max(
-            1,
-            Math.ceil((end - Date.now()) / 60_000),
-          )
-          await ScreenTime.startTimedBlock(rule.id, remainingMin, !!c.strict)
-        }
       } catch (e) {
         throw normalizeError(e)
       }
-    },
-    onSuccess: async () => {
+      let nativeError: unknown
+      if (ScreenTime.isAvailable && rule.createdAt) {
+        const end = new Date(rule.createdAt).getTime() + newDuration * 60_000
+        const remainingMin = Math.max(1, Math.ceil((end - Date.now()) / 60_000))
+        try {
+          await ScreenTime.startTimedBlock(rule.id, remainingMin, !!c.strict)
+        } catch (e) {
+          nativeError = normalizeError(e)
+        }
+      }
+      // L'écriture BDD est déjà acquise : rafraîchir l'UI même si le
+      // réarmement natif a échoué, mais ne jamais retarder ce réarmement pour
+      // attendre un refetch React Query.
       await invalidateByTags(qc, BLOCKING_TAGS, [blockingKeys.tagMap])
+      if (nativeError) throw nativeError
     },
   })
 }
