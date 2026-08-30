@@ -219,15 +219,13 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
   // mesure ne fait que confirmer, `measuredH` n'est donc capturé qu'une
   // fois — cf. la garde dans l'onLayout).
   const [measuredH, setMeasuredH] = useState<number | null>(null)
-  // Une mesure prise à une largeur/hauteur/marge de sécurité donnée ne vaut
-  // plus rien après une rotation ou une résolution tardive des safe-area
-  // insets (courante au tout premier rendu) : on l'invalide pour forcer une
-  // nouvelle mesure via le même onLayout, plutôt que de mélanger une
-  // hauteur mesurée à l'ancienne échelle avec les nouvelles dimensions.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: déclencheurs volontaires — invalide la mesure, ne les lit pas
+  // La mesure de référence ne dépend que de la largeur qui fixe l'échelle de
+  // base. Une variation de hauteur ou de safe area doit conserver cette
+  // mesure afin que `availableH` puisse réduire l'échelle sans nouveau cycle.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: windowW est volontairement un déclencheur de remise à zéro
   useEffect(() => {
     setMeasuredH(null)
-  }, [windowW, windowH, insets.top, insets.bottom])
+  }, [windowW])
   const scale =
     measuredH && measuredH > availableH
       ? widthScale * (availableH / measuredH)

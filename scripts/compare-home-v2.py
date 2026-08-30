@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import tempfile
 from pathlib import Path
 
 try:
@@ -39,8 +40,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("/tmp/relock-home-v2-comparison"),
-        help="Directory receiving normalized, overlay, difference and side-by-side PNGs",
+        default=None,
+        help="Directory receiving artifacts (default: a unique temporary directory)",
     )
     parser.add_argument(
         "--ignore-top-ratio",
@@ -48,7 +49,10 @@ def parse_args() -> argparse.Namespace:
         default=0.08,
         help="Top ratio excluded from the numeric score (default: 0.08)",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.output is None:
+        args.output = Path(tempfile.mkdtemp(prefix="relock-home-v2-comparison-"))
+    return args
 
 
 def normalize_to_reference(image: Image.Image, reference: Image.Image) -> Image.Image:

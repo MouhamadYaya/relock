@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: typography.heroTitleSize,
     lineHeight: typography.heroTitleLineHeight,
     color: colors.textPrimary,
-    letterSpacing: -0.45,
+    letterSpacing: typography.heroTitleLetterSpacing,
     marginBottom: layout.heroTitleBottom,
   },
   description: {

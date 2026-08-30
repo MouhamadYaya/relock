@@ -99,6 +99,7 @@ export const relockMaterial = {
     welcomeBodyLineHeight: 21,
     heroTitleSize: 24,
     heroTitleLineHeight: 29,
+    heroTitleLetterSpacing: -0.45,
     heroBodySize: 15,
     heroBodyLineHeight: 21,
     buttonSize: 16,
