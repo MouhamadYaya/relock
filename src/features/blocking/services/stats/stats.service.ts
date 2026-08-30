@@ -257,6 +257,19 @@ export function computeWeek(
   })
 }
 
+/** Minutes regagnées CETTE semaine (lun→dim) — carte « Résultats du jour » de l'Accueil. */
+export function computeWeekSavedMinutes(rows: DailyStats[]): number {
+  const now = new Date()
+  const dow = (now.getDay() + 6) % 7 // 0 = lundi
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - dow)
+  const mondayKey = ymd(monday)
+  const todayKey = ymd(now)
+  return rows
+    .filter(r => r.date >= mondayKey && r.date <= todayKey)
+    .reduce((sum, r) => sum + (r.time_saved_minutes ?? 0), 0)
+}
+
 /** Record = plus longue suite de jours consécutifs jamais atteinte. */
 export function computeRecordStreak(rows: DailyStats[]): number {
   const dates = rows

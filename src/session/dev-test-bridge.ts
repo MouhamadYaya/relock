@@ -7,8 +7,10 @@ import {
 } from 'react-native'
 import { constants } from '@/config/constants'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
+import { completeOnboarding } from '@/session/bootstrap'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { kvStorage } from '@/shared/services/storage/mmkv'
+import { useAppGateStore } from '@/shared/stores/app-gate.store'
 
 /** Événement interne (dev) : force période/décalage de l'écran Activité. */
 export const DEV_EVENT_ACTIVITY_PERIOD = 'relock-dev-activity-period'
@@ -67,19 +69,38 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} navigate settings`)
       return
     case 'onboarding-reset':
-      // Efface le drapeau et relance le bundle JS : l'app redémarre sur
-      // l'onboarding (utile pour la QA visuelle d'un écran narratif donné).
+      // Efface le drapeau, bascule le store, PUIS remplace explicitement
+      // vers `/onboarding`. Le simple flip du store (sans ce `replace`)
+      // laisse `Stack.Protected` rediriger seul vers son ancre (`app/
+      // index.tsx`, lui-même un `<Redirect>`) : ce rebond en deux temps —
+      // pendant que l'écran (tabs) est encore actif — laisse le native
+      // stack (react-native-screens) non composité : app entièrement noire
+      // jusqu'à ce qu'une navigation ordinaire ultérieure force un nouveau
+      // rendu. Reproduit et vérifié sur iOS 26 / Simulateur (2026-08-30).
       kvStorage.delete(constants.ONBOARDING_DONE)
-      console.log(`${TAG} onboarding réinitialisé, rechargement…`)
-      DevSettings.reload()
+      useAppGateStore.getState().resetOnboardingDone()
+      router.replace('/onboarding')
+      console.log(`${TAG} onboarding réinitialisé`)
       return
     case 'onboarding-complete':
-      // Symétrique de `onboarding-reset` : remet le drapeau pour revenir
-      // directement à l'app principale après une QA visuelle.
-      kvStorage.setString(constants.ONBOARDING_DONE, '1')
-      console.log(`${TAG} onboarding marqué terminé, rechargement…`)
+      // Symétrique de `onboarding-reset` : `completeOnboarding()` fait déjà
+      // le flip + le `replace` explicite (voir son commentaire pour le
+      // pourquoi du `replace`).
+      completeOnboarding()
+      console.log(`${TAG} onboarding marqué terminé`)
+      return
+    case 'dev-session': {
+      // Déconnecte le compte courant (souvent restauré depuis le Keychain,
+      // même après une réinstallation) pour forcer `ensureDevSession()` à
+      // reconnecter le compte dev (DEV_LOGIN_EMAIL) au prochain montage —
+      // utile pour tester avec des données seedées sans le mot de passe du
+      // vrai compte.
+      const { supabase } = await import('@/shared/services/supabase/client')
+      await supabase.auth.signOut()
+      console.log(`${TAG} déconnecté, rechargement…`)
       DevSettings.reload()
       return
+    }
     default: {
       // `activity-period/<période 0|1|2>/<décalage>` : pilote les filtres
       // de l'écran Activité (validation visuelle Jour/Semaine/Mois).

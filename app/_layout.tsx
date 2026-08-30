@@ -1,11 +1,7 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider as NavThemeProvider,
-} from '@react-navigation/native'
+import { ThemeProvider as NavThemeProvider } from '@react-navigation/native'
 import { Stack } from 'expo-router'
-import React, { useEffect, useMemo } from 'react'
-import { StyleSheet, useColorScheme } from 'react-native'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
 import BootSplash from 'react-native-bootsplash'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -18,6 +14,7 @@ import { runInstallReset } from '@/features/blocking/services/reset.service'
 import { userKeys } from '@/features/user/api/keys'
 import { useT } from '@/i18n/useT'
 import { useBackButtonHandler } from '@/navigation/helpers/use-back-handler'
+import { useNavigationTheme } from '@/navigation/helpers/use-navigation-theme'
 import {
   clearNavigationPersistence,
   usePersistLastPath,
@@ -37,7 +34,6 @@ import {
   initSentry,
 } from '@/shared/services/monitoring/sentry'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
-import { useTheme } from '@/shared/theme'
 import { ThemeProvider } from '@/shared/theme/ThemeProvider'
 
 initSentry()
@@ -50,10 +46,7 @@ const HALF_SHEET_OPTIONS = {
 
 function AppShell() {
   const t = useT()
-  const { theme, mode } = useTheme()
-  const systemScheme = useColorScheme()
-  const isDark =
-    mode === 'dark' || (mode === 'system' && systemScheme === 'dark')
+  const navigationTheme = useNavigationTheme()
 
   const onboardingDone = useAppGateStore(s => s.onboardingDone)
 
@@ -82,23 +75,6 @@ function AppShell() {
 
   usePersistLastPath()
   useRestoreLastPath(onboardingDone)
-
-  const navigationTheme = useMemo(
-    () => ({
-      ...(isDark ? DarkTheme : DefaultTheme),
-      dark: isDark,
-      colors: {
-        ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
-        primary: theme.colors.primary,
-        background: theme.colors.background,
-        card: theme.colors.surface,
-        text: theme.colors.textPrimary,
-        border: theme.colors.border,
-        notification: theme.colors.danger,
-      },
-    }),
-    [isDark, theme],
-  )
 
   return (
     <NavThemeProvider value={navigationTheme}>

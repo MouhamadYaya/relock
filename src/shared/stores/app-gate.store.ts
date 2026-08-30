@@ -9,6 +9,7 @@ function readOnboardingDone(): boolean {
 type AppGateStore = {
   onboardingDone: boolean
   setOnboardingDone: () => void
+  resetOnboardingDone: () => void
 }
 
 /**
@@ -19,4 +20,9 @@ type AppGateStore = {
 export const useAppGateStore = create<AppGateStore>(set => ({
   onboardingDone: readOnboardingDone(),
   setOnboardingDone: () => set({ onboardingDone: true }),
+  // Dev only (`src/session/dev-test-bridge.ts`) : symétrique de
+  // `setOnboardingDone`, pour rejouer l'onboarding par un flip réactif du
+  // store (voir `completeOnboarding()` dans `src/session/bootstrap.ts` pour
+  // pourquoi ce flip doit être suivi d'un `router.replace` explicite).
+  resetOnboardingDone: () => set({ onboardingDone: false }),
 }))

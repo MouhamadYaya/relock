@@ -1,6 +1,6 @@
 import { IconName } from '@assets/icons'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   AppState,
@@ -13,18 +13,24 @@ import {
   View,
 } from 'react-native'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
+import { useExtendTimedBlockMutation } from '@/features/blocking/hooks/useExtendTimedBlockMutation'
 import { useFreshInstallReset } from '@/features/blocking/hooks/useFreshInstallReset'
 import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
+import { useLimitSteps } from '@/features/blocking/hooks/useLimitSteps'
+import { useRuleAutoCleanup } from '@/features/blocking/hooks/useRuleAutoCleanup'
 import { useRuleReconciler } from '@/features/blocking/hooks/useRuleReconciler'
-import { timedRunning } from '@/features/blocking/types'
+import { buildSessions, type RuleSession } from '@/features/blocking/session'
+import { ActiveProtectionCard } from '@/features/home/components/ActiveProtectionCard'
+import { DailyResultsCard } from '@/features/home/components/DailyResultsCard'
+import { EmptyProtectionCard } from '@/features/home/components/EmptyProtectionCard'
+import { QuickStartRail } from '@/features/home/components/QuickStartRail'
 import { ScreenTimeHero } from '@/features/home/components/ScreenTimeHero'
-import { TryNextCard } from '@/features/home/components/TryNextCard'
 import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
-import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { showErrorToast } from '@/shared/utils/toast'
 
 const FW = {
   400: fonts.regular,
@@ -35,23 +41,10 @@ const FW = {
 } as const
 const f = (w: keyof typeof FW) => FW[w]
 
-// Palette exacte de la maquette « Relock Home ».
 const C = {
-  card: '#1C1C1E',
-  accent: '#A5A1F5',
-  onAccent: '#131318',
+  accent: '#9E86F2',
   ink: '#F5F5F7',
-  ink55: 'rgba(235,235,245,0.55)',
-  ink50: 'rgba(235,235,245,0.5)',
-  ink45: 'rgba(235,235,245,0.45)',
-  ink35: 'rgba(235,235,245,0.35)',
-  ink32: 'rgba(235,235,245,0.32)',
-  ink85: 'rgba(235,235,245,0.85)',
-  subtleBg: 'rgba(255,255,255,0.055)',
-  sep: 'rgba(255,255,255,0.06)',
-  iconTint: 'rgba(165,161,245,0.13)',
-  iconStroke: '#B4B0F8',
-  switchOff: 'rgba(120,120,128,0.3)',
+  ink85: 'rgba(224,224,235,0.65)',
   danger: '#F87171',
   dangerInk: '#FCA5A5',
   dangerInk2: 'rgba(252,165,165,0.75)',
@@ -67,15 +60,54 @@ export default function HomeScreen() {
   // Auto-réparation : iOS peut perdre la surveillance native (réinstall,
   // mise à jour) — on ré-arme les règles persistantes actives au lancement.
   useRuleReconciler(rules, !rulesPending)
+  // Timers terminés / suspensions échues : retirés d'office, comme sur
+  // l'onglet Blocages — sans ça un timer fini traînerait sur l'Accueil.
+  useRuleAutoCleanup(rules)
 
-  // Un « Bloquer maintenant » terminé disparaît (ponctuel).
-  const visibleRules = rules.filter(
-    r => !(r.type === 'progressive_delay' && !timedRunning(r)),
+  // Les libellés « encore X min » sont temporels : on retick régulièrement.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const limitSteps = useLimitSteps()
+  const sessions = useMemo(
+    () => buildSessions(rules, now, limitSteps),
+    [rules, now, limitSteps],
   )
-  const protectedToday = rules.some(
-    r => r.isActive && !(r.type === 'progressive_delay' && !timedRunning(r)),
-  )
-  useNotificationReconciler(stats.streak, protectedToday)
+  const hasAnyBlockage = sessions.length > 0
+
+  // Priorité au « Bloquer maintenant » en cours pour piloter l'anneau/apps/
+  // +15 min ; une plage horaire simultanément active s'affiche en ligne
+  // d'info sous la carte plutôt que de prendre sa place.
+  const running = sessions.filter(s => s.state === 'running')
+  const runningTimed = running.find(s => s.rule.type === 'progressive_delay')
+  const runningSchedule = running.find(s => s.rule.type === 'schedule')
+  const primary = runningTimed ?? runningSchedule ?? null
+  const scheduleFooter =
+    primary && primary.rule.type !== 'schedule'
+      ? (runningSchedule ?? null)
+      : null
+  // Rien de « live » : on montre la protection la plus proche (à venir ou
+  // suspendue) pour dire ce qui se passe, plutôt qu'un vide muet.
+  const idleSession: RuleSession | null = primary
+    ? null
+    : (sessions.find(s => s.state === 'upcoming') ??
+      sessions.find(s => s.state === 'suspended') ??
+      sessions[0] ??
+      null)
+
+  useNotificationReconciler(stats.streak, running.length > 0)
+
+  const extendMutation = useExtendTimedBlockMutation()
+  const onExtend = () => {
+    if (!runningTimed) return
+    extendMutation.mutate(
+      { rule: runningTimed.rule, addMinutes: 15 },
+      { onError: e => showErrorToast(e) },
+    )
+  }
 
   // Autorisation Temps d'écran : sans elle rien ne bloque.
   const [needsScreenTime, setNeedsScreenTime] = useState(false)
@@ -119,7 +151,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.container}>
-          {/* Header : logo + réglages */}
+          {/* Header : logo + série + réglages */}
           <View style={styles.header}>
             <Image
               source={require('../../../../assets/relock-wordmark.png')}
@@ -127,23 +159,40 @@ export default function HomeScreen() {
               resizeMode="contain"
               accessibilityLabel="Relock"
             />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Réglages"
-              onPress={() => router.push('/settings')}
-              hitSlop={10}
-              style={styles.gear}
-            >
-              <IconSvg name={IconName.SETTINGS} size={22} color={C.ink85} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Image
+                source={require('@assets/home-flamme.png')}
+                style={styles.flame}
+                resizeMode="contain"
+                accessibilityLabel={`Série de ${stats.streak} jour${stats.streak > 1 ? 's' : ''}`}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Réglages"
+                onPress={() => router.push('/settings')}
+                hitSlop={10}
+                style={styles.gear}
+              >
+                <IconSvg name={IconName.SETTINGS} size={20} color={C.ink85} />
+              </Pressable>
+            </View>
           </View>
 
-          {/* Hero : temps d'écran du jour + delta + pilules par app */}
-          <ScreenTimeHero />
+          {hasAnyBlockage ? (
+            <ScreenTimeHero />
+          ) : (
+            <View style={styles.welcome}>
+              <Text style={[f(700), styles.welcomeKicker]}>
+                Bienvenue dans Relock
+              </Text>
+              <Text style={[f(400), styles.welcomeSub]}>
+                Commence par protéger un premier{'\n'}moment de ta journée.
+              </Text>
+            </View>
+          )}
 
-          {/* L'alerte passe AVANT la série : sans cette autorisation rien ne
-              bloque, donc la série ne veut rien dire. On ne décore pas un
-              tableau de bord posé sur une app qui ne fait rien. */}
+          {/* L'alerte passe AVANT le reste : sans cette autorisation rien ne
+              bloque, donc ce qui suit ne veut rien dire. */}
           {needsScreenTime && (
             <Pressable
               accessibilityRole="button"
@@ -167,124 +216,29 @@ export default function HomeScreen() {
             </Pressable>
           )}
 
-          {/* Le titre DIT la règle : « ne casse pas la chaîne » suppose qu'on
-              sache déjà ce qu'est la chaîne et ce qui la casse. */}
-          <Text style={[f(700), styles.streakHeading]}>
-            Un blocage par jour garde ta chaîne
-          </Text>
+          {!rulesPending &&
+            (hasAnyBlockage ? (
+              <ActiveProtectionCard
+                primaryRule={primary?.rule ?? null}
+                scheduleFooterRule={scheduleFooter?.rule ?? null}
+                idleSession={idleSession}
+                now={now}
+                onExtend={onExtend}
+                extending={extendMutation.isPending}
+              />
+            ) : (
+              <EmptyProtectionCard />
+            ))}
 
-          {/* Carte série (avec stats intégrées) */}
-          <View style={styles.streakCard}>
-            <View style={styles.rowBetween}>
-              <Text style={[f(500), { fontSize: 14, color: C.ink55 }]}>
-                Série en cours
-              </Text>
-              <Text style={[f(500), { fontSize: 13, color: C.ink35 }]}>
-                Record · {Math.max(stats.record, stats.streak)} j 🔥
-              </Text>
-            </View>
-
-            <View style={styles.streakRow}>
-              {/* Tant que les données ne sont pas là, « 0 » serait un mensonge :
-                  un chargement ou une panne réseau s'afficherait exactement
-                  comme une série réellement à zéro. */}
-              <Text style={[f(700), styles.tnum, styles.streakNum]}>
-                {stats.isPending ? '—' : stats.streak}
-              </Text>
-              <Text style={[f(600), { fontSize: 16, color: C.ink }]}>
-                {stats.streak > 1 ? 'jours' : 'jour'} de contrôle
-              </Text>
-            </View>
-
-            {/* Semaine — cercles L→D. Le jour actuel porte un anneau détaché :
-                un simple contour de la même couleur disparaissait sur un jour
-                déjà tenu. */}
-            <View style={styles.week}>
-              {stats.week.map((w, i) => (
-                <View
-                  key={`${w.d}-${i}`}
-                  style={[styles.dayWrap, w.today && styles.dayTodayRing]}
-                >
-                  <View
-                    style={[
-                      styles.dayCircle,
-                      { backgroundColor: w.done ? C.accent : C.subtleBg },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        f(600),
-                        {
-                          fontSize: 12,
-                          color: w.done
-                            ? C.onAccent
-                            : w.today
-                              ? C.ink85
-                              : C.ink32,
-                        },
-                      ]}
-                    >
-                      {w.d}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.streakDivider} />
-
-            {/* Stats intégrées : regagnées | ouverture évitée */}
-            <View style={styles.streakStats}>
-              <View style={{ flex: 1 }}>
-                <Text style={[f(700), styles.statVal]}>
-                  {stats.isPending ? '—' : fmtSaved(stats.savedMinutes)}
-                </Text>
-                <Text style={[f(400), styles.statLabel]}>
-                  regagnées aujourd'hui
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={{ flex: 1, paddingLeft: 20 }}>
-                <Text style={[f(700), styles.statVal]}>
-                  {stats.isPending ? '—' : stats.interceptions}
-                </Text>
-                <Text style={[f(400), styles.statLabel]}>
-                  ouverture{stats.interceptions > 1 ? 's' : ''} évitée
-                  {stats.interceptions > 1 ? 's' : ''}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* La gestion des blocages vit dans son onglet : l'Accueil montre la
-              RÉCOMPENSE, pas la plomberie. Seul reste un appel à l'action, tant
-              qu'aucun blocage n'existe — il disparaît dès le premier, et
-              revient s'il n'en reste plus. Il renvoie vers l'onglet Blocages
-              (le foyer des blocages), pas directement vers la création. */}
-          {!rulesPending && visibleRules.length === 0 && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Rien ne protège ton temps — ouvrir Blocages"
-              onPress={() => router.navigate('/(tabs)/blocks')}
-              style={styles.emptyBig}
-            >
-              <View style={styles.emptyBigIcon}>
-                <IconSvg name={IconName.PLUS} size={24} color={C.iconStroke} />
-              </View>
-              <Text style={[f(700), styles.emptyBigTitle]}>
-                Rien ne protège ton temps
-              </Text>
-              <Text style={[f(400), styles.emptyBigSub]}>
-                Ton téléphone est grand ouvert. Choisis un premier moment à
-                protéger.
-              </Text>
-            </Pressable>
+          {hasAnyBlockage ? (
+            <DailyResultsCard
+              savedMinutesWeek={stats.savedMinutesWeek}
+              interceptions={stats.interceptions}
+              isPending={stats.isPending}
+            />
+          ) : (
+            <QuickStartRail rules={rules} />
           )}
-
-          {/* Les suggestions, elles, ne s'en vont jamais : il y a toujours un
-              moment de plus à protéger. Les deux cartes peuvent donc coexister
-              à la première ouverture. */}
-          <TryNextCard rules={rules} />
 
           <View style={{ height: 8 }} />
         </View>
@@ -293,133 +247,36 @@ export default function HomeScreen() {
   )
 }
 
-function fmtSaved(min: number): string {
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  if (h === 0) return `${m} min`
-  if (m === 0) return `${h} h`
-  return `${h} h ${String(m).padStart(2, '0')}`
-}
-
 const styles = StyleSheet.create({
-  // Appel à l'action agrandi : un écran vide est une invitation à agir.
-  emptyBig: {
-    marginTop: 26,
-    backgroundColor: C.card,
-    borderRadius: 22,
-    paddingVertical: 30,
-    paddingHorizontal: 22,
-    alignItems: 'center',
-  },
-  emptyBigIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 17,
-    backgroundColor: C.iconTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  emptyBigTitle: { fontSize: 18, color: C.ink, letterSpacing: -0.3 },
-  emptyBigSub: {
-    fontSize: 13.5,
-    color: C.ink55,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginTop: 6,
-    maxWidth: 260,
-  },
   scrollContent: { flexGrow: 1 },
   container: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
+    paddingTop: 10,
+    paddingBottom: 26,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  brandLogo: { width: 114, height: 22 },
+  brandLogo: { width: 122, height: 23 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  flame: { width: 24, height: 24 },
   gear: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  tnum: { fontVariant: ['tabular-nums'] },
-
-  // Titre motivant au-dessus de la série
-  streakHeading: {
-    fontSize: 17,
-    color: C.ink,
-    letterSpacing: -0.4,
-    marginTop: 24,
-    marginBottom: 11,
-    paddingHorizontal: 2,
-  },
-  // Carte série
-  streakCard: {
-    backgroundColor: C.card,
-    borderRadius: 24,
-    padding: 18,
-  },
-  streakRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 9,
-    marginTop: 6,
-  },
-  streakNum: {
-    fontSize: 40,
-    color: C.accent,
-    letterSpacing: -1,
-    lineHeight: 42,
-  },
-  week: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 14,
-  },
-  dayCircle: {
     width: 32,
     height: 32,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // L'anneau se détache du disque : violet plus clair + un vrai jour entre les
-  // deux, sinon il se fond dans le remplissage d'un jour déjà tenu.
-  dayWrap: {
-    padding: 2.5,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: 'transparent',
+  welcome: { marginTop: 18 },
+  welcomeKicker: { fontSize: 15, color: C.accent, letterSpacing: -0.2 },
+  welcomeSub: {
+    fontSize: 14,
+    color: 'rgba(224,224,235,0.58)',
+    lineHeight: 19,
+    marginTop: 4,
   },
-  dayTodayRing: { borderColor: '#DAD7FF' },
-  streakDivider: {
-    height: 1,
-    backgroundColor: C.sep,
-    marginTop: 14,
-  },
-  streakStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  statVal: {
-    fontSize: 19,
-    color: C.ink,
-    letterSpacing: -0.4,
-  },
-  statLabel: { fontSize: 12, color: C.ink50, marginTop: 3 },
-  statDivider: { width: 1, height: 30, backgroundColor: C.sep },
 
   // Alerte autorisation
   alertCard: {

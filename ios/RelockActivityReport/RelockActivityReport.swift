@@ -38,13 +38,19 @@ struct RelockActivityReport: DeviceActivityReportExtension {
     DayUsageReport { model in
       UsageReportView(model: model)
     }
-    // Accueil : UNE seule scène pour le total + le delta + les pilules.
-    // Deux scènes distinctes (héro et pilules) = deux DeviceActivityReport qui
-    // calculent EN MÊME TEMPS dans une extension bornée à 6 Mo : l'un des deux
-    // perdait la course et restait blanc, au hasard. Une scène = un rapport =
-    // plus de course.
+    // Accueil (ancienne maquette, hero + pilules) : UNE seule scène pour le
+    // total + le delta + les pilules. Deux scènes distinctes (héro et
+    // pilules) = deux DeviceActivityReport qui calculent EN MÊME TEMPS dans
+    // une extension bornée à 6 Mo : l'un des deux perdait la course et
+    // restait blanc, au hasard. Une scène = un rapport = plus de course.
     HomeReport { model in
       HomeSectionView(model: model)
+    }
+    // Accueil (maquette « Relock Home » v2) : héro SEUL, sans pilules — la
+    // carte de protection prend leur place. Aucune course possible : c'est le
+    // seul rapport présenté par l'écran Accueil dans ce mode.
+    HeroReport { model in
+      HeroTotalView(model: model)
     }
   }
 }
