@@ -1,5 +1,10 @@
 import { router } from 'expo-router'
-import { DeviceEventEmitter, Linking, NativeModules } from 'react-native'
+import {
+  DeviceEventEmitter,
+  DevSettings,
+  Linking,
+  NativeModules,
+} from 'react-native'
 import { constants } from '@/config/constants'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
 import { completeOnboarding } from '@/session/bootstrap'
@@ -84,6 +89,18 @@ async function run(cmd: string): Promise<void> {
       completeOnboarding()
       console.log(`${TAG} onboarding marqué terminé`)
       return
+    case 'dev-session': {
+      // Déconnecte le compte courant (souvent restauré depuis le Keychain,
+      // même après une réinstallation) pour forcer `ensureDevSession()` à
+      // reconnecter le compte dev (DEV_LOGIN_EMAIL) au prochain montage —
+      // utile pour tester avec des données seedées sans le mot de passe du
+      // vrai compte.
+      const { supabase } = await import('@/shared/services/supabase/client')
+      await supabase.auth.signOut()
+      console.log(`${TAG} déconnecté, rechargement…`)
+      DevSettings.reload()
+      return
+    }
     default: {
       // `activity-period/<période 0|1|2>/<décalage>` : pilote les filtres
       // de l'écran Activité (validation visuelle Jour/Semaine/Mois).
