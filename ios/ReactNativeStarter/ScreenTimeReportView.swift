@@ -6,7 +6,8 @@ import os
 /// Héberge un rapport de temps d'écran (extension RelockActivityReport) dans une
 /// UIView pour RN.
 /// - `mode` : « usage » (Activité : résumé + graphe + classement, défilant),
-///   « pills » (rangée du jour, Accueil) ou « hero » (total + delta, Accueil).
+///   « home » (total + delta + pilules, ancienne maquette Accueil) ou
+///   « hero » (total + delta seuls, maquette Accueil v2).
 /// - `period` : 0 = jour, 1 = semaine, 2 = mois.
 /// - `offset` : recule dans le temps, en unités de la période.
 ///
@@ -70,6 +71,19 @@ private struct ReportContainer: View {
       let start = cal.date(byAdding: .day, value: -1, to: today.start) ?? today.start
       DeviceActivityReport(
         DeviceActivityReport.Context("TodayHome"),
+        filter: DeviceActivityFilter(
+          segment: .daily(during: DateInterval(start: start, end: today.end)),
+          users: .all, devices: devices))
+
+    case "hero":
+      // Même filtre que « home » (hier → fin d'aujourd'hui, segments
+      // quotidiens) : seul le rendu change côté extension (pas de pilules).
+      let today =
+        cal.dateInterval(of: .day, for: now)
+        ?? DateInterval(start: now, duration: 86_400)
+      let start = cal.date(byAdding: .day, value: -1, to: today.start) ?? today.start
+      DeviceActivityReport(
+        DeviceActivityReport.Context("TodayHero"),
         filter: DeviceActivityFilter(
           segment: .daily(during: DateInterval(start: start, end: today.end)),
           users: .all, devices: devices))
@@ -215,6 +229,8 @@ final class ScreenTimeReportView: UIView {
     var body: some View {
       if mode == "home" {
         MockHomeView()
+      } else if mode == "hero" {
+        MockHeroView()
       } else {
         MockUsageView(period: period)
       }
@@ -277,6 +293,34 @@ final class ScreenTimeReportView: UIView {
           .padding(.horizontal, 2)
         }
         .frame(height: 80)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .environment(\.colorScheme, .dark)
+    }
+  }
+
+  /// Bloc Accueil factice, sans pilules (miroir de HeroTotalView) — maquette v2.
+  private struct MockHeroView: View {
+    private let ink = Color(red: 0.961, green: 0.961, blue: 0.969)
+    private let unit = Color(red: 0.922, green: 0.922, blue: 0.961).opacity(0.45)
+    private let green = Color(red: 0.373, green: 0.788, blue: 0.545)
+
+    var body: some View {
+      VStack(alignment: .leading, spacing: 5) {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+          Text("3").font(.system(size: 44, weight: .bold)).kerning(-1.2)
+            .foregroundColor(ink)
+          Text("h").font(.system(size: 22, weight: .semibold)).foregroundColor(unit)
+          Text("12").font(.system(size: 44, weight: .bold)).kerning(-1.2)
+            .foregroundColor(ink)
+          Text("min").font(.system(size: 22, weight: .semibold)).foregroundColor(unit)
+        }
+        HStack(spacing: 6) {
+          Image(systemName: "chevron.down")
+            .font(.system(size: 11, weight: .bold)).foregroundColor(green)
+          Text("48 min de moins qu'hier")
+            .font(.system(size: 13.5, weight: .medium)).foregroundColor(green)
+        }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       .environment(\.colorScheme, .dark)

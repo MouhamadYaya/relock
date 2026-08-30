@@ -51,12 +51,19 @@ const schedule = (
 })
 
 export const PRESETS: Preset[] = [
+  {
+    id: 'focus',
+    title: 'Focus',
+    pitch: 'Un coup de collier, là, maintenant — pas de réglages.',
+    type: 'progressive_delay',
+    config: { name: 'Focus', preset_id: 'focus', duration_min: 25 },
+  },
   schedule(
     'nuit',
-    'Nuit tranquille',
+    'Repos',
     'Le scroll du soir est celui qui coûte le plus de sommeil.',
     22,
-    7,
+    8,
   ),
   schedule(
     'reveil',
@@ -98,10 +105,10 @@ export const PRESETS: Preset[] = [
   ),
   {
     id: 'dose',
-    title: '30 minutes par jour',
+    title: 'Réseaux limités',
     pitch: 'Tu gardes tes apps. Tu reprends la main sur la dose.',
     type: 'daily_limit',
-    config: { name: '30 minutes par jour', preset_id: 'dose', limit_min: 30 },
+    config: { name: 'Réseaux limités', preset_id: 'dose', limit_min: 30 },
   },
   {
     id: 'micro',
@@ -122,8 +129,10 @@ const hh = (h: unknown, m: unknown) =>
 /** Ce que fait le préréglage, en une ligne — pour la carte de suggestion. */
 export function presetDetail(p: Preset): string {
   const c = p.config
-  if (p.type === 'daily_limit') return `Au-delà, bloqué jusqu’à minuit`
-  return `${daysLabel((c.days as number[]) ?? null)}, ${hh(c.start_hour, c.start_minute)} → ${hh(c.end_hour, c.end_minute)}`
+  if (p.type === 'daily_limit') return `${c.limit_min} min par jour`
+  if (p.type === 'progressive_delay')
+    return `${c.duration_min} min de blocage immédiat`
+  return `${hh(c.start_hour, c.start_minute)} → ${hh(c.end_hour, c.end_minute)} · ${daysLabel((c.days as number[]) ?? null)}`
 }
 
 /** Lignes du récapitulatif : ce que l'utilisateur valide, sans jargon. */
@@ -135,6 +144,13 @@ export function presetLines(p: Preset): { label: string; value: string }[] {
       { label: 'Limite', value: `${c.limit_min} minutes par jour` },
       { label: 'Jours', value: 'Tous les jours' },
       { label: 'Une fois épuisée', value: 'Bloqué jusqu’à minuit' },
+    ]
+  }
+  if (p.type === 'progressive_delay') {
+    return [
+      { label: 'Type', value: 'Blocage minuté' },
+      { label: 'Durée', value: `${c.duration_min} minutes` },
+      { label: 'Démarre', value: 'Immédiatement' },
     ]
   }
   return [

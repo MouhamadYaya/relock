@@ -9,8 +9,9 @@ import { useTheme } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 /**
- * Hero de l'Accueil (maquette « Relock Home ») : « Temps d'écran aujourd'hui »,
- * grand total + delta vs hier, puis la rangée de pilules par app.
+ * Hero de l'Accueil (maquette « Relock Home » v2) : « Temps d'écran
+ * aujourd'hui », grand total + delta vs hier. Sans les pilules par app — la
+ * carte de protection prend leur place sous ce bloc.
  *
  * Le total et le delta sont RENDUS par l'extension DeviceActivityReport
  * (scène « TodayHero ») : le sandbox d'iOS interdit à cette extension de
@@ -89,12 +90,6 @@ export function ScreenTimeHero() {
           </Text>
         </View>
       ) : (
-        // UN SEUL rapport pour le total + le delta + les pilules. Deux vues
-        // distantes qui calculaient en même temps se faisaient la course dans
-        // une extension bornée à 6 Mo : l'une gagnait, l'autre restait blanche,
-        // au hasard (parfois le total, parfois les pilules). Une vue = pas de
-        // course.
-        //
         // Fond explicite (et pas juste transparent) : la vue native de
         // l'extension DeviceActivityReport ne peint RIEN tant qu'elle n'a pas
         // de données (pas d'autorisation, calcul en cours, extension tuée) —
@@ -102,24 +97,19 @@ export function ScreenTimeHero() {
         // Liquid Glass (iOS 26) et la ferait paraître blanche.
         <View
           style={[
-            styles.homeBlock,
+            styles.heroBlock,
             { backgroundColor: theme.colors.background },
           ]}
         >
           {showSkeleton && (
-            <View style={styles.homeSkeleton} pointerEvents="none">
+            <View style={styles.heroSkeleton} pointerEvents="none">
               <View style={styles.skelBig} />
               <View style={styles.skelSmall} />
-              <View style={styles.skeletonRow}>
-                {[0, 1, 2, 3, 4].map(i => (
-                  <View key={i} style={styles.skel} />
-                ))}
-              </View>
             </View>
           )}
           <ScreenTimeReport
-            key={`home-${epoch}-${authorized}`}
-            mode="home"
+            key={`hero-${epoch}-${authorized}`}
+            mode="hero"
             style={styles.report}
           />
         </View>
@@ -136,17 +126,16 @@ const styles = StyleSheet.create({
     color: C.label,
     letterSpacing: -0.2,
   },
-  // Hauteur fixe : la vue native remplit (héro 82 + gap 14 + pilules 80).
-  // Doit coller aux hauteurs de HomeSectionView côté extension.
+  // Hauteur fixe : doit coller à celle de HeroTotalView côté extension.
   heroWrap: { height: 82, marginTop: 4, justifyContent: 'center' },
-  homeBlock: { height: 176, marginTop: 4 },
+  heroBlock: { height: 82, marginTop: 4 },
   unavailable: {
     ...fonts.medium,
     fontSize: 14,
     color: C.muted,
     lineHeight: 20,
   },
-  homeSkeleton: { ...StyleSheet.absoluteFillObject, gap: 8 },
+  heroSkeleton: { ...StyleSheet.absoluteFillObject, gap: 8 },
   skelBig: {
     width: 150,
     height: 44,
@@ -160,11 +149,4 @@ const styles = StyleSheet.create({
     backgroundColor: C.skel,
   },
   report: { flex: 1 },
-  skeletonRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 9,
-    marginTop: 20,
-  },
-  skel: { width: 66, height: 74, borderRadius: 16, backgroundColor: C.skel },
 })

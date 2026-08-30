@@ -104,6 +104,29 @@ export const BlockRulesService = {
     if (error) throw normalizeError(error)
   },
 
+  /**
+   * PROLONGER un « Bloquer maintenant » en cours (action « +15 min »). On
+   * patche `duration_min` sans toucher `created_at` : la fin reste
+   * `created_at + duration_min`, source unique déjà lue partout ailleurs
+   * (carte Accueil, onglet Blocages, fiche détail).
+   */
+  async extendTimedBlock(id: string, durationMin: number): Promise<void> {
+    const { data } = await supabase
+      .from('block_rules')
+      .select('config')
+      .eq('id', id)
+      .maybeSingle()
+    const config = {
+      ...((data?.config as Record<string, unknown>) ?? {}),
+      duration_min: durationMin,
+    }
+    const { error } = await supabase
+      .from('block_rules')
+      .update({ config })
+      .eq('id', id)
+    if (error) throw normalizeError(error)
+  },
+
   /** Suppression définitive d'une règle (action « Arrêter le blocage »). */
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from('block_rules').delete().eq('id', id)

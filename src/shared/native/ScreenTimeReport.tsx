@@ -15,10 +15,11 @@ type ReportProps = ViewProps & {
   offset?: number
   /**
    * « usage » : l'Activité entière (résumé + graphe + classement), qui défile
-   * elle-même. Accueil : « hero » (total du jour + delta) et « pills »
-   * (rangée du jour).
+   * elle-même. « home » : total + delta + pilules (ancienne maquette
+   * Accueil). « hero » : total + delta seuls, sans pilules (maquette Accueil
+   * v2 — la carte de protection prend la place des pilules).
    */
-  mode?: 'usage' | 'home'
+  mode?: 'usage' | 'home' | 'hero'
   /** Affiché si la vue native est absente OU si son rendu échoue. */
   fallback?: React.ReactNode
 }
@@ -50,7 +51,7 @@ export const isScreenTimeReportAvailable = hasNativeView(NAME)
 type NativeProps = ViewProps & {
   period?: number
   offset?: number
-  mode?: 'usage' | 'home'
+  mode?: 'usage' | 'home' | 'hero'
 }
 
 const NativeReport: React.ComponentType<NativeProps> | null =

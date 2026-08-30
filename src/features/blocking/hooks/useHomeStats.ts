@@ -3,6 +3,7 @@ import {
   computeRecordStreak,
   computeStreak,
   computeWeek,
+  computeWeekSavedMinutes,
   StatsService,
 } from '@/features/blocking/services/stats/stats.service'
 import { useSessionUserId } from '@/session/useSessionUser'
@@ -29,6 +30,7 @@ export function useHomeStats() {
         streak: computeStreak(recent),
         record: computeRecordStreak(recent),
         week: computeWeek(recent),
+        savedMinutesWeek: computeWeekSavedMinutes(recent),
       }
     },
     // Sans session, RLS renvoie du VIDE sans erreur : interroger Supabase
@@ -50,6 +52,7 @@ export function useHomeStats() {
     resisted: data?.today?.opens_stopped ?? 0,
     interceptions: data?.today?.interceptions_count ?? 0,
     savedMinutes: data?.today?.time_saved_minutes ?? 0,
+    savedMinutesWeek: data?.savedMinutesWeek ?? 0,
     streak: data?.streak ?? 0,
     record: data?.record ?? 0,
     week: data?.week ?? computeWeek([]),
