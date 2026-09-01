@@ -7,7 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000001 /* NativeDurationPickerView.swift */; };
+		D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */; };
+		D1A700000000000000000006 /* NativeDurationPickerViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */; };
+		C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */; };
 		0BBFF9FFE1F0D52D8E9E0A2A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23BE557DFCBF1E290B255014 /* Foundation.framework */; };
+		43963F48D9B9A6A2391A455E /* BlockedAppIconsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833FBC2BC7CE65761F10F55D /* BlockedAppIconsView.swift */; };
+		35EC70A225E4C3E9CCAA99C4 /* BlockedAppIconsViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9386503D5AF5B4C64253FEC5 /* BlockedAppIconsViewManager.swift */; };
+		DBC6CAA416AA6C02FE6CEFCF /* BlockedAppIconsViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 978FB0EDC0916E5AD42437BA /* BlockedAppIconsViewManager.mm */; };
 		0C707AFC4DDA4B2786217A24 /* Inter-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1CA975ADD6054F0FB8FEACC8 /* Inter-Regular.ttf */; };
 		0C80B921A6F3F58F76C31292 /* libPods-ReactNativeStarter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-ReactNativeStarter.a */; };
 		0CF7C5D8BB8B78E3539478DC /* ScreenTimeReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55276F1AD513ADCDA696FED4 /* ScreenTimeReportView.swift */; };
@@ -36,6 +43,8 @@
 		AB1CE0000000000000000006 /* RelockBlockAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000002 /* RelockBlockAttributes.swift */; };
 		AB1CE0000000000000000007 /* RelockBlockAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000002 /* RelockBlockAttributes.swift */; };
 		AB1CE0000000000000000008 /* RelockWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000004 /* RelockWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
+		A71C00000000000000000002 /* ReportAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A71C00000000000000000001 /* ReportAssets.xcassets */; };
+		A71C00000000000000000003 /* ReportAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A71C00000000000000000001 /* ReportAssets.xcassets */; };
 		B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
@@ -46,6 +55,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		C0DE0000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = ReactNativeStarter;
+		};
 		46FE697C5E1649D8E349A770 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
@@ -102,7 +118,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D1A700000000000000000001 /* NativeDurationPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeDurationPickerView.swift; path = ReactNativeStarter/NativeDurationPickerView.swift; sourceTree = "<group>"; };
+		D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeDurationPickerViewManager.swift; path = ReactNativeStarter/NativeDurationPickerViewManager.swift; sourceTree = "<group>"; };
+		D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = NativeDurationPickerViewManager.mm; path = ReactNativeStarter/NativeDurationPickerViewManager.mm; sourceTree = "<group>"; };
+		C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityPhysicalScrollTests.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000003 /* ReactNativeStarterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReactNativeStarterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		09245AC1DD1546958697DF20 /* Inter-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.ttf"; path = "../assets/fonts/Inter-Medium.ttf"; sourceTree = "<group>"; };
+		833FBC2BC7CE65761F10F55D /* BlockedAppIconsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlockedAppIconsView.swift; path = ReactNativeStarter/BlockedAppIconsView.swift; sourceTree = "<group>"; };
+		9386503D5AF5B4C64253FEC5 /* BlockedAppIconsViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlockedAppIconsViewManager.swift; path = ReactNativeStarter/BlockedAppIconsViewManager.swift; sourceTree = "<group>"; };
+		978FB0EDC0916E5AD42437BA /* BlockedAppIconsViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = BlockedAppIconsViewManager.mm; path = ReactNativeStarter/BlockedAppIconsViewManager.mm; sourceTree = "<group>"; };
 		0E239EECBD552FA87471FE5E /* ScreenTimeReportViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ScreenTimeReportViewManager.swift; path = ReactNativeStarter/ScreenTimeReportViewManager.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* ReactNativeStarter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReactNativeStarter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ReactNativeStarter/Images.xcassets; sourceTree = "<group>"; };
@@ -136,6 +160,7 @@
 		AB1CE0000000000000000002 /* RelockBlockAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockBlockAttributes.swift; path = RelockWidgets/RelockBlockAttributes.swift; sourceTree = "<group>"; };
 		AB1CE0000000000000000003 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockWidgets/Info.plist; sourceTree = "<group>"; };
 		AB1CE0000000000000000004 /* RelockWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A71C00000000000000000001 /* ReportAssets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = ReportAssets.xcassets; path = RelockActivityReport/ReportAssets.xcassets; sourceTree = "<group>"; };
 		BA36F585153B5E7C7D71D1B7 /* RelockShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA97067EDAE6D8F92FDAD17E /* RelockShieldAction.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShieldAction.entitlements; path = RelockShieldAction/RelockShieldAction.entitlements; sourceTree = "<group>"; };
 		BE6C76F37A41348D6134E60C /* RelockActivityReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockActivityReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -152,6 +177,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C0DE00000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -202,9 +234,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C0DE00000000000000000004 /* ReactNativeStarterUITests */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */,
+			);
+			path = ReactNativeStarterUITests;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* ReactNativeStarter */ = {
 			isa = PBXGroup;
 			children = (
+				D1A700000000000000000001 /* NativeDurationPickerView.swift */,
+				D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */,
+				D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */,
 				DC2160CB3002FE400001F544 /* ReactNativeStarter.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -218,6 +261,9 @@
 				55276F1AD513ADCDA696FED4 /* ScreenTimeReportView.swift */,
 				0E239EECBD552FA87471FE5E /* ScreenTimeReportViewManager.swift */,
 				98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */,
+				833FBC2BC7CE65761F10F55D /* BlockedAppIconsView.swift */,
+				9386503D5AF5B4C64253FEC5 /* BlockedAppIconsViewManager.swift */,
+				978FB0EDC0916E5AD42437BA /* BlockedAppIconsViewManager.mm */,
 			);
 			name = ReactNativeStarter;
 			sourceTree = "<group>";
@@ -247,6 +293,7 @@
 			children = (
 				D892459F17F45426D89F11D2 /* RelockActivityReport.swift */,
 				4B2A34559E02757B55C72EA0 /* UsageReportView.swift */,
+				A71C00000000000000000001 /* ReportAssets.xcassets */,
 				69F9094F8A1A3A5DC82EA284 /* Info.plist */,
 				DFC605A98264E83CD445F19A /* RelockActivityReport.entitlements */,
 			);
@@ -291,6 +338,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* ReactNativeStarter */,
+				C0DE00000000000000000004 /* ReactNativeStarterUITests */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -312,6 +360,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* ReactNativeStarter.app */,
+				C0DE00000000000000000003 /* ReactNativeStarterUITests.xctest */,
 				14EE595CCFF2B3E063DC7BD8 /* RelockMonitor.appex */,
 				A673B73E1554D473DCDADCDD /* RelockShield.appex */,
 				BA36F585153B5E7C7D71D1B7 /* RelockShieldAction.appex */,
@@ -373,6 +422,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		C0DE00000000000000000008 /* ReactNativeStarterUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0DE00000000000000000009 /* Build configuration list for PBXNativeTarget "ReactNativeStarterUITests" */;
+			buildPhases = (
+				C0DE00000000000000000007 /* Sources */,
+				C0DE00000000000000000005 /* Frameworks */,
+				C0DE00000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C0DE0000000000000000000D /* PBXTargetDependency */,
+			);
+			name = ReactNativeStarterUITests;
+			productName = ReactNativeStarterUITests;
+			productReference = C0DE00000000000000000003 /* ReactNativeStarterUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		13B07F861A680F5B00A75B9A /* ReactNativeStarter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ReactNativeStarter" */;
@@ -497,6 +564,10 @@
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
 					};
+					C0DE00000000000000000008 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ReactNativeStarter" */;
@@ -513,6 +584,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* ReactNativeStarter */,
+				C0DE00000000000000000008 /* ReactNativeStarterUITests */,
 				8BA9BB81E9029AC33DFAE70B /* RelockMonitor */,
 				84E8DAD0EFE1AAEFF9EEB11E /* RelockShield */,
 				DE1F0EC2839616896F96F0B2 /* RelockShieldAction */,
@@ -523,10 +595,18 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C0DE00000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		02377F149C18DC4C8F3B863A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A71C00000000000000000002 /* ReportAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,6 +614,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A71C00000000000000000003 /* ReportAssets.xcassets in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				4FCAC8B284A252FEA644948F /* PrivacyInfo.xcprivacy in Resources */,
@@ -679,10 +760,21 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C0DE00000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */,
+				D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */,
+				D1A700000000000000000006 /* NativeDurationPickerViewManager.mm in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */,
 				AB1CE0000000000000000007 /* RelockBlockAttributes.swift in Sources */,
@@ -690,6 +782,9 @@
 				0CF7C5D8BB8B78E3539478DC /* ScreenTimeReportView.swift in Sources */,
 				325143E77DE7C2351A0B913B /* ScreenTimeReportViewManager.swift in Sources */,
 				B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */,
+				43963F48D9B9A6A2391A455E /* BlockedAppIconsView.swift in Sources */,
+				35EC70A225E4C3E9CCAA99C4 /* BlockedAppIconsViewManager.swift in Sources */,
+				DBC6CAA416AA6C02FE6CEFCF /* BlockedAppIconsViewManager.mm in Sources */,
 				80D8BF1D0BA3C5709AACC0DC /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -739,6 +834,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C0DE0000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* ReactNativeStarter */;
+			targetProxy = C0DE0000000000000000000C /* PBXContainerItemProxy */;
+		};
 		28F1351425A5E4F7BA4A2756 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = RelockMonitor;
@@ -772,6 +872,46 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C0DE0000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7K9HCH8GF2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.ReactNativeStarterUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ReactNativeStarter;
+			};
+			name = Debug;
+		};
+		C0DE0000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7K9HCH8GF2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.ReactNativeStarterUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ReactNativeStarter;
+			};
+			name = Release;
+		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-ReactNativeStarter.debug.xcconfig */;
@@ -1254,6 +1394,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C0DE00000000000000000009 /* Build configuration list for PBXNativeTarget "ReactNativeStarterUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0DE0000000000000000000A /* Debug */,
+				C0DE0000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ReactNativeStarter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

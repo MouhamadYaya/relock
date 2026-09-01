@@ -12,8 +12,8 @@ import { ScreenTime } from '@/shared/native/screen-time'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
 
-/** Événement interne (dev) : force période/décalage de l'écran Activité. */
-export const DEV_EVENT_ACTIVITY_PERIOD = 'relock-dev-activity-period'
+/** Événement interne (dev) : force le jour affiché par l'écran Activité. */
+export const DEV_EVENT_ACTIVITY_DAY = 'relock-dev-activity-day'
 /** Événement interne (dev) : saute l'onboarding directement à une étape. */
 export const DEV_EVENT_ONBOARDING_JUMP = 'relock-dev-onboarding-jump'
 
@@ -30,11 +30,111 @@ export const DEV_EVENT_ONBOARDING_JUMP = 'relock-dev-onboarding-jump'
  */
 const TAG = '[DEV-BRIDGE]'
 
+/**
+ * Hôte de la machine de dev, vu depuis l'appareil.
+ *
+ * ⚠️ En BRIDGELESS (New Architecture), `NativeModules.SourceCode` n'est pas
+ * peuplé : on retombait sur `localhost`, qui sur un iPhone désigne le
+ * TÉLÉPHONE — le pont était donc muet sur appareil physique (aucune commande
+ * reçue, aucun résultat renvoyé). `getDevServer()` reste fiable dans les deux
+ * runtimes ; `SourceCode` n'est plus qu'un repli.
+ */
+function devHost(): string {
+  try {
+    const getDevServer =
+      require('react-native/Libraries/Core/Devtools/getDevServer').default
+    const url = getDevServer?.()?.url as string | undefined
+    const host = url?.match(/^https?:\/\/([^/:]+)/)?.[1]
+    if (host) return host
+  } catch {
+    // Repli ci-dessous.
+  }
+  const scriptURL = NativeModules.SourceCode?.scriptURL as string | undefined
+  return scriptURL?.match(/^https?:\/\/([^/:]+)/)?.[1] ?? 'localhost'
+}
+
+/**
+ * Renvoie un résultat au Mac (port 8124). Les logs Metro ne sont pas toujours
+ * lisibles depuis un pilotage scripté : ce canal l'est toujours.
+ */
+async function report(what: string, payload: string): Promise<void> {
+  try {
+    await fetch(`http://${devHost()}:8124/${what}`, {
+      method: 'POST',
+      body: payload,
+    })
+  } catch {
+    // Pas de serveur en face : le log console suffit.
+  }
+}
+
 async function run(cmd: string): Promise<void> {
   switch (cmd) {
     case 'diag': {
       const d = await ScreenTime.getDiagnostics()
       console.log(`${TAG} diag`, JSON.stringify(d, null, 2))
+      return
+    }
+    case 'selinfo': {
+      // Ce que le NATIF sait de chaque règle : combien d'apps / catégories /
+      // domaines, et quels rangs sont en sursis. C'est la seule façon de
+      // savoir si « une seule icône » vient des données ou du rendu.
+      const { BlockRulesService } = await import(
+        '@/features/blocking/services/block-rules/block-rules.service'
+      )
+      const rules = await BlockRulesService.list()
+      const out: unknown[] = []
+      for (const r of rules) {
+        const info = await ScreenTime.selectionInfo(r.id).catch(e => String(e))
+        const rep = await ScreenTime.reprievedApps(r.id).catch(() => ({}))
+        out.push({
+          id: r.id,
+          type: r.type,
+          isActive: r.isActive,
+          dbCount: r.count,
+          native: info,
+          reprieved: rep,
+        })
+      }
+      const payload = JSON.stringify(out, null, 2)
+      console.log(`${TAG} selinfo`, payload)
+      await report('selinfo', payload)
+      return
+    }
+    case 'blocked': {
+      // Union DÉDUPLIQUÉE des apps réellement sous bouclier : c'est
+      // exactement ce que la rangée « Apps bloquées » dessine.
+      const keys = await ScreenTime.blockedAppKeys()
+      const payload = JSON.stringify(
+        { count: keys.length, unique: new Set(keys).size, keys },
+        null,
+        2,
+      )
+      console.log(`${TAG} blocked`, payload)
+      await report('blocked', payload)
+      return
+    }
+    case 'unlock-test': {
+      // Débloque la 1re app 5 min, puis relit : elle doit RESTER dans la
+      // liste, marquée « ouverte ».
+      const before = await ScreenTime.blockedAppKeys()
+      if (before.length > 0) await ScreenTime.unblockAppKey(before[0], 5)
+      const [after, reprieved] = await Promise.all([
+        ScreenTime.blockedAppKeys(),
+        ScreenTime.reprievedKeys(),
+      ])
+      const payload = JSON.stringify(
+        {
+          before: before.length,
+          after: after.length,
+          stillListed: before[0] ? after.includes(before[0]) : null,
+          reprievedCount: Object.keys(reprieved).length,
+        },
+        null,
+        2,
+      )
+      console.log(`${TAG} unlock-test`, payload)
+      await report('unlock-test', payload)
       return
     }
     case 'pull': {
@@ -102,15 +202,13 @@ async function run(cmd: string): Promise<void> {
       return
     }
     default: {
-      // `activity-period/<période 0|1|2>/<décalage>` : pilote les filtres
-      // de l'écran Activité (validation visuelle Jour/Semaine/Mois).
-      const m = cmd.match(/^activity-period\/(\d)\/(\d+)$/)
+      // `activity-day/<décalage 0…6>` pilote le jour de l'écran Activité.
+      const m = cmd.match(/^activity-day\/(\d)$/)
       if (m) {
-        DeviceEventEmitter.emit(DEV_EVENT_ACTIVITY_PERIOD, {
-          period: Number(m[1]),
-          offset: Number(m[2]),
-        })
-        console.log(`${TAG} activity period=${m[1]} offset=${m[2]}`)
+        const offset = Number(m[1])
+        if (offset > 6) return
+        DeviceEventEmitter.emit(DEV_EVENT_ACTIVITY_DAY, { offset })
+        console.log(`${TAG} activity day offset=${offset}`)
         return
       }
       // `onboarding/<step id>` : saute directement à une étape narrative
@@ -153,9 +251,7 @@ function handleUrl(url: string | null) {
  * construction l'adresse du Mac vue par l'appareil.
  */
 function commandsUrl(): string {
-  const scriptURL = NativeModules.SourceCode?.scriptURL as string | undefined
-  const host = scriptURL?.match(/^https?:\/\/([^/:]+)/)?.[1] ?? 'localhost'
-  return `http://${host}:8123/relock-dev-commands.json`
+  return `http://${devHost()}:8123/relock-dev-commands.json`
 }
 
 /**
@@ -185,12 +281,8 @@ function probeStorage(): void {
   } catch (e) {
     r = `FAIL ${String(e)}`
   }
-  const host =
-    (NativeModules.SourceCode?.scriptURL as string | undefined)?.match(
-      /^https?:\/\/([^/:]+)/,
-    )?.[1] ?? 'localhost'
   fetch(
-    `http://${host}:8124/storage-probe?r=${encodeURIComponent(r).slice(0, 800)}`,
+    `http://${devHost()}:8124/storage-probe?r=${encodeURIComponent(r).slice(0, 800)}`,
   ).catch(() => {})
 }
 

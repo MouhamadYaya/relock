@@ -32,7 +32,7 @@ describe('Home new-user actions', () => {
     })
 
     const action = renderer?.root.findByProps({
-      accessibilityLabel: 'Créer ma première protection',
+      accessibilityLabel: 'Créer une protection',
     })
 
     act(() => action?.props.onPress())

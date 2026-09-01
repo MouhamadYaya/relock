@@ -27,12 +27,14 @@ export type Preset = {
   config: Record<string, unknown>
 }
 
-const schedule = (
+const scheduleAt = (
   id: string,
   title: string,
   pitch: string,
   sh: number,
+  sm: number,
   eh: number,
+  em: number,
   extra: Record<string, unknown> = {},
 ): Preset => ({
   id,
@@ -43,12 +45,134 @@ const schedule = (
     name: title,
     preset_id: id,
     start_hour: sh,
-    start_minute: 0,
+    start_minute: sm,
     end_hour: eh,
-    end_minute: 0,
+    end_minute: em,
     ...extra,
   },
 })
+
+const schedule = (
+  id: string,
+  title: string,
+  pitch: string,
+  sh: number,
+  eh: number,
+  extra: Record<string, unknown> = {},
+): Preset => scheduleAt(id, title, pitch, sh, 0, eh, 0, extra)
+
+export const NEW_RULE_PRESET_IDS = {
+  work: 'new-rule-work',
+  focus: 'new-rule-focus',
+  study: 'new-rule-study',
+  creative: 'new-rule-creative',
+  decompression: 'new-rule-decompression',
+  sleep: 'new-rule-sleep',
+  evening: 'new-rule-evening',
+  weekend: 'new-rule-weekend',
+  morning: 'new-rule-morning',
+  social: 'new-rule-social',
+  doomscroll: 'new-rule-doomscroll',
+  family: 'new-rule-family',
+} as const
+
+export const NEW_RULE_PRESETS: Preset[] = [
+  schedule(
+    NEW_RULE_PRESET_IDS.work,
+    'Travail',
+    'Bloque les distractions pendant tes heures de travail.',
+    9,
+    17,
+    { days: [1, 2, 3, 4, 5] },
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.focus,
+    'Focus laser',
+    'Une heure sans interruption pour avancer sur l’essentiel.',
+    14,
+    15,
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.study,
+    'Études',
+    'Protège ta matinée pour apprendre sans interruption.',
+    8,
+    12,
+    { days: [1, 2, 3, 4, 5] },
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.creative,
+    'Création profonde',
+    'Garde ton élan créatif loin des notifications.',
+    19,
+    21,
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.decompression,
+    'Décompression',
+    'Laisse ton esprit ralentir avant la fin de la journée.',
+    20,
+    22,
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.sleep,
+    'Sommeil profond',
+    'Protège ta nuit du scroll tardif.',
+    22,
+    6,
+  ),
+  scheduleAt(
+    NEW_RULE_PRESET_IDS.evening,
+    'Soirée calme',
+    'Ralentis sans écran avant de dormir.',
+    19,
+    30,
+    22,
+    0,
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.weekend,
+    'Week-end zen',
+    'Commence ton week-end loin du scroll automatique.',
+    9,
+    12,
+    { days: [0, 6] },
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.morning,
+    'Matin sans écran',
+    'Démarre la journée avant d’ouvrir tes réseaux.',
+    7,
+    9,
+  ),
+  schedule(
+    NEW_RULE_PRESET_IDS.social,
+    'Pause réseaux',
+    'Rends tes soirées à tes proches.',
+    18,
+    20,
+  ),
+  {
+    id: NEW_RULE_PRESET_IDS.doomscroll,
+    title: 'Anti-doomscroll',
+    pitch: 'Garde tes réseaux sans leur donner toute ta journée.',
+    type: 'daily_limit',
+    config: {
+      name: 'Anti-doomscroll',
+      preset_id: NEW_RULE_PRESET_IDS.doomscroll,
+      limit_min: 20,
+    },
+  },
+  scheduleAt(
+    NEW_RULE_PRESET_IDS.family,
+    'Temps en famille',
+    'Profite des tiens sans interruptions numériques.',
+    18,
+    30,
+    21,
+    0,
+  ),
+]
 
 export const PRESETS: Preset[] = [
   {
@@ -117,6 +241,7 @@ export const PRESETS: Preset[] = [
     type: 'daily_limit',
     config: { name: '15 minutes par jour', preset_id: 'micro', limit_min: 15 },
   },
+  ...NEW_RULE_PRESETS,
 ]
 
 export function findPreset(id: string): Preset | undefined {

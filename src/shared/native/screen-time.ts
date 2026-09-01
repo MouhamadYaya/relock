@@ -32,12 +32,58 @@ export interface ScreenTimeEvent {
   at: string
 }
 
+export interface SelectionInfo {
+  apps: number
+  categories: number
+  webDomains: number
+  total: number
+}
+
 interface BlocusScreenTimeNative {
   requestAuthorization(): Promise<AuthStatus>
   authorizationStatus(): Promise<AuthStatus>
   presentPicker(): Promise<{ count: number }>
   /** Lie la dernière sélection du picker à une règle (à la création). */
   bindSelection(ruleId: string): Promise<boolean>
+  /**
+   * Recopie la sélection d'une règle dans le brouillon global AVANT d'ouvrir
+   * le sélecteur : en édition, il s'ouvre donc sur les apps de CETTE règle.
+   * Résout le nombre d'éléments amorcés.
+   */
+  seedSelection(ruleId: string): Promise<number>
+  /**
+   * Ce que la règle bloque, en NOMBRES. Apple ne livre jamais l'identité des
+   * apps : on sait seulement combien de tuiles dessiner, chacune rendue par
+   * `BlockedAppIconsView` à son rang.
+   */
+  selectionInfo(ruleId: string): Promise<SelectionInfo>
+  /** Débloque TEMPORAIREMENT l'app de rang `index` (la règle continue). */
+  unblockApp(
+    ruleId: string,
+    index: number,
+    minutes: number,
+  ): Promise<{ until: number }>
+  /** Sursis en cours pour une règle : rang de l'app (string) → fin (epoch s). */
+  reprievedApps(ruleId: string): Promise<Record<string, number>>
+  /**
+   * Identités STABLES des apps d'une règle, triées. Un `Set` natif n'a pas
+   * d'ordre garanti : indexer dedans faisait afficher deux fois la même app.
+   */
+  appKeys(ruleId: string): Promise<string[]>
+  /**
+   * Apps couvertes par une protection en cours, DÉDUPLIQUÉES. Inclut celles
+   * en sursis : un déblocage temporaire n'exclut pas l'app de la protection.
+   */
+  blockedAppKeys(): Promise<string[]>
+  /** Apps en sursis : clé stable → fin du sursis (epoch, secondes). */
+  reprievedKeys(): Promise<Record<string, number>>
+  /** Débloque temporairement l'app désignée par sa clé stable. */
+  unblockAppKey(key: string, minutes: number): Promise<{ until: number }>
+  /** Termine immédiatement le sursis d'une app et remet son bouclier. */
+  reblockAppKey(key: string): Promise<boolean>
+  /** Joue/arrête la nappe sonore locale du rituel respiratoire. */
+  playCalmSound(): Promise<boolean>
+  stopCalmSound(): Promise<boolean>
   /** Bloque maintenant pour `minutes` (min 15). strict = pas d'arrêt anticipé. */
   startTimedBlock(
     ruleId: string,
@@ -134,6 +180,21 @@ export const ScreenTime = {
   authorizationStatus: () => ensure().authorizationStatus(),
   presentPicker: () => ensure().presentPicker(),
   bindSelection: (ruleId: string) => ensure().bindSelection(ruleId),
+  seedSelection: (ruleId: string) => ensure().seedSelection(ruleId),
+  selectionInfo: (ruleId: string) => ensure().selectionInfo(ruleId),
+  unblockApp: (ruleId: string, index: number, minutes: number) =>
+    ensure().unblockApp(ruleId, index, minutes),
+  reprievedApps: (ruleId: string) => ensure().reprievedApps(ruleId),
+  appKeys: (ruleId: string) => ensure().appKeys(ruleId),
+  blockedAppKeys: () => ensure().blockedAppKeys(),
+  reprievedKeys: () => ensure().reprievedKeys(),
+  unblockAppKey: (key: string, minutes: number) =>
+    ensure().unblockAppKey(key, minutes),
+  reblockAppKey: (key: string) => ensure().reblockAppKey(key),
+  playCalmSound: () =>
+    native ? native.playCalmSound() : Promise.resolve(false),
+  stopCalmSound: () =>
+    native ? native.stopCalmSound() : Promise.resolve(false),
   startTimedBlock: (ruleId: string, minutes: number, strict: boolean) =>
     ensure().startTimedBlock(ruleId, minutes, strict),
   startSchedule: (

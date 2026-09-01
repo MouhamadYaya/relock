@@ -187,6 +187,27 @@ export function isSessionLocked(r: BlockRuleView, now = new Date()): boolean {
   return !!end && end.getTime() > now.getTime()
 }
 
+/**
+ * La session STRICTE qui couvre une app, s'il y en a une.
+ *
+ * ⚠️ Une app visée par plusieurs règles est verrouillée dès qu'UNE seule est
+ * stricte : le bouclier le plus sévère l'emporte. Sinon il suffirait d'ajouter
+ * une règle souple par-dessus pour ouvrir ce qu'on s'était interdit — et le
+ * mode strict ne protégerait plus rien.
+ */
+export function strictSessionFor(
+  sessions: RuleSession[],
+  ruleIds: string[],
+  now = new Date(),
+): RuleSession | null {
+  return (
+    sessions.find(
+      session =>
+        ruleIds.includes(session.rule.id) && isSessionLocked(session.rule, now),
+    ) ?? null
+  )
+}
+
 // ── Cycle de vie ──────────────────────────────────────────────────────
 
 /** Date d'expiration de la règle (création + durée de vie), sinon null. */
@@ -298,6 +319,33 @@ export function deriveSession(
       nowMin: minutesOfDay(now),
     },
   }
+}
+
+/**
+ * Avancement de la session en cours, de 0 (vient de commencer) à 1 (au bout).
+ * `null` quand la notion n'a pas de sens (règle à venir, suspendue, ou limite
+ * dont le natif n'a encore remonté aucun palier — on ne dessine pas une barre
+ * à partir d'un chiffre inventé).
+ */
+export function sessionProgress(s: RuleSession): number | null {
+  if (s.state !== 'running') return null
+  const clamp = (v: number) => Math.max(0, Math.min(1, v))
+
+  if (s.indicator.kind === 'timer') {
+    // `fraction` est la part RESTANTE : la barre montre le chemin parcouru.
+    return clamp(1 - s.indicator.fraction)
+  }
+  if (s.indicator.kind === 'limit') {
+    return s.indicator.pct > 0 ? clamp(s.indicator.pct) : null
+  }
+  if (s.indicator.kind === 'schedule') {
+    const { startMin, endMin, nowMin } = s.indicator
+    const span = (endMin - startMin + DAY_MIN) % DAY_MIN
+    if (span === 0) return null
+    const done = (nowMin - startMin + DAY_MIN) % DAY_MIN
+    return clamp(done / span)
+  }
+  return null
 }
 
 /** Les règles affichables, triées : en cours → à venir → suspendues. */

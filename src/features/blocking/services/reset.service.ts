@@ -18,7 +18,14 @@ const PENDING = 'reset.pendingCloudWipe'
 export async function runInstallReset(): Promise<void> {
   try {
     const fresh = await ScreenTime.resetIfFreshInstall()
-    if (fresh) kvStorage.setString(PENDING, '1')
+    // Le drapeau natif vit dans UserDefaults.standard, remis à zéro par iOS à
+    // chaque désinstallation COMPLÈTE — y compris celles que Xcode/`expo run:ios`
+    // déclenche pour un simple rebuild dev (changement de signature/entitlements
+    // des 5 extensions). En __DEV__, ce n'est donc pas un signal fiable de
+    // « vraie » réinstallation : on laisse la purge native (résidus système)
+    // s'exécuter, mais on n'efface JAMAIS le cloud sur cette seule détection —
+    // sinon chaque rebuild de test supprime les règles du compte.
+    if (fresh && !__DEV__) kvStorage.setString(PENDING, '1')
   } catch {
     // best effort — ne bloque jamais le démarrage
   }

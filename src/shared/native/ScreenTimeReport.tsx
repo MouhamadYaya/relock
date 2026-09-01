@@ -7,19 +7,19 @@ import {
 } from 'react-native'
 
 type ReportProps = ViewProps & {
-  period?: number
-  /**
-   * Décalage en UNITÉS de la période courante : jours (period 0), semaines
-   * (period 1) ou mois (period 2). 0 = période en cours.
-   */
+  /** Décalage journalier : 0 = aujourd'hui, 6 = il y a six jours. */
   offset?: number
   /**
-   * « usage » : l'Activité entière (résumé + graphe + classement), qui défile
-   * elle-même. « home » : total + delta + pilules (ancienne maquette
+   * « usage » : l'Activité entière (résumé + graphe + classement). « home » :
+   * total + delta + pilules (ancienne maquette
    * Accueil). « hero » : total + delta seuls, sans pilules (maquette Accueil
    * v2 — la carte de protection prend la place des pilules).
    */
   mode?: 'usage' | 'home' | 'hero'
+  /** Force une nouvelle connexion au rapport sans démonter la vue native. */
+  reloadToken?: number
+  /** Commandes émises par la page SwiftUI du rapport Activité. */
+  onCommand?: (event: { nativeEvent: { command: string } }) => void
   /** Affiché si la vue native est absente OU si son rendu échoue. */
   fallback?: React.ReactNode
 }
@@ -27,7 +27,7 @@ type ReportProps = ViewProps & {
 const NAME = 'ScreenTimeReportView'
 
 // Vue native qui héberge le rapport de temps d'écran système (extension
-// DeviceActivityReport). period : 0 = jour, 1 = semaine, 2 = mois.
+// DeviceActivityReport). L'écran Activité expose les sept derniers jours.
 //
 // ⚠️ `requireNativeComponent` ne lève JAMAIS d'exception quand la vue
 // n'existe pas — l'erreur exploserait au rendu. La vraie détection passe
@@ -49,9 +49,10 @@ function hasNativeView(name: string): boolean {
 export const isScreenTimeReportAvailable = hasNativeView(NAME)
 
 type NativeProps = ViewProps & {
-  period?: number
   offset?: number
   mode?: 'usage' | 'home' | 'hero'
+  reloadToken?: number
+  onCommand?: (event: { nativeEvent: { command: string } }) => void
 }
 
 const NativeReport: React.ComponentType<NativeProps> | null =

@@ -4,12 +4,12 @@
  *
  * La seule chose qu'on ne peut pas faire à sa place : choisir les apps. Le
  * sélecteur d'Apple rend un jeton opaque, aucune API ne permet de pré-cocher
- * quoi que ce soit. Si une sélection existe déjà (il en a fait une un jour), on
- * la réutilise et il n'a vraiment rien à faire ; sinon on la lui demande une
- * fois, et c'est le seul geste.
+ * quoi que ce soit — et on ne réutilise JAMAIS la sélection d'une règle
+ * précédente : un préréglage dit QUAND bloquer, jamais QUOI. Le parcours est
+ * donc toujours le même : récapitulatif → choix des apps → activer.
  */
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import {
   ActivityIndicator,
   Pressable,
@@ -19,6 +19,7 @@ import {
 } from 'react-native'
 import { HalfSheet } from '@/features/blocking/components/HalfSheet'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
+import { returnToBlocks } from '@/features/blocking/navigation/return-to-blocks'
 import { findPreset, presetLines } from '@/features/blocking/presets'
 import { armRule } from '@/features/blocking/services/arm'
 import type { BlockRuleView } from '@/features/blocking/types'
@@ -49,21 +50,14 @@ export default function PresetRecapScreen() {
   const { presetId } = useLocalSearchParams<{ presetId: string }>()
   const preset = findPreset(presetId)
   const createRule = useCreateRuleMutation()
-  const [count, setCount] = useState<number | null>(null)
+  // ⚠️ On part TOUJOURS de zéro, jamais du dernier choix global du picker.
+  // Un préréglage dit QUAND bloquer, pas QUOI : hériter de la sélection d'une
+  // règle précédente activait le blocage sur des apps que l'utilisateur
+  // n'avait pas choisies pour CELUI-CI (et sautait l'étape sans rien dire).
+  // Le parcours est donc invariable : récapitulatif → choix des apps → activer.
+  const [count, setCount] = useState<number>(0)
   const [working, setWorking] = useState(false)
   const [done, setDone] = useState(false)
-
-  // Combien d'apps sont déjà choisies ? C'est ce qui décide si l'utilisateur a
-  // un geste à faire ou aucun.
-  useEffect(() => {
-    if (!ScreenTime.isAvailable) {
-      setCount(0)
-      return
-    }
-    ScreenTime.getStatus()
-      .then(s => setCount(s.count))
-      .catch(() => setCount(0))
-  }, [])
 
   if (!preset) return null
 
@@ -120,7 +114,7 @@ export default function PresetRecapScreen() {
 
   if (done) {
     return (
-      <HalfSheet onClose={() => router.back()}>
+      <HalfSheet onClose={returnToBlocks}>
         {close => (
           <View style={s.wrap}>
             <Text style={[f(700), s.title]}>C'est en place.</Text>
@@ -161,11 +155,9 @@ export default function PresetRecapScreen() {
             <View style={[s.row, s.rowSep]}>
               <Text style={[f(400), s.rowLabel]}>Apps</Text>
               <Text style={[f(500), s.rowValue]}>
-                {count === null
-                  ? '…'
-                  : needsApps
-                    ? 'À choisir'
-                    : `${count} app${count > 1 ? 's' : ''}`}
+                {needsApps
+                  ? 'À choisir'
+                  : `${count} app${count > 1 ? 's' : ''}`}
               </Text>
             </View>
           </View>
@@ -179,9 +171,9 @@ export default function PresetRecapScreen() {
 
           <Pressable
             accessibilityRole="button"
-            disabled={count === null || working}
+            disabled={working}
             onPress={needsApps ? pickApps : activate}
-            style={[s.primary, (count === null || working) && s.primaryOff]}
+            style={[s.primary, working && s.primaryOff]}
           >
             {working ? (
               <ActivityIndicator color={C.onViolet} />

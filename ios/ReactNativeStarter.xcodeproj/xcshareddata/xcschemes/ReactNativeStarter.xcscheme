@@ -20,6 +20,20 @@
                ReferencedContainer = "container:ReactNativeStarter.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C0DE00000000000000000008"
+               BuildableName = "ReactNativeStarterUITests.xctest"
+               BlueprintName = "ReactNativeStarterUITests"
+               ReferencedContainer = "container:ReactNativeStarter.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -32,9 +46,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "ReactNativeStarterTests.xctest"
-               BlueprintName = "ReactNativeStarterTests"
+               BlueprintIdentifier = "C0DE00000000000000000008"
+               BuildableName = "ReactNativeStarterUITests.xctest"
+               BlueprintName = "ReactNativeStarterUITests"
                ReferencedContainer = "container:ReactNativeStarter.xcodeproj">
             </BuildableReference>
          </TestableReference>

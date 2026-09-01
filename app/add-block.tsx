@@ -1,1 +1,1 @@
-export { default } from '@/features/blocking/screens/AddScreen'
+export { default } from '@/features/blocking/screens/NewRuleScreen'

@@ -9,8 +9,277 @@
   "navigation": {
     "tabs": {
       "home": "Accueil",
-      "blocks": "Bloquer",
+      "blocks": "Blocages",
       "activity": "Activité"
+    }
+  },
+  "blocking": {
+    "title": "Blocages",
+    "add_rule": "Nouvelle règle",
+    "blocked_apps": "Apps bloquées",
+    "unlock_all": "Tout débloquer",
+    "unlock": "Débloquer",
+    "unlock_x": "Débloquer X",
+    "rules_title": "Règles",
+    "empty_rules": {
+      "no_apps_blocked": "Toutes les apps sont disponibles.",
+      "trouble_hint": "Ça ne marche pas ?",
+      "restart_cta": "Recharge Relock."
+    },
+    "rules": {
+      "clean_time": {
+        "title": "Heure propre",
+        "description": "Bloquer X",
+        "status": "31 min restantes"
+      },
+      "sport": {
+        "title": "Sport",
+        "description": "Bloquer",
+        "status": "Commence dans 1 j"
+      },
+      "work": {
+        "title": "Travail",
+        "description": "Bloquer les distractions",
+        "status": "09:00 – 17:00"
+      },
+      "sleep": {
+        "title": "Sommeil",
+        "description": "Repos sans distractions",
+        "status": "22:00 – 06:00"
+      },
+      "social_break": {
+        "title": "Pause réseaux",
+        "description": "Bloquer les réseaux",
+        "status": "18:00 – 20:00"
+      },
+      "calm_morning": {
+        "title": "Matin calme",
+        "description": "Commencer sans scroll",
+        "status": "07:00 – 09:00"
+      }
+    },
+    "new_rule": {
+      "title": "Nouvelle règle",
+      "close": "Fermer",
+      "types": {
+        "session": {
+          "title": "Session",
+          "description": "p. ex. 30 min"
+        },
+        "schedule": {
+          "title": "Planification",
+          "description": "ex. 9h – 17h"
+        },
+        "limit": {
+          "title": "Limite de temps",
+          "description": "ex. 45 min/jour"
+        }
+      },
+      "productive": {
+        "title": "Sois plus productif",
+        "description": "Améliore ta productivité avec l’équilibre."
+      },
+      "rest": {
+        "title": "Dormir, se relaxer et repartir",
+        "description": "Dormir mieux et se réveiller frais."
+      },
+      "balance": {
+        "title": "Reprends le contrôle de tes réseaux",
+        "description": "Protège les moments qui comptent vraiment."
+      },
+      "templates": {
+        "work": {
+          "time": "09:00 – 17:00",
+          "title": "Travail",
+          "description": "Bloquer les distractions",
+          "add": "Ajouter la règle Travail"
+        },
+        "focus": {
+          "time": "14:00 – 15:00",
+          "title": "Focus laser",
+          "description": "Concentration intense",
+          "add": "Ajouter la règle Focus laser"
+        },
+        "study": {
+          "time": "08:00 – 12:00",
+          "title": "Études",
+          "description": "Apprends sans interruption",
+          "add": "Ajouter la règle Études"
+        },
+        "creative": {
+          "time": "19:00 – 21:00",
+          "title": "Création profonde",
+          "description": "Garde ton élan créatif",
+          "add": "Ajouter la règle Création profonde"
+        },
+        "decompression": {
+          "time": "20:00 – 22:00",
+          "title": "Décompression",
+          "description": "Détends-toi",
+          "add": "Ajouter la règle Décompression"
+        },
+        "sleep": {
+          "time": "22:00 – 06:00",
+          "title": "Sommeil profond",
+          "description": "Repose ton esprit",
+          "add": "Ajouter la règle Sommeil profond"
+        },
+        "evening": {
+          "time": "19:30 – 22:00",
+          "title": "Soirée calme",
+          "description": "Ralentis sans écran",
+          "add": "Ajouter la règle Soirée calme"
+        },
+        "weekend": {
+          "time": "09:00 – 12:00",
+          "title": "Week-end zen",
+          "description": "Déconnecte pour respirer",
+          "add": "Ajouter la règle Week-end zen"
+        },
+        "morning": {
+          "time": "07:00 – 09:00",
+          "title": "Matin sans écran",
+          "description": "Démarre sans scroller",
+          "add": "Ajouter la règle Matin sans écran"
+        },
+        "social": {
+          "time": "18:00 – 20:00",
+          "title": "Pause réseaux",
+          "description": "Retrouve tes proches",
+          "add": "Ajouter la règle Pause réseaux"
+        },
+        "doomscroll": {
+          "time": "20 min / jour",
+          "title": "Anti-doomscroll",
+          "description": "Coupe le scroll infini",
+          "add": "Ajouter la règle Anti-doomscroll"
+        },
+        "family": {
+          "time": "18:30 – 21:00",
+          "title": "Temps en famille",
+          "description": "Profite des tiens",
+          "add": "Ajouter la règle Temps en famille"
+        }
+      }
+    },
+    "unlock_app": {
+      "title": "Débloquer cette app",
+      "picker_title": "Pendant…",
+      "subtitle": "Choisis entre 5 et 30 minutes.",
+      "minutes": "{{count}} min",
+      "cancel": "Annuler",
+      "unlocked": "Débloquée pour {{count}} min",
+      "unit": "min",
+      "open": "Ouverte",
+      "unlock_all_title": "Tout débloquer",
+      "unlock_all_subtitle": "Choisis entre 5 et 30 minutes."
+    },
+    "breathing": {
+      "cancel": "Annuler",
+      "all_apps": "Toutes les apps",
+      "one_app": "Application choisie",
+      "slowly": "Respire lentement",
+      "inhale": "Inspire",
+      "exhale": "Expire",
+      "prompt": "Une respiration avant de décider. Ce moment t’appartient.",
+      "sound_off": "Couper le son",
+      "sound_on": "Activer le son",
+      "continue": "Continuer",
+      "wait": "Attends {{count}} s"
+    },
+    "reblock_app": {
+      "action": "Rebloquer",
+      "title": "Application ouverte",
+      "remaining": "Reblocage automatique dans {{time}}",
+      "rules_title": "Protections concernées",
+      "empty_rules": "Aucune protection active trouvée.",
+      "confirm": "Rebloquer maintenant",
+      "cancel": "La garder ouverte",
+      "countdown_hours_minutes": "{{hours}}h {{minutes}}m",
+      "countdown_minutes_seconds": "{{minutes}}m {{seconds}}s",
+      "countdown_seconds": "{{seconds}}s"
+    },
+    "session_sheet": {
+      "edit": "Modifier",
+      "close": "Fermer",
+      "blocked_title": "Bloqués",
+      "during": "Pendant",
+      "unlocks_allowed": "Déblocages autorisés",
+      "allowed_yes": "Oui",
+      "allowed_no": "Non",
+      "unlock_apps": "Débloquer des apps",
+      "quit_early": "Quitter en avance",
+      "strict_notice": "Mode strict : rien ne peut être ouvert avant la fin du blocage.",
+      "headline_session": "Session, {{time}} restant",
+      "headline_schedule": "Plage horaire, jusqu’à {{time}}",
+      "headline_limit": "Limite du jour, {{time}} par jour",
+      "headline_upcoming": "Démarre à {{time}}",
+      "headline_paused": "En pause",
+      "every_day": "tous les jours",
+      "no_apps": "Aucune app à ouvrir pour l’instant."
+    },
+    "unlock_picker": {
+      "title": "Quelles apps ?",
+      "subtitle": "Elles se rebloqueront toutes seules à la fin du sursis.",
+      "continue": "Continuer",
+      "cancel": "Annuler",
+      "select_all": "Tout sélectionner",
+      "clear_all": "Tout désélectionner",
+      "selected": "{{count}} sélectionnée(s)",
+      "app_position": "App {{index}}"
+    },
+    "pause_sheet": {
+      "title": "Définir la durée de pause",
+      "subtitle_indefinite": "Cette règle reste en pause jusqu’à ce que tu la reprennes.",
+      "subtitle_until": "Cette règle reprend toute seule {{when}}.",
+      "confirm": "Mettre en pause",
+      "delete": "Supprimer la règle",
+      "back": "Retour",
+      "option_15min": "15 minutes",
+      "option_1h": "1 heure",
+      "option_today": "Pour aujourd’hui",
+      "option_1day": "1 jour",
+      "option_indefinite": "Indéfiniment",
+      "when_time": "à {{time}}",
+      "when_tomorrow": "demain à {{time}}",
+      "when_midnight": "à minuit"
+    },
+    "delete_sheet": {
+      "title": "Supprimer cette règle ?",
+      "body": "Cela supprimera définitivement la règle. Tu ne peux pas annuler.",
+      "hold": "Maintenir pour Supprimer",
+      "holding": "Continuer de maintenir",
+      "cancel": "Annuler"
+    },
+    "edit_rule": {
+      "title": "Modifier le blocage",
+      "save": "Enregistrer",
+      "change_apps": "Changer les apps",
+      "saved": "Blocage mis à jour",
+      "saving": "Enregistrement…"
+    },
+    "hold": {
+      "activate": "Maintenir pour activer",
+      "keep_holding": "Continuer de maintenir…",
+      "commit": "Maintenir pour s’engager",
+      "save": "Maintenir pour enregistrer"
+    },
+    "strict_lock": {
+      "title": "Blocage strict",
+      "body_rule": "Ce blocage ne peut pas être arrêté avant la fin. C’est exactement ce que tu as choisi en l’activant.",
+      "body_app": "Cette app ne peut pas être ouverte avant la fin du blocage. C’est exactement ce que tu as choisi en l’activant.",
+      "until": "Jusqu’à {{time}}",
+      "remaining": "encore {{time}}",
+      "no_end": "Jusqu’à la fin du blocage",
+      "action": "Compris"
+    },
+    "strict_commit": {
+      "title": "Mode strict — tu t’engages",
+      "body": "Une fois activé, tu ne pourras plus arrêter ce blocage avant {{time}} : ni le mettre en pause, ni le supprimer, ni ouvrir une app — même en fermant Relock.",
+      "irreversible": "Cette décision est irréversible.",
+      "reassure": "C’est le but : c’est toi, maintenant, qui décides pour toi, tout à l’heure.",
+      "confirm": "Je m’engage",
+      "cancel": "Annuler"
     }
   },
   "home": {

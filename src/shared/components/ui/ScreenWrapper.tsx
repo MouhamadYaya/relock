@@ -24,6 +24,8 @@ interface Props {
   disableBottomInset?: boolean
   /** Merged over theme defaults (e.g. `translucent` + transparent `backgroundColor`). */
   statusBarProps?: Partial<ThemedStatusBarProps>
+  /** Optional semantic canvas override for visually distinct feature screens. */
+  backgroundColor?: string
 }
 
 export function ScreenWrapper({
@@ -34,11 +36,12 @@ export function ScreenWrapper({
   disableTopInset = false,
   disableBottomInset = false,
   statusBarProps,
+  backgroundColor,
 }: Props) {
   const { theme } = useTheme()
   const insets: EdgeInsets = useSafeAreaInsets()
 
-  const bg = theme.colors.background
+  const bg = backgroundColor ?? theme.colors.background
 
   // Top inset: applied once via SafeAreaView edges (not duplicated on Content).
   const safeEdges = disableTopInset

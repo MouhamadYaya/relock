@@ -1,6 +1,6 @@
 import { IconName } from '@assets/icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
@@ -24,15 +24,30 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import Svg, { Circle, Path, Line as SvgLine } from 'react-native-svg'
+import { HoldToConfirmButton } from '@/features/blocking/components/HoldToConfirmButton'
+import { StrictCommitmentSheet } from '@/features/blocking/components/StrictCommitmentSheet'
+import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
+import { useUpdateRuleMutation } from '@/features/blocking/hooks/useUpdateRuleMutation'
+import { returnToBlocks } from '@/features/blocking/navigation/return-to-blocks'
+import { armRule } from '@/features/blocking/services/arm'
 import { daysLabel } from '@/features/blocking/session'
+import {
+  type BlockingEditorType,
+  isBlockingEditorType,
+} from '@/features/blocking/types'
 import { NotificationService } from '@/features/notifications/notification.service'
 import {
   hasAskedNotifPermission,
   markNotifPermissionAsked,
 } from '@/features/notifications/prefs'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
-import { ScreenTime } from '@/shared/native/screen-time'
+import {
+  NativeDurationPicker,
+  normalizeDurationMinutes,
+} from '@/shared/native/NativeDurationPicker'
+import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -87,13 +102,28 @@ const C = {
 
 const GRAB = 26 // hauteur de la zone poignée
 const BOTTOM = 30 // marge basse (home indicator + air)
+const DURATION_MINUTE_INTERVAL = 5
+const BLOCK_DURATION_MIN_MINUTES = 5
+const BLOCK_DURATION_MAX_MINUTES = 8 * 60
+const DAILY_LIMIT_MIN_MINUTES = 5
+const DAILY_LIMIT_MAX_MINUTES = 4 * 60
 
-type TypeKey = 'block_now' | 'schedule' | 'daily_limit'
+type TypeKey = BlockingEditorType
 const DB_TYPE: Record<TypeKey, BlockRuleType> = {
   block_now: 'progressive_delay',
   schedule: 'schedule',
   daily_limit: 'daily_limit',
 }
+
+/** Lecture inverse — retrouver le type d'éditeur d'une règle qu'on modifie. */
+const EDITOR_TYPE: Record<BlockRuleType, TypeKey> = {
+  progressive_delay: 'block_now',
+  schedule: 'schedule',
+  daily_limit: 'daily_limit',
+}
+
+const cfgNum = (value: unknown, fallback: number): number =>
+  typeof value === 'number' ? value : fallback
 
 const TYPES: {
   key: TypeKey
@@ -126,9 +156,6 @@ const timeToDate = (h: number, m: number) => {
   d.setHours(h, m, 0, 0)
   return d
 }
-const minutesToDate = (min: number) =>
-  timeToDate(Math.floor(min / 60), min % 60)
-const dateToMinutes = (d: Date) => d.getHours() * 60 + d.getMinutes()
 const hhmm = (d: Date) =>
   `${d.getHours()}h${d.getMinutes() ? String(d.getMinutes()).padStart(2, '0') : ''}`
 function fmtDuration(min: number): string {
@@ -190,6 +217,16 @@ const DAY_PRESETS: { label: string; days: number[] | null }[] = [
 ]
 const sameDays = (a: number[] | null, b: number[] | null) =>
   a === null || b === null ? a === b : a.join() === b.join()
+
+function closeEditorRoute() {
+  if (router.canGoBack()) router.back()
+  else returnToBlocks()
+}
+
+/** Après une création réussie : direction Blocages, peu importe d'où on vient. */
+function goToBlocksAfterCreate() {
+  returnToBlocks()
+}
 
 function Chip({
   label,
@@ -262,9 +299,18 @@ function TypeRow({
 export default function AddScreen() {
   const { height: SCREEN_H, width: SCREEN_W } = useWindowDimensions()
   const MAXH = Math.round(SCREEN_H * 0.9)
+  const t = useT()
+  const { type: typeParam, id: editId } = useLocalSearchParams<{
+    type?: string
+    id?: string
+  }>()
+  const initialType = isBlockingEditorType(typeParam) ? typeParam : null
+  // Édition : même écran, même réglages — seule la sortie change (on met à
+  // jour la règle au lieu d'en créer une, et on revient à sa fiche).
+  const editing = typeof editId === 'string' && editId.length > 0
 
-  const [step, setStep] = useState<0 | 1>(0)
-  const [type, setType] = useState<TypeKey>('block_now')
+  const [step, setStep] = useState<0 | 1>(() => (initialType ? 1 : 0))
+  const [type, setType] = useState<TypeKey>(() => initialType ?? 'block_now')
   const [name, setName] = useState('')
   const [count, setCount] = useState(0)
   const [working, setWorking] = useState(false)
@@ -275,6 +321,19 @@ export default function AddScreen() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [warn, setWarn] = useState<string | null>(null)
   const createRule = useCreateRuleMutation()
+  const updateRule = useUpdateRuleMutation()
+  const { rules } = useBlockRulesQuery()
+  const editedRule = editing
+    ? rules.find(rule => rule.id === editId)
+    : undefined
+  // La sélection d'apps n'est ré-écrite QUE si l'utilisateur a rouvert le
+  // sélecteur : sinon on recopierait le brouillon global sur cette règle.
+  const appsRepicked = useRef(false)
+  const prefilled = useRef(false)
+  // Engagement du mode strict : la feuille rend sa réponse à la promesse que
+  // `onSubmit` attend, exactement comme le faisait l'alerte système.
+  const [strictPrompt, setStrictPrompt] = useState(false)
+  const strictAnswer = useRef<((committed: boolean) => void) | null>(null)
 
   const [durationMin, setDurationMin] = useState(30)
   const [strict, setStrict] = useState(false)
@@ -285,8 +344,6 @@ export default function AddScreen() {
   const [start, setStart] = useState(() => timeToDate(22, 0))
   const [end, setEnd] = useState(() => timeToDate(8, 0))
   const [limitMin, setLimitMin] = useState(60)
-  const durationValue = useMemo(() => minutesToDate(durationMin), [durationMin])
-  const limitValue = useMemo(() => minutesToDate(limitMin), [limitMin])
 
   // Hauteur adaptative : on mesure le contenu de chaque étape.
   const [contentH, setContentH] = useState<[number, number]>([
@@ -308,6 +365,62 @@ export default function AddScreen() {
   const firstMeasure = useRef(true)
 
   const target = Math.min(MAXH, GRAB + contentH[step])
+
+  useEffect(() => {
+    if (!initialType) return
+    if (initialType !== 'block_now') setStrict(false)
+    setType(initialType)
+    setStep(1)
+    stepX.value = 1
+  }, [initialType, stepX])
+
+  // Pré-remplissage : une seule fois, dès que la règle arrive du cache. Le
+  // verrou évite qu'une invalidation React Query ne réécrase, en plein
+  // réglage, ce que l'utilisateur vient de changer.
+  useEffect(() => {
+    if (!editedRule || prefilled.current) return
+    prefilled.current = true
+    const config = editedRule.config ?? {}
+    const editorType = EDITOR_TYPE[editedRule.type]
+    setType(editorType)
+    setStep(1)
+    stepX.value = 1
+    setName(typeof config.name === 'string' ? config.name : '')
+    setCount(editedRule.count ?? 0)
+    setDays(Array.isArray(config.days) ? (config.days as number[]) : null)
+    if (editorType === 'block_now') {
+      setDurationMin(
+        normalizeDurationMinutes(
+          cfgNum(config.duration_min, 30),
+          BLOCK_DURATION_MIN_MINUTES,
+          BLOCK_DURATION_MAX_MINUTES,
+          DURATION_MINUTE_INTERVAL,
+        ),
+      )
+      setStrict(config.strict === true)
+      return
+    }
+    if (editorType === 'schedule') {
+      setStart(
+        timeToDate(
+          cfgNum(config.start_hour, 22),
+          cfgNum(config.start_minute, 0),
+        ),
+      )
+      setEnd(
+        timeToDate(cfgNum(config.end_hour, 8), cfgNum(config.end_minute, 0)),
+      )
+      return
+    }
+    setLimitMin(
+      normalizeDurationMinutes(
+        cfgNum(config.limit_min, 60),
+        DAILY_LIMIT_MIN_MINUTES,
+        DAILY_LIMIT_MAX_MINUTES,
+        DURATION_MINUTE_INTERVAL,
+      ),
+    )
+  }, [editedRule, stepX])
 
   // Entrée : simple glissé vers le haut, sans rebond.
   useEffect(() => {
@@ -332,13 +445,13 @@ export default function AddScreen() {
     }
   }, [sheetH, target])
 
-  const close = () => {
+  const close = (onDone: () => void = closeEditorRoute) => {
     backdrop.value = withTiming(0, { duration: 200 })
     translateY.value = withTiming(
       SCREEN_H,
       { duration: 240, easing: Easing.in(Easing.cubic) },
       fin => {
-        if (fin) runOnJS(router.back)()
+        if (fin) runOnJS(onDone)()
       },
     )
   }
@@ -389,8 +502,14 @@ export default function AddScreen() {
     try {
       const auth = await ScreenTime.requestAuthorization()
       if (auth !== 'approved') return
+      // Édition : le sélecteur doit s'ouvrir sur les apps DE CETTE RÈGLE,
+      // pas sur le dernier brouillon global.
+      if (editing && editId) {
+        await ScreenTime.seedSelection(editId).catch(() => {})
+      }
       const res = await ScreenTime.presentPicker()
       setCount(res.count)
+      if (editing) appsRepicked.current = true
     } catch (e) {
       showErrorToast(e)
     }
@@ -407,23 +526,21 @@ export default function AddScreen() {
   // « Bloquer maintenant » : un blocage qui a une fin connue peut être
   // verrouillé sans piéger personne. Une plage ou une limite vivent sans fin —
   // les verrouiller reviendrait à confisquer le téléphone pour toujours.
+  /** Heure à laquelle le verrou tombera — le seul chiffre qui engage. */
+  const strictEndLabel = () => hhmm(new Date(Date.now() + durationMin * 60_000))
+
   const confirmStrictCommitment = (): Promise<boolean> =>
     new Promise(resolve => {
-      const endLabel = hhmm(new Date(Date.now() + durationMin * 60_000))
-      Alert.alert(
-        'Mode strict — tu t\u2019engages',
-        `Tu ne pourras plus arrêter ce blocage avant ${endLabel}, même en fermant Relock. C'est le but : tenir.`,
-        [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-          {
-            text: 'Je m\u2019engage',
-            style: 'destructive',
-            onPress: () => resolve(true),
-          },
-        ],
-        { cancelable: false },
-      )
+      strictAnswer.current = resolve
+      setStrictPrompt(true)
     })
+
+  const answerStrict = (committed: boolean) => {
+    setStrictPrompt(false)
+    const resolve = strictAnswer.current
+    strictAnswer.current = null
+    resolve?.(committed)
+  }
 
   const buildConfig = (): Record<string, unknown> => {
     // `strict` n'existe que sur le timer. `days` n'est écrit que si on s'écarte
@@ -497,27 +614,99 @@ export default function AddScreen() {
     )
   }
 
-  const onSubmit = async () => {
-    if (count === 0 || working || createRule.isPending || submitting.current)
+  /** iOS impose des fenêtres DeviceActivity d'au moins 15 min. */
+  const scheduleIsValid = (): boolean => {
+    if (type !== 'schedule') return true
+    const s = start.getHours() * 60 + start.getMinutes()
+    const e = end.getHours() * 60 + end.getMinutes()
+    if (s === e) {
+      setWarn(
+        'Le début et la fin doivent être différents (sinon la plage dure 24 h).',
+      )
+      return false
+    }
+    const win = e - s > 0 ? e - s : e - s + 1440
+    if (win < 15) {
+      setWarn(
+        'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
+      )
+      return false
+    }
+    return true
+  }
+
+  /**
+   * ENREGISTRER une règle existante.
+   *
+   * On éteint l'ancienne mécanique native avant de la relancer avec les
+   * nouveaux réglages — `stopRule` (et non `clearRuleData`) : la sélection
+   * d'apps de la règle doit survivre à une modification de durée.
+   */
+  const onSubmitEdit = async () => {
+    if (!editedRule || !editId) return
+    if (count === 0 || working || updateRule.isPending || submitting.current)
       return
-    // iOS impose des fenêtres DeviceActivity d'au moins 15 min.
-    if (type === 'schedule') {
-      const s = start.getHours() * 60 + start.getMinutes()
-      const e = end.getHours() * 60 + end.getMinutes()
-      if (s === e) {
-        setWarn(
-          'Le début et la fin doivent être différents (sinon la plage dure 24 h).',
+    if (!scheduleIsValid()) return
+    // L'engagement ne se redemande QUE si le strict vient d'être activé :
+    // le réafficher à chaque édition d'une règle déjà stricte ne protège rien.
+    if (strict && editedRule.config?.strict !== true) {
+      const committed = await confirmStrictCommitment()
+      if (!committed) return
+    }
+    submitting.current = true
+    setWorking(true)
+    // Le bouclier est réglé sur les nouvelles valeurs AVANT l'écriture DB :
+    // si la base refuse, il faut le ramener sur celles qui restent
+    // enregistrées, sinon l'app affiche une règle et le système en applique
+    // une autre.
+    let rearmed = false
+    try {
+      if (ScreenTime.isAvailable) {
+        const auth = await ScreenTime.requestAuthorization()
+        if (auth !== 'approved') {
+          Alert.alert('Autorisation requise', "Active l'accès Temps d'écran.")
+          return
+        }
+        await ScreenTime.stopRule(editId, nativeKindOf(editedRule.type)).catch(
+          () => {},
         )
-        return
+        if (appsRepicked.current) await ScreenTime.bindSelection(editId)
+        await runNative(editId)
+        rearmed = true
       }
-      const win = e - s > 0 ? e - s : e - s + 1440
-      if (win < 15) {
+      await updateRule.mutateAsync({
+        id: editId,
+        type: DB_TYPE[type],
+        count,
+        config: buildConfig(),
+      })
+      setSuccessMsg(summary())
+    } catch (e) {
+      if (rearmed) {
+        await ScreenTime.stopRule(editId, nativeKindOf(DB_TYPE[type])).catch(
+          () => {},
+        )
+        await armRule(editedRule).catch(() => {})
+      }
+      const msg = String((e as { message?: string })?.message ?? e ?? '')
+      if (/too short|schedule/i.test(msg)) {
         setWarn(
           'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
         )
-        return
+      } else {
+        showErrorToast(e)
       }
+    } finally {
+      setWorking(false)
+      submitting.current = false
     }
+  }
+
+  const onSubmit = async () => {
+    if (editing) return onSubmitEdit()
+    if (count === 0 || working || createRule.isPending || submitting.current)
+      return
+    if (!scheduleIsValid()) return
     // Strict = engagement irréversible dans l'app (sur les 3 types) → confirmation.
     if (strict) {
       const committed = await confirmStrictCommitment()
@@ -568,15 +757,14 @@ export default function AddScreen() {
     }
   }
 
-  const disabled = count === 0 || working || createRule.isPending
-  const typeTitle = TYPES.find(t => t.key === type)?.title ?? ''
+  const typeTitle = TYPES.find(item => item.key === type)?.title ?? ''
 
   return (
     <View style={styles.root}>
       {/* Fond flouté (léger) + assombri, tap pour fermer */}
       <AnimatedPressable
         style={[StyleSheet.absoluteFill, backdropStyle]}
-        onPress={close}
+        onPress={() => close()}
       >
         {BlurView ? (
           <BlurView
@@ -624,14 +812,17 @@ export default function AddScreen() {
             <View style={styles.panel} onLayout={measure(1)}>
               <View style={styles.step2Head}>
                 <Pressable
-                  onPress={() => goStep(0)}
+                  // En édition, le type FAIT partie de l'identité de la règle :
+                  // revenir en arrière referme l'éditeur, il ne rejoue pas le
+                  // choix du type.
+                  onPress={() => (editing ? close() : goStep(0))}
                   hitSlop={10}
                   style={styles.backBtn}
                 >
                   <IconSvg name={IconName.BACK} size={18} color={C.ink} />
                 </Pressable>
                 <Text style={[f(700), { fontSize: 17, color: C.ink }]}>
-                  {typeTitle}
+                  {editing ? t('blocking.edit_rule.title') : typeTitle}
                 </Text>
                 <View style={{ width: 36 }} />
               </View>
@@ -657,15 +848,14 @@ export default function AddScreen() {
                       </Text>
                     </View>
                     <View style={styles.pickerWrap}>
-                      <DateTimePicker
-                        mode="countdown"
-                        display="spinner"
-                        value={durationValue}
-                        minuteInterval={5}
-                        themeVariant="dark"
-                        onChange={(_e, d) =>
-                          d && setDurationMin(dateToMinutes(d))
-                        }
+                      <NativeDurationPicker
+                        testID="duration-wheel"
+                        accessibilityLabel="Durée du blocage"
+                        minutes={durationMin}
+                        minimumMinutes={BLOCK_DURATION_MIN_MINUTES}
+                        maximumMinutes={BLOCK_DURATION_MAX_MINUTES}
+                        minuteInterval={DURATION_MINUTE_INTERVAL}
+                        onMinutesChange={setDurationMin}
                       />
                     </View>
                   </View>
@@ -716,13 +906,14 @@ export default function AddScreen() {
                     </Text>
                   </View>
                   <View style={styles.pickerWrap}>
-                    <DateTimePicker
-                      mode="countdown"
-                      display="spinner"
-                      value={limitValue}
-                      minuteInterval={5}
-                      themeVariant="dark"
-                      onChange={(_e, d) => d && setLimitMin(dateToMinutes(d))}
+                    <NativeDurationPicker
+                      testID="limit-wheel"
+                      accessibilityLabel="Limite par jour"
+                      minutes={limitMin}
+                      minimumMinutes={DAILY_LIMIT_MIN_MINUTES}
+                      maximumMinutes={DAILY_LIMIT_MAX_MINUTES}
+                      minuteInterval={DURATION_MINUTE_INTERVAL}
+                      onMinutesChange={setLimitMin}
                     />
                   </View>
                 </View>
@@ -815,26 +1006,27 @@ export default function AddScreen() {
                 <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
               </Pressable>
 
-              <Pressable
-                accessibilityRole="button"
-                disabled={disabled}
-                onPress={onSubmit}
-                style={[
-                  styles.cta,
-                  { backgroundColor: disabled ? C.surface2 : C.accent },
-                ]}
-              >
-                <Text
-                  style={[
-                    f(700),
-                    { fontSize: 16, color: disabled ? C.ink3 : C.bg },
-                  ]}
-                >
-                  {working || createRule.isPending
-                    ? 'Activation…'
-                    : 'Activer le blocage'}
-                </Text>
-              </Pressable>
+              {/* Armer un blocage s'ENGAGE — qu'on le crée ou qu'on le
+                  modifie : on le tient, avec la même onde et le même
+                  martèlement que la suppression, aux couleurs de la marque.
+                  Enregistrer une modification RÉ-ARME la mécanique native :
+                  ça mérite le même geste que l'activation. */}
+              <HoldToConfirmButton
+                testID={editing ? 'save-block' : 'activate-block'}
+                idleLabel={
+                  editing
+                    ? t('blocking.hold.save')
+                    : t('blocking.hold.activate')
+                }
+                holdingLabel={t('blocking.hold.keep_holding')}
+                disabled={count === 0}
+                pending={
+                  working ||
+                  (editing ? updateRule.isPending : createRule.isPending)
+                }
+                onConfirm={onSubmit}
+                style={styles.holdCta}
+              />
             </View>
           </View>
         </Animated.View>
@@ -850,13 +1042,15 @@ export default function AddScreen() {
             <Text
               style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}
             >
-              C'est activé
+              {editing ? t('blocking.edit_rule.saved') : "C'est activé"}
             </Text>
             <Text style={[f(400), styles.successSub]}>{successMsg}</Text>
             <Pressable
+              // Après une édition on retombe sur la fiche d'où l'on vient ;
+              // après une création, sur la liste des blocages.
               onPress={() => {
                 setSuccessMsg(null)
-                close()
+                close(editing ? closeEditorRoute : goToBlocksAfterCreate)
               }}
               style={styles.successBtn}
             >
@@ -867,6 +1061,13 @@ export default function AddScreen() {
           </View>
         </View>
       </Modal>
+
+      <StrictCommitmentSheet
+        visible={strictPrompt}
+        endsAtLabel={strictEndLabel()}
+        onCancel={() => answerStrict(false)}
+        onCommit={() => answerStrict(true)}
+      />
 
       {/* Avertissement (ex : plage trop courte) */}
       <Modal visible={!!warn} transparent animationType="fade">
@@ -1017,11 +1218,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cta: {
-    height: 56,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  holdCta: {
     marginTop: 22,
   },
   modalBg: {

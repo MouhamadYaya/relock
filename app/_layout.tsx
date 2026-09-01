@@ -87,6 +87,7 @@ function AppShell() {
         <Stack.Protected guard={onboardingDone}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add-block" options={HALF_SHEET_OPTIONS} />
+          <Stack.Screen name="block-editor" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="block-detail" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="preset-recap" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="theme-picker" options={HALF_SHEET_OPTIONS} />

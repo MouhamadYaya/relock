@@ -1,7 +1,14 @@
 import { useFocusEffect } from '@react-navigation/native'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 import { ScreenTime } from '@/shared/native/screen-time'
+
+export type ScreenTimeAuthorizationState =
+  | 'checking'
+  | 'approved'
+  | 'denied'
+  | 'unavailable'
+  | 'error'
 
 /**
  * Autorisation Temps d'écran, TOUJOURS à jour.
@@ -17,26 +24,55 @@ import { ScreenTime } from '@/shared/native/screen-time'
  * l'app au premier plan. Inutile de sonder en boucle — c'est un événement
  * rare, pas une donnée qui dérive.
  */
-export function useScreenTimeAuthorized(): boolean {
-  // Optimiste au départ : on n'affiche pas « non autorisé » le temps de la
-  // première vérification, sinon l'écran clignote à chaque ouverture.
-  const [authorized, setAuthorized] = useState(true)
+export function useScreenTimeAuthorization() {
+  const [status, setStatus] = useState<ScreenTimeAuthorizationState>(() =>
+    ScreenTime.isAvailable ? 'checking' : 'unavailable',
+  )
+  const requestGeneration = useRef(0)
 
-  const check = useCallback(() => {
-    if (!ScreenTime.isAvailable) return
-    ScreenTime.authorizationStatus()
-      .then(s => setAuthorized(s === 'approved'))
-      .catch(() => undefined)
+  const check = useCallback(async (): Promise<ScreenTimeAuthorizationState> => {
+    const generation = ++requestGeneration.current
+    if (!ScreenTime.isAvailable) {
+      if (generation === requestGeneration.current) setStatus('unavailable')
+      return 'unavailable'
+    }
+
+    let nextStatus: ScreenTimeAuthorizationState
+    try {
+      const nativeStatus = await ScreenTime.authorizationStatus()
+      nextStatus = nativeStatus === 'approved' ? 'approved' : 'denied'
+    } catch {
+      nextStatus = 'error'
+    }
+
+    if (generation === requestGeneration.current) setStatus(nextStatus)
+    return nextStatus
   }, [])
 
-  useFocusEffect(check)
+  useFocusEffect(
+    useCallback(() => {
+      check()
+    }, [check]),
+  )
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', s => {
       if (s === 'active') check()
     })
-    return () => sub.remove()
+    return () => {
+      requestGeneration.current += 1
+      sub.remove()
+    }
   }, [check])
 
-  return authorized
+  return {
+    status,
+    authorized: status === 'approved',
+    refresh: check,
+  }
+}
+
+/** Compatibilité pour les écrans qui n'ont besoin que du booléen. */
+export function useScreenTimeAuthorized(): boolean {
+  return useScreenTimeAuthorization().authorized
 }

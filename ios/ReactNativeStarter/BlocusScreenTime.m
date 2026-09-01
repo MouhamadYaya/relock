@@ -20,6 +20,60 @@ RCT_EXTERN_METHOD(bindSelection
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(seedSelection
+                  : (nonnull NSString *)ruleId
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(selectionInfo
+                  : (nonnull NSString *)ruleId
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(unblockApp
+                  : (nonnull NSString *)ruleId
+                  index : (nonnull NSNumber *)index
+                  minutes : (nonnull NSNumber *)minutes
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(appKeys
+                  : (nonnull NSString *)ruleId
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(blockedAppKeys
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(reprievedKeys
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(unblockAppKey
+                  : (nonnull NSString *)key
+                  minutes : (nonnull NSNumber *)minutes
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(reblockAppKey
+                  : (nonnull NSString *)key
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(playCalmSound
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(stopCalmSound
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(reprievedApps
+                  : (nonnull NSString *)ruleId
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(startTimedBlock
                   : (nonnull NSString *)ruleId
                   minutes : (nonnull NSNumber *)minutes

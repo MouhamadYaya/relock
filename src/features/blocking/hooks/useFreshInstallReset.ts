@@ -23,7 +23,9 @@ export function useFreshInstallReset() {
   const done = useRef(false)
 
   useEffect(() => {
-    if (done.current || !hasPendingFreshInstall()) return
+    // __DEV__ : un drapeau resté posé par un ancien rebuild ne doit plus
+    // jamais déclencher la purge — voir `runInstallReset` (reset.service.ts).
+    if (done.current || __DEV__ || !hasPendingFreshInstall()) return
     done.current = true
     wipeCloudData()
       .then(ok => {

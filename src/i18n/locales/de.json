@@ -9,8 +9,277 @@
   "navigation": {
     "tabs": {
       "home": "Start",
-      "blocks": "Blockieren",
+      "blocks": "Blockaden",
       "activity": "Aktivität"
+    }
+  },
+  "blocking": {
+    "title": "Blockaden",
+    "add_rule": "Neue Regel",
+    "blocked_apps": "Blockierte Apps",
+    "unlock_all": "Alle entsperren",
+    "unlock": "Entsperren",
+    "unlock_x": "X entsperren",
+    "rules_title": "Regeln",
+    "empty_rules": {
+      "no_apps_blocked": "Alle Apps sind verfügbar.",
+      "trouble_hint": "Sieht das nicht richtig aus?",
+      "restart_cta": "Relock neu starten."
+    },
+    "rules": {
+      "clean_time": {
+        "title": "Klare Zeit",
+        "description": "X blockieren",
+        "status": "31 Min. verbleibend"
+      },
+      "sport": {
+        "title": "Sport",
+        "description": "Blockieren",
+        "status": "Beginnt in 1 Tag"
+      },
+      "work": {
+        "title": "Arbeit",
+        "description": "Ablenkungen blockieren",
+        "status": "09:00 – 17:00"
+      },
+      "sleep": {
+        "title": "Schlaf",
+        "description": "Erholen ohne Ablenkung",
+        "status": "22:00 – 06:00"
+      },
+      "social_break": {
+        "title": "Social-Media-Pause",
+        "description": "Soziale Medien blockieren",
+        "status": "18:00 – 20:00"
+      },
+      "calm_morning": {
+        "title": "Ruhiger Morgen",
+        "description": "Ohne Scrollen starten",
+        "status": "07:00 – 09:00"
+      }
+    },
+    "new_rule": {
+      "title": "Neue Regel",
+      "close": "Schließen",
+      "types": {
+        "session": {
+          "title": "Sitzung",
+          "description": "z. B. 30 Min."
+        },
+        "schedule": {
+          "title": "Zeitplan",
+          "description": "z. B. 9–17 Uhr"
+        },
+        "limit": {
+          "title": "Zeitlimit",
+          "description": "z. B. 45 Min./Tag"
+        }
+      },
+      "productive": {
+        "title": "Sei produktiver",
+        "description": "Steigere deine Produktivität mit Balance."
+      },
+      "rest": {
+        "title": "Schlafen, entspannen und neu starten",
+        "description": "Schlafe besser und wache erholt auf."
+      },
+      "balance": {
+        "title": "Gewinne die Kontrolle über Social Media zurück",
+        "description": "Schütze die Momente, die wirklich zählen."
+      },
+      "templates": {
+        "work": {
+          "time": "09:00 – 17:00",
+          "title": "Arbeit",
+          "description": "Ablenkungen blockieren",
+          "add": "Regel Arbeit hinzufügen"
+        },
+        "focus": {
+          "time": "14:00 – 15:00",
+          "title": "Laserfokus",
+          "description": "Intensive Konzentration",
+          "add": "Regel Laserfokus hinzufügen"
+        },
+        "study": {
+          "time": "08:00 – 12:00",
+          "title": "Lernen",
+          "description": "Lerne ohne Unterbrechungen",
+          "add": "Regel Lernen hinzufügen"
+        },
+        "creative": {
+          "time": "19:00 – 21:00",
+          "title": "Kreativfokus",
+          "description": "Bewahre deinen kreativen Fluss",
+          "add": "Regel Kreativfokus hinzufügen"
+        },
+        "decompression": {
+          "time": "20:00 – 22:00",
+          "title": "Entspannung",
+          "description": "Nimm dir Zeit zum Abschalten",
+          "add": "Regel Entspannung hinzufügen"
+        },
+        "sleep": {
+          "time": "22:00 – 06:00",
+          "title": "Tiefschlaf",
+          "description": "Gönne deinem Geist Ruhe",
+          "add": "Regel Tiefschlaf hinzufügen"
+        },
+        "evening": {
+          "time": "19:30 – 22:00",
+          "title": "Ruhiger Abend",
+          "description": "Komme ohne Bildschirm zur Ruhe",
+          "add": "Regel Ruhiger Abend hinzufügen"
+        },
+        "weekend": {
+          "time": "09:00 – 12:00",
+          "title": "Zen-Wochenende",
+          "description": "Abschalten und durchatmen",
+          "add": "Regel Zen-Wochenende hinzufügen"
+        },
+        "morning": {
+          "time": "07:00 – 09:00",
+          "title": "Bildschirmfreier Morgen",
+          "description": "Starte bewusst in den Tag",
+          "add": "Regel Bildschirmfreier Morgen hinzufügen"
+        },
+        "social": {
+          "time": "18:00 – 20:00",
+          "title": "Social-Media-Pause",
+          "description": "Zeit für echte Begegnungen",
+          "add": "Regel Social-Media-Pause hinzufügen"
+        },
+        "doomscroll": {
+          "time": "20 Min. / Tag",
+          "title": "Anti-Doomscroll",
+          "description": "Stoppe endloses Scrollen",
+          "add": "Regel Anti-Doomscroll hinzufügen"
+        },
+        "family": {
+          "time": "18:30 – 21:00",
+          "title": "Familienzeit",
+          "description": "Das Handy bleibt außer Reichweite",
+          "add": "Regel Familienzeit hinzufügen"
+        }
+      }
+    },
+    "unlock_app": {
+      "title": "Diese App entsperren",
+      "picker_title": "Für…",
+      "subtitle": "Wähle zwischen 5 und 30 Minuten.",
+      "minutes": "{{count}} Min.",
+      "cancel": "Abbrechen",
+      "unlocked": "Für {{count}} Min. entsperrt",
+      "unit": "Min.",
+      "open": "Offen",
+      "unlock_all_title": "Alle entsperren",
+      "unlock_all_subtitle": "Wähle zwischen 5 und 30 Minuten."
+    },
+    "breathing": {
+      "cancel": "Abbrechen",
+      "all_apps": "Alle Apps",
+      "one_app": "Ausgewählte App",
+      "slowly": "Atme langsam",
+      "inhale": "Einatmen",
+      "exhale": "Ausatmen",
+      "prompt": "Ein Atemzug vor deiner Entscheidung. Dieser Moment gehört dir.",
+      "sound_off": "Ton ausschalten",
+      "sound_on": "Ton einschalten",
+      "continue": "Weiter",
+      "wait": "Warte {{count}} s"
+    },
+    "reblock_app": {
+      "action": "Wieder sperren",
+      "title": "App ist geöffnet",
+      "remaining": "Automatische Sperre in {{time}}",
+      "rules_title": "Betroffene Schutzregeln",
+      "empty_rules": "Keine aktive Schutzregel gefunden.",
+      "confirm": "Jetzt wieder sperren",
+      "cancel": "Geöffnet lassen",
+      "countdown_hours_minutes": "{{hours}}h {{minutes}}m",
+      "countdown_minutes_seconds": "{{minutes}}m {{seconds}}s",
+      "countdown_seconds": "{{seconds}}s"
+    },
+    "session_sheet": {
+      "edit": "Bearbeiten",
+      "close": "Schließen",
+      "blocked_title": "Blockiert",
+      "during": "Für",
+      "unlocks_allowed": "Entsperren erlaubt",
+      "allowed_yes": "Ja",
+      "allowed_no": "Nein",
+      "unlock_apps": "Apps entsperren",
+      "quit_early": "Früher beenden",
+      "strict_notice": "Strikter Modus: Vor dem Ende lässt sich nichts öffnen.",
+      "headline_session": "Session, noch {{time}}",
+      "headline_schedule": "Zeitplan, bis {{time}}",
+      "headline_limit": "Tageslimit, {{time}} pro Tag",
+      "headline_upcoming": "Startet um {{time}}",
+      "headline_paused": "Pausiert",
+      "every_day": "täglich",
+      "no_apps": "Gerade keine App zum Öffnen."
+    },
+    "unlock_picker": {
+      "title": "Welche Apps?",
+      "subtitle": "Sie sperren sich am Ende der Freigabe von selbst wieder.",
+      "continue": "Weiter",
+      "cancel": "Abbrechen",
+      "select_all": "Alle auswählen",
+      "clear_all": "Auswahl aufheben",
+      "selected": "{{count}} ausgewählt",
+      "app_position": "App {{index}}"
+    },
+    "pause_sheet": {
+      "title": "Pausendauer festlegen",
+      "subtitle_indefinite": "Diese Regel bleibt pausiert, bis du sie fortsetzt.",
+      "subtitle_until": "Diese Regel läuft {{when}} von selbst weiter.",
+      "confirm": "Pausieren",
+      "delete": "Regel löschen",
+      "back": "Zurück",
+      "option_15min": "15 Minuten",
+      "option_1h": "1 Stunde",
+      "option_today": "Für heute",
+      "option_1day": "1 Tag",
+      "option_indefinite": "Unbegrenzt",
+      "when_time": "um {{time}}",
+      "when_tomorrow": "morgen um {{time}}",
+      "when_midnight": "um Mitternacht"
+    },
+    "delete_sheet": {
+      "title": "Diese Regel löschen?",
+      "body": "Die Regel wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+      "hold": "Zum Löschen halten",
+      "holding": "Weiter halten",
+      "cancel": "Abbrechen"
+    },
+    "edit_rule": {
+      "title": "Blockierung bearbeiten",
+      "save": "Speichern",
+      "change_apps": "Apps ändern",
+      "saved": "Blockierung aktualisiert",
+      "saving": "Wird gespeichert…"
+    },
+    "hold": {
+      "activate": "Zum Aktivieren halten",
+      "keep_holding": "Weiter halten…",
+      "commit": "Zum Verpflichten halten",
+      "save": "Zum Speichern halten"
+    },
+    "strict_lock": {
+      "title": "Strikte Blockierung",
+      "body_rule": "Diese Blockierung lässt sich vor dem Ende nicht stoppen. Genau das hast du beim Aktivieren gewählt.",
+      "body_app": "Diese App lässt sich vor dem Ende der Blockierung nicht öffnen. Genau das hast du beim Aktivieren gewählt.",
+      "until": "Bis {{time}}",
+      "remaining": "noch {{time}}",
+      "no_end": "Bis zum Ende der Blockierung",
+      "action": "Verstanden"
+    },
+    "strict_commit": {
+      "title": "Strikter Modus — du verpflichtest dich",
+      "body": "Nach dem Start kannst du diese Blockierung vor {{time}} nicht mehr stoppen: kein Pausieren, kein Löschen, keine App öffnen — auch nicht, wenn du Relock schließt.",
+      "irreversible": "Diese Entscheidung lässt sich nicht rückgängig machen.",
+      "reassure": "Genau darum geht es: Du entscheidest jetzt für dich später.",
+      "confirm": "Ich verpflichte mich",
+      "cancel": "Abbrechen"
     }
   },
   "home": {
