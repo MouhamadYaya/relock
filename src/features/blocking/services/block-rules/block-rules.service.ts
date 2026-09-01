@@ -6,7 +6,10 @@
 import type { BlockRuleView, CreateRuleInput } from '@/features/blocking/types'
 import type { AppId } from '@/shared/components/ui/AppLogo'
 import { supabase } from '@/shared/services/supabase/client'
-import type { BlockRule } from '@/shared/services/supabase/database.types'
+import type {
+  BlockRule,
+  BlockRuleType,
+} from '@/shared/services/supabase/database.types'
 import { normalizeError } from '@/shared/utils/normalize-error'
 
 function toView(row: BlockRule): BlockRuleView {
@@ -55,6 +58,54 @@ export const BlockRulesService = {
       .single()
     if (error) throw normalizeError(error)
     return toView(data)
+  },
+
+  /**
+   * MODIFIER une règle existante (action « Modifier » de la fiche).
+   *
+   * On réécrit `config` en entier : c'est l'éditeur qui vient de la
+   * reconstruire à partir de tous ses champs, un patch partiel laisserait
+   * traîner des réglages abandonnés (un `strict` d'un ancien blocage minuté,
+   * par exemple). `suspended_until` est la seule exception : il décrit l'état
+   * de vie de la règle, pas ses réglages, et survit donc à l'édition.
+   */
+  async update(
+    id: string,
+    input: {
+      type: BlockRuleType
+      count?: number
+      config: Record<string, unknown>
+    },
+  ): Promise<void> {
+    const { data } = await supabase
+      .from('block_rules')
+      .select('config, app_selection')
+      .eq('id', id)
+      .maybeSingle()
+    const previous = (data?.config as Record<string, unknown>) ?? {}
+    const previousSelection = (data?.app_selection ?? {}) as {
+      apps?: string[]
+      count?: number
+    }
+    const config: Record<string, unknown> = { ...input.config }
+    if (previous.suspended_until != null) {
+      config.suspended_until = previous.suspended_until
+    }
+    const { error } = await supabase
+      .from('block_rules')
+      .update({
+        type: input.type,
+        app_selection: {
+          apps: previousSelection.apps ?? [],
+          count:
+            typeof input.count === 'number'
+              ? input.count
+              : previousSelection.count,
+        },
+        config,
+      })
+      .eq('id', id)
+    if (error) throw normalizeError(error)
   },
 
   async setActive(id: string, isActive: boolean): Promise<void> {

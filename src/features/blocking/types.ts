@@ -3,6 +3,23 @@
 import type { AppId } from '@/shared/components/ui/AppLogo'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 
+export const BLOCKING_EDITOR_TYPES = [
+  'block_now',
+  'schedule',
+  'daily_limit',
+] as const
+
+export type BlockingEditorType = (typeof BLOCKING_EDITOR_TYPES)[number]
+
+export function isBlockingEditorType(
+  value: unknown,
+): value is BlockingEditorType {
+  return (
+    typeof value === 'string' &&
+    BLOCKING_EDITOR_TYPES.some(editorType => editorType === value)
+  )
+}
+
 /** Règle de blocage prête pour l'affichage. */
 export interface BlockRuleView {
   id: string

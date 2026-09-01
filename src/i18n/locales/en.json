@@ -9,8 +9,276 @@
   "navigation": {
     "tabs": {
       "home": "Home",
-      "blocks": "Block",
+      "blocks": "Blocks",
       "activity": "Activity"
+    }
+  },
+  "blocking": {
+    "title": "Blocks",
+    "add_rule": "New rule",
+    "blocked_apps": "Blocked apps",
+    "unlock_all": "Unblock all",
+    "unlock": "Unblock",
+    "unlock_x": "Unblock X",
+    "rules_title": "Rules",
+    "empty_rules": {
+      "no_apps_blocked": "All apps are available.",
+      "trouble_hint": "Doesn't seem right?",
+      "restart_cta": "Restart Relock."
+    },
+    "rules": {
+      "clean_time": {
+        "title": "Clean time",
+        "description": "Block X",
+        "status": "31 min remaining"
+      },
+      "sport": {
+        "title": "Sport",
+        "description": "Block",
+        "status": "Starts in 1 day"
+      },
+      "work": {
+        "title": "Work",
+        "description": "Block distractions",
+        "status": "09:00 – 17:00"
+      },
+      "sleep": {
+        "title": "Sleep",
+        "description": "Rest without distractions",
+        "status": "22:00 – 06:00"
+      },
+      "social_break": {
+        "title": "Social break",
+        "description": "Block social media",
+        "status": "18:00 – 20:00"
+      },
+      "calm_morning": {
+        "title": "Calm morning",
+        "description": "Start without scrolling",
+        "status": "07:00 – 09:00"
+      }
+    },
+    "new_rule": {
+      "title": "New rule",
+      "close": "Close",
+      "types": {
+        "session": {
+          "title": "Session",
+          "description": "e.g. 30 min"
+        },
+        "schedule": {
+          "title": "Schedule",
+          "description": "e.g. 9am – 5pm"
+        },
+        "limit": {
+          "title": "Time limit",
+          "description": "e.g. 45 min/day"
+        }
+      },
+      "productive": {
+        "title": "Be more productive",
+        "description": "Improve your productivity with balance."
+      },
+      "rest": {
+        "title": "Sleep, relax and reset",
+        "description": "Sleep better and wake up refreshed."
+      },
+      "balance": {
+        "title": "Take back control of social media",
+        "description": "Protect the moments that truly matter."
+      },
+      "templates": {
+        "work": {
+          "time": "09:00 – 17:00",
+          "title": "Work",
+          "description": "Block distractions",
+          "add": "Add Work rule"
+        },
+        "focus": {
+          "time": "14:00 – 15:00",
+          "title": "Laser focus",
+          "description": "Deep concentration",
+          "add": "Add Laser focus rule"
+        },
+        "study": {
+          "time": "08:00 – 12:00",
+          "title": "Study",
+          "description": "Learn without interruptions",
+          "add": "Add Study rule"
+        },
+        "creative": {
+          "time": "19:00 – 21:00",
+          "title": "Deep creation",
+          "description": "Keep your creative momentum",
+          "add": "Add Deep creation rule"
+        },
+        "decompression": {
+          "time": "20:00 – 22:00",
+          "title": "Decompression",
+          "description": "Take time to unwind",
+          "add": "Add Decompression rule"
+        },
+        "sleep": {
+          "time": "22:00 – 06:00",
+          "title": "Deep sleep",
+          "description": "Rest your mind",
+          "add": "Add Deep sleep rule"
+        },
+        "evening": {
+          "time": "19:30 – 22:00",
+          "title": "Calm evening",
+          "description": "Slow down without a screen",
+          "add": "Add Calm evening rule"
+        },
+        "weekend": {
+          "time": "09:00 – 12:00",
+          "title": "Zen weekend",
+          "description": "Disconnect and breathe",
+          "add": "Add Zen weekend rule"
+        },
+        "morning": {
+          "time": "07:00 – 09:00",
+          "title": "Screen-free morning",
+          "description": "Start the day fully present",
+          "add": "Add Screen-free morning rule"
+        },
+        "social": {
+          "time": "18:00 – 20:00",
+          "title": "Social break",
+          "description": "Reconnect with your people",
+          "add": "Add Social break rule"
+        },
+        "doomscroll": {
+          "time": "20 min / day",
+          "title": "Anti-doomscroll",
+          "description": "Stop automatic scrolling",
+          "add": "Add Anti-doomscroll rule"
+        },
+        "family": {
+          "time": "18:30 – 21:00",
+          "title": "Family time",
+          "description": "Keep the phone out of reach",
+          "add": "Add Family time rule"
+        }
+      }
+    },
+    "unlock_app": {
+      "title": "Unlock this app",
+      "picker_title": "For…",
+      "subtitle": "Choose between 5 and 30 minutes.",
+      "minutes": "{{count}} min",
+      "cancel": "Cancel",
+      "unlocked": "Unlocked for {{count}} min",
+      "unit": "min",
+      "open": "Open",
+      "unlock_all_title": "Unlock everything",
+      "unlock_all_subtitle": "Choose between 5 and 30 minutes."
+    },
+    "breathing": {
+      "cancel": "Cancel",
+      "all_apps": "All apps",
+      "one_app": "Selected app",
+      "slowly": "Breathe slowly",
+      "inhale": "Breathe in",
+      "exhale": "Breathe out",
+      "prompt": "Take one breath before deciding. This moment is yours.",
+      "sound_off": "Turn sound off",
+      "sound_on": "Turn sound on",
+      "continue": "Continue",
+      "wait": "Wait {{count}}s"
+    },
+    "reblock_app": {
+      "action": "Reblock",
+      "title": "App is open",
+      "remaining": "Reblocks automatically in {{time}}",
+      "rules_title": "Related protections",
+      "empty_rules": "No active protection found.",
+      "confirm": "Reblock now",
+      "cancel": "Keep it open",
+      "countdown_hours_minutes": "{{hours}}h {{minutes}}m",
+      "countdown_minutes_seconds": "{{minutes}}m {{seconds}}s",
+      "countdown_seconds": "{{seconds}}s"
+    },
+    "session_sheet": {
+      "edit": "Edit",
+      "close": "Close",
+      "blocked_title": "Blocked",
+      "during": "For",
+      "unlocks_allowed": "Unblocks allowed",
+      "allowed_yes": "Yes",
+      "allowed_no": "No",
+      "unlock_apps": "Unblock apps",
+      "quit_early": "Quit early",
+      "strict_notice": "Strict mode: nothing can be opened before the block ends.",
+      "headline_session": "Session, {{time}} left",
+      "headline_schedule": "Schedule, until {{time}}",
+      "headline_limit": "Daily limit, {{time}} per day",
+      "headline_upcoming": "Starts at {{time}}",
+      "headline_paused": "Paused",
+      "every_day": "every day",
+      "no_apps": "No app to open right now."
+    },
+    "unlock_picker": {
+      "title": "Which apps?",
+      "subtitle": "They lock themselves again when the reprieve ends.",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "select_all": "Select all",
+      "clear_all": "Clear selection",
+      "selected": "{{count}} selected"
+    },
+    "pause_sheet": {
+      "title": "Set pause duration",
+      "subtitle_indefinite": "This rule stays paused until you resume it.",
+      "subtitle_until": "This rule resumes on its own {{when}}.",
+      "confirm": "Pause",
+      "delete": "Delete rule",
+      "back": "Back",
+      "option_15min": "15 minutes",
+      "option_1h": "1 hour",
+      "option_today": "For today",
+      "option_1day": "1 day",
+      "option_indefinite": "Indefinitely",
+      "when_time": "at {{time}}",
+      "when_tomorrow": "tomorrow at {{time}}",
+      "when_midnight": "at midnight"
+    },
+    "delete_sheet": {
+      "title": "Delete this rule?",
+      "body": "This permanently deletes the rule. You cannot undo it.",
+      "hold": "Hold to Delete",
+      "holding": "Keep holding",
+      "cancel": "Cancel"
+    },
+    "edit_rule": {
+      "title": "Edit block",
+      "save": "Save",
+      "change_apps": "Change apps",
+      "saved": "Block updated",
+      "saving": "Saving…"
+    },
+    "hold": {
+      "activate": "Hold to activate",
+      "keep_holding": "Keep holding…",
+      "commit": "Hold to commit",
+      "save": "Hold to save"
+    },
+    "strict_lock": {
+      "title": "Strict block",
+      "body_rule": "This block cannot be stopped before it ends. That is exactly what you chose when you turned it on.",
+      "body_app": "This app cannot be opened before the block ends. That is exactly what you chose when you turned it on.",
+      "until": "Until {{time}}",
+      "remaining": "{{time}} left",
+      "no_end": "Until the block ends",
+      "action": "Got it"
+    },
+    "strict_commit": {
+      "title": "Strict mode — you are committing",
+      "body": "Once it starts you will not be able to stop this block before {{time}}: no pausing, no deleting, no opening an app — not even by closing Relock.",
+      "irreversible": "This decision cannot be undone.",
+      "reassure": "That is the point: you, right now, decide for you, later.",
+      "confirm": "I commit",
+      "cancel": "Cancel"
     }
   },
   "home": {

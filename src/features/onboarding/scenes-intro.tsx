@@ -144,7 +144,7 @@ function HeroLine2({
 // portée comprise) pour occuper la même largeur dans la composition que
 // l'ancien mockup reconstruit en JSX. Réutilisée par WelcomeGlow pour que
 // le halo reste proportionné à la taille réelle de l'image.
-const PHONE_W = 594
+const PHONE_W = 616
 
 /**
  * Halo « projecteur » derrière le mockup, plus large et plus vif que
@@ -317,20 +317,27 @@ const FEED_BLOCKS = [
   { h: 60, c: '#282832' },
 ]
 
+// Une seule horloge pilote toute la boucle du mockup (défilement du feed,
+// montée du bouclier, fondu de reprise) : ces constantes fixent son rythme
+// et sont réutilisées par `SceneDemo` pour savoir, en JS, quand le mur de
+// blocage apparaît à l'écran (`DEMO_WALL_REVEAL_T`) et activer le CTA à ce
+// moment précis plutôt que de deviner un délai indépendant de l'animation.
+const DEMO_CYCLE_MS = 4400
+const DEMO_WALL_REVEAL_T = 0.54
+const DEMO_WALL_REVEAL_MS = DEMO_CYCLE_MS * DEMO_WALL_REVEAL_T
+
 /**
  * Mockup d'iPhone animé en boucle : un feed défile tard le soir, puis le
  * bouclier Relock monte et bloque. La magie du produit, vécue avant la
  * première question — le principe Cal AI, sans vidéo (tout est recréé).
  */
 function PhoneDemo() {
-  // Une seule horloge pilote toute la boucle : zéro dérive entre les
-  // couches (défilement du feed, montée du bouclier, fondu de reprise).
   const t = useSharedValue(0)
   useEffect(() => {
     t.value = withRepeat(
       withSequence(
         withTiming(0, { duration: 1 }),
-        withTiming(1, { duration: 4400, easing: Easing.linear }),
+        withTiming(1, { duration: DEMO_CYCLE_MS, easing: Easing.linear }),
       ),
       -1,
       false,
@@ -354,7 +361,7 @@ function PhoneDemo() {
       {
         translateY: interpolate(
           t.value,
-          [0, 0.4, 0.5, 0.54, 1],
+          [0, 0.4, 0.5, DEMO_WALL_REVEAL_T, 1],
           [340, 340, -10, 0, 0],
           Extrapolation.CLAMP,
         ),
@@ -402,12 +409,24 @@ function PhoneDemo() {
 }
 
 export function SceneDemo({ onNext }: { onNext: () => void }) {
+  // Le CTA reste désactivé tant que le mur de blocage n'est pas apparu dans
+  // l'animation du mockup (cf. `DEMO_WALL_REVEAL_MS`) : on guide l'utilisateur
+  // à regarder la démo avant de pouvoir continuer, plutôt que de laisser
+  // passer directement à côté du moment qui vend le produit.
+  const [ctaReady, setCtaReady] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setCtaReady(true), DEMO_WALL_REVEAL_MS)
+    return () => clearTimeout(id)
+  }, [])
+
   return (
     <View className="flex-1 px-5">
       <View className="flex-1 justify-center">
         <Reveal index={0}>
-          <Text style={styles.h1}>Voilà ce qui se passe</Text>
-          <GradientLine text="à 23 h 47." size={32} />
+          <Text style={[styles.h1, styles.h1Center]}>
+            Le blocage intervient
+          </Text>
+          <GradientLine text="au bon moment." size={32} />
         </Reveal>
         <Reveal index={1} style={{ marginTop: 26 }}>
           <PhoneDemo />
@@ -419,7 +438,7 @@ export function SceneDemo({ onNext }: { onNext: () => void }) {
         </Reveal>
       </View>
       <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Je veux ça" onPress={onNext} />
+        <Pill label="Je veux ça" onPress={onNext} disabled={!ctaReady} />
       </Reveal>
     </View>
   )
@@ -704,6 +723,9 @@ const styles = StyleSheet.create({
     lineHeight: 38,
     letterSpacing: -0.8,
     color: OB.ink,
+  },
+  h1Center: {
+    textAlign: 'center',
   },
   h1Dim: {
     ...fonts.bold,

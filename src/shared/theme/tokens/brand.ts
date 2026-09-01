@@ -20,6 +20,10 @@ export const brand = {
   facebook: {
     blue: '#1877F2',
   },
+  tiktok: {
+    cyan: '#25F4EE',
+    pink: '#FE2C55',
+  },
 } as const
 
 export type Brand = typeof brand

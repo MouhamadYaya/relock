@@ -83,7 +83,7 @@ function GradientAction() {
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel="Créer ma première protection"
+      accessibilityLabel="Créer une protection"
       onPress={() => router.push('/add-block')}
       style={styles.action}
     >
@@ -105,7 +105,7 @@ function GradientAction() {
         </Svg>
       </View>
       <Text style={[f(600), styles.actionLabel]}>
-        Créer ma première protection
+        Créer une protection
       </Text>
       <Text aria-hidden style={[f(600), styles.actionArrow]}>
         →

@@ -6,13 +6,6 @@
  */
 export const relockMaterial = {
   colors: {
-    canvasTop: '#080A12',
-    canvasBottom: '#0A0B12',
-    canvasFallback: '#090A11',
-    ambientIndigo: 'rgba(93, 75, 204, 0.16)',
-    ambientIndigoSolid: '#5D4BCC',
-    ambientViolet: 'rgba(147, 104, 255, 0.1)',
-    ambientVioletSolid: '#9368FF',
     surfaceHeroTop: '#151629',
     surfaceHeroBottom: '#0D0E19',
     surfacePanelTop: '#131522',
@@ -41,10 +34,69 @@ export const relockMaterial = {
     alertTextMuted: 'rgba(255, 214, 221, 0.76)',
     alertBackground: 'rgba(251, 113, 133, 0.1)',
     alertBorder: 'rgba(251, 113, 133, 0.22)',
+    blockingCanvas: '#030504',
+    blockingCanvasTop: '#070A0B',
+    blockingSurface: '#090B0B',
+    blockingSurfaceRaised: '#111312',
+    blockingSurfaceActiveTop: '#1B1524',
+    blockingSurfaceActiveMiddle: '#131018',
+    blockingSurfaceActiveBottom: '#090A0A',
+    blockingSurfaceActiveBloom: '#49345E',
+    blockingSurfaceCool: '#0C0E11',
+    // Les feuilles restent neutres et nocturnes : la lumière violette vient
+    // d'un foyer local, jamais d'un grand aplat gris-violet.
+    blockingSheetSurfaceTop: '#302E35',
+    blockingSheetSurface: '#242429',
+    blockingSheetCard: '#302F36',
+    blockingBorder: 'rgba(255, 255, 255, 0.07)',
+    blockingBorderStrong: 'rgba(198, 181, 255, 0.16)',
+    blockingAccent: '#8B5CFF',
+    blockingAccentLight: '#C6B5FF',
+    blockingAccentMedium: '#4A4259',
+    blockingAccentDark: '#2A2433',
+    blockingAccentTint: 'rgba(139, 92, 255, 0.12)',
+    blockingAccentTintStrong: 'rgba(139, 92, 255, 0.28)',
+    // Remplissage de la barre d'avancement : nettement plus dense que le
+    // fond de la pilule, sinon la progression ne se voit pas.
+    blockingProgressFill: 'rgba(139, 92, 255, 0.45)',
+    blockingPill: 'rgba(24, 26, 25, 0.9)',
+    blockingInkMuted: '#A4A4AA',
+    blockingLockedAppMark: 'rgba(255, 255, 255, 0.96)',
+    blockingUnlockedAppMark: 'rgba(255, 255, 255, 0.78)',
+    blockingAppMarkContrast: 'rgba(0, 0, 0, 0.78)',
+    blockingImageShade: 'rgba(3, 5, 4, 0.34)',
+    blockingImageChrome: 'rgba(3, 5, 4, 0.7)',
+    blockingModalBackdrop: 'rgba(3, 5, 4, 0.84)',
+    // Rouge des actions irréversibles : une seule teinte, déclinée en
+    // remplissage, halo et bordure, pour que « supprimer » se reconnaisse
+    // partout à la même couleur.
+    blockingDanger: '#FB7185',
+    blockingDangerBright: '#FF9AAC',
+    blockingDangerTint: 'rgba(251, 113, 133, 0.16)',
+    blockingDangerWash: 'rgba(251, 113, 133, 0.34)',
+    blockingDangerBorder: 'rgba(251, 113, 133, 0.44)',
+    // La feuille destructrice est lie-de-vin presque noire. Le bouton garde le
+    // rouge saturé : les deux ne peuvent plus se confondre.
+    blockingDangerCanvas: '#180A10',
+    blockingDangerDeep: '#67182D',
+    blockingDangerSurface: '#D54861',
+    // Avertissement : ni le violet de la marque (qui invite), ni le rouge de
+    // la suppression (qui détruit) — l'ambre dit « lis avant de continuer ».
+    blockingWarning: '#F2B155',
+    blockingWarningTint: 'rgba(242, 177, 85, 0.16)',
+    blockingWarningBorder: 'rgba(242, 177, 85, 0.46)',
+    // Verre des commandes posées sur une feuille (croix, « Modifier »).
+    blockingGlass: 'rgba(255, 255, 255, 0.11)',
+    // Verre CLAIR des actions secondaires posées sur une image : il se
+    // distingue du dégradé violet, réservé à l'action principale de l'écran.
+    blockingGlassBright: 'rgba(255, 255, 255, 0.24)',
+    blockingGlassBrightEdge: 'rgba(255, 255, 255, 0.42)',
   },
   radius: {
     hero: 28,
     panel: 26,
+    visual: 28,
+    functional: 20,
     action: 18,
     button: 17,
     compact: 12,
@@ -91,6 +143,13 @@ export const relockMaterial = {
     quickChevronSize: 20,
     bottomNavigationClearance: 49,
     scrollBottom: 28,
+    blockingTypeCardMinHeight: 148,
+    blockingTypeGlyphSize: 32,
+    blockingTypeChevronSize: 20,
+    blockingTemplateCardMinHeight: 224,
+    blockingLockedTileSize: 68,
+    blockingScrollBottom: 112,
+    blockingCardColumnWidth: '48.4%',
   },
   typography: {
     welcomeTitleSize: 16,
@@ -110,11 +169,30 @@ export const relockMaterial = {
     quickTitleLineHeight: 22,
     quickDetailSize: 13,
     quickDetailLineHeight: 18,
+    blockingTitleSize: 34,
+    blockingTitleLineHeight: 41,
+    blockingSectionSize: 20,
+    blockingSectionLineHeight: 26,
+    blockingCardTitleSize: 17,
+    blockingCardTitleLineHeight: 22,
+    blockingCardBodySize: 14,
+    blockingCardBodyLineHeight: 19,
+    blockingMetaSize: 13,
+    blockingMetaLineHeight: 18,
+    blockingTypeTitleSize: 15,
+    blockingTypeTitleLineHeight: 20,
+    blockingCompactTitleSize: 13,
+    blockingCompactTitleLineHeight: 17,
+    blockingCompactBodySize: 12,
+    blockingCompactBodyLineHeight: 15,
+    blockingSectionLetterSpacing: -0.35,
+    blockingTitleLetterSpacing: -0.8,
   },
   opacity: {
     decorative: 0.22,
     decorativeStrong: 0.34,
     disabled: 0.52,
+    blockingAmbient: 0.08,
   },
   shadow: {
     hero: {
@@ -144,6 +222,20 @@ export const relockMaterial = {
       shadowOpacity: 0.28,
       shadowRadius: 13,
       shadowOffset: { width: 0, height: 5 },
+    },
+    blockingSubtle: {
+      elevation: 1,
+      shadowColor: '#000000',
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    },
+    blockingGlow: {
+      elevation: 1,
+      shadowColor: '#8B5CFF',
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
     },
   },
 } as const

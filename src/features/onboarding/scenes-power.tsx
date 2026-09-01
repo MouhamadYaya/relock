@@ -9,13 +9,13 @@ import {
   Footnote,
   GhostLink,
   GradientLine,
-  MockDialog,
+  GuideCard,
   Moon,
   Pill,
   RedAlert,
 } from './bits'
 import { Reveal } from './motion'
-import { haptic, OB } from './tokens'
+import { GUIDE_BOTTOM_PADDING, GUIDE_SCENE_PADDING, haptic, OB } from './tokens'
 
 // ─── Acte 4 · Temps d'écran (blocage DUR) ───────────────────────────────
 
@@ -29,6 +29,7 @@ import { haptic, OB } from './tokens'
 export function ScenePermission({ onNext }: { onNext: () => void }) {
   const [denied, setDenied] = useState(0)
   const [busy, setBusy] = useState(false)
+  const [dimmed, setDimmed] = useState(false)
   const advanced = useRef(false)
 
   const advance = () => {
@@ -61,6 +62,10 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
       return
     }
     setBusy(true)
+    // La vraie fenêtre iOS va apparaître par-dessus cet écran : on efface
+    // notre carte-guide plutôt que de risquer un chevauchement mal aligné
+    // (ni sa taille ni sa position exactes ne sont prévisibles côté app).
+    setDimmed(true)
     try {
       const s = await ScreenTime.requestAuthorization()
       if (s === 'approved') {
@@ -72,6 +77,7 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
       setDenied(d => d + 1)
     } finally {
       setBusy(false)
+      setDimmed(false)
     }
   }
 
@@ -79,24 +85,36 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
     Linking.openSettings().catch(() => {})
   }
 
+  const learnMore = () => {
+    Linking.openURL('https://www.apple.com/privacy/').catch(() => {})
+  }
+
+  const cardAction = denied >= 2 ? openSettings : request
+  const continueLabel =
+    denied >= 2
+      ? 'Ouvrir les Réglages'
+      : denied === 1
+        ? 'Réessayer'
+        : 'Continuer'
+
   return (
-    <View style={styles.scene}>
-      <View style={styles.permTop}>
-        <Reveal index={0}>
-          <Text style={styles.h1}>Débloque le vrai blocage.</Text>
-        </Reveal>
+    <View style={styles.guideScene}>
+      <Reveal index={0} style={styles.guideHeroWrap}>
+        <Text style={styles.heroTitle}>
+          Donnons à Relock l'accès à{`\n`}Temps d'écran. En toute confiance.
+        </Text>
+      </Reveal>
+      <View style={styles.guideMiddle}>
         <Reveal index={1}>
-          <Text style={styles.subLeft}>
-            iOS exige ton accord pour laisser Relock bloquer des apps. Sans lui,
-            rien ne peut fonctionner.
-          </Text>
-        </Reveal>
-        <Reveal index={2} style={{ marginTop: 24 }}>
-          <MockDialog
+          <GuideCard
             title="« Relock » souhaite accéder à Temps d'écran"
-            body="Relock pourra restreindre certains contenus et limiter l'utilisation des apps. Ton activité reste sur ton téléphone."
-            allowLabel="Continuer"
-            denyLabel="Refuser"
+            body="L'accès à Temps d'écran permet à Relock de limiter les apps choisies et de t'aider à rester concentré. Tes données restent sur ton appareil."
+            leftLabel={continueLabel}
+            rightLabel="Ne pas autoriser"
+            activeSide="left"
+            onActivePress={cardAction}
+            activeBusy={busy}
+            dimmed={dimmed}
           />
         </Reveal>
         {denied > 0 ? (
@@ -105,16 +123,14 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
           </View>
         ) : null}
       </View>
-      <Reveal index={3} style={styles.bottom}>
-        {denied >= 2 ? (
-          <Pill label="Ouvrir les Réglages" onPress={openSettings} />
-        ) : (
-          <Pill
-            label={denied === 1 ? 'Réessayer' : 'Activer la protection'}
-            onPress={request}
-            disabled={busy}
-          />
-        )}
+      <Reveal index={2} style={styles.guideBottom}>
+        <View style={styles.privacyWrap}>
+          <Text style={styles.privacyText}>
+            Tes informations restent protégées par Apple et stockées uniquement
+            sur ton téléphone.
+          </Text>
+          <GhostLink label="En savoir plus" onPress={learnMore} accent />
+        </View>
         {__DEV__ ? (
           // Échappatoire DEV uniquement : le simulateur a le module mais ne
           // peut pas finir le parcours d'autorisation (code de l'appareil).
@@ -130,9 +146,13 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
 
 export function SceneNotifs({ onNext }: { onNext: () => void }) {
   const [busy, setBusy] = useState(false)
+  const [dimmed, setDimmed] = useState(false)
 
   const request = async () => {
     setBusy(true)
+    // Même logique que Temps d'écran : on efface la carte-guide avant que
+    // la vraie fenêtre système n'apparaisse par-dessus.
+    setDimmed(true)
     try {
       await NotificationService.ensurePermission()
     } catch {
@@ -144,29 +164,34 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
   }
 
   return (
-    <View style={styles.scene}>
-      <View style={styles.permTop}>
-        <Reveal index={0}>
-          <Text style={styles.h1}>Un encouragement au bon moment.</Text>
-        </Reveal>
+    <View style={styles.guideScene}>
+      <Reveal index={0} style={styles.guideHeroWrap}>
+        <Text style={styles.heroTitle}>
+          Reçois tes bilans Relock{`\n`}et célèbre chaque progrès.
+        </Text>
+      </Reveal>
+      <View style={styles.guideMiddle}>
         <Reveal index={1}>
-          <Text style={styles.subLeft}>
-            Quand tu résistes, on te le dit. Quand ta série grandit, on la
-            célèbre. Jamais de spam, désactivable quand tu veux.
-          </Text>
-        </Reveal>
-        <Reveal index={2} style={{ marginTop: 24 }}>
-          <MockDialog
+          <GuideCard
             title="« Relock » souhaite t'envoyer des notifications"
-            body="Elles peuvent inclure des alertes, des sons et des pastilles."
-            allowLabel="Autoriser"
-            denyLabel="Ne pas autoriser"
+            body="Les notifications peuvent inclure des alertes, des sons et des pastilles. Tu peux les configurer dans Réglages."
+            leftLabel="Ne pas autoriser"
+            rightLabel="Autoriser"
+            activeSide="right"
+            interactive={false}
+            dimmed={dimmed}
+            frameVariant="notifications"
           />
         </Reveal>
       </View>
-      <Reveal index={3} style={styles.bottom}>
-        <Pill label="Activer les rappels" onPress={request} disabled={busy} />
-        <GhostLink label="Plus tard" onPress={onNext} dim />
+      <Reveal index={2} style={styles.guideBottom}>
+        <Pill
+          label="Continuer"
+          kind="ghost"
+          onPress={request}
+          disabled={busy}
+          glow
+        />
       </Reveal>
     </View>
   )
@@ -378,15 +403,38 @@ const styles = StyleSheet.create({
     letterSpacing: -0.7,
     color: OB.ink,
   },
-  subLeft: {
-    ...fonts.regular,
-    fontSize: 16,
-    lineHeight: 24,
-    color: OB.ink55,
-    marginTop: 10,
+  guideScene: { flex: 1 },
+  guideHeroWrap: {
+    paddingTop: 72,
+    paddingHorizontal: GUIDE_SCENE_PADDING,
   },
-
-  permTop: { flex: 1, paddingTop: 12 },
+  heroTitle: {
+    ...fonts.bold,
+    fontSize: 20,
+    lineHeight: 25,
+    letterSpacing: -0.4,
+    color: OB.ink,
+    textAlign: 'center',
+  },
+  guideMiddle: {
+    flex: 1,
+    paddingTop: 100,
+    paddingHorizontal: GUIDE_SCENE_PADDING,
+  },
+  guideBottom: {
+    gap: 8,
+    paddingBottom: 25,
+    paddingHorizontal: GUIDE_BOTTOM_PADDING,
+  },
+  privacyWrap: { alignItems: 'center', gap: 10, paddingBottom: 6 },
+  privacyText: {
+    ...fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+    color: OB.ink40,
+    textAlign: 'center',
+    paddingHorizontal: 25,
+  },
 
   paywallTopRow: { alignItems: 'flex-end', paddingTop: 2 },
   paywallBody: { flex: 1 },

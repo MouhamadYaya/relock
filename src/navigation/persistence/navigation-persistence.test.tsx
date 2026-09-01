@@ -16,7 +16,7 @@ import {
 
 const KEY = constants.NAVIGATION_STATE_V1
 
-let mockPathname = '/settings'
+let mockPathname = '/blocks'
 
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
@@ -39,7 +39,7 @@ const flush = async () => {
 
 describe('usePersistLastPath / useRestoreLastPath', () => {
   beforeEach(() => {
-    mockPathname = '/settings'
+    mockPathname = '/blocks'
     navigationStorage.delete(KEY)
     jest.spyOn(Linking, 'getInitialURL').mockResolvedValue(null)
   })
@@ -52,6 +52,17 @@ describe('usePersistLastPath / useRestoreLastPath', () => {
     })
     await flush()
 
-    expect(navigationStorage.getString(KEY)).toBe('/settings')
+    expect(navigationStorage.getString(KEY)).toBe('/blocks')
+  })
+
+  it('does not persist a modal route that cannot be restored without params', async () => {
+    mockPathname = '/preset-recap'
+
+    await act(async () => {
+      create(<TestHarness enabled />)
+    })
+    await flush()
+
+    expect(navigationStorage.getString(KEY)).toBeNull()
   })
 })

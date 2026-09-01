@@ -93,3 +93,5 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+# Sorties de build Xcode (xcresult, captures de test) — jamais versionnées
+artifacts/

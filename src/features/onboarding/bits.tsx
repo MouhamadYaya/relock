@@ -5,6 +5,7 @@ import {
   type StyleProp,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ViewStyle,
 } from 'react-native'
@@ -29,7 +30,13 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { haptic, OB } from './tokens'
+import {
+  GUIDE_FRAME_ASPECT_RATIO,
+  GUIDE_FRAME_GAP,
+  GUIDE_SCENE_PADDING,
+  haptic,
+  OB,
+} from './tokens'
 
 // ─── Fond ────────────────────────────────────────────────────────────────
 
@@ -74,6 +81,25 @@ export function HaloBackdrop({ intensity = 1 }: { intensity?: number }) {
 // ─── Lune ────────────────────────────────────────────────────────────────
 
 const MOON = require('../../../assets/moon.png')
+
+// ─── Flèche de la carte-guide ───────────────────────────────────────────
+
+/**
+ * Asset fourni par le design (`design/Notifications/flecheUp.png`), copié
+ * tel quel dans `assets/` — un dessin à la main n'a jamais rendu aussi net
+ * ni aussi lisible sur fond sombre que ce PNG détouré (dégradé lavande →
+ * bleu glacier déjà intégré à l'image).
+ *
+ * Géométrie mesurée au pixel dans le fichier source (992×1586, canal
+ * alpha réel) : la pointe de la flèche (l'endroit qui doit s'aligner sur
+ * le bouton) est à 62.15% de la largeur et 19.36% de la hauteur du
+ * canevas — PAS au centre ni en haut strict, d'où ces fractions plutôt
+ * que de deviner un point d'ancrage.
+ */
+const ARROW_IMG = require('../../../assets/onboarding-arrow.png')
+const ARROW_ASPECT = 992 / 1586
+const ARROW_TIP_X_FRACTION = 0.6215
+const ARROW_TIP_Y_FRACTION = 0.1936
 
 /** Le logo lune, détouré. `glow` ajoute un halo doux derrière. */
 export function Moon({
@@ -263,11 +289,13 @@ export function GhostLink({
   onPress,
   dim = false,
   underline = false,
+  accent = false,
 }: {
   label: string
   onPress: () => void
   dim?: boolean
   underline?: boolean
+  accent?: boolean
 }) {
   return (
     <Pressable
@@ -283,6 +311,7 @@ export function GhostLink({
         style={[
           styles.ghostLink,
           dim && { color: OB.ink40 },
+          accent && { color: OB.accent },
           underline && styles.ghostLinkUnderline,
         ]}
       >
@@ -433,79 +462,178 @@ export function RedAlert({ text }: { text: string }) {
 }
 
 /**
- * Réplique du dialogue d'autorisation iOS, encadrée du dégradé signature,
- * avec le choix « autoriser » lumineux et l'autre éteint — le pré-prompt
- * pédagogique d'Opal : l'utilisateur apprend le geste avant de le faire.
+ * Carte-guide d'autorisation : cadre au dégradé signature (l'aperçu de la
+ * fenêtre iOS à venir) autour d'une réplique sombre du dialogue système,
+ * deux choix côte à côte, et une flèche pointant celui que l'utilisateur va
+ * réellement obtenir. Un seul des deux boutons est réel — celui qui
+ * déclenche la vraie permission (`activeSide`) ; l'autre reste une pure
+ * prévisualisation du dialogue natif à venir, jamais interactif.
  */
-export function MockDialog({
+/** Taille d'affichage de la flèche (l'aspect réel du PNG source est conservé). */
+const ARROW_DISPLAY_W = 104
+const ARROW_DISPLAY_H = Math.round(ARROW_DISPLAY_W / ARROW_ASPECT)
+/** Espace visible entre la pointe de la flèche et le bouton visé — elle ne doit jamais le toucher. */
+const ARROW_GAP_TO_BUTTON = 10
+/** Géométrie partagée avec les styles; la hauteur de pilule ancre la flèche. */
+const GUIDE_INNER_PAD_H = 18
+const GUIDE_INNER_PAD_BOTTOM = 16
+const GUIDE_ROW_GAP = 10
+const GUIDE_PILL_HEIGHT = 50
+const GUIDE_ARROW_TOP =
+  GUIDE_PILL_HEIGHT +
+  ARROW_GAP_TO_BUTTON -
+  ARROW_DISPLAY_H * ARROW_TIP_Y_FRACTION
+const GUIDE_ARROW_TRAILING_SPACE = 72
+
+type GuideFrameVariant = 'permission' | 'notifications'
+
+export function GuideCard({
   title,
   body,
-  allowLabel,
-  denyLabel,
+  leftLabel,
+  rightLabel,
+  activeSide,
+  onActivePress,
+  activeBusy = false,
+  interactive = true,
+  dimmed = false,
+  frameVariant = 'permission',
 }: {
   title: string
   body: string
-  allowLabel: string
-  denyLabel: string
+  leftLabel: string
+  rightLabel: string
+  activeSide: 'left' | 'right'
+  onActivePress?: () => void
+  activeBusy?: boolean
+  /** false : les deux choix restent une pure prévisualisation (aucun n'est réel). */
+  interactive?: boolean
+  /**
+   * true dès que la vraie demande système est lancée : la carte s'efface
+   * (fondu) pour ne jamais rester visible à côté d'une fenêtre native dont
+   * ni la taille ni la position exactes ne sont prévisibles — deux boîtes
+   * qui se chevauchent mal est pire qu'une carte qui s'efface proprement.
+   */
+  dimmed?: boolean
+  frameVariant?: GuideFrameVariant
 }) {
-  return (
-    <View style={styles.mockWrap}>
-      <Svg
-        style={StyleSheet.absoluteFill}
-        width="100%"
-        height="100%"
-        pointerEvents="none"
+  const { width: screenWidth } = useWindowDimensions()
+  const frameAspectRatio = GUIDE_FRAME_ASPECT_RATIO[frameVariant]
+  const frameWidth = screenWidth - GUIDE_SCENE_PADDING * 2
+  const frameHeight = frameWidth / frameAspectRatio
+  const scale = useSharedValue(1)
+  const aStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(dimmed ? 0.05 : 1, { duration: 180 }),
+  }))
+
+  const renderPill = (label: string, side: 'left' | 'right') => {
+    const active = side === activeSide
+    const text = (
+      <Text
+        style={[
+          styles.guidePillLabel,
+          active ? styles.guidePillLabelActive : styles.guidePillLabelDim,
+        ]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.9}
       >
-        <Defs>
-          <LinearGradient id="mockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor={OB.grad[0]} />
-            <Stop offset="100%" stopColor={OB.grad[2]} />
-          </LinearGradient>
-        </Defs>
-        <Rect
-          x={1.5}
-          y={1.5}
-          width="99%"
-          height="97%"
-          rx={18}
-          fill="none"
-          stroke="url(#mockGrad)"
-          strokeWidth={1.6}
-          opacity={0.85}
-        />
-      </Svg>
-      <View style={styles.mockCard}>
-        <Text style={styles.mockTitle}>{title}</Text>
-        <Text style={styles.mockBody}>{body}</Text>
-        <View style={styles.mockSep} />
-        <Text style={styles.mockAllow}>{allowLabel}</Text>
-        <View style={styles.mockSep} />
-        <Text style={styles.mockDeny}>{denyLabel}</Text>
+        {label}
+      </Text>
+    )
+    const pill =
+      active && interactive && onActivePress ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          disabled={activeBusy}
+          style={styles.guidePillPressable}
+          onPressIn={() => {
+            scale.value = withSpring(0.96, { damping: 20, stiffness: 400 })
+          }}
+          onPressOut={() => {
+            scale.value = withSpring(1, { damping: 16, stiffness: 300 })
+          }}
+          onPress={() => {
+            haptic.tap()
+            onActivePress()
+          }}
+        >
+          <Animated.View
+            style={[styles.guidePill, styles.guidePillActive, aStyle]}
+          >
+            {text}
+          </Animated.View>
+        </Pressable>
+      ) : (
+        <View style={[styles.guidePill, active && styles.guidePillActive]}>
+          {text}
+        </View>
+      )
+
+    return (
+      <View style={styles.guidePillSlot}>
+        {pill}
+        {active ? (
+          <View pointerEvents="none" style={styles.guideArrow}>
+            <Image
+              source={ARROW_IMG}
+              resizeMode="contain"
+              style={styles.guideArrowImage}
+            />
+          </View>
+        ) : null}
       </View>
-      {/* Flèche « dessinée à la main » vers le choix lumineux. */}
-      <Svg
-        width={64}
-        height={72}
-        style={styles.mockArrow}
-        viewBox="0 0 64 72"
-        fill="none"
+    )
+  }
+
+  return (
+    <Animated.View style={[styles.guideContainer, fadeStyle]}>
+      <View
+        style={[
+          styles.guideFrame,
+          frameVariant === 'notifications' && styles.guideFrameNotifications,
+        ]}
       >
-        <Path
-          d="M54 66 C 30 58, 20 40, 30 12"
-          stroke={OB.accent}
-          strokeWidth={2.4}
-          strokeLinecap="round"
-          strokeDasharray="1 7"
-        />
-        <Path
-          d="M22 20 L30 8 L38 20"
-          stroke={OB.accent}
-          strokeWidth={2.4}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </View>
+        <Svg
+          style={StyleSheet.absoluteFill}
+          width={frameWidth}
+          height={frameHeight}
+          pointerEvents="none"
+        >
+          <Defs>
+            <LinearGradient id="guideGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor={OB.grad[0]} />
+              <Stop offset="100%" stopColor={OB.grad[2]} />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            x={1}
+            y={1}
+            width={frameWidth - 2}
+            height={frameHeight - 2}
+            rx={40}
+            fill="url(#guideGrad)"
+            fillOpacity={0.07}
+            stroke="url(#guideGrad)"
+            strokeWidth={1.4}
+            strokeOpacity={0.9}
+          />
+        </Svg>
+        <View style={styles.guideInner}>
+          <Text style={styles.guideTitle}>{title}</Text>
+          <Text style={styles.guideBody}>{body}</Text>
+          <View style={styles.guideRow}>
+            {renderPill(leftLabel, 'left')}
+            {renderPill(rightLabel, 'right')}
+          </View>
+        </View>
+      </View>
+      <View pointerEvents="none" style={styles.guideArrowTrailingSpace} />
+    </Animated.View>
   )
 }
 
@@ -660,45 +788,84 @@ const styles = StyleSheet.create({
     color: '#FCA5A5',
   },
 
-  mockWrap: { alignSelf: 'stretch' },
-  mockCard: {
-    margin: 8,
-    borderRadius: 14,
-    backgroundColor: OB.card2,
-    paddingTop: 16,
-    overflow: 'hidden',
+  guideContainer: { alignSelf: 'stretch' },
+  guideFrame: {
+    alignSelf: 'stretch',
+    aspectRatio: GUIDE_FRAME_ASPECT_RATIO.permission,
+    borderRadius: 40,
+    justifyContent: 'center',
+    shadowColor: OB.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.32,
+    shadowRadius: 28,
+    elevation: 10,
   },
-  mockTitle: {
+  guideFrameNotifications: {
+    aspectRatio: GUIDE_FRAME_ASPECT_RATIO.notifications,
+  },
+  guideInner: {
+    borderRadius: 20,
+    backgroundColor: '#141416',
+    marginHorizontal: GUIDE_FRAME_GAP,
+    paddingTop: 18,
+    paddingBottom: GUIDE_INNER_PAD_BOTTOM,
+    paddingHorizontal: GUIDE_INNER_PAD_H,
+  },
+  guideTitle: {
     ...fonts.semiBold,
-    fontSize: 15,
+    fontSize: 18,
+    lineHeight: 23,
     color: OB.ink,
     textAlign: 'center',
-    paddingHorizontal: 18,
   },
-  mockBody: {
+  guideBody: {
     ...fonts.regular,
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 19,
     color: OB.ink55,
     textAlign: 'center',
-    paddingHorizontal: 18,
-    marginTop: 4,
-    marginBottom: 12,
+    marginTop: 8,
   },
-  mockSep: { height: StyleSheet.hairlineWidth, backgroundColor: OB.hairline },
-  mockAllow: {
-    ...fonts.semiBold,
-    fontSize: 16,
-    color: OB.accent,
-    textAlign: 'center',
-    paddingVertical: 12,
+  guideRow: { flexDirection: 'row', gap: GUIDE_ROW_GAP, marginTop: 16 },
+  guidePillSlot: {
+    flexBasis: 0,
+    flexGrow: 1,
+    width: 0,
+    minWidth: 0,
+    minHeight: GUIDE_PILL_HEIGHT,
   },
-  mockDeny: {
-    ...fonts.regular,
-    fontSize: 16,
-    color: OB.ink28,
-    textAlign: 'center',
-    paddingVertical: 12,
+  guidePillPressable: { flex: 1, width: '100%' },
+  guidePill: {
+    flex: 1,
+    width: '100%',
+    minHeight: GUIDE_PILL_HEIGHT,
+    borderRadius: GUIDE_PILL_HEIGHT / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  mockArrow: { position: 'absolute', right: -6, bottom: -34 },
+  guidePillActive: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: OB.ink28,
+    backgroundColor: 'rgba(164,154,254,0.14)',
+  },
+  guidePillLabel: { ...fonts.semiBold, fontSize: 13.5, letterSpacing: -0.2 },
+  guidePillLabelActive: { color: OB.accent },
+  guidePillLabelDim: { color: OB.ink40 },
+  guideArrow: {
+    position: 'absolute',
+    zIndex: 2,
+    left: '50%',
+    top: GUIDE_ARROW_TOP,
+    width: ARROW_DISPLAY_W,
+    height: ARROW_DISPLAY_H,
+    transform: [{ translateX: -ARROW_TIP_X_FRACTION * ARROW_DISPLAY_W }],
+    shadowColor: OB.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 8,
+  },
+  guideArrowImage: { width: '100%', height: '100%' },
+  guideArrowTrailingSpace: { height: GUIDE_ARROW_TRAILING_SPACE },
 })

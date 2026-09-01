@@ -4,11 +4,13 @@ import SwiftUI
 // Palette partagée par les vues du rapport (mode sombre forcé : sinon iOS rend
 // les libellés système des apps en noir).
 enum ReportPalette {
+  static let background = Color(red: 0.043, green: 0.047, blue: 0.063)
   static let accent = Color(red: 0.643, green: 0.604, blue: 0.996)
   static let ink = Color(red: 0.94, green: 0.94, blue: 0.96)
   static let ink2 = Color(red: 0.66, green: 0.67, blue: 0.75)
   static let ink3 = Color(red: 0.46, green: 0.48, blue: 0.56)
   static let card = Color.white.opacity(0.04)
+  static let statCard = Color(red: 0.082, green: 0.086, blue: 0.102)
   static let grid = Color.white.opacity(0.07)
   static let track = Color.white.opacity(0.08)
 }
@@ -22,30 +24,35 @@ func formatDuration(_ s: Double) -> String {
   return r == 0 ? "\(h) h" : "\(h) h \(String(format: "%02d", r))"
 }
 
-/// L'Activité entière : résumé, graphe, classement — dans UN ScrollView.
+/// Page Activité complète, rendue et défilée dans le processus du rapport.
 ///
-/// ⚠️ Ce ScrollView est le SEUL défilement possible de l'écran. La vue d'un
-/// rapport est rendue hors process et iOS lui route les touches directement,
-/// sans passer par la hiérarchie de l'app : un ScrollView côté React Native
-/// ne reçoit jamais le geste au-dessus d'un rapport (vérifié — le `hitTest`
-/// de la vue hôte n'est jamais appelé). D'où l'obligation de tout réunir ici.
+/// `DeviceActivityReport` est une surface distante : sur iPhone, les gestes qui
+/// commencent dans son rectangle n'atteignent jamais un ScrollView de l'app.
+/// Toute la page visible vit donc dans CE ScrollView, en une seule surface.
 struct UsageReportView: View {
   let model: UsageModel
 
   private var maxAppSeconds: Double { model.apps.first?.seconds ?? 1 }
 
   var body: some View {
-    ScrollView(showsIndicators: false) {
+    ScrollView(.vertical, showsIndicators: false) {
       VStack(alignment: .leading, spacing: 14) {
+        Color.clear
+          .frame(height: 134)
+          .accessibilityHidden(true)
         summaryCard
         chartSection
         appsSection
+        otherStatsSection
       }
       .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.vertical, 4)
+      .padding(.horizontal, 20)
+      .padding(.top, 4)
+      .padding(.bottom, 32)
     }
+    .accessibilityIdentifier("activity-native-scroll")
+    .background(ReportPalette.background)
     .environment(\.colorScheme, .dark)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 
   // MARK: Résumé
@@ -64,33 +71,17 @@ struct UsageReportView: View {
           .font(.system(size: 13, weight: .medium))
           .foregroundColor(ReportPalette.ink2)
       }
-      if !model.isEmpty {
-        HStack(spacing: 28) {
-          stat("\(model.totalPickups)", "Activations")
-          stat("\(model.totalNotifications)", "Notifications")
-        }
-      }
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
   }
 
-  private func stat(_ value: String, _ label: String) -> some View {
-    VStack(alignment: .leading, spacing: 1) {
-      Text(value)
-        .font(.system(size: 22, weight: .bold))
-        .foregroundColor(ReportPalette.ink)
-      Text(label)
-        .font(.system(size: 12)).foregroundColor(ReportPalette.ink3)
-    }
-  }
-
   // MARK: Graphe
 
   private var chartSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text(model.isHourly ? "Temps d'écran par heure" : "Temps d'écran par jour")
+      Text("Temps d'écran par heure")
         .font(.system(size: 14, weight: .semibold))
         .foregroundColor(ReportPalette.ink2)
       UsageChartView(model: model)
@@ -126,6 +117,7 @@ struct UsageReportView: View {
         .background(RoundedRectangle(cornerRadius: 18).fill(ReportPalette.card))
       }
     }
+    .accessibilityIdentifier("activity-native-apps")
   }
 
   private func appRow(_ app: AppUsage) -> some View {
@@ -190,20 +182,98 @@ struct UsageReportView: View {
     let n = "\(app.notifications) notification\(app.notifications > 1 ? "s" : "")"
     return "\(a) · \(n)"
   }
+
+  // MARK: Autres statistiques
+
+  private var otherStatsSection: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text("Autres statistiques")
+        .font(.system(size: 23, weight: .bold))
+        .foregroundColor(ReportPalette.ink)
+
+      statCard(
+        value: model.totalNotifications,
+        title: "Notifications",
+        subtitle: "reçues sur la période",
+        imageName: "notification-card")
+
+      statCard(
+        value: model.totalPickups,
+        title: "Prises en main",
+        subtitle: "sur la période",
+        imageName: "pickups-card")
+    }
+  }
+
+  private func statCard(
+    value: Int,
+    title: String,
+    subtitle: String,
+    imageName: String
+  ) -> some View {
+    ZStack(alignment: .leading) {
+      ReportPalette.statCard
+
+      Image(imageName)
+        .resizable()
+        .scaledToFill()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
+        .accessibilityHidden(true)
+
+      LinearGradient(
+        colors: [
+          ReportPalette.statCard,
+          ReportPalette.statCard.opacity(0.96),
+          ReportPalette.statCard.opacity(0.20),
+        ],
+        startPoint: .leading,
+        endPoint: .trailing)
+
+      HStack(alignment: .firstTextBaseline, spacing: 12) {
+        Text("\(value)")
+          .font(.system(size: 52, weight: .bold, design: .rounded))
+          .monospacedDigit()
+          .foregroundColor(ReportPalette.ink)
+          .lineLimit(1)
+          .minimumScaleFactor(0.65)
+          .layoutPriority(1)
+        VStack(alignment: .leading, spacing: 1) {
+          Text(title)
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundColor(ReportPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.82)
+          Text(subtitle)
+            .font(.system(size: 13))
+            .foregroundColor(ReportPalette.ink2)
+            .lineLimit(1)
+            .minimumScaleFactor(0.82)
+        }
+      }
+      .padding(.leading, 18)
+      .padding(.trailing, 18)
+    }
+    .frame(height: 168)
+    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 22, style: .continuous)
+        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+    )
+    .accessibilityElement(children: .combine)
+  }
 }
 
 // MARK: - Graphe
 
-/// Graphe seul (fond quadrillé + axes), intégré au rapport. Sa granularité
-/// vient du contexte qui l'alimente : elle reste donc juste même quand la
-/// période ne contient aucune donnée.
+/// Graphe horaire (fond quadrillé + axes), intégré au rapport journalier.
 struct UsageChartView: View {
   let model: UsageModel
 
   private var axisMax: Double {
     let peak = model.values.max() ?? 0
-    if peak <= 0 { return model.isHourly ? 3_600 : 7_200 }
-    let step = model.isHourly ? 1_800.0 : 3_600.0
+    if peak <= 0 { return 3_600 }
+    let step = 1_800.0
     return max(step, (peak / step).rounded(.up) * step)
   }
 

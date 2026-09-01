@@ -24,7 +24,6 @@ import { buildSessions, type RuleSession } from '@/features/blocking/session'
 import { ActiveProtectionCard } from '@/features/home/components/ActiveProtectionCard'
 import { DailyResultsCard } from '@/features/home/components/DailyResultsCard'
 import { EmptyProtectionCard } from '@/features/home/components/EmptyProtectionCard'
-import { HomeAmbientBackground } from '@/features/home/components/HomeAmbientBackground'
 import { QuickStartRail } from '@/features/home/components/QuickStartRail'
 import { ScreenTimeHero } from '@/features/home/components/ScreenTimeHero'
 import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
@@ -156,7 +155,6 @@ export default function HomeScreen() {
         translucent: true,
       }}
     >
-      <HomeAmbientBackground />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

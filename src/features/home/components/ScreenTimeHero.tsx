@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
 import { AppState, StyleSheet, Text, View } from 'react-native'
 import {
@@ -29,28 +30,32 @@ const C = {
 
 export function ScreenTimeHero() {
   const { theme } = useTheme()
+  const isFocused = useIsFocused()
 
   // Le contenu du rapport est rendu HORS process : il peut mourir pendant que
   // l'app est en arrière-plan, et il date d'« aujourd'hui » au moment du
-  // rendu. À chaque retour au premier plan, on remonte les vues À NEUF
-  // (epoch dans la clé) : connexion fraîche, chiffres du bon jour. C'est ce
-  // qui empêche les pilules de disparaître après un aller-retour.
+  // rendu. À chaque retour au premier plan, `reloadToken` demande au pont natif
+  // une connexion fraîche avec les chiffres du bon jour. C'est ce qui empêche
+  // le rapport de disparaître après un aller-retour.
   const [epoch, setEpoch] = useState(0)
   useEffect(() => {
+    if (!isFocused) return
     const sub = AppState.addEventListener('change', st => {
       if (st === 'active') setEpoch(e => e + 1)
     })
     return () => sub.remove()
-  }, [])
+  }, [isFocused])
 
   // Squelettes le temps que iOS calcule et rende les scènes (asynchrone),
   // puis on les retire — la vue native a un fond transparent.
   const [showSkeleton, setShowSkeleton] = useState(true)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: epoch redémarre le squelette lors d'une reconnexion native
   useEffect(() => {
+    if (!isFocused) return
     setShowSkeleton(true)
     const t = setTimeout(() => setShowSkeleton(false), 2500)
     return () => clearTimeout(t)
-  }, [epoch])
+  }, [epoch, isFocused])
 
   // Sans autorisation Temps d'écran, iOS ne rend RIEN dans la vue du rapport :
   // l'Accueil affichait alors un trou muet sous le titre. On dit pourquoi.
@@ -107,11 +112,13 @@ export function ScreenTimeHero() {
               <View style={styles.skelSmall} />
             </View>
           )}
-          <ScreenTimeReport
-            key={`hero-${epoch}-${authorized}`}
-            mode="hero"
-            style={styles.report}
-          />
+          {isFocused && (
+            <ScreenTimeReport
+              mode="hero"
+              reloadToken={epoch}
+              style={styles.report}
+            />
+          )}
         </View>
       )}
     </View>

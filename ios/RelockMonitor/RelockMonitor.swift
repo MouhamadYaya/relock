@@ -100,6 +100,14 @@ final class RelockMonitor: DeviceActivityMonitor {
     return sel
   }
 
+  /// Sursis en cours (déblocages temporaires), les échus retirés au passage.
+  /// ⚠️ Miroir de `BlocusScreenTime.liveReprieves`.
+  static func liveReprieves(_ defaults: UserDefaults?) -> [String: Double] {
+    let raw = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
+    let now = Date().timeIntervalSince1970
+    return raw.filter { $0.value > now }
+  }
+
   /// Union des sélections des fenêtres actives → bouclier (ou retrait).
   private func recomputeShield() {
     var apps = Set<ApplicationToken>()
@@ -114,6 +122,16 @@ final class RelockMonitor: DeviceActivityMonitor {
       cats.formUnion(sel.categoryTokens)
       webs.formUnion(sel.webDomainTokens)
     }
+    // Sursis (déblocage temporaire d'une app) — miroir de
+    // `BlocusScreenTime.recomputeShield`. Les échus sont filtrés par
+    // l'horodatage : à la fin du sursis, le bouclier revient tout seul.
+    let live = Self.liveReprieves(defaults)
+    if !live.isEmpty {
+      apps = apps.filter { token in
+        guard let data = try? JSONEncoder().encode(token) else { return true }
+        return live[data.base64EncodedString()] == nil
+      }
+    }
     if apps.isEmpty && cats.isEmpty && webs.isEmpty {
       store.shield.applications = nil
       store.shield.applicationCategories = nil
@@ -125,6 +143,29 @@ final class RelockMonitor: DeviceActivityMonitor {
       store.shield.webDomains = webs.isEmpty ? nil : webs
       defaults?.set(true, forKey: "blocus.isBlocking")
     }
+  }
+
+  /// Un seul réveil partagé suffit : après chaque échéance, on arme la
+  /// suivante. La fenêtre commence à l'expiration du sursis afin que
+  /// `intervalDidStart` remette le bouclier dès la prochaine utilisation.
+  private func scheduleNextReprieveWake() {
+    let center = DeviceActivityCenter()
+    let activity = DeviceActivityName("reprieve.shared")
+    center.stopMonitoring([activity])
+    guard let next = Self.liveReprieves(defaults).values.min() else { return }
+
+    let now = Date()
+    let start = max(Date(timeIntervalSince1970: next), now.addingTimeInterval(1))
+    let end = start.addingTimeInterval(15 * 60)
+    let full: Set<Calendar.Component> = [
+      .year, .month, .day, .hour, .minute, .second,
+    ]
+    let calendar = Calendar.current
+    let schedule = DeviceActivitySchedule(
+      intervalStart: calendar.dateComponents(full, from: start),
+      intervalEnd: calendar.dateComponents(full, from: end),
+      repeats: false)
+    try? center.startMonitoring(activity, during: schedule)
   }
 
   /// Avancement du quota du jour (25/50/75/100 %) partagé avec l'app.
@@ -193,6 +234,31 @@ final class RelockMonitor: DeviceActivityMonitor {
       DeviceActivityCenter().stopMonitoring([activity])
       return
     }
+    // Sursis (déblocage temporaire d'une app) : comme « resume. », cette
+    // activité ne protège RIEN — elle ne sert qu'à sonner à l'échéance. La
+    // traiter comme une fenêtre l'ajouterait à `activeWindows` et remettrait
+    // sous bouclier toutes les apps de la règle, sursis compris.
+    if activity.rawValue.hasPrefix("reprieve.") {
+      recomputeShield()
+      scheduleNextReprieveWake()
+      return
+    }
+    // Échéance d'un blocage COURT (< 15 min) : iOS refuse une fenêtre aussi
+    // brève, on a donc programmé un réveil qui COMMENCE à la fin voulue. Ce
+    // n'est pas une fenêtre de blocage — elle ferme celle du blocage minuté.
+    if activity.rawValue.hasPrefix("end."),
+      let id = ruleId(from: activity.rawValue)
+    {
+      let window = "timed.\(id)"
+      let wasActive = activeWindows().contains(window)
+      setWindow(window, active: false)
+      recomputeShield()
+      if wasActive {
+        logEvent(kind: "window_end", activity: window)
+      }
+      DeviceActivityCenter().stopMonitoring([activity])
+      return
+    }
     // Jour non retenu (« lun→ven ») : la fenêtre s'ouvre, mais elle ne protège
     // rien. `intervalDidStart` tombe au DÉBUT de la session — c'est donc bien
     // le bon jour qu'on teste, même pour une plage de nuit qui finit demain.
@@ -213,6 +279,13 @@ final class RelockMonitor: DeviceActivityMonitor {
   override func intervalDidEnd(for activity: DeviceActivityName) {
     super.intervalDidEnd(for: activity)
     heartbeat("intervalDidEnd \(activity.rawValue)")
+    // Fin d'un sursis : le bouclier revient de lui-même (les entrées échues
+    // sont filtrées sur l'horodatage). Rien à retirer d'`activeWindows` —
+    // un sursis n'y a jamais été inscrit.
+    if activity.rawValue.hasPrefix("reprieve.") {
+      recomputeShield()
+      return
+    }
     // Fin de CETTE fenêtre uniquement — l'union préserve les autres blocages.
     let wasActive = activeWindows().contains(activity.rawValue)
     setWindow(activity.rawValue, active: false)

@@ -1,4 +1,5 @@
 import ActivityKit
+import AVFoundation
 import DeviceActivity
 import FamilyControls
 import Foundation
@@ -25,6 +26,8 @@ final class BlocusScreenTime: NSObject {
   private static let storeName = "blocus.default"
 
   private let defaults = UserDefaults(suiteName: BlocusScreenTime.suite)
+  private var calmEngine: AVAudioEngine?
+  private var calmPlayer: AVAudioPlayerNode?
 
   @objc static func requiresMainQueueSetup() -> Bool { true }
 
@@ -35,6 +38,92 @@ final class BlocusScreenTime: NSObject {
 
   @available(iOS 16.0, *)
   private var center: DeviceActivityCenter { DeviceActivityCenter() }
+
+  // MARK: - Pause respiratoire
+
+  private func stopCalmAudio() {
+    calmPlayer?.stop()
+    calmEngine?.stop()
+    calmPlayer = nil
+    calmEngine = nil
+    try? AVAudioSession.sharedInstance().setActive(
+      false, options: .notifyOthersOnDeactivation)
+  }
+
+  /// Nappe harmonique locale de six secondes. Aucun fichier ni réseau : le
+  /// son est synthétisé à la demande et respecte le mode silencieux (`ambient`).
+  @objc(playCalmSound:rejecter:)
+  func playCalmSound(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      stopCalmAudio()
+      let session = AVAudioSession.sharedInstance()
+      try session.setCategory(.ambient, mode: .default, options: .mixWithOthers)
+      try session.setActive(true)
+
+      let engine = AVAudioEngine()
+      let player = AVAudioPlayerNode()
+      let sampleRate = 44_100.0
+      let duration = 6.0
+      guard
+        let format = AVAudioFormat(
+          standardFormatWithSampleRate: sampleRate, channels: 2),
+        let buffer = AVAudioPCMBuffer(
+          pcmFormat: format,
+          frameCapacity: AVAudioFrameCount(sampleRate * duration)),
+        let channels = buffer.floatChannelData
+      else {
+        reject("calm_audio_buffer", "Impossible de créer le son de respiration", nil)
+        return
+      }
+
+      buffer.frameLength = buffer.frameCapacity
+      let frequencies = [174.61, 261.63, 349.23, 523.25]
+      for frame in 0..<Int(buffer.frameLength) {
+        let time = Double(frame) / sampleRate
+        let attack = min(1, time / 0.7)
+        let release = min(1, (duration - time) / 1.1)
+        let envelope = max(0, min(attack, release))
+        let breath = 0.88 + 0.12 * sin(2 * Double.pi * 0.2 * time)
+        let wave =
+          0.5 * sin(2 * Double.pi * frequencies[0] * time)
+          + 0.27 * sin(2 * Double.pi * frequencies[1] * time)
+          + 0.16 * sin(2 * Double.pi * frequencies[2] * time)
+          + 0.07 * sin(2 * Double.pi * frequencies[3] * time)
+        let sample = Float(wave * envelope * breath * 0.1)
+        channels[0][frame] = sample
+        channels[1][frame] = sample
+      }
+
+      engine.attach(player)
+      engine.connect(player, to: engine.mainMixerNode, format: format)
+      try engine.start()
+      calmEngine = engine
+      calmPlayer = player
+      player.scheduleBuffer(buffer) { [weak self, weak player] in
+        DispatchQueue.main.async {
+          guard let self, self.calmPlayer === player else { return }
+          self.stopCalmAudio()
+        }
+      }
+      player.play()
+      resolve(true)
+    } catch {
+      stopCalmAudio()
+      reject("calm_audio_failed", error.localizedDescription, error)
+    }
+  }
+
+  @objc(stopCalmSound:rejecter:)
+  func stopCalmSound(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter _: @escaping RCTPromiseRejectBlock
+  ) {
+    stopCalmAudio()
+    resolve(true)
+  }
 
   // MARK: - Sélection partagée (App Group)
 
@@ -98,8 +187,14 @@ final class BlocusScreenTime: NSObject {
   /// arrête encore pour purger les appareils qui en ont d'un build précédent.
   private func allActivityNames(kind: String, ruleId: String) -> [String] {
     let base = Self.activityName(kind: kind, ruleId: ruleId)
-    guard kind == "schedule" else { return [base] }
-    return [base] + (1...7).map { "\(base).\($0)" }
+    if kind == "schedule" {
+      return [base] + (1...7).map { "\(base).\($0)" }
+    }
+    // Un blocage court n'a pas de fenêtre : c'est « end.<id> » qui sonne à son
+    // échéance. Arrêter la règle doit donc aussi désarmer ce réveil, sinon il
+    // retirerait un bouclier reposé entre-temps.
+    if kind == "timed" { return [base, "end.\(ruleId)"] }
+    return [base]
   }
 
   /// Clé de jour local « yyyy-MM-dd » (miroir de `RelockMonitor.dayKey`) pour
@@ -183,6 +278,12 @@ final class BlocusScreenTime: NSObject {
       cats.formUnion(sel.categoryTokens)
       webs.formUnion(sel.webDomainTokens)
     }
+    // Sursis : une app débloquée temporairement sort du bouclier sans que la
+    // règle s'arrête — les autres apps restent protégées.
+    let live = Self.liveReprieves(defaults)
+    if !live.isEmpty {
+      apps = apps.filter { !isReprieved($0, live) }
+    }
     if apps.isEmpty && cats.isEmpty && webs.isEmpty {
       store.shield.applications = nil
       store.shield.applicationCategories = nil
@@ -194,6 +295,29 @@ final class BlocusScreenTime: NSObject {
       store.shield.webDomains = webs.isEmpty ? nil : webs
       defaults?.set(true, forKey: "blocus.isBlocking")
     }
+  }
+
+  /// Programme un seul réveil partagé au début du prochain sursis expiré. Le
+  /// moniteur reprogramme ensuite l'échéance suivante, ce qui reste exact même
+  /// quand plusieurs apps sont ouvertes pour des durées différentes.
+  @available(iOS 16.0, *)
+  private func scheduleNextReprieveWake() {
+    let activity = DeviceActivityName("reprieve.shared")
+    center.stopMonitoring([activity])
+    guard let next = Self.liveReprieves(defaults).values.min() else { return }
+
+    let now = Date()
+    let start = max(Date(timeIntervalSince1970: next), now.addingTimeInterval(1))
+    let end = start.addingTimeInterval(15 * 60)
+    let full: Set<Calendar.Component> = [
+      .year, .month, .day, .hour, .minute, .second,
+    ]
+    let calendar = Calendar.current
+    let schedule = DeviceActivitySchedule(
+      intervalStart: calendar.dateComponents(full, from: start),
+      intervalEnd: calendar.dateComponents(full, from: end),
+      repeats: false)
+    try? center.startMonitoring(activity, during: schedule)
   }
 
   // MARK: - Live Activity (Dynamic Island + écran verrouillé)
@@ -323,6 +447,32 @@ final class BlocusScreenTime: NSObject {
   /// Copie la dernière sélection du picker (« selection ») vers la règle.
   /// À appeler UNE fois à la création (jamais au ré-armement, sinon la
   /// sélection d'une autre règle en cours de création écraserait celle-ci).
+  /// Amorce le brouillon GLOBAL avec la sélection déjà liée à une règle, pour
+  /// que le sélecteur système s'ouvre avec ses apps DÉJÀ cochées.
+  ///
+  /// ⚠️ Indispensable en édition : `presentPicker` part du brouillon global,
+  /// donc sans amorçage on montrerait la sélection d'une AUTRE règle — et un
+  /// simple « Terminé » l'aurait recopiée sur celle qu'on modifie.
+  @objc(seedSelection:resolver:rejecter:)
+  func seedSelection(
+    _ ruleId: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      reject("unsupported", "iOS 16+ requis", nil); return
+    }
+    guard let sel = loadRuleSelection(ruleId) else {
+      // Règle sans sélection connue : on repart d'une ardoise vide plutôt que
+      // d'hériter du brouillon d'une autre règle.
+      saveSelection(FamilyActivitySelection())
+      resolve(0)
+      return
+    }
+    saveSelection(sel)
+    resolve(selectionCount(sel))
+  }
+
   @objc(bindSelection:resolver:rejecter:)
   func bindSelection(
     _ ruleId: String,
@@ -342,6 +492,256 @@ final class BlocusScreenTime: NSObject {
     } else {
       reject("encode_failed", "Sélection non encodable", nil)
     }
+  }
+
+  /// Ce que la règle bloque, en nombres. L'app ne peut PAS connaître l'identité
+  /// des apps (jetons opaques) : elle a seulement besoin de savoir COMBIEN de
+  /// tuiles dessiner, chacune rendue par `BlockedAppIconsView` à son rang.
+  @objc(selectionInfo:resolver:rejecter:)
+  func selectionInfo(
+    _ ruleId: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      resolve(["apps": 0, "categories": 0, "webDomains": 0, "total": 0])
+      return
+    }
+    guard let sel = loadRuleSelection(ruleId) else {
+      resolve(["apps": 0, "categories": 0, "webDomains": 0, "total": 0])
+      return
+    }
+    resolve([
+      "apps": sel.applicationTokens.count,
+      "categories": sel.categoryTokens.count,
+      "webDomains": sel.webDomainTokens.count,
+      "total": selectionCount(sel),
+    ])
+  }
+
+  // MARK: - Identité stable d'une app (clé de jeton)
+  //
+  // ⚠️ `applicationTokens` est un Set : son ORDRE D'ITÉRATION n'est pas
+  // garanti. Indexer dedans (« la 2ᵉ app de la règle ») faisait donc pointer
+  // deux vues sur le même jeton — d'où la même icône affichée deux fois.
+  // L'encodage du jeton, lui, est stable : il sert de clé, de critère de tri
+  // ET d'identité pour dédupliquer. On ne LIT pas le jeton (Apple l'interdit),
+  // on le COMPARE — ce qui suffit.
+
+  /// Clés des apps d'une règle, triées : l'ordre ne bouge plus d'un appel à
+  /// l'autre, donc une vignette garde toujours la même app.
+  @available(iOS 16.0, *)
+  private func appKeys(of selection: FamilyActivitySelection) -> [String] {
+    selection.applicationTokens.compactMap { Self.tokenKey($0) }.sorted()
+  }
+
+  @objc(appKeys:resolver:rejecter:)
+  func appKeys(
+    _ ruleId: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *), let sel = loadRuleSelection(ruleId) else {
+      resolve([]); return
+    }
+    resolve(appKeys(of: sel))
+  }
+
+  /// Les apps couvertes par une protection en cours, dédupliquées.
+  ///
+  /// ⚠️ Les apps en sursis RESTENT dans la liste : un déblocage temporaire ne
+  /// retire pas l'app de la protection, il l'ouvre pour un moment. La faire
+  /// disparaître donnait à croire qu'elle n'était plus protégée du tout —
+  /// c'est `reprievedKeys` qui dit lesquelles sont ouvertes, et l'UI change
+  /// alors le cadenas plutôt que la tuile.
+  @objc(blockedAppKeys:rejecter:)
+  func blockedAppKeys(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else { resolve([]); return }
+    var keys = Set<String>()
+
+    #if DEBUG
+      // Le test visuel physique doit pouvoir exercer la grande tuile même si
+      // aucune plage n'est active à l'heure où XCTest tourne. Cette branche
+      // n'existe pas dans la build Release et ne modifie jamais activeWindows.
+      if ProcessInfo.processInfo.arguments.contains("--relock-blocked-icons-ui-test") {
+        for (storageKey, value) in defaults?.dictionaryRepresentation() ?? [:] {
+          guard
+            storageKey == "selection" || storageKey.hasPrefix("selection."),
+            let data = value as? Data,
+            let selection = try? JSONDecoder().decode(
+              FamilyActivitySelection.self, from: data)
+          else { continue }
+          keys.formUnion(appKeys(of: selection))
+        }
+        resolve(keys.sorted())
+        return
+      }
+    #endif
+
+    for raw in activeWindows() {
+      guard let ruleId = raw.split(separator: ".").dropFirst().first
+      else { continue }
+      if isSuspended(String(ruleId)) { continue }
+      guard let sel = loadRuleSelection(String(ruleId)) else { continue }
+      keys.formUnion(appKeys(of: sel))
+    }
+    resolve(keys.sorted())
+  }
+
+  /// Apps actuellement en sursis : clé → fin du sursis (epoch, secondes).
+  /// Les échues sont retirées au passage, donc l'app se referme d'elle-même.
+  @objc(reprievedKeys:rejecter:)
+  func reprievedKeys(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else { resolve([:]); return }
+    let live = Self.liveReprieves(defaults)
+    recomputeShield()
+    scheduleNextReprieveWake()
+    resolve(live)
+  }
+
+  /// Débloque temporairement l'app désignée par sa clé, quelles que soient les
+  /// règles qui la visent.
+  @objc(unblockAppKey:minutes:resolver:rejecter:)
+  func unblockAppKey(
+    _ key: String,
+    minutes: NSNumber,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      reject("unsupported", "iOS 16+ requis", nil); return
+    }
+    let mins = min(30, max(1, minutes.intValue))
+    let until = Date().addingTimeInterval(TimeInterval(mins * 60))
+    Self.withGroupLock {
+      var map = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
+      let now = Date().timeIntervalSince1970
+      map = map.filter { $0.value > now }
+      map[key] = until.timeIntervalSince1970
+      defaults?.set(map, forKey: "reprieves")
+    }
+    recomputeShield()
+    scheduleNextReprieveWake()
+    resolve(["until": until.timeIntervalSince1970])
+  }
+
+  /// Termine immédiatement le sursis de l'app sans toucher aux règles qui la
+  /// protègent. Le recalcul remet son jeton dans l'union du bouclier.
+  @objc(reblockAppKey:resolver:rejecter:)
+  func reblockAppKey(
+    _ key: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      reject("unsupported", "iOS 16+ requis", nil); return
+    }
+    Self.withGroupLock {
+      var map = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
+      map.removeValue(forKey: key)
+      defaults?.set(map, forKey: "reprieves")
+    }
+    recomputeShield()
+    scheduleNextReprieveWake()
+    resolve(true)
+  }
+
+  // MARK: - Déblocage TEMPORAIRE d'une app (« sursis »)
+  //
+  // Débloquer une app ne suspend PAS la règle : la protection continue de
+  // tourner pour toutes les autres, et l'app revient sous bouclier à
+  // l'échéance. Un sursis vise le JETON, pas la règle — si trois blocages
+  // visent la même app, un seul sursis la libère pour la durée choisie
+  // (sinon « débloquer » ne ferait visiblement rien, ce que personne ne
+  // comprendrait).
+  //
+  // Stockage : `reprieves` = [jetonBase64: timestampDeFin]. Le jeton sert
+  // d'identifiant stable via son encodage — on ne peut pas le lire, mais on
+  // peut le comparer.
+
+  @available(iOS 16.0, *)
+  static func tokenKey<T: Codable>(_ token: T) -> String? {
+    guard let data = try? JSONEncoder().encode(token) else { return nil }
+    return data.base64EncodedString()
+  }
+
+  /// Sursis en cours, les échus retirés au passage.
+  static func liveReprieves(_ defaults: UserDefaults?) -> [String: Double] {
+    let raw = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
+    let now = Date().timeIntervalSince1970
+    return raw.filter { $0.value > now }
+  }
+
+  @available(iOS 16.0, *)
+  private func isReprieved(_ token: ApplicationToken, _ live: [String: Double])
+    -> Bool
+  {
+    guard let key = Self.tokenKey(token) else { return false }
+    return live[key] != nil
+  }
+
+  /// Libère l'app de rang `index` de la règle pour `minutes`, puis recalcule
+  /// le bouclier. Une activité DeviceActivity courte réveille `RelockMonitor`
+  /// à l'échéance pour remettre le bouclier même app fermée.
+  @objc(unblockApp:index:minutes:resolver:rejecter:)
+  func unblockApp(
+    _ ruleId: String,
+    index: NSNumber,
+    minutes: NSNumber,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *) else {
+      reject("unsupported", "iOS 16+ requis", nil); return
+    }
+    guard let sel = loadRuleSelection(ruleId) else {
+      reject("empty_selection", "Aucune app liée à cette règle", nil); return
+    }
+    let apps = Array(sel.applicationTokens)
+    let i = index.intValue
+    guard i >= 0, i < apps.count, let key = Self.tokenKey(apps[i]) else {
+      reject("bad_index", "App introuvable dans cette règle", nil); return
+    }
+    let mins = min(30, max(1, minutes.intValue))
+    let until = Date().addingTimeInterval(TimeInterval(mins * 60))
+
+    Self.withGroupLock {
+      var map = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
+      let now = Date().timeIntervalSince1970
+      map = map.filter { $0.value > now }
+      map[key] = until.timeIntervalSince1970
+      defaults?.set(map, forKey: "reprieves")
+    }
+    recomputeShield()
+    scheduleNextReprieveWake()
+
+    resolve(["until": until.timeIntervalSince1970])
+  }
+
+  /// Sursis en cours pour une règle : rang de l'app → fin (timestamp).
+  @objc(reprievedApps:resolver:rejecter:)
+  func reprievedApps(
+    _ ruleId: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.0, *), let sel = loadRuleSelection(ruleId) else {
+      resolve([:]); return
+    }
+    let live = Self.liveReprieves(defaults)
+    var out: [String: Double] = [:]
+    for (i, token) in Array(sel.applicationTokens).enumerated() {
+      if let key = Self.tokenKey(token), let until = live[key] {
+        out[String(i)] = until
+      }
+    }
+    resolve(out)
   }
 
   // MARK: - Mécanique 1 : Bloquer maintenant (durée, par règle)
@@ -364,7 +764,8 @@ final class BlocusScreenTime: NSObject {
     }
     let raw = Self.activityName(kind: "timed", ruleId: ruleId)
     let activity = DeviceActivityName(raw)
-    let mins = max(15, minutes.intValue)  // DeviceActivity : fenêtre ≥ 15 min
+    let wake = DeviceActivityName("end.\(ruleId)")
+    let mins = max(1, minutes.intValue)
     let cal = Calendar.current
     let now = Date()
     let end = now.addingTimeInterval(TimeInterval(mins * 60))
@@ -373,13 +774,23 @@ final class BlocusScreenTime: NSObject {
     let full: Set<Calendar.Component> = [
       .year, .month, .day, .hour, .minute, .second,
     ]
+    // ⚠️ iOS refuse une fenêtre DeviceActivity de moins de 15 minutes. Sous ce
+    // seuil on ne programme donc PAS la fenêtre : le bouclier est posé tout de
+    // suite (il l'est de toute façon, `setWindow` plus bas), et un réveil
+    // « end.<id> » qui COMMENCE à l'échéance vient le retirer. C'est la même
+    // parade que pour les sursis courts (cf. `scheduleNextReprieveWake`) —
+    // seule la DURÉE d'un intervalle est bornée, jamais son début.
+    let short = mins < 15
+    let monitored = short ? wake : activity
+    let windowStart = short ? end : now
+    let windowEnd = short ? end.addingTimeInterval(15 * 60) : end
     let schedule = DeviceActivitySchedule(
-      intervalStart: cal.dateComponents(full, from: now),
-      intervalEnd: cal.dateComponents(full, from: end),
+      intervalStart: cal.dateComponents(full, from: windowStart),
+      intervalEnd: cal.dateComponents(full, from: windowEnd),
       repeats: false)
     do {
-      center.stopMonitoring([activity])
-      try center.startMonitoring(activity, during: schedule)
+      center.stopMonitoring([activity, wake])
+      try center.startMonitoring(monitored, during: schedule)
       setWindow(raw, active: true)  // blocage immédiat
       recomputeShield()
       // Live Activity : compte à rebours dans la Dynamic Island + écran

@@ -349,39 +349,41 @@ export default function OnboardingFlow() {
   const isIgnition = step === 'ignition'
 
   return (
-    <View
-      className="flex-1"
-      style={{
-        backgroundColor: OB.bg,
-        paddingTop: isIgnition ? 0 : insets.top + 6,
-      }}
-    >
+    <View className="flex-1" style={{ backgroundColor: OB.bg }}>
       {!isIgnition && step !== 'artifact' && step !== 'auth' ? (
+        // Rendu hors du conteneur à `paddingTop` ci-dessous : positionné en
+        // absolute, ce halo était sinon ancré au bord du padding (donc
+        // sous la status bar) au lieu du haut réel de l'écran — bordure
+        // nette visible entre le noir uni de la status bar et le violet du
+        // dégradé juste en dessous. Ici il couvre tout l'écran, dégradé
+        // continu depuis le tout premier pixel.
         <HaloBackdrop />
       ) : null}
-      {inDiagnostic ? (
-        <View className="flex-row items-center gap-3.5 px-5 pb-1.5">
-          {canBack ? (
-            <BackBtn onPress={goBack} />
-          ) : (
+      <View style={{ flex: 1, paddingTop: isIgnition ? 0 : insets.top + 6 }}>
+        {inDiagnostic ? (
+          <View className="flex-row items-center gap-3.5 px-5 pb-1.5">
+            {canBack ? (
+              <BackBtn onPress={goBack} />
+            ) : (
+              <View className="w-[38px]" />
+            )}
+            <OBProgress
+              step={DIAGNOSTIC.indexOf(step) + 1}
+              total={DIAGNOSTIC.length}
+            />
             <View className="w-[38px]" />
-          )}
-          <OBProgress
-            step={DIAGNOSTIC.indexOf(step) + 1}
-            total={DIAGNOSTIC.length}
-          />
-          <View className="w-[38px]" />
-        </View>
-      ) : null}
-      <Animated.View
-        key={step}
-        entering={dirRef.current === 'fwd' ? enterFwd : enterBack}
-        exiting={dirRef.current === 'fwd' ? exitFwd : exitBack}
-        className="flex-1"
-        style={{ paddingBottom: insets.bottom + 6 }}
-      >
-        {scene}
-      </Animated.View>
+          </View>
+        ) : null}
+        <Animated.View
+          key={step}
+          entering={dirRef.current === 'fwd' ? enterFwd : enterBack}
+          exiting={dirRef.current === 'fwd' ? exitFwd : exitBack}
+          className="flex-1"
+          style={{ paddingBottom: insets.bottom + 6 }}
+        >
+          {scene}
+        </Animated.View>
+      </View>
     </View>
   )
 }

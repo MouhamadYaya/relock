@@ -9,6 +9,7 @@ import Calendar from '@assets/svgs/calendar.svg';
 import Chart from '@assets/svgs/chart.svg';
 import Check from '@assets/svgs/check.svg';
 import Clock from '@assets/svgs/clock.svg';
+import Close from '@assets/svgs/close.svg';
 import Flame from '@assets/svgs/flame.svg';
 import Forward from '@assets/svgs/forward.svg';
 import Globe from '@assets/svgs/globe.svg';
@@ -35,6 +36,7 @@ export enum IconName {
   CHART = 'CHART',
   CHECK = 'CHECK',
   CLOCK = 'CLOCK',
+  CLOSE = 'CLOSE',
   FLAME = 'FLAME',
   FORWARD = 'FORWARD',
   GLOBE = 'GLOBE',
@@ -62,6 +64,7 @@ export const AppIcon = {
   [IconName.CHART]: Chart,
   [IconName.CHECK]: Check,
   [IconName.CLOCK]: Clock,
+  [IconName.CLOSE]: Close,
   [IconName.FLAME]: Flame,
   [IconName.FORWARD]: Forward,
   [IconName.GLOBE]: Globe,

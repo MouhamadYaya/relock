@@ -1,13 +1,13 @@
 import { IconName } from '@assets/icons'
+import { useIsFocused } from '@react-navigation/native'
 import { router } from 'expo-router'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   AppState,
   DeviceEventEmitter,
   Linking,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -15,19 +15,13 @@ import {
 import Svg, { Path } from 'react-native-svg'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
-import { ScreenTimeReport } from '@/shared/native/ScreenTimeReport'
+import {
+  isScreenTimeReportAvailable,
+  ScreenTimeReport,
+} from '@/shared/native/ScreenTimeReport'
 import { ScreenTime } from '@/shared/native/screen-time'
-import { useScreenTimeAuthorized } from '@/shared/native/useScreenTimeAuth'
+import { useScreenTimeAuthorization } from '@/shared/native/useScreenTimeAuth'
 import { fonts } from '@/shared/theme/tokens/fonts'
-
-const FW = {
-  400: fonts.regular,
-  500: fonts.medium,
-  600: fonts.semiBold,
-  700: fonts.bold,
-  800: fonts.bold,
-} as const
-const f = (w: keyof typeof FW) => FW[w]
 
 const C = {
   bg: '#0B0C10',
@@ -38,98 +32,6 @@ const C = {
   ink3: '#6B6F82',
   accent: '#A49AFE',
   border: 'rgba(148,152,178,0.16)',
-}
-
-const SEGMENTS = ['Mois', 'Semaine', 'Jour']
-const DOW = ['D', 'L', 'M', 'M', 'J', 'V', 'S'] // getDay() 0=dimanche
-const MONTHS_SHORT = [
-  'janv.',
-  'févr.',
-  'mars',
-  'avr.',
-  'mai',
-  'juin',
-  'juil.',
-  'août',
-  'sept.',
-  'oct.',
-  'nov.',
-  'déc.',
-]
-const MONTHS = [
-  'Janvier',
-  'Février',
-  'Mars',
-  'Avril',
-  'Mai',
-  'Juin',
-  'Juillet',
-  'Août',
-  'Septembre',
-  'Octobre',
-  'Novembre',
-  'Décembre',
-]
-
-/** 7 derniers jours (plus ancien → aujourd'hui), avec décalage jour. */
-function lastSevenDays(): { offset: number; letter: string; day: number }[] {
-  const out: { offset: number; letter: string; day: number }[] = []
-  for (let offset = 6; offset >= 0; offset--) {
-    const d = new Date()
-    d.setDate(d.getDate() - offset)
-    out.push({ offset, letter: DOW[d.getDay()], day: d.getDate() })
-  }
-  return out
-}
-
-/** Lundi (00:00) de la semaine de `d` — les semaines FR commencent lundi. */
-function mondayOf(d: Date): Date {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7))
-  return x
-}
-
-/**
- * Nombre de périodes passées proposées. iOS ne conserve qu'un historique
- * court de temps d'écran : au-delà, les rapports reviennent vides. Trois
- * périodes couvrent ce qu'iOS sait réellement fournir.
- */
-const PAST_PERIODS = 3
-
-/** 3 dernières semaines (plus récente d'abord), avec décalage semaine. */
-function lastWeeks(): { offset: number; label: string }[] {
-  const out: { offset: number; label: string }[] = []
-  const monday = mondayOf(new Date())
-  for (let offset = 0; offset < PAST_PERIODS; offset++) {
-    if (offset === 0) {
-      out.push({ offset, label: 'Cette semaine' })
-      continue
-    }
-    const d = new Date(monday)
-    d.setDate(monday.getDate() - 7 * offset)
-    out.push({
-      offset,
-      label: `Sem. du ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`,
-    })
-  }
-  return out
-}
-
-/** 3 derniers mois (plus récent d'abord), avec décalage mois. */
-function lastMonths(): { offset: number; label: string }[] {
-  const out: { offset: number; label: string }[] = []
-  const now = new Date()
-  for (let offset = 0; offset < PAST_PERIODS; offset++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1)
-    const year =
-      d.getFullYear() === now.getFullYear() ? '' : ` ${d.getFullYear()}`
-    out.push({
-      offset,
-      label: offset === 0 ? 'Ce mois-ci' : `${MONTHS[d.getMonth()]}${year}`,
-    })
-  }
-  return out
 }
 
 function ReloadIcon({ color, size = 19 }: { color: string; size?: number }) {
@@ -146,252 +48,263 @@ function ReloadIcon({ color, size = 19 }: { color: string; size?: number }) {
   )
 }
 
-export default function ActivityScreen() {
-  const [seg, setSeg] = useState(2) // Jour par défaut
-  // Un décalage PAR période : les trois vues natives restent montées en
-  // parallèle, chacune garde donc sa position dans le temps.
-  const [offsets, setOffsets] = useState<Record<number, number>>({
-    0: 0,
-    1: 0,
-    2: 0,
-  })
-  const [reloadKey, setReloadKey] = useState(0)
-  const period = 2 - seg // Jour(2)->0, Semaine(1)->1, Mois(0)->2
-  const offset = offsets[period] ?? 0
-  const setOffset = (v: number) => setOffsets(o => ({ ...o, [period]: v }))
-  // Une vue par période, montée à la PREMIÈRE visite puis JAMAIS démontée :
-  // changer de segment ne reconstruit rien, ça bascule la visibilité. C'est
-  // ce qui rend l'écran incapable d'être vide au retour sur un segment déjà
-  // vu — le rapport y est encore, vivant.
-  const [visited, setVisited] = useState<Record<number, boolean>>({
-    [2 - 2]: true,
-  })
+function ActivityHeader({ refreshing }: { refreshing?: boolean }) {
+  return (
+    <View style={styles.header}>
+      <Text style={styles.title}>Activité</Text>
+      <View style={styles.headerActions}>
+        <View style={styles.iconBtn}>
+          {refreshing ? (
+            <ActivityIndicator size="small" color={C.accent} />
+          ) : (
+            <ReloadIcon color={C.ink2} />
+          )}
+        </View>
+        <View style={styles.iconBtn}>
+          <IconSvg name={IconName.SETTINGS} size={19} color={C.ink2} />
+        </View>
+      </View>
+    </View>
+  )
+}
 
-  // Les listes de dates sont recalculées à chaque rechargement ET au retour au
-  // premier plan : figées au montage, elles proposaient encore « hier » comme
-  // dernier jour lorsque l'app passait minuit ouverte, et l'offset 0 ne
-  // désignait alors plus aujourd'hui.
+function ReportPlaceholder({ refreshing }: { refreshing?: boolean }) {
+  return (
+    <View
+      testID="activity-report-placeholder"
+      style={styles.placeholder}
+      pointerEvents="none"
+    >
+      <ActivityHeader refreshing={refreshing} />
+      <View style={styles.placeholderDays}>
+        {[0, 1, 2, 3, 4, 5, 6].map(day => (
+          <View key={day} style={styles.placeholderDay} />
+        ))}
+      </View>
+      <View style={styles.placeholderSummary}>
+        <View style={styles.placeholderLabel} />
+        <View style={styles.placeholderTotal} />
+        <View style={styles.placeholderLabelWide} />
+      </View>
+      <View style={styles.placeholderSectionLabel} />
+      <View style={styles.placeholderChart}>
+        <ActivityIndicator color={C.accent} />
+        <Text style={styles.loadingText}>
+          Préparation de tes données Temps d'écran…
+        </Text>
+      </View>
+      <View style={styles.placeholderSectionLabel} />
+      <View style={styles.placeholderRows}>
+        {[0, 1, 2].map(row => (
+          <View key={row} style={styles.placeholderRow}>
+            <View style={styles.placeholderIcon} />
+            <View style={styles.placeholderRowText} />
+            <View style={styles.placeholderDuration} />
+          </View>
+        ))}
+      </View>
+    </View>
+  )
+}
+
+function StateCard({
+  icon,
+  title,
+  description,
+  action,
+  onPress,
+}: {
+  icon: 'monitor' | 'reload'
+  title: string
+  description: string
+  action: string
+  onPress: () => void
+}) {
+  return (
+    <View style={styles.statePage}>
+      <ActivityHeader />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={action}
+        onPress={onPress}
+        style={styles.stateCard}
+      >
+        <View style={styles.stateIcon}>
+          {icon === 'monitor' ? (
+            <IconSvg name={IconName.MONITOR} size={24} color={C.accent} />
+          ) : (
+            <ReloadIcon color={C.accent} size={24} />
+          )}
+        </View>
+        <Text style={styles.stateTitle}>{title}</Text>
+        <Text style={styles.stateDescription}>{description}</Text>
+        <Text style={styles.stateAction}>{action}</Text>
+      </Pressable>
+    </View>
+  )
+}
+
+type NativeCommandEvent = { nativeEvent: { command: string } }
+
+export default function ActivityScreen() {
+  const isFocused = useIsFocused()
+  const [dayOffset, setDayOffset] = useState(0)
+  const [reloadKey, setReloadKey] = useState(0)
   const [dateEpoch, setDateEpoch] = useState(0)
+  const [reportLoading, setReportLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const {
+    status: authorizationStatus,
+    authorized,
+    refresh,
+  } = useScreenTimeAuthorization()
+
   useEffect(() => {
-    const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') setDateEpoch(e => e + 1)
+    if (!isFocused) return
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') setDateEpoch(epoch => epoch + 1)
     })
     return () => sub.remove()
+  }, [isFocused])
+
+  const reportIdentity = `${dayOffset}-${dateEpoch}-${reloadKey}`
+  useEffect(() => {
+    if (authorized && isFocused) setReportLoading(Boolean(reportIdentity))
+  }, [authorized, isFocused, reportIdentity])
+
+  const reloadReport = useCallback(async () => {
+    if (isRefreshing) return
+    setIsRefreshing(true)
+    setReportLoading(true)
+    try {
+      const nextStatus = await refresh()
+      if (nextStatus === 'approved') setReloadKey(key => key + 1)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [isRefreshing, refresh])
+
+  const askAuthorization = useCallback(async () => {
+    try {
+      const requestedStatus = await ScreenTime.requestAuthorization()
+      const checkedStatus = await refresh()
+      if (requestedStatus === 'approved' && checkedStatus === 'approved') {
+        setReloadKey(key => key + 1)
+      } else {
+        Linking.openSettings()
+      }
+    } catch {
+      await refresh()
+      Linking.openSettings()
+    }
+  }, [refresh])
+
+  const selectDay = useCallback((nextOffset: number) => {
+    if (!Number.isInteger(nextOffset) || nextOffset < 0 || nextOffset > 6)
+      return
+    setDayOffset(nextOffset)
   }, [])
-  // biome-ignore lint/correctness/useExhaustiveDependencies: recalcul volontaire au réveil / rechargement
-  const days = useMemo(() => lastSevenDays(), [dateEpoch, reloadKey])
-  // biome-ignore lint/correctness/useExhaustiveDependencies: idem
-  const weeks = useMemo(() => lastWeeks(), [dateEpoch, reloadKey])
-  // biome-ignore lint/correctness/useExhaustiveDependencies: idem
-  const months = useMemo(() => lastMonths(), [dateEpoch, reloadKey])
 
-  // Sans autorisation Temps d'écran, iOS ne lance MÊME PAS l'extension de
-  // rapport : les trois vues restent muettes et l'écran n'affichait qu'un
-  // grand rectangle vide, sans la moindre explication. On le dit, et on
-  // propose de l'accorder — comme le fait déjà l'Accueil.
-  const authorized = useScreenTimeAuthorized()
+  const handleNativeCommand = useCallback(
+    ({ nativeEvent: { command } }: NativeCommandEvent) => {
+      if (command === 'ready') {
+        setReportLoading(false)
+        return
+      }
+      if (command === 'refresh') {
+        reloadReport().catch(() => {})
+        return
+      }
+      if (command === 'settings') {
+        router.push('/settings')
+        return
+      }
+      const selection = command.match(/^select\.day(\d)$/)
+      if (selection) selectDay(Number(selection[1]))
+    },
+    [reloadReport, selectDay],
+  )
 
-  const askAuthorization = () => {
-    ScreenTime.requestAuthorization()
-      .then(s => {
-        if (s !== 'approved') Linking.openSettings()
-      })
-      .catch(() => Linking.openSettings())
-  }
+  useEffect(() => {
+    const settingsSub = DeviceEventEmitter.addListener(
+      'relock-native-settings',
+      () => router.push('/settings'),
+    )
+    return () => settingsSub.remove()
+  }, [])
 
-  const selectSegment = (i: number) => {
-    setSeg(i)
-    setOffsets(o => ({ ...o, [2 - i]: 0 })) // la période repart sur « actuel »
-  }
-
-  // Dev : pilotage des filtres par le pont de test (validation scriptée).
   useEffect(() => {
     if (!__DEV__) return
     const sub = DeviceEventEmitter.addListener(
-      'relock-dev-activity-period',
-      (p: { period: number; offset: number }) => {
-        setSeg(2 - p.period)
-        setOffsets(o => ({ ...o, [p.period]: p.offset }))
-      },
+      'relock-dev-activity-day',
+      (selection: { offset: number }) => selectDay(selection.offset),
     )
     return () => sub.remove()
-  }, [])
+  }, [selectDay])
+
+  const nativeReportVisible =
+    authorized && isFocused && isScreenTimeReportAvailable
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper backgroundColor={C.bg}>
       <View style={styles.root}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[f(800), styles.title]}>Activité</Text>
-          <View style={styles.headerActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Rafraîchir"
-              onPress={() => setReloadKey(k => k + 1)}
-              hitSlop={8}
-              style={styles.iconBtn}
-            >
-              <ReloadIcon color={C.ink2} />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Réglages"
-              onPress={() => router.push('/settings')}
-              hitSlop={8}
-              style={styles.iconBtn}
-            >
-              <IconSvg name={IconName.SETTINGS} size={19} color={C.ink2} />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Période */}
-        <View style={styles.segment}>
-          {SEGMENTS.map((s, i) => {
-            const active = seg === i
-            return (
-              <Pressable
-                key={s}
-                onPress={() => selectSegment(i)}
-                style={[
-                  styles.segItem,
-                  active && { backgroundColor: C.accent },
-                ]}
-              >
-                <Text
-                  style={[
-                    f(active ? 700 : 600),
-                    { fontSize: 14, color: active ? C.bg : C.ink2 },
-                  ]}
-                >
-                  {s}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </View>
-
-        {/* Sélecteur de jour (mode Jour uniquement) — hauteur bornée pour ne
-            pas étirer le ScrollView horizontal et pousser la carte en bas. */}
-        {period === 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.daysScroll}
-            contentContainerStyle={styles.daysRow}
-          >
-            {days.map(d => {
-              const active = d.offset === offset
-              return (
-                <Pressable
-                  key={d.offset}
-                  onPress={() => setOffset(d.offset)}
-                  style={styles.dayCol}
-                >
-                  <Text style={[f(600), styles.dayLetter]}>{d.letter}</Text>
-                  <View
-                    style={[styles.dayCircle, active && styles.dayCircleActive]}
-                  >
-                    <Text
-                      style={[
-                        f(active ? 700 : 500),
-                        { fontSize: 16, color: active ? C.bg : C.ink },
-                      ]}
-                    >
-                      {d.day}
-                    </Text>
-                  </View>
-                </Pressable>
-              )
-            })}
-          </ScrollView>
-        )}
-
-        {/* Sélecteur de semaine / mois — 6 dernières périodes, même principe
-            que les 7 derniers jours (décalage passé au rapport natif). */}
-        {period !== 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.chipsScroll}
-            contentContainerStyle={styles.chipsRow}
-          >
-            {(period === 1 ? weeks : months).map(p => {
-              const active = p.offset === offset
-              return (
-                <Pressable
-                  key={p.offset}
-                  onPress={() => setOffset(p.offset)}
-                  style={[styles.chip, active && styles.chipActive]}
-                >
-                  <Text
-                    style={[
-                      f(active ? 700 : 500),
-                      { fontSize: 13.5, color: active ? C.bg : C.ink },
-                    ]}
-                  >
-                    {p.label}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </ScrollView>
-        )}
-
-        {/* Rapport système : UNE vue, qui défile ELLE-MÊME.
-            Sa vue est rendue hors process et iOS lui route les touches
-            directement : un ScrollView côté RN ne recevrait jamais le geste
-            au-dessus d'elle (vérifié — le `hitTest` de la vue hôte n'est
-            jamais appelé), et l'écran ne défilait que dans les interstices.
-            Résumé, graphe et classement vivent donc dans le rapport. */}
-        {!authorized && ScreenTime.isAvailable ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={askAuthorization}
-            style={[styles.report, styles.authCard]}
-          >
-            <View style={styles.authIcon}>
-              <IconSvg name={IconName.MONITOR} size={22} color={C.accent} />
-            </View>
-            <Text style={[f(700), { fontSize: 16, color: C.ink }]}>
-              Autorise le Temps d'écran
-            </Text>
-            <Text style={[f(400), styles.authSub]}>
-              iOS ne communique aucune donnée d'usage tant que Relock n'y est
-              pas autorisé. Appuie pour l'activer.
-            </Text>
-          </Pressable>
-        ) : (
-          // UNE seule vue. Sa clé change à chaque changement de période, de
-          // décalage, de retour au premier plan (dateEpoch) ou d'appui sur ⟳ :
-          // React la remonte donc À NEUF, ce qui force une connexion de rendu
-          // fraîche à l'extension. Un seul rapport vivant à la fois = jamais de
-          // course, et jamais de surface distante morte réaffichée.
-          //
-          // Fond explicite : tant que l'extension DeviceActivityReport n'a
-          // rien à peindre (calcul en cours, extension tuée), elle ne rend
-          // rien — sans ce fond, ce blanc système serait échantillonné par la
-          // tab bar Liquid Glass (iOS 26) et la ferait paraître blanche.
-          <View style={[styles.report, { backgroundColor: C.bg }]}>
+        {nativeReportVisible ? (
+          <>
+            {reportLoading ? (
+              <ReportPlaceholder refreshing={isRefreshing} />
+            ) : null}
             <ScreenTimeReport
-              key={`${period}-${offset}-${dateEpoch}-${reloadKey}`}
+              testID="activity-report"
               style={styles.report}
               mode="usage"
-              period={period}
-              offset={offset}
+              offset={dayOffset}
+              reloadToken={dateEpoch + reloadKey}
+              onCommand={handleNativeCommand}
               fallback={
-                <View style={[styles.report, styles.fallback]}>
-                  <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                    Disponible sur iPhone
-                  </Text>
-                  <Text style={[f(400), styles.fallbackSub]}>
-                    Le vrai temps d'écran par app (avec les icônes) est fourni
-                    par iOS et ne s'affiche que sur un iPhone physique.
-                  </Text>
-                </View>
+                <StateCard
+                  icon="reload"
+                  title="Rapport indisponible"
+                  description="Le rapport Temps d'écran n'a pas pu être affiché."
+                  action="Réessayer"
+                  onPress={() => {
+                    reloadReport().catch(() => {})
+                  }}
+                />
               }
             />
-          </View>
+          </>
+        ) : authorizationStatus === 'denied' ? (
+          <StateCard
+            icon="monitor"
+            title="Autorise le Temps d'écran"
+            description="iOS ne communique aucune donnée d'usage tant que Relock n'y est pas autorisé."
+            action="Autoriser"
+            onPress={() => {
+              askAuthorization().catch(() => {})
+            }}
+          />
+        ) : authorizationStatus === 'error' ? (
+          <StateCard
+            icon="reload"
+            title="Données momentanément indisponibles"
+            description="Relock n'a pas pu vérifier l'accès au Temps d'écran."
+            action="Réessayer"
+            onPress={() => {
+              reloadReport().catch(() => {})
+            }}
+          />
+        ) : authorizationStatus === 'unavailable' ||
+          !isScreenTimeReportAvailable ? (
+          <StateCard
+            icon="monitor"
+            title="Disponible sur iPhone"
+            description="Le vrai temps d'écran par app est fourni par iOS sur un iPhone physique."
+            action="Ouvrir les réglages"
+            onPress={() => Linking.openSettings()}
+          />
+        ) : (
+          <ReportPlaceholder refreshing={isRefreshing} />
         )}
       </View>
     </ScreenWrapper>
@@ -399,13 +312,20 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 20, paddingTop: 4 },
+  root: { flex: 1, backgroundColor: C.bg },
+  report: { ...StyleSheet.absoluteFillObject, backgroundColor: 'transparent' },
   header: {
+    height: 38,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  title: { fontSize: 24, color: C.ink, letterSpacing: -0.6 },
+  title: {
+    ...fonts.bold,
+    fontSize: 24,
+    color: C.ink,
+    letterSpacing: -0.6,
+  },
   headerActions: { flexDirection: 'row', gap: 10 },
   iconBtn: {
     width: 38,
@@ -417,88 +337,139 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: C.surface2,
-    borderRadius: 14,
-    padding: 4,
+  placeholder: {
+    ...StyleSheet.absoluteFillObject,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    backgroundColor: C.bg,
+  },
+  placeholderDays: {
+    height: 78,
     marginTop: 18,
-  },
-  segItem: {
-    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 11,
+    justifyContent: 'space-between',
   },
-  daysScroll: { flexGrow: 0, maxHeight: 96 },
-  daysRow: { gap: 10, paddingVertical: 16, paddingRight: 4 },
-  chipsScroll: { flexGrow: 0, maxHeight: 70 },
-  chipsRow: { gap: 8, paddingVertical: 16, paddingRight: 4 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 18,
-    backgroundColor: C.surface2,
-  },
-  chipActive: { backgroundColor: C.accent },
-  dayCol: { alignItems: 'center', gap: 8 },
-  dayLetter: { fontSize: 12, color: C.ink3 },
-  dayCircle: {
-    width: 44,
+  placeholderDay: {
+    width: 38,
     height: 44,
     borderRadius: 22,
     backgroundColor: C.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  dayCircleActive: { backgroundColor: C.accent },
-
-  authCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    gap: 10,
+  placeholderSummary: {
+    height: 132,
+    padding: 16,
+    borderRadius: 18,
     backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 20,
+    gap: 10,
   },
-  authIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: 'rgba(164,154,254,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
+  placeholderLabel: {
+    width: 92,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: C.border,
   },
-  authTitle: { fontSize: 17, color: C.ink, letterSpacing: -0.3 },
-  authSub: {
-    fontSize: 13.5,
-    color: C.ink2,
-    textAlign: 'center',
-    lineHeight: 20,
+  placeholderTotal: {
+    width: 132,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: C.surface2,
   },
-  report: { flex: 1, marginTop: 4, marginBottom: 12 },
-  reportLoading: {
-    ...StyleSheet.absoluteFillObject,
+  placeholderLabelWide: {
+    width: 168,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: C.border,
+  },
+  placeholderSectionLabel: {
+    width: 176,
+    height: 13,
+    marginTop: 18,
+    marginBottom: 10,
+    borderRadius: 7,
+    backgroundColor: C.border,
+  },
+  placeholderChart: {
+    height: 184,
+    borderRadius: 18,
+    backgroundColor: C.surface,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
   },
-  reportLoadingText: { fontSize: 13, color: C.ink3 },
-  fallback: {
+  loadingText: { ...fonts.medium, fontSize: 13, color: C.ink3 },
+  placeholderRows: {
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    backgroundColor: C.surface,
+  },
+  placeholderRow: {
+    height: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: C.border,
+  },
+  placeholderIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: C.surface2,
+  },
+  placeholderRowText: {
+    width: 120,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: C.border,
+  },
+  placeholderDuration: {
+    width: 48,
+    height: 13,
+    marginLeft: 'auto',
+    borderRadius: 7,
+    backgroundColor: C.border,
+  },
+  statePage: { flex: 1, paddingHorizontal: 20, paddingTop: 4 },
+  stateCard: {
     flex: 1,
+    maxHeight: 320,
+    marginTop: 28,
+    paddingHorizontal: 32,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 30,
   },
-  fallbackSub: {
-    fontSize: 13,
-    color: C.ink2,
-    marginTop: 6,
+  stateIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 17,
+    marginBottom: 14,
+    backgroundColor: 'rgba(164,154,254,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stateTitle: {
+    ...fonts.bold,
+    fontSize: 17,
+    color: C.ink,
     textAlign: 'center',
-    lineHeight: 19,
+  },
+  stateDescription: {
+    ...fonts.regular,
+    marginTop: 8,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: C.ink2,
+    textAlign: 'center',
+  },
+  stateAction: {
+    ...fonts.semiBold,
+    marginTop: 18,
+    fontSize: 14,
+    color: C.accent,
   },
 })

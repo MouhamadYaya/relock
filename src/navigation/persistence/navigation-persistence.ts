@@ -13,12 +13,19 @@ import { constants } from '@/config/constants'
 import { navigationStorage } from '@/shared/services/storage/mmkv'
 
 const KEY = constants.NAVIGATION_STATE_V1
+const RESTORABLE_PATHS = new Set(['/home', '/blocks', '/activity'])
+
+function isRestorablePath(path: string): boolean {
+  return RESTORABLE_PATHS.has(path)
+}
 
 function loadLastPath(): string | undefined {
-  return navigationStorage.getString(KEY) || undefined
+  const path = navigationStorage.getString(KEY) || undefined
+  return path && isRestorablePath(path) ? path : undefined
 }
 
 function persistLastPath(path: string) {
+  if (!isRestorablePath(path)) return
   navigationStorage.setString(KEY, path)
 }
 

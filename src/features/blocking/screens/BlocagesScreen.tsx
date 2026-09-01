@@ -11,6 +11,7 @@ import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg'
+import { durationLabel, hhmm } from '@/features/blocking/format'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useLimitSteps } from '@/features/blocking/hooks/useLimitSteps'
 import { useRuleAutoCleanup } from '@/features/blocking/hooks/useRuleAutoCleanup'
@@ -54,19 +55,6 @@ const F = {
 const f = (w: keyof typeof F) => F[w]
 
 // ── Libellés d'état (langage naturel, chiffre clé mis en valeur) ───────
-
-const hhmm = (d: Date) =>
-  d.getMinutes()
-    ? `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`
-    : `${d.getHours()} h`
-
-function durationLabel(ms: number): string {
-  const m = Math.max(0, Math.round(ms / 60_000))
-  if (m < 60) return `${m} min`
-  const h = Math.floor(m / 60)
-  const r = m % 60
-  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')}`
-}
 
 /** Géométrie du rail : le point est centré dessus, la carte suit. */
 const DOT = 9
