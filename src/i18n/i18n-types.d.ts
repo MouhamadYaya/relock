@@ -234,6 +234,7 @@ declare module 'i18next' {
             "select_all": string;
             "clear_all": string;
             "selected": string;
+            "app_position": string;
           };
           "pause_sheet": {
             "title": string;

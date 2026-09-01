@@ -300,11 +300,17 @@ final class BlocusScreenTime: NSObject {
   /// Programme un seul réveil partagé au début du prochain sursis expiré. Le
   /// moniteur reprogramme ensuite l'échéance suivante, ce qui reste exact même
   /// quand plusieurs apps sont ouvertes pour des durées différentes.
+  ///
+  /// Renvoie `false` si le réveil n'a PAS pu être armé (quota d'activités
+  /// atteint, par exemple) : sans lui, un sursis ne se refermerait jamais et
+  /// l'app resterait libre pour de bon. L'appelant doit alors annuler le
+  /// sursis plutôt que de le confirmer.
   @available(iOS 16.0, *)
-  private func scheduleNextReprieveWake() {
+  @discardableResult
+  private func scheduleNextReprieveWake() -> Bool {
     let activity = DeviceActivityName("reprieve.shared")
     center.stopMonitoring([activity])
-    guard let next = Self.liveReprieves(defaults).values.min() else { return }
+    guard let next = Self.liveReprieves(defaults).values.min() else { return true }
 
     let now = Date()
     let start = max(Date(timeIntervalSince1970: next), now.addingTimeInterval(1))
@@ -317,7 +323,25 @@ final class BlocusScreenTime: NSObject {
       intervalStart: calendar.dateComponents(full, from: start),
       intervalEnd: calendar.dateComponents(full, from: end),
       repeats: false)
-    try? center.startMonitoring(activity, during: schedule)
+    do {
+      try center.startMonitoring(activity, during: schedule)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /// Annule un sursis déjà inscrit et remet l'app sous bouclier — utilisé quand
+  /// on n'a pas pu garantir sa fin.
+  @available(iOS 16.0, *)
+  private func rollBackReprieve(_ key: String) {
+    Self.withGroupLock {
+      var map = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
+      map.removeValue(forKey: key)
+      defaults?.set(map, forKey: "reprieves")
+    }
+    recomputeShield()
+    scheduleNextReprieveWake()
   }
 
   // MARK: - Live Activity (Dynamic Island + écran verrouillé)
@@ -627,7 +651,13 @@ final class BlocusScreenTime: NSObject {
       defaults?.set(map, forKey: "reprieves")
     }
     recomputeShield()
-    scheduleNextReprieveWake()
+    guard scheduleNextReprieveWake() else {
+      rollBackReprieve(key)
+      reject(
+        "reprieve_wake_unavailable",
+        "Impossible de programmer la fin du sursis", nil)
+      return
+    }
     resolve(["until": until.timeIntervalSince1970])
   }
 
@@ -719,7 +749,13 @@ final class BlocusScreenTime: NSObject {
       defaults?.set(map, forKey: "reprieves")
     }
     recomputeShield()
-    scheduleNextReprieveWake()
+    guard scheduleNextReprieveWake() else {
+      rollBackReprieve(key)
+      reject(
+        "reprieve_wake_unavailable",
+        "Impossible de programmer la fin du sursis", nil)
+      return
+    }
 
     resolve(["until": until.timeIntervalSince1970])
   }

@@ -127,6 +127,7 @@ export function BlockedAppTileView({
   unlocked,
   label,
   reprievedUntil,
+  showLabel = true,
   onPress,
   disabled = false,
 }: {
@@ -136,6 +137,12 @@ export function BlockedAppTileView({
   label: string
   /** Fin du sursis (epoch en secondes) — pilote le décompte sous la tuile. */
   reprievedUntil?: number
+  /**
+   * Masque le mot d'action sous la tuile (« Débloquer »). Un décompte de
+   * sursis, lui, reste TOUJOURS affiché : ce n'est pas un bouton, c'est
+   * l'information qu'on ne peut lire nulle part ailleurs.
+   */
+  showLabel?: boolean
   onPress: () => void
   disabled?: boolean
 }) {
@@ -185,13 +192,15 @@ export function BlockedAppTileView({
           <BlockedAppLockGlyph open={unlocked} />
         </View>
       </View>
-      <Text
-        pointerEvents="none"
-        numberOfLines={1}
-        style={[styles.label, unlocked && styles.labelOpen]}
-      >
-        {caption}
-      </Text>
+      {showLabel || counting ? (
+        <Text
+          pointerEvents="none"
+          numberOfLines={1}
+          style={[styles.label, unlocked && styles.labelOpen]}
+        >
+          {caption}
+        </Text>
+      ) : null}
     </PressableScale>
   )
 }

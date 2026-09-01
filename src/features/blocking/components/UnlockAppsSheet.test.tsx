@@ -50,7 +50,9 @@ describe('UnlockAppsSheet', () => {
       .findAllByProps(props)
       .find(node => typeof node.props.onPress === 'function')
 
-  const tile = (key: string) => pressable({ accessibilityLabel: key })
+  // Par testID, pas par libellé : VoiceOver ne doit PAS entendre le jeton
+  // opaque, le libellé est donc un repère de position traduit.
+  const tile = (key: string) => pressable({ testID: `unlock-app-${key}` })
 
   const cta = () => pressable({ testID: 'unlock-apps-continue' })
 

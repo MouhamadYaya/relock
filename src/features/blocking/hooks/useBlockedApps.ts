@@ -45,6 +45,13 @@ export function mergeBlockedApps(
  * La faire disparaître laissait croire qu'elle n'était plus protégée du tout,
  * alors que le sursis expire tout seul et que le blocage reprend.
  */
+/**
+ * Plancher du réveil d'échéance. Une échéance DÉJÀ passée que le natif
+ * continue de rapporter relançait une lecture à 0 ms, qui reprogrammait une
+ * lecture à 0 ms : le pont natif était interrogé en boucle serrée.
+ */
+const REPRIEVE_RETRY_MS = 1000
+
 export function useBlockedApps(runningRules: BlockRuleView[]) {
   const [apps, setApps] = useState<BlockedApp[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -107,7 +114,7 @@ export function useBlockedApps(runningRules: BlockRuleView[]) {
       .filter((until): until is number => until != null)
       .sort((a, b) => a - b)[0]
     if (next == null) return
-    const delay = Math.max(0, next * 1000 - Date.now() + 100)
+    const delay = Math.max(REPRIEVE_RETRY_MS, next * 1000 - Date.now() + 100)
     const id = setTimeout(() => load('reprieve-expired'), delay)
     return () => clearTimeout(id)
   }, [apps, load])

@@ -225,7 +225,8 @@
       "cancel": "Abbrechen",
       "select_all": "Alle auswählen",
       "clear_all": "Auswahl aufheben",
-      "selected": "{{count}} ausgewählt"
+      "selected": "{{count}} ausgewählt",
+      "app_position": "App {{index}}"
     },
     "pause_sheet": {
       "title": "Pausendauer festlegen",

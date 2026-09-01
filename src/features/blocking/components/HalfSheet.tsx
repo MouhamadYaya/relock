@@ -117,8 +117,15 @@ export function HalfSheet({
       easing: Easing.out(Easing.cubic),
     })
     backdrop.value = withTiming(1, { duration: 240 })
+    // Rotation ou changement de hauteur : la feuille se repose. L'état déplié
+    // doit suivre, sinon le contenu reste défilable et impossible à tirer sur
+    // une feuille pourtant repliée.
+    if (expandedSV.value) {
+      expandedSV.value = false
+      setExpanded(false)
+    }
     // Valeurs partagées Reanimated : références stables → mount-only.
-  }, [backdrop, translateY, restY])
+  }, [backdrop, translateY, restY, expandedSV])
 
   useEffect(() => {
     if (firstMeasure.current) {

@@ -225,7 +225,8 @@
       "cancel": "Cancel",
       "select_all": "Select all",
       "clear_all": "Clear selection",
-      "selected": "{{count}} selected"
+      "selected": "{{count}} selected",
+      "app_position": "App {{index}}"
     },
     "pause_sheet": {
       "title": "Set pause duration",

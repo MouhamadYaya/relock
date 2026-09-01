@@ -195,9 +195,9 @@
       "empty_rules": "Активных правил не найдено.",
       "confirm": "Заблокировать сейчас",
       "cancel": "Оставить открытым",
-      "countdown_hours_minutes": "{{hours}}h {{minutes}}m",
-      "countdown_minutes_seconds": "{{minutes}}m {{seconds}}s",
-      "countdown_seconds": "{{seconds}}s"
+      "countdown_hours_minutes": "{{hours}} ч {{minutes}} мин",
+      "countdown_minutes_seconds": "{{minutes}} мин {{seconds}} с",
+      "countdown_seconds": "{{seconds}} с"
     },
     "session_sheet": {
       "edit": "Изменить",
@@ -225,7 +225,8 @@
       "cancel": "Отмена",
       "select_all": "Выбрать все",
       "clear_all": "Снять выбор",
-      "selected": "Выбрано: {{count}}"
+      "selected": "Выбрано: {{count}}",
+      "app_position": "Приложение {{index}}"
     },
     "pause_sheet": {
       "title": "Длительность паузы",

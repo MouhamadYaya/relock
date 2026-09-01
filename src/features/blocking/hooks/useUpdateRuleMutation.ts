@@ -16,7 +16,9 @@ export interface UpdateRuleInput {
  *
  * La mécanique NATIVE est ré-armée par l'appelant (l'éditeur) AVANT l'écriture
  * DB : si la base refuse, on ne veut pas d'un bouclier réglé sur des valeurs
- * que personne n'a enregistrées.
+ * que personne n'a enregistrées. Le repli appartient donc à l'appelant, seul
+ * à connaître la configuration native précédente — cf. `AddScreen.onSubmitEdit`,
+ * qui réarme la règle d'origine quand cette mutation rejette.
  */
 export function useUpdateRuleMutation() {
   const qc = useQueryClient()

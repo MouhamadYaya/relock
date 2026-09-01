@@ -169,8 +169,9 @@ export default function ActivityScreen() {
   }, [isFocused])
 
   const reportIdentity = `${dayOffset}-${dateEpoch}-${reloadKey}`
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reportIdentity n'est pas lu, c'est son changement (jour, rechargement) qui remet l'écran d'attente
   useEffect(() => {
-    if (authorized && isFocused) setReportLoading(Boolean(reportIdentity))
+    if (authorized && isFocused) setReportLoading(true)
   }, [authorized, isFocused, reportIdentity])
 
   const reloadReport = useCallback(async () => {

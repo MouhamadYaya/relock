@@ -76,6 +76,9 @@ type Flow =
   | 'pause'
   | 'delete'
 
+/** Plancher du réveil de fin de sursis (cf. `useBlockedApps`). */
+const REPRIEVE_RETRY_MS = 1000
+
 const num = (value: unknown, fallback: number): number =>
   typeof value === 'number' ? value : fallback
 
@@ -185,7 +188,9 @@ export default function BlockDetailScreen() {
   useEffect(() => {
     const next = Object.values(reprieved).sort((a, b) => a - b)[0]
     if (next == null) return
-    const delay = Math.max(0, next * 1000 - Date.now() + 100)
+    // Plancher : une échéance déjà passée que le natif rapporte encore
+    // relancerait une lecture à 0 ms, en boucle serrée sur le pont natif.
+    const delay = Math.max(REPRIEVE_RETRY_MS, next * 1000 - Date.now() + 100)
     const timer = setTimeout(() => loadApps(), delay)
     return () => clearTimeout(timer)
   }, [reprieved, loadApps])
@@ -196,6 +201,11 @@ export default function BlockDetailScreen() {
   const locked = isSessionLocked(rule, now)
   const config = rule.config ?? {}
   const lockedKeys = appKeys.filter(key => reprieved[key] == null)
+  // La rangée ne réserve la ligne de légende que si un décompte l'occupe :
+  // sans sursis en cours, les tuiles ne flottent pas au-dessus d'un vide.
+  const tilesHeight = appKeys.some(key => reprieved[key] != null)
+    ? BLOCKED_APP_SLOT_HEIGHT
+    : layout.blockingLockedTileSize
 
   /** La ligne d'accent : le type, puis le seul chiffre qui compte. */
   const headline = (): string => {
@@ -327,9 +337,6 @@ export default function BlockDetailScreen() {
 
   const confirmDelete = (close: () => void) => {
     setPending(true)
-    if (ScreenTime.isAvailable) {
-      ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(() => {})
-    }
     del.mutate(
       { id: rule.id },
       {
@@ -337,7 +344,15 @@ export default function BlockDetailScreen() {
           setPending(false)
           showErrorToast(error)
         },
+        // Le natif n'est purgé QU'APRÈS la suppression de la ligne : purger
+        // d'abord laissait, si la base refusait, une règle bien visible dans
+        // l'app mais que plus rien ne faisait respecter.
         onSuccess: () => {
+          if (ScreenTime.isAvailable) {
+            ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(
+              () => {},
+            )
+          }
           setPending(false)
           setFlow(null)
           close()
@@ -409,7 +424,7 @@ export default function BlockDetailScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={styles.tilesViewport}
+                style={[styles.tilesViewport, { height: tilesHeight }]}
                 contentContainerStyle={styles.tilesContent}
               >
                 {appKeys.map(key => (
@@ -418,6 +433,7 @@ export default function BlockDetailScreen() {
                     tokenKey={key}
                     unlocked={reprieved[key] != null}
                     reprievedUntil={reprieved[key]}
+                    showLabel={false}
                     label={
                       reprieved[key] != null
                         ? t('blocking.reblock_app.action')
@@ -482,7 +498,7 @@ export default function BlockDetailScreen() {
             onPress={startQuit}
             style={[styles.secondaryAction, locked && styles.actionDisabled]}
           >
-            <PauseGlyph color={colors.textPrimary} />
+            <PauseGlyph color={colors.blockingWarning} />
             <Text style={styles.secondaryLabel}>
               {t('blocking.session_sheet.quit_early')}
             </Text>
@@ -616,6 +632,9 @@ const styles = StyleSheet.create({
   panel: {
     borderRadius: radius.panel,
     overflow: 'hidden',
+    // Fond PLEIN sous le dégradé : la carte est peinte jusqu'à ses bords même
+    // si la surface SVG posée par-dessus ne couvre pas tout.
+    backgroundColor: colors.blockingSurface,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
@@ -638,7 +657,6 @@ const styles = StyleSheet.create({
   // précédent calcul utilisait la mauvaise line-height et rognait 6 points.
   tilesViewport: {
     flexGrow: 0,
-    height: BLOCKED_APP_SLOT_HEIGHT,
     marginTop: spacing.sm,
   },
   tilesContent: {
@@ -650,6 +668,7 @@ const styles = StyleSheet.create({
   infoCard: {
     borderRadius: radius.panel,
     overflow: 'hidden',
+    backgroundColor: colors.blockingSurface,
     paddingHorizontal: spacing.md,
     marginTop: spacing.sm,
   },
@@ -721,7 +740,9 @@ const styles = StyleSheet.create({
   },
   secondaryLabel: {
     ...fonts.medium,
-    color: colors.textPrimary,
+    // Ambre : quitter un blocage en avance n'est pas une action neutre, sans
+    // être pour autant destructrice comme une suppression.
+    color: colors.blockingWarning,
     fontSize: typography.buttonSize,
     lineHeight: typography.buttonLineHeight,
   },

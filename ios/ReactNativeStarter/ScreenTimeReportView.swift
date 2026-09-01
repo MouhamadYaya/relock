@@ -387,6 +387,9 @@ final class ScreenTimeReportView: UIView {
     addSubview(vc.view)
     hosting = vc
     bringSubviewToFront(activityControls)
+    // Le JS attend CE signal pour retirer son écran d'attente : sans lui, le
+    // rapport se dessine derrière un placeholder qui ne part jamais.
+    onCommand?(["command": "ready"])
   }
 
   override func layoutSubviews() {

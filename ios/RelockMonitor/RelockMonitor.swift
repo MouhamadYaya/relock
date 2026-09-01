@@ -165,7 +165,16 @@ final class RelockMonitor: DeviceActivityMonitor {
       intervalStart: calendar.dateComponents(full, from: start),
       intervalEnd: calendar.dateComponents(full, from: end),
       repeats: false)
-    try? center.startMonitoring(activity, during: schedule)
+    do {
+      try center.startMonitoring(activity, during: schedule)
+    } catch {
+      // Sans réveil, les sursis restants ne se refermeraient jamais. On les
+      // annule donc et le bouclier revient tout de suite : un blocage qui
+      // revient trop tôt se corrige d'un geste, un blocage qui ne revient
+      // jamais, non.
+      Self.withGroupLock { defaults?.removeObject(forKey: "reprieves") }
+      recomputeShield()
+    }
   }
 
   /// Avancement du quota du jour (25/50/75/100 %) partagé avec l'app.

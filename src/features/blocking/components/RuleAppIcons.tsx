@@ -34,6 +34,11 @@ export function RuleAppIcons({
 
   useEffect(() => {
     let cancelled = false
+    // La règle a changé : on repart d'une ardoise vide. Sans ça, un composant
+    // recyclé garde à l'écran les icônes de la règle précédente jusqu'à la
+    // réponse du natif — et pour toujours si celle-ci échoue.
+    setKeys([])
+    setOthers(0)
     if (!ScreenTime.isAvailable) return
     Promise.all([ScreenTime.appKeys(ruleId), ScreenTime.selectionInfo(ruleId)])
       .then(([appKeys, info]) => {

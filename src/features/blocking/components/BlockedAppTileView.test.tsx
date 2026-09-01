@@ -39,6 +39,43 @@ describe('BlockedAppTileView lock state', () => {
     renderer = undefined
   })
 
+  it('drops the action word where the sheet already carries the action', () => {
+    act(() => {
+      renderer = create(
+        <BlockedAppTileView
+          tokenKey="blocked-app"
+          unlocked={false}
+          showLabel={false}
+          label="Débloquer"
+          onPress={jest.fn()}
+        />,
+      )
+    })
+
+    expect(renderer?.root.findAllByProps({ numberOfLines: 1 })).toHaveLength(0)
+  })
+
+  it('keeps a running countdown even when the action word is hidden', () => {
+    // Le décompte n'est pas un bouton : c'est la seule façon de savoir quand
+    // l'app se referme.
+    act(() => {
+      renderer = create(
+        <BlockedAppTileView
+          tokenKey="unlocked-app"
+          unlocked
+          showLabel={false}
+          reprievedUntil={Date.now() / 1000 + 89}
+          label="Rebloquer"
+          onPress={jest.fn()}
+        />,
+      )
+    })
+
+    expect(
+      renderer?.root.findByProps({ numberOfLines: 1 }).props.children,
+    ).toBe('1m 29s')
+  })
+
   it('reserves the full tile, gap and caption height for parent rails', () => {
     expect(BLOCKED_APP_SLOT_HEIGHT).toBe(
       relockMaterial.layout.blockingLockedTileSize +

@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000001 /* NativeDurationPickerView.swift */; };
+		D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */; };
+		D1A700000000000000000006 /* NativeDurationPickerViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */; };
 		C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */; };
 		0BBFF9FFE1F0D52D8E9E0A2A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23BE557DFCBF1E290B255014 /* Foundation.framework */; };
 		43963F48D9B9A6A2391A455E /* BlockedAppIconsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833FBC2BC7CE65761F10F55D /* BlockedAppIconsView.swift */; };
@@ -115,6 +118,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D1A700000000000000000001 /* NativeDurationPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeDurationPickerView.swift; path = ReactNativeStarter/NativeDurationPickerView.swift; sourceTree = "<group>"; };
+		D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeDurationPickerViewManager.swift; path = ReactNativeStarter/NativeDurationPickerViewManager.swift; sourceTree = "<group>"; };
+		D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = NativeDurationPickerViewManager.mm; path = ReactNativeStarter/NativeDurationPickerViewManager.mm; sourceTree = "<group>"; };
 		C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityPhysicalScrollTests.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000003 /* ReactNativeStarterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReactNativeStarterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		09245AC1DD1546958697DF20 /* Inter-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.ttf"; path = "../assets/fonts/Inter-Medium.ttf"; sourceTree = "<group>"; };
@@ -239,6 +245,9 @@
 		13B07FAE1A68108700A75B9A /* ReactNativeStarter */ = {
 			isa = PBXGroup;
 			children = (
+				D1A700000000000000000001 /* NativeDurationPickerView.swift */,
+				D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */,
+				D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */,
 				DC2160CB3002FE400001F544 /* ReactNativeStarter.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -763,6 +772,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */,
+				D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */,
+				D1A700000000000000000006 /* NativeDurationPickerViewManager.mm in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */,
 				AB1CE0000000000000000007 /* RelockBlockAttributes.swift in Sources */,

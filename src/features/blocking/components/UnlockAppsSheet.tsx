@@ -50,18 +50,25 @@ function CheckGlyph() {
  */
 function SelectableAppTile({
   tokenKey,
+  label,
   selected,
   onToggle,
 }: {
   tokenKey: string
+  /**
+   * Ce que VoiceOver annonce. Family Controls ne rend qu'un jeton opaque —
+   * aucun nom d'app ne remonte au JS — d'où un repère de position.
+   */
+  label: string
   selected: boolean
   onToggle: () => void
 }) {
   return (
     <PressableScale
+      testID={`unlock-app-${tokenKey}`}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
-      accessibilityLabel={tokenKey}
+      accessibilityLabel={label}
       onPress={onToggle}
       style={styles.tileSlot}
     >
@@ -201,10 +208,13 @@ export function UnlockAppsSheet({
             style={styles.gridViewport}
             contentContainerStyle={styles.grid}
           >
-            {appKeys.map(key => (
+            {appKeys.map((key, index) => (
               <SelectableAppTile
                 key={key}
                 tokenKey={key}
+                label={t('blocking.unlock_picker.app_position', {
+                  index: index + 1,
+                })}
                 selected={selected.includes(key)}
                 onToggle={() => toggle(key)}
               />
@@ -253,7 +263,7 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: colors.blockingImageChrome,
+    backgroundColor: colors.blockingModalBackdrop,
   },
   sheet: {
     maxHeight: '84%',

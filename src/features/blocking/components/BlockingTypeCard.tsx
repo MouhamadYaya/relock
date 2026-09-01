@@ -81,23 +81,18 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
+  // Ni pastille ni cadre : on ne garde que le placement et la taille.
   chevron: {
     width: spacing.xl,
     height: spacing.xl,
-    borderRadius: radius.capsule,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.blockingGlass,
   },
   iconStage: {
     width: spacing.xxxxl,
     height: spacing.xxxxl,
-    borderRadius: radius.action,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.blockingAccentTint,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.blockingBorderStrong,
   },
   titleSlot: {
     minHeight: typography.blockingTypeTitleLineHeight * 2,

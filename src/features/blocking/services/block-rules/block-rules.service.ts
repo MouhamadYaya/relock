@@ -77,11 +77,15 @@ export const BlockRulesService = {
       config: Record<string, unknown>
     },
   ): Promise<void> {
-    const { data } = await supabase
+    // La lecture doit réussir AVANT d'écrire : sur erreur, les valeurs de repli
+    // ci-dessous écraseraient la sélection d'apps par une liste vide et
+    // perdraient `suspended_until`.
+    const { data, error: readError } = await supabase
       .from('block_rules')
       .select('config, app_selection')
       .eq('id', id)
       .maybeSingle()
+    if (readError) throw normalizeError(readError)
     const previous = (data?.config as Record<string, unknown>) ?? {}
     const previousSelection = (data?.app_selection ?? {}) as {
       apps?: string[]

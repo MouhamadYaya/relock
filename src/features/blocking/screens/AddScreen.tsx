@@ -24,18 +24,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import Svg, { Circle, Path, Line as SvgLine } from 'react-native-svg'
-import {
-  BLOCK_DURATION_OPTIONS,
-  DAILY_LIMIT_OPTIONS,
-  DurationWheel,
-  nearestDurationOption,
-} from '@/features/blocking/components/DurationWheel'
 import { HoldToConfirmButton } from '@/features/blocking/components/HoldToConfirmButton'
 import { StrictCommitmentSheet } from '@/features/blocking/components/StrictCommitmentSheet'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
 import { useUpdateRuleMutation } from '@/features/blocking/hooks/useUpdateRuleMutation'
 import { returnToBlocks } from '@/features/blocking/navigation/return-to-blocks'
+import { armRule } from '@/features/blocking/services/arm'
 import { daysLabel } from '@/features/blocking/session'
 import {
   type BlockingEditorType,
@@ -48,6 +43,10 @@ import {
 } from '@/features/notifications/prefs'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
+import {
+  NativeDurationPicker,
+  normalizeDurationMinutes,
+} from '@/shared/native/NativeDurationPicker'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -103,6 +102,11 @@ const C = {
 
 const GRAB = 26 // hauteur de la zone poignée
 const BOTTOM = 30 // marge basse (home indicator + air)
+const DURATION_MINUTE_INTERVAL = 5
+const BLOCK_DURATION_MIN_MINUTES = 5
+const BLOCK_DURATION_MAX_MINUTES = 8 * 60
+const DAILY_LIMIT_MIN_MINUTES = 5
+const DAILY_LIMIT_MAX_MINUTES = 4 * 60
 
 type TypeKey = BlockingEditorType
 const DB_TYPE: Record<TypeKey, BlockRuleType> = {
@@ -386,9 +390,11 @@ export default function AddScreen() {
     setDays(Array.isArray(config.days) ? (config.days as number[]) : null)
     if (editorType === 'block_now') {
       setDurationMin(
-        nearestDurationOption(
+        normalizeDurationMinutes(
           cfgNum(config.duration_min, 30),
-          BLOCK_DURATION_OPTIONS,
+          BLOCK_DURATION_MIN_MINUTES,
+          BLOCK_DURATION_MAX_MINUTES,
+          DURATION_MINUTE_INTERVAL,
         ),
       )
       setStrict(config.strict === true)
@@ -407,7 +413,12 @@ export default function AddScreen() {
       return
     }
     setLimitMin(
-      nearestDurationOption(cfgNum(config.limit_min, 60), DAILY_LIMIT_OPTIONS),
+      normalizeDurationMinutes(
+        cfgNum(config.limit_min, 60),
+        DAILY_LIMIT_MIN_MINUTES,
+        DAILY_LIMIT_MAX_MINUTES,
+        DURATION_MINUTE_INTERVAL,
+      ),
     )
   }, [editedRule, stepX])
 
@@ -644,6 +655,11 @@ export default function AddScreen() {
     }
     submitting.current = true
     setWorking(true)
+    // Le bouclier est réglé sur les nouvelles valeurs AVANT l'écriture DB :
+    // si la base refuse, il faut le ramener sur celles qui restent
+    // enregistrées, sinon l'app affiche une règle et le système en applique
+    // une autre.
+    let rearmed = false
     try {
       if (ScreenTime.isAvailable) {
         const auth = await ScreenTime.requestAuthorization()
@@ -656,6 +672,7 @@ export default function AddScreen() {
         )
         if (appsRepicked.current) await ScreenTime.bindSelection(editId)
         await runNative(editId)
+        rearmed = true
       }
       await updateRule.mutateAsync({
         id: editId,
@@ -665,6 +682,12 @@ export default function AddScreen() {
       })
       setSuccessMsg(summary())
     } catch (e) {
+      if (rearmed) {
+        await ScreenTime.stopRule(editId, nativeKindOf(DB_TYPE[type])).catch(
+          () => {},
+        )
+        await armRule(editedRule).catch(() => {})
+      }
       const msg = String((e as { message?: string })?.message ?? e ?? '')
       if (/too short|schedule/i.test(msg)) {
         setWarn(
@@ -825,12 +848,14 @@ export default function AddScreen() {
                       </Text>
                     </View>
                     <View style={styles.pickerWrap}>
-                      <DurationWheel
+                      <NativeDurationPicker
                         testID="duration-wheel"
                         accessibilityLabel="Durée du blocage"
                         minutes={durationMin}
-                        options={BLOCK_DURATION_OPTIONS}
-                        onChange={setDurationMin}
+                        minimumMinutes={BLOCK_DURATION_MIN_MINUTES}
+                        maximumMinutes={BLOCK_DURATION_MAX_MINUTES}
+                        minuteInterval={DURATION_MINUTE_INTERVAL}
+                        onMinutesChange={setDurationMin}
                       />
                     </View>
                   </View>
@@ -881,12 +906,14 @@ export default function AddScreen() {
                     </Text>
                   </View>
                   <View style={styles.pickerWrap}>
-                    <DurationWheel
+                    <NativeDurationPicker
                       testID="limit-wheel"
                       accessibilityLabel="Limite par jour"
                       minutes={limitMin}
-                      options={DAILY_LIMIT_OPTIONS}
-                      onChange={setLimitMin}
+                      minimumMinutes={DAILY_LIMIT_MIN_MINUTES}
+                      maximumMinutes={DAILY_LIMIT_MAX_MINUTES}
+                      minuteInterval={DURATION_MINUTE_INTERVAL}
+                      onMinutesChange={setLimitMin}
                     />
                   </View>
                 </View>
