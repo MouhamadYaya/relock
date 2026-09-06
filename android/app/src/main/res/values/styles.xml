@@ -7,6 +7,9 @@
     <style name="BootTheme" parent="Theme.BootSplash">
         <item name="bootSplashBackground">@color/bootsplash_background</item>
         <item name="bootSplashLogo">@drawable/bootsplash_logo</item>
+        <!-- Logotype ancré en bas de l'écran (API 31+ uniquement : au-dessous,
+             Android n'a pas d'emplacement de marque et l'ignore). -->
+        <item name="bootSplashBrand">@drawable/bootsplash_brand</item>
         <item name="postBootSplashTheme">@style/AppTheme</item>
     </style>
 </resources>

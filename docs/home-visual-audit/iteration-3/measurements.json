@@ -1,0 +1,116 @@
+{
+  "iteration": "3",
+  "referenceSource": "/Users/mhdyaya/Downloads/ChatGPT Image 4 sept. 2026 à 12_47_45.png",
+  "referenceCrop": [
+    194,
+    37,
+    829,
+    1461
+  ],
+  "screenshotSource": "/Users/mhdyaya/Documents/RelockApp/docs/home-visual-audit/iteration-3/screenshot.png",
+  "comparisonSize": [
+    635,
+    1424
+  ],
+  "normalizedRms": 0.2637,
+  "targetRegions": {
+    "header": {
+      "pixels": [
+        31,
+        82,
+        575,
+        69
+      ],
+      "normalized": [
+        0.0488,
+        0.0576,
+        0.9055,
+        0.0485
+      ]
+    },
+    "hero": {
+      "pixels": [
+        0,
+        157,
+        635,
+        480
+      ],
+      "normalized": [
+        0.0,
+        0.1103,
+        1.0,
+        0.3371
+      ]
+    },
+    "score": {
+      "pixels": [
+        23,
+        637,
+        590,
+        191
+      ],
+      "normalized": [
+        0.0362,
+        0.4473,
+        0.9291,
+        0.1341
+      ]
+    },
+    "blocked": {
+      "pixels": [
+        23,
+        842,
+        590,
+        136
+      ],
+      "normalized": [
+        0.0362,
+        0.5913,
+        0.9291,
+        0.0955
+      ]
+    },
+    "top3": {
+      "pixels": [
+        23,
+        992,
+        590,
+        271
+      ],
+      "normalized": [
+        0.0362,
+        0.6966,
+        0.9291,
+        0.1903
+      ]
+    },
+    "navbar": {
+      "pixels": [
+        23,
+        1276,
+        590,
+        110
+      ],
+      "normalized": [
+        0.0362,
+        0.8961,
+        0.9291,
+        0.0772
+      ]
+    },
+    "homeIndicator": {
+      "pixels": [
+        208,
+        1405,
+        220,
+        8
+      ],
+      "normalized": [
+        0.3276,
+        0.9867,
+        0.3465,
+        0.0056
+      ]
+    }
+  }
+}

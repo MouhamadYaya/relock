@@ -1,16 +1,15 @@
 import { router } from 'expo-router'
 import {
+  AppState,
   DeviceEventEmitter,
   DevSettings,
   Linking,
   NativeModules,
 } from 'react-native'
-import { constants } from '@/config/constants'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
-import { completeOnboarding } from '@/session/bootstrap'
+import { completeOnboarding, resetOnboarding } from '@/session/bootstrap'
 import { ScreenTime } from '@/shared/native/screen-time'
-import { kvStorage } from '@/shared/services/storage/mmkv'
-import { useAppGateStore } from '@/shared/stores/app-gate.store'
+import { genUUID } from '@/shared/utils/uuid'
 
 /** Événement interne (dev) : force le jour affiché par l'écran Activité. */
 export const DEV_EVENT_ACTIVITY_DAY = 'relock-dev-activity-day'
@@ -72,7 +71,9 @@ async function run(cmd: string): Promise<void> {
   switch (cmd) {
     case 'diag': {
       const d = await ScreenTime.getDiagnostics()
-      console.log(`${TAG} diag`, JSON.stringify(d, null, 2))
+      const payload = JSON.stringify(d, null, 2)
+      console.log(`${TAG} diag`, payload)
+      await report('diag', payload)
       return
     }
     case 'selinfo': {
@@ -99,6 +100,54 @@ async function run(cmd: string): Promise<void> {
       const payload = JSON.stringify(out, null, 2)
       console.log(`${TAG} selinfo`, payload)
       await report('selinfo', payload)
+      return
+    }
+    case 'rules': {
+      // Vue d'ensemble VÉRIFIABLE des trois mécaniques : ce que la base dit,
+      // ce que le moteur JS en déduit, et ce qu'iOS a réellement armé. Une
+      // règle « active » dont l'activité manque côté système ne bloquera
+      // jamais rien — c'est précisément ce que cette confrontation révèle.
+      const { BlockRulesService } = await import(
+        '@/features/blocking/services/block-rules/block-rules.service'
+      )
+      const { buildSessions } = await import('@/features/blocking/session')
+      const { nativeKindOf } = await import('@/shared/native/screen-time')
+      const rules = await BlockRulesService.list()
+      const [armed, steps] = await Promise.all([
+        ScreenTime.armedActivities().catch(() => [] as string[]),
+        ScreenTime.limitSteps().catch(() => ({}) as Record<string, number>),
+      ])
+      const sessions = buildSessions(rules, new Date(), steps)
+      const prefix = { timed: 'timed', schedule: 'sched', limit: 'limit' }
+      const payload = JSON.stringify(
+        {
+          armedActivities: armed,
+          limitSteps: steps,
+          rules: rules.map(rule => {
+            const kind = nativeKindOf(rule.type)
+            const expected = `${prefix[kind]}.${rule.id}`
+            const session = sessions.find(s => s.rule.id === rule.id)
+            return {
+              id: rule.id,
+              type: rule.type,
+              isActive: rule.isActive,
+              config: rule.config,
+              count: rule.count,
+              createdAt: rule.createdAt,
+              state: session?.state ?? 'auto-supprimée',
+              indicator: session?.indicator,
+              expectedActivity: expected,
+              // Un blocage court n'arme que son réveil « end.<id> ».
+              armed:
+                armed.includes(expected) || armed.includes(`end.${rule.id}`),
+            }
+          }),
+        },
+        null,
+        2,
+      )
+      console.log(`${TAG} rules`, payload)
+      await report('rules', payload)
       return
     }
     case 'blocked': {
@@ -148,6 +197,17 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} sync → today=`, JSON.stringify(today))
       return
     }
+    case 'pick': {
+      // Ouvre le sélecteur système d'apps. C'est le SEUL moyen d'obtenir des
+      // jetons Family Controls : Apple ne permet ni de les fabriquer ni de les
+      // énumérer. Un test d'interface peut ensuite y cocher une app, ce qui
+      // rend la vérification du mur reproductible.
+      const res = await ScreenTime.presentPicker()
+      const payload = JSON.stringify(res)
+      console.log(`${TAG} pick`, payload)
+      await report('pick', payload)
+      return
+    }
     case 'auth': {
       // Sans autorisation Temps d'écran, iOS ne lance PAS l'extension de
       // rapport : toutes les vues restent vides. Permet de la (re)demander
@@ -169,17 +229,11 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} navigate settings`)
       return
     case 'onboarding-reset':
-      // Efface le drapeau, bascule le store, PUIS remplace explicitement
-      // vers `/onboarding`. Le simple flip du store (sans ce `replace`)
-      // laisse `Stack.Protected` rediriger seul vers son ancre (`app/
-      // index.tsx`, lui-même un `<Redirect>`) : ce rebond en deux temps —
-      // pendant que l'écran (tabs) est encore actif — laisse le native
-      // stack (react-native-screens) non composité : app entièrement noire
-      // jusqu'à ce qu'une navigation ordinaire ultérieure force un nouveau
-      // rendu. Reproduit et vérifié sur iOS 26 / Simulateur (2026-08-30).
-      kvStorage.delete(constants.ONBOARDING_DONE)
-      useAppGateStore.getState().resetOnboardingDone()
-      router.replace('/onboarding')
+      // Même chemin que le bouton « restart · dev » de l'Accueil : efface le
+      // drapeau, bascule le store, puis remplace explicitement vers
+      // `/onboarding` (voir `resetOnboarding()` pour le pourquoi du
+      // `replace`).
+      resetOnboarding()
       console.log(`${TAG} onboarding réinitialisé`)
       return
     case 'onboarding-complete':
@@ -211,9 +265,185 @@ async function run(cmd: string): Promise<void> {
         console.log(`${TAG} activity day offset=${offset}`)
         return
       }
+      // `mkrule/<block_now|schedule|daily_limit>/<param>` : crée une VRAIE
+      // règle de test, avec la sélection d'apps d'une règle existante
+      // (`seedSelection` → `bindSelection`, seul chemin permis par Apple pour
+      // recopier des jetons opaques). Elle est nommée « [TEST] … » et
+      // `rmtest` la supprime — aucune règle de l'utilisateur n'est touchée.
+      const mk = cmd.match(/^mkrule\/(block_now|schedule|daily_limit)\/(\d+)$/)
+      if (mk) {
+        const { BlockRulesService } = await import(
+          '@/features/blocking/services/block-rules/block-rules.service'
+        )
+        const kind = mk[1]
+        const value = Number(mk[2])
+        const existing = await BlockRulesService.list()
+        const donor = existing.find(r => (r.count ?? 0) > 0)
+        const id = genUUID()
+        // Avec une règle existante, on recopie SA sélection (seed → bind).
+        // Sans aucune règle — cas normal après l'expiration d'un blocage
+        // minuté — on repart du brouillon global, c'est-à-dire du dernier
+        // choix fait dans le sélecteur Apple : le seul jeu de jetons encore
+        // disponible sans rouvrir le sélecteur.
+        if (donor) await ScreenTime.seedSelection(donor.id)
+        await ScreenTime.bindSelection(id)
+        const seeded = (await ScreenTime.selectionInfo(id)).total
+        const config: Record<string, unknown> =
+          kind === 'schedule'
+            ? {
+                name: `[TEST] plage ${value}h`,
+                start_hour: value,
+                start_minute: 0,
+                end_hour: (value + 2) % 24,
+                end_minute: 0,
+                days: [1, 2, 3, 4, 5],
+              }
+            : kind === 'daily_limit'
+              ? { name: `[TEST] limite ${value}min`, limit_min: value }
+              : { name: `[TEST] minuté ${value}min`, duration_min: value }
+        const type =
+          kind === 'schedule'
+            ? 'schedule'
+            : kind === 'daily_limit'
+              ? 'daily_limit'
+              : 'progressive_delay'
+        if (kind === 'schedule') {
+          await ScreenTime.startSchedule(
+            id, value, 0, (value + 2) % 24, 0, [1, 2, 3, 4, 5],
+          )
+        } else if (kind === 'daily_limit') {
+          await ScreenTime.startDailyLimit(id, value)
+        } else {
+          await ScreenTime.startTimedBlock(id, value, false)
+        }
+        await BlockRulesService.create({
+          id,
+          type,
+          appIds: [],
+          count: seeded,
+          config,
+        })
+        const armed = await ScreenTime.armedActivities().catch(() => [])
+        const diag = await ScreenTime.getDiagnostics().catch(() => null)
+        await report(
+          'mkrule',
+          JSON.stringify(
+            { id, type, config, seeded, armed, diag },
+            null,
+            2,
+          ),
+        )
+        return
+      }
+      // `pause/<ruleId>/<secondes>` puis `resume/<ruleId>` : cycle complet de
+      // suspension. On renvoie `ruleDays` AVANT et APRÈS — c'est la preuve
+      // qu'une plage « lun→ven » ne devient pas 7 j/7 après une pause.
+      const pm = cmd.match(/^pause\/([0-9a-fA-F-]+)\/(\d+)$/)
+      if (pm) {
+        const until = Math.floor(Date.now() / 1000) + Number(pm[2])
+        const before = await ScreenTime.getDiagnostics().catch(() => null)
+        await ScreenTime.suspendRule(pm[1], Number(pm[2]) > 0 ? until : 0)
+        const after = await ScreenTime.getDiagnostics().catch(() => null)
+        await report(
+          'pause',
+          JSON.stringify(
+            {
+              ruleId: pm[1],
+              ruleDaysAvant: before?.ruleDays,
+              ruleDaysApres: after?.ruleDays,
+              suspendues: after?.suspendedRules,
+              shieldAvant: before?.shieldApplications,
+              shieldApres: after?.shieldApplications,
+            },
+            null,
+            2,
+          ),
+        )
+        return
+      }
+      const rm = cmd.match(/^resume\/([0-9a-fA-F-]+)$/)
+      if (rm) {
+        const { BlockRulesService } = await import(
+          '@/features/blocking/services/block-rules/block-rules.service'
+        )
+        const { armRule } = await import('@/features/blocking/services/arm')
+        const before = await ScreenTime.getDiagnostics().catch(() => null)
+        const rule = (await BlockRulesService.list()).find(r => r.id === rm[1])
+        if (rule) await armRule(rule).catch(() => {})
+        await ScreenTime.resumeRule(rm[1])
+        const after = await ScreenTime.getDiagnostics().catch(() => null)
+        await report(
+          'resume',
+          JSON.stringify(
+            {
+              ruleId: rm[1],
+              ruleDaysAvant: before?.ruleDays,
+              ruleDaysApres: after?.ruleDays,
+              suspendues: after?.suspendedRules,
+              shieldAvant: before?.shieldApplications,
+              shieldApres: after?.shieldApplications,
+            },
+            null,
+            2,
+          ),
+        )
+        return
+      }
+      // `rmtest` : supprime toutes les règles « [TEST] … » (DB + natif).
+      if (cmd === 'rmtest') {
+        const { BlockRulesService } = await import(
+          '@/features/blocking/services/block-rules/block-rules.service'
+        )
+        const { nativeKindOf } = await import('@/shared/native/screen-time')
+        const rules = await BlockRulesService.list()
+        const targets = rules.filter(r =>
+          String(r.config?.name ?? '').startsWith('[TEST]'),
+        )
+        for (const rule of targets) {
+          await BlockRulesService.remove(rule.id)
+          await ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(
+            () => {},
+          )
+        }
+        const diag = await ScreenTime.getDiagnostics().catch(() => null)
+        await report(
+          'rmtest',
+          JSON.stringify(
+            { supprimées: targets.map(r => r.id), diag },
+            null,
+            2,
+          ),
+        )
+        return
+      }
+      // `limit/<on|off>/<ruleId>` : rejoue (ou annule) un quota du jour
+      // atteint. Sert à vérifier que le mur tombe EN PLEINE session, ce qu'on
+      // ne peut pas provoquer autrement (iOS seul décide des seuils).
+      const lm = cmd.match(/^limit\/(on|off)\/([0-9a-fA-F-]+)$/)
+      if (lm) {
+        const before = await ScreenTime.getDiagnostics().catch(() => null)
+        const res = await ScreenTime.simulateLimitReached(lm[2], lm[1] === 'on')
+        const after = await ScreenTime.getDiagnostics().catch(() => null)
+        const payload = JSON.stringify(
+          {
+            ruleId: lm[2],
+            reached: lm[1] === 'on',
+            result: res,
+            shieldBefore: before?.shieldApplications ?? null,
+            shieldAfter: after?.shieldApplications ?? null,
+            activeWindowsAfter: after?.activeWindows ?? null,
+            limitProgressAfter: after?.limitProgress ?? null,
+          },
+          null,
+          2,
+        )
+        console.log(`${TAG} limit`, payload)
+        await report('limit', payload)
+        return
+      }
       // `onboarding/<step id>` : saute directement à une étape narrative
       // (ex. `onboarding/auth`) sans rejouer tout le parcours à chaque reload.
-      const om = cmd.match(/^onboarding\/([a-z]+)$/)
+      const om = cmd.match(/^onboarding\/([a-zA-Z]+)$/)
       if (om) {
         DeviceEventEmitter.emit(DEV_EVENT_ONBOARDING_JUMP, { step: om[1] })
         console.log(`${TAG} onboarding jump=${om[1]}`)
@@ -288,38 +518,82 @@ function probeStorage(): void {
 
 let lastCommandId = 0
 let baselined = false
+let polling = false
 
+/**
+ * Interrogation du serveur de commandes, à cadence ADAPTATIVE.
+ *
+ * ⚠️ La version précédente arrêtait le timer après 8 échecs — définitivement.
+ * Sur un iPhone, huit échecs arrivent pour des raisons parfaitement banales :
+ * l'app passe en arrière-plan, le Wi-Fi se rétablit, l'écran se verrouille. Le
+ * pont devenait alors muet pour le RESTE de la vie du process, sans rien dire :
+ * on croyait à une panne de l'app alors que seul le pilote était mort.
+ *
+ * On ne s'arrête donc plus jamais : après quelques échecs on ralentit à 10 s
+ * (aucun coût quand il n'y a pas de serveur en face), et le premier succès
+ * ramène la cadence nerveuse. Un retour au premier plan la ramène aussi tout
+ * de suite — c'est exactement le moment où l'on relance des commandes.
+ */
 function pollCommands(): void {
+  if (polling) return
+  polling = true
   const CMD_URL = commandsUrl()
-  // Sans serveur (dev sur iPhone, session normale), on abandonne vite :
-  // pas de requête réseau ratée toutes les 1,5 s à l'infini.
+  const FAST_MS = 1500
+  const SLOW_MS = 10_000
+  const MISSES_BEFORE_SLOWDOWN = 8
   let misses = 0
-  const timer = setInterval(async () => {
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  const schedule = (delay: number) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(tick, delay)
+  }
+
+  const tick = async () => {
+    let delay = misses >= MISSES_BEFORE_SLOWDOWN ? SLOW_MS : FAST_MS
     try {
       const res = await fetch(`${CMD_URL}?t=${Date.now()}`)
-      if (!res.ok) return
-      misses = 0
-      const body = (await res.json()) as { id?: number; cmd?: string }
-      if (typeof body.id !== 'number' || typeof body.cmd !== 'string') return
-      // Premier contact du LANCEMENT : la commande déjà présente est du
-      // passé — on la prend comme référence SANS l'exécuter. Sinon chaque
-      // démarrage rejouait le dernier ordre (ex. « activity ») et
-      // court-circuitait l'écran initial, onboarding compris.
-      if (!baselined) {
-        baselined = true
-        lastCommandId = body.id
-        console.log(`${TAG} référence #${body.id} (ignorée)`)
-        return
+      if (res.ok) {
+        misses = 0
+        delay = FAST_MS
+        const body = (await res.json()) as { id?: number; cmd?: string }
+        if (typeof body.id === 'number' && typeof body.cmd === 'string') {
+          // Premier contact du LANCEMENT : la commande déjà présente est du
+          // passé — on la prend comme référence SANS l'exécuter. Sinon chaque
+          // démarrage rejouait le dernier ordre (ex. « activity ») et
+          // court-circuitait l'écran initial, onboarding compris.
+          if (!baselined) {
+            baselined = true
+            lastCommandId = body.id
+            console.log(`${TAG} référence #${body.id} (ignorée)`)
+          } else if (body.id > lastCommandId) {
+            lastCommandId = body.id
+            console.log(`${TAG} exécute #${body.id}: ${body.cmd}`)
+            await run(body.cmd).catch(e =>
+              console.log(`${TAG} ${body.cmd} ERREUR`, String(e)),
+            )
+          }
+        }
       }
-      if (body.id <= lastCommandId) return
-      lastCommandId = body.id
-      console.log(`${TAG} exécute #${body.id}: ${body.cmd}`)
-      await run(body.cmd)
     } catch {
       misses += 1
-      if (misses >= 8) clearInterval(timer)
+      if (misses === MISSES_BEFORE_SLOWDOWN) {
+        console.log(`${TAG} serveur injoignable — cadence réduite à ${SLOW_MS}ms`)
+      }
+      delay = misses >= MISSES_BEFORE_SLOWDOWN ? SLOW_MS : FAST_MS
     }
-  }, 1500)
+    schedule(delay)
+  }
+
+  // Le retour au premier plan est le moment où l'on attend une commande :
+  // on reprend la cadence rapide sans attendre la fin d'un cycle lent.
+  AppState.addEventListener('change', state => {
+    if (state !== 'active') return
+    misses = 0
+    schedule(0)
+  })
+
+  schedule(0)
 }
 
 export function initDevTestBridge(): void {

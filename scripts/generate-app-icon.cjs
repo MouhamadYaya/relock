@@ -189,7 +189,7 @@ async function main() {
     const iosDir = path.join(
       root,
       'ios',
-      'ReactNativeStarter',
+      'Relock',
       'Images.xcassets',
       'AppIcon.appiconset',
     )

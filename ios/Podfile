@@ -15,7 +15,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'ReactNativeStarter' do
+target 'Relock' do
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
@@ -54,6 +54,34 @@ target 'ReactNativeStarter' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # Plusieurs pods déclarent encore dans leur podspec un plancher iOS très
+    # ancien : `@react-native-community/blur` 10.0, netinfo et clipboard 9.0,
+    # google-signin 10.0… CocoaPods respecte ce plancher pour la cible du pod,
+    # et SOUS iOS 11 l'allocation alignée (`operator new(size_t,
+    # align_val_t)`) est marquée indisponible par la libc++.
+    #
+    # C'est fatal dès qu'un de ces pods inclut RCT-Folly (toute lib Fabric le
+    # fait, via RCTViewComponentView → ComponentDescriptor → dynamic.h) :
+    # `folly/lang/New.h` appelle ces surcharges et Clang les rejette en
+    # substitution SFINAE — « only available on iOS 11 or newer ». Le patch
+    # `op_new_builtin_ = false` ci-dessous aggrave même le cas, puisqu'il
+    # force précisément le chemin `::operator new` qui porte cette annotation.
+    #
+    # L'app exige de toute façon `min_ios_version_supported` (15.1) : aucun
+    # pod ne peut réellement tourner plus bas. On remonte donc chaque cible à
+    # ce plancher — jamais l'inverse, un pod qui vise plus haut garde sa
+    # valeur.
+    minimum = Gem::Version.new(min_ios_version_supported)
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_s
+        next unless current.empty? || current.match?(/\A\d+(\.\d+)*\z/)
+        if current.empty? || Gem::Version.new(current) < minimum
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] =
+            min_ios_version_supported
+        end
+      end
+    end
     installer.pods_project.targets.each do |target|
       target.build_phases.each do |phase|
         # « Run script … will be run during every build » (Hermes, etc.) :

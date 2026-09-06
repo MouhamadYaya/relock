@@ -9,6 +9,67 @@ import { trigger } from 'react-native-haptic-feedback'
  * Palette volontairement locale : l'onboarding est un espace narratif à
  * part, plus sombre que l'app (exception documentée aux theme tokens).
  */
+export const RECOGNITION = {
+  moonSize: 88,
+  introSize: 26,
+  introLineHeight: 34,
+  titleSize: 36,
+  titleLineHeight: 44,
+  questionSize: 17,
+  questionLineHeight: 24,
+  revealDuration: 500,
+  // Intro, looking up, elapsed time, question, then time to read before the CTA.
+  readingDelays: [200, 1100, 800, 1000, 900],
+} as const
+
+/** Bounded decorative segments for the annual projection. */
+export const PROJECTION_MAX_BARS = 14
+
+export const GOOD_NEWS = {
+  leadSize: 22,
+  leadLineHeight: 30,
+} as const
+
+export const VICTORY = {
+  moonSize: 152,
+  compactMoonSize: 120,
+  compactHeight: 740,
+  titleSize: 38,
+  titleLineHeight: 46,
+  bodySize: 18,
+  bodyLineHeight: 27,
+  captionSize: 14,
+  captionLineHeight: 21,
+  iconSize: 20,
+  maxWidth: 440,
+} as const
+
+export const PERSONALIZED_PLAN = {
+  titleSize: 32,
+  titleLineHeight: 39,
+  compactTitleSize: 28,
+  compactTitleLineHeight: 34,
+  compactHeight: 740,
+  bodySize: 17,
+  bodyLineHeight: 25,
+  captionSize: 13,
+  captionLineHeight: 19,
+  successSize: 40,
+  iconSize: 22,
+  goalSize: 30,
+  revealDuration: 450,
+  readingDelays: [200, 800, 1000, 1000, 1000],
+} as const
+
+export const PLAN_PREPARATION = {
+  duration: 4200,
+  completionHold: 650,
+  tick: 50,
+  percentageSize: 76,
+  percentageLineHeight: 91,
+  trackHeight: 7,
+} as const
+
 export const OB = {
   bg: '#050507',
   ink: '#F5F5F7',

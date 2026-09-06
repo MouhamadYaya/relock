@@ -1,5 +1,6 @@
 import { Redirect } from 'expo-router'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
+import { useShieldRequestStore } from '@/shared/stores/shield-request.store'
 
 /**
  * Sans fichier possédant le chemin "/", Expo Router ne peut pas le résoudre
@@ -16,5 +17,12 @@ import { useAppGateStore } from '@/shared/stores/app-gate.store'
  */
 export default function Index() {
   const onboardingDone = useAppGateStore(s => s.onboardingDone)
+  // Ouverture depuis le mur système : la destination est l'onglet Blocages,
+  // sans ouvrir automatiquement le rituel de déblocage. Sans ce test, ce
+  // `<Redirect>` renvoyait vers l'accueil et écrasait cette destination.
+  const shieldRequest = useShieldRequestStore(s => s.request)
+  if (onboardingDone && shieldRequest) {
+    return <Redirect href="/(tabs)/blocks" />
+  }
   return <Redirect href={onboardingDone ? '/(tabs)/home' : '/onboarding'} />
 }

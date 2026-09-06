@@ -1,6 +1,6 @@
 /**
  * ┌──────────────────────────────────────────────────────────┐
- *  React Native Starter Hooks
+ *  Relock Hooks
  *  Drop this `hooks/` folder into any RN project.
  *  Zero external dependencies — only React + React Native
  *  (except useClipBoard: @react-native-clipboard/clipboard).

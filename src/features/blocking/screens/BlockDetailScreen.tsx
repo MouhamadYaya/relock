@@ -28,7 +28,6 @@ import {
   type RuleTypeGlyphKind,
 } from '@/features/blocking/components/BlockingGlyphs'
 import {
-  BlockingCardSurface,
   BrandActionSurface,
   SheetBloom,
 } from '@/features/blocking/components/BlockingSurfaces'
@@ -412,7 +411,6 @@ export default function BlockDetailScreen() {
           </View>
 
           <View style={styles.panel}>
-            <BlockingCardSurface cornerRadius={radius.panel} />
             <Text style={styles.panelTitle}>
               {t('blocking.session_sheet.blocked_title')}
             </Text>
@@ -448,7 +446,6 @@ export default function BlockDetailScreen() {
           </View>
 
           <View style={styles.infoCard}>
-            <BlockingCardSurface cornerRadius={radius.panel} />
             <InfoRow
               label={t('blocking.session_sheet.during')}
               value={duringValue()}
@@ -629,16 +626,20 @@ const styles = StyleSheet.create({
     left: -spacing.xxxl,
     right: -spacing.xxxl,
   },
+  // Aplat UNIQUE, pas de dégradé SVG : la carte grandit quand la rangée d'apps
+  // arrive (elle naît sur l'état vide), et un `BlockingCardSurface` posé en
+  // absolu gardait la peinture de la PREMIÈRE mesure — d'où l'arête nette en
+  // travers des tuiles. Une couleur pleine ne peut pas se couper en deux.
   panel: {
     borderRadius: radius.panel,
     overflow: 'hidden',
-    // Fond PLEIN sous le dégradé : la carte est peinte jusqu'à ses bords même
-    // si la surface SVG posée par-dessus ne couvre pas tout.
-    backgroundColor: colors.blockingSurface,
+    backgroundColor: colors.blockingSurfaceCool,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.blockingBorder,
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
   },
   panelTitle: {
     ...fonts.semiBold,
@@ -657,7 +658,7 @@ const styles = StyleSheet.create({
   // précédent calcul utilisait la mauvaise line-height et rognait 6 points.
   tilesViewport: {
     flexGrow: 0,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
   },
   tilesContent: {
     flexDirection: 'row',
@@ -668,9 +669,11 @@ const styles = StyleSheet.create({
   infoCard: {
     borderRadius: radius.panel,
     overflow: 'hidden',
-    backgroundColor: colors.blockingSurface,
+    backgroundColor: colors.blockingSurfaceCool,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.blockingBorder,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
   },
   infoRow: {
     minHeight: spacing.xxxxl + spacing.xxs,
@@ -717,7 +720,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     borderRadius: radius.capsule,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     // Halo violet plutôt que l'ombre neutre : l'action principale RAYONNE.
     shadowColor: shadow.glow.shadowColor,
     shadowOpacity: shadow.glow.shadowOpacity,
@@ -736,7 +739,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    marginTop: spacing.xxs,
+    marginTop: spacing.xs,
   },
   secondaryLabel: {
     ...fonts.medium,

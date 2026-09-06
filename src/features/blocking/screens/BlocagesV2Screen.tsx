@@ -1,6 +1,7 @@
 import { IconName } from '@assets/icons'
-import { router } from 'expo-router'
-import React, { useEffect, useMemo, useState } from 'react'
+import { useIsFocused } from '@react-navigation/native'
+import { router, useLocalSearchParams } from 'expo-router'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   ScrollView,
@@ -32,10 +33,17 @@ import {
   buildRuleTemplates,
   pickRandomRuleTemplates,
 } from '@/features/blocking/rule-templates'
+import { rulesGridPlan } from '@/features/blocking/rules-grid'
 import {
   configLine,
   stateLine,
 } from '@/features/blocking/screens/BlocagesScreen'
+import {
+  homeUnlockEntry,
+  pendingHomeUnlockRequest,
+  readNativeUnlockApps,
+  unlockableProtectedApps,
+} from '@/features/blocking/services/home-unlock'
 import {
   buildSessions,
   isSessionLocked,
@@ -50,6 +58,10 @@ import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
+import {
+  setShieldRequest,
+  useShieldRequestStore,
+} from '@/shared/stores/shield-request.store'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -228,6 +240,17 @@ function EmptyBlockedAppsPanel({
 export default function BlocagesV2Screen() {
   const t = useT()
   const insets = useSafeAreaInsets()
+  const { homeUnlockRequest } = useLocalSearchParams<{
+    homeUnlockRequest?: string
+  }>()
+  const isFocused = useIsFocused()
+  const focusedRef = useRef(isFocused)
+  focusedRef.current = isFocused
+  const consumedHomeUnlock = useRef<string | null>(null)
+  // La demande venue du mur sert uniquement à rendre la redirection vers cet
+  // onglet déterministe au démarrage à froid. Elle ne déclenche aucun parcours
+  // de déblocage : l'utilisateur reste libre d'en lancer un depuis les tuiles.
+  const shieldRequest = useShieldRequestStore(state => state.request)
   const [now, setNow] = useState(() => new Date())
   // `'all'` = « Tout débloquer » ; sinon la clé opaque de l'app visée.
   const [breathing, setBreathing] = useState<UnlockTarget | null>(null)
@@ -272,11 +295,14 @@ export default function BlocagesV2Screen() {
     refresh: refreshBlockedApps,
   } = useBlockedApps(runningSessions.map(session => session.rule))
   const hasBlockedApps = blockedApps.length > 0
-  const lockedApps = blockedApps.filter(app => !app.unlocked)
   const strictSessionForApp = (app: { ruleIds: string[] }) =>
     strictSessionFor(runningSessions, app.ruleIds, now)
   // « Tout débloquer » ne porte QUE sur ce qui peut réellement s'ouvrir.
-  const unlockableApps = lockedApps.filter(app => !strictSessionForApp(app))
+  const unlockableApps = unlockableProtectedApps(
+    blockedApps,
+    runningSessions,
+    now,
+  )
   const reblockingApp = blockedApps.find(app => app.key === reblocking)
   // La feuille de reblocage affiche LA carte de la protection concernée : on
   // lui passe donc exactement ce que la grille passe à `BlockingRuleCard`.
@@ -304,27 +330,81 @@ export default function BlocagesV2Screen() {
         },
       }
     })
-  const hasNoRules = !isPending && rules.length === 0
   const ruleTemplates = useMemo(() => buildRuleTemplates(t), [t])
   // Toujours proposées, même une fois des règles créées — seules celles déjà
   // en place sont retirées (on ne suggère jamais ce qui existe déjà).
+  // Signature STABLE des préréglages déjà en place. Dépendre du tableau
+  // `rules` lui-même retirait le tirage à chaque refetch — or `rules` change
+  // d'identité à chaque passage (et à CHAQUE rendu tant que la requête n'a rien
+  // renvoyé, à cause du `?? []`). Les trois cartes suggérées se rebattaient
+  // donc sous les yeux de l'utilisateur sans que rien n'ait changé.
+  const usedPresetSignature = rules
+    .map(rule => (rule.config as Record<string, unknown> | null)?.preset_id)
+    .filter((id): id is string => typeof id === 'string')
+    .sort()
+    .join(',')
+
   const suggestedTemplates = useMemo(() => {
     const usedPresetIds = new Set(
-      rules
-        .map(rule => (rule.config as Record<string, unknown> | null)?.preset_id)
-        .filter((id): id is string => typeof id === 'string'),
+      usedPresetSignature ? usedPresetSignature.split(',') : [],
     )
     const available = ruleTemplates.filter(
       template => !usedPresetIds.has(template.presetId),
     )
     return pickRandomRuleTemplates(available, SUGGESTED_TEMPLATE_COUNT)
-  }, [ruleTemplates, rules])
+  }, [ruleTemplates, usedPresetSignature])
 
   // Si le sursis expire pendant que sa feuille est ouverte, elle disparaît :
   // l'app est déjà revenue sous bouclier, confirmer n'aurait plus de sens.
   useEffect(() => {
     if (reblocking && !reblockingApp?.unlocked) setReblocking(null)
   }, [reblocking, reblockingApp?.unlocked])
+
+  // Une fois la destination atteinte, libérer le marqueur d'entrée externe.
+  // Le conserver ferait revenir l'utilisateur sur Blocages lors d'un futur
+  // passage par la route racine au cours de la même session.
+  useEffect(() => {
+    if (shieldRequest) setShieldRequest(null)
+  }, [shieldRequest])
+
+  // Only an explicit Home CTA starts the ritual. Shield redirects remain passive.
+  useEffect(() => {
+    const request = pendingHomeUnlockRequest(
+      homeUnlockRequest,
+      consumedHomeUnlock.current,
+      isFocused,
+      !isPending,
+    )
+    if (!request) return
+    consumedHomeUnlock.current = request
+    router.setParams({ homeUnlockRequest: undefined })
+    const openHomeUnlock = async () => {
+      try {
+        const result = await refetch()
+        if (result.isError || !result.data) throw result.error
+        const freshNow = new Date()
+        const apps = await readNativeUnlockApps(result.data, freshNow)
+        const entry = homeUnlockEntry(
+          apps,
+          buildSessions(result.data, freshNow),
+          freshNow,
+        )
+        if (!focusedRef.current || consumedHomeUnlock.current !== request)
+          return
+        if (entry.kind === 'breathing') setBreathing('all')
+        if (entry.kind === 'strict') {
+          setStrictNotice({
+            scope: 'app',
+            title: entry.session.title,
+            endsAt: entry.session.sessionEndsAt,
+          })
+        }
+      } catch (error) {
+        if (focusedRef.current) showErrorToast(error)
+      }
+    }
+    openHomeUnlock()
+  }, [homeUnlockRequest, isFocused, isPending, refetch])
 
   const continueAfterBreathing = () => {
     const target = breathing
@@ -343,14 +423,35 @@ export default function BlocagesV2Screen() {
    * Peu importe combien de règles la visent — un sursis porte sur l'app.
    */
   const confirmUnlockApp = async (minutes: number) => {
-    if (!unlocking) return
+    if (!unlocking || unlockPending) return
     setUnlockPending(true)
     try {
       // « Tout débloquer » ouvre chaque app encore verrouillée pour la même
       // durée : les règles continuent de tourner, tout se referme à l'échéance.
-      const targets =
-        unlocking === 'all' ? unlockableApps.map(app => app.key) : [unlocking]
+      const result = await refetch()
+      if (result.isError || !result.data) throw result.error
+      const freshNow = new Date()
+      const currentApps = await readNativeUnlockApps(result.data, freshNow)
+      const permitted = unlockableProtectedApps(
+        currentApps,
+        buildSessions(result.data, freshNow),
+        freshNow,
+      )
+      const targets = permitted
+        .filter(app => unlocking === 'all' || app.key === unlocking)
+        .map(app => app.key)
       for (const key of targets) {
+        // A protection may start or an app may change state during the ritual.
+        const grantNow = new Date()
+        const grantApps = await readNativeUnlockApps(result.data, grantNow)
+        if (
+          !unlockableProtectedApps(
+            grantApps,
+            buildSessions(result.data, grantNow),
+            grantNow,
+          ).some(app => app.key === key)
+        )
+          continue
         await ScreenTime.unblockAppKey(key, minutes)
       }
       setUnlocking(null)
@@ -412,6 +513,8 @@ export default function BlocagesV2Screen() {
     }
     router.push({ pathname: '/block-detail', params: { id: rule.id } })
   }
+
+  const gridPlan = rulesGridPlan(sessions.length, isPending)
 
   const renderSuggestionCards = () =>
     suggestedTemplates.map(template => (
@@ -549,19 +652,30 @@ export default function BlocagesV2Screen() {
           </View>
 
           <View style={styles.grid}>
-            {isPending ? (
-              <ActivityIndicator
-                accessibilityLabel={t('common.loading')}
-                color={colors.blockingAccentLight}
-                style={styles.loader}
-              />
-            ) : hasNoRules ? (
+            {/*
+              « Nouvelle règle » ne dépend d'AUCUNE donnée : c'est une porte
+              d'entrée, pas un résultat. La placer derrière le chargement des
+              règles la faisait attendre la session Supabase puis l'aller-retour
+              réseau — plusieurs secondes sans rien, et indéfiniment hors ligne.
+              Elle s'affiche donc immédiatement dès qu'il n'y a aucune règle à
+              dessiner, et seul ce qui vient vraiment du réseau attend.
+            */}
+            {!gridPlan.showsRules ? (
               <>
-                <NewRuleSuggestionCard
-                  label={t('blocking.add_rule')}
-                  style={styles.suggestionCardSlot}
-                />
-                {renderSuggestionCards()}
+                {gridPlan.showsNewRuleCard && (
+                  <NewRuleSuggestionCard
+                    label={t('blocking.add_rule')}
+                    style={styles.suggestionCardSlot}
+                  />
+                )}
+                {gridPlan.showsLoader && (
+                  <ActivityIndicator
+                    accessibilityLabel={t('common.loading')}
+                    color={colors.blockingAccentLight}
+                    style={styles.loader}
+                  />
+                )}
+                {gridPlan.showsSuggestions && renderSuggestionCards()}
               </>
             ) : (
               <>

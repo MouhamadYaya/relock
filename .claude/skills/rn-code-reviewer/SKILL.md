@@ -5,7 +5,7 @@ description: Reviews React Native bare-workflow changes in this starter for corr
 
 # RN Code Reviewer
 
-Project-specific code review workflow for this React Native starter.
+Project-specific code review workflow for Relock.
 
 ## When to apply
 

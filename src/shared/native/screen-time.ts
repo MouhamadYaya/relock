@@ -14,6 +14,25 @@ import { NativeModules, Platform } from 'react-native'
 
 export type AuthStatus = 'approved' | 'denied' | 'notDetermined' | 'unsupported'
 
+/**
+ * Score d'Accueil calculé par l'extension `RelockActivityReport`, lu via le
+ * conteneur App Group. Les mesures brutes de Temps d'écran ne quittent jamais
+ * le bac à sable Apple : seul ce résultat agrégé traverse.
+ *
+ * `pending` n'est pas un score bas, c'est l'absence de score — un nouvel
+ * utilisateur n'a aucun historique auquel se comparer.
+ */
+export interface NativeHomeScore {
+  status: 'pending' | 'provisional' | 'ready'
+  global?: number
+  focus?: number
+  rest?: number
+  delta?: number
+  weakestAxis?: 'focus' | 'rest'
+  historyDays: number
+  updatedAt?: number
+}
+
 /** Type de mécanique natif — mappe un `BlockRuleType` DB. */
 export type NativeKind = 'timed' | 'schedule' | 'limit'
 
@@ -32,11 +51,31 @@ export interface ScreenTimeEvent {
   at: string
 }
 
+/** Contexte à usage unique transmis par le mur iOS avant d'ouvrir Relock. */
+export interface PendingShieldRequest {
+  id: string
+  /** Contexte facultatif : la redirection vers Blocages n'en dépend pas. */
+  applicationKey: string | null
+  applicationName: string | null
+  /** Timestamp Unix en secondes. */
+  requestedAt: number
+}
+
 export interface SelectionInfo {
   apps: number
   categories: number
   webDomains: number
   total: number
+}
+
+export interface HomeReferenceFixture {
+  enabled: true
+  streak: number
+  focusScore: number
+  restScore: number
+  blockedCount: number
+  blockedOverflow: number
+  myAppsScenario?: 'blocked' | 'upcoming' | 'none'
 }
 
 interface BlocusScreenTimeNative {
@@ -111,6 +150,8 @@ interface BlocusScreenTimeNative {
   limitSteps(): Promise<Record<string, number>>
   /** Activités DeviceActivity réellement armées côté iOS (vérité système). */
   armedActivities(): Promise<string[]>
+  /** Consomme le contexte du dernier bouton « Ouvrir Relock ». */
+  consumePendingShieldRequest(): Promise<PendingShieldRequest | null>
   /** Arrête UNE règle (pause) sans toucher aux autres blocages. */
   stopRule(ruleId: string, kind: NativeKind): Promise<boolean>
   /**
@@ -126,6 +167,8 @@ interface BlocusScreenTimeNative {
   /** Réinitialisation globale (réservé au reset d'installation). */
   stopBlocking(): Promise<boolean>
   getStatus(): Promise<ScreenTimeStatus>
+  /** Score d'Accueil déposé par l'extension de rapport. */
+  homeScore(): Promise<NativeHomeScore>
   /** Lit le journal d'événements SANS le vider (protocole pull-ack). */
   pullEvents(): Promise<ScreenTimeEvent[]>
   /** Purge les `count` premiers événements une fois la synchro réussie. */
@@ -134,6 +177,17 @@ interface BlocusScreenTimeNative {
   resetIfFreshInstall(): Promise<boolean>
   /** Bilan de santé natif : build, autorisation, journal, vie des extensions. */
   getDiagnostics(): Promise<ScreenTimeDiagnostics>
+  /** DEBUG uniquement, et uniquement après `-HomeReferenceFixture YES`. */
+  homeReferenceFixture?(): Promise<HomeReferenceFixture | null>
+  /**
+   * DEV uniquement (absent des builds Release) : rejoue l'effet d'un quota
+   * quotidien atteint, pour vérifier que le bouclier tombe bien en pleine
+   * session sans avoir à consommer de vraies minutes d'écran.
+   */
+  simulateLimitReached?(
+    ruleId: string,
+    reached: boolean,
+  ): Promise<{ activeWindows: string[]; shieldApplications: number }>
 }
 
 /** Rapport de diagnostic natif (dev + debug device). */
@@ -142,6 +196,8 @@ export interface ScreenTimeDiagnostics {
   nativeBuiltAt: string
   authorized: boolean
   appGroupOK: boolean
+  /** Canal persistant utilisé par les extensions du Shield. */
+  shieldStateTransport: string
   eventLogCount: number
   eventLogTail: ScreenTimeEvent[]
   totalResisted: number
@@ -149,11 +205,35 @@ export interface ScreenTimeDiagnostics {
   monitorLastWakeAt: string
   monitorLastWakeWhat: string
   shieldLastActionAt: string
+  shieldLastOpenRequestStatus: string
+  shieldLastActionResponse: string
+  pendingShieldRequest: PendingShieldRequest | null
   /** Activités réellement armées côté iOS (la vérité système). */
   armedActivities: string[]
   /** Affichages du bouclier (= tentatives d'ouverture arrêtées). */
   shieldShownTotal: number
   shieldLastShownAt: string
+  /** Sonde de diagnostic écrite par le mur lui-même (voir RelockShield). */
+  shieldProbeAt: string
+  shieldProbeWhat: string
+  /** Nom système de la dernière app arrêtée par le mur (« — » si aucune). */
+  shieldLastApplicationName: string
+  /** Nombre d'arrêts de cette app aujourd'hui. */
+  shieldLastApplicationCount: number
+  /**
+   * VÉRITÉ SYSTÈME : ce que ManagedSettings applique vraiment, relu depuis le
+   * magasin. `-1` quand l'API n'est pas disponible. À distinguer de
+   * `activeWindows`, qui dit seulement ce que Relock CROIT avoir armé.
+   */
+  shieldApplications: number
+  shieldWebDomains: number
+  shieldCategories: string
+  /** Nombre de sursis (déblocages temporaires) encore en cours. */
+  reprievedCount: number
+  /** Filtre de jours par règle (0 = dimanche). Absent ⇒ tous les jours. */
+  ruleDays: Record<string, number[]>
+  /** Règles masquées : id → reprise (epoch s), 0 = jusqu'à reprise manuelle. */
+  suspendedRules: Record<string, number>
   /** Paliers de quota franchis aujourd'hui, clé « limitProgress.<id> ». */
   limitProgress: Record<string, string>
 }
@@ -165,6 +245,15 @@ const native = NativeModules.BlocusScreenTime as
 /** True quand le module Family Controls natif est présent (iOS device). */
 export const isScreenTimeAvailable = Platform.OS === 'ios' && native != null
 
+/**
+ * Les méthodes qui ont un repli utile se gardent **par méthode**, jamais par
+ * module : `native ? native.x() : repli` ne teste que la présence du module.
+ * Le binaire installé peut être plus ancien que le bundle JS servi par Metro —
+ * c'est le cas normal quand on ajoute une méthode native sans relancer
+ * `npm run ios`. Le module existe alors, la méthode non, et l'appel jetait un
+ * `TypeError` synchrone qui échappait au `.catch()` de l'appelant et tuait
+ * l'écran entier au lieu de dégrader vers l'état vide prévu.
+ */
 function ensure(): BlocusScreenTimeNative {
   if (!native) {
     throw new Error(
@@ -192,9 +281,9 @@ export const ScreenTime = {
     ensure().unblockAppKey(key, minutes),
   reblockAppKey: (key: string) => ensure().reblockAppKey(key),
   playCalmSound: () =>
-    native ? native.playCalmSound() : Promise.resolve(false),
+    native?.playCalmSound ? native.playCalmSound() : Promise.resolve(false),
   stopCalmSound: () =>
-    native ? native.stopCalmSound() : Promise.resolve(false),
+    native?.stopCalmSound ? native.stopCalmSound() : Promise.resolve(false),
   startTimedBlock: (ruleId: string, minutes: number, strict: boolean) =>
     ensure().startTimedBlock(ruleId, minutes, strict),
   startSchedule: (
@@ -215,9 +304,14 @@ export const ScreenTime = {
     ),
   startDailyLimit: (ruleId: string, minutes: number) =>
     ensure().startDailyLimit(ruleId, minutes),
-  limitSteps: () => (native ? native.limitSteps() : Promise.resolve({})),
+  limitSteps: () =>
+    native?.limitSteps ? native.limitSteps() : Promise.resolve({}),
   armedActivities: () =>
-    native ? native.armedActivities() : Promise.resolve([]),
+    native?.armedActivities ? native.armedActivities() : Promise.resolve([]),
+  consumePendingShieldRequest: () =>
+    native?.consumePendingShieldRequest
+      ? native.consumePendingShieldRequest()
+      : Promise.resolve(null),
   stopRule: (ruleId: string, kind: NativeKind) =>
     ensure().stopRule(ruleId, kind),
   suspendRule: (ruleId: string, untilSec: number) =>
@@ -227,11 +321,26 @@ export const ScreenTime = {
     ensure().clearRuleData(ruleId, kind),
   stopBlocking: () => ensure().stopBlocking(),
   getStatus: () => ensure().getStatus(),
+  homeScore: (): Promise<NativeHomeScore> =>
+    native?.homeScore
+      ? native.homeScore()
+      : Promise.resolve({ status: 'pending', historyDays: 0 }),
   pullEvents: () => ensure().pullEvents(),
   ackEvents: (count: number) => ensure().ackEvents(count),
   resetIfFreshInstall: () =>
-    native ? native.resetIfFreshInstall() : Promise.resolve(false),
+    native?.resetIfFreshInstall
+      ? native.resetIfFreshInstall()
+      : Promise.resolve(false),
   getDiagnostics: () => ensure().getDiagnostics(),
+  homeReferenceFixture: () =>
+    __DEV__ && native?.homeReferenceFixture
+      ? native.homeReferenceFixture()
+      : Promise.resolve(null),
+  /** Résout `null` quand la build n'expose pas la simulation (Release). */
+  simulateLimitReached: (ruleId: string, reached: boolean) =>
+    native?.simulateLimitReached
+      ? native.simulateLimitReached(ruleId, reached)
+      : Promise.resolve(null),
 }
 
 /** Kind natif d'un type de règle DB. */

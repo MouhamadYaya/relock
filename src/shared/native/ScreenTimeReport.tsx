@@ -10,14 +10,14 @@ type ReportProps = ViewProps & {
   /** Décalage journalier : 0 = aujourd'hui, 6 = il y a six jours. */
   offset?: number
   /**
-   * « usage » : l'Activité entière (résumé + graphe + classement). « home » :
-   * total + delta + pilules (ancienne maquette
-   * Accueil). « hero » : total + delta seuls, sans pilules (maquette Accueil
-   * v2 — la carte de protection prend la place des pilules).
+   * « usage » : l'Activité entière. « home » : le héro et le classement du
+   * tableau de bord dans une seule surface native.
    */
-  mode?: 'usage' | 'home' | 'hero'
+  mode?: 'usage' | 'home'
   /** Force une nouvelle connexion au rapport sans démonter la vue native. */
   reloadToken?: number
+  /** Décale le classement Home uniquement lorsqu'une carte Blocages existe. */
+  showsBlockedCard?: boolean
   /** Commandes émises par la page SwiftUI du rapport Activité. */
   onCommand?: (event: { nativeEvent: { command: string } }) => void
   /** Affiché si la vue native est absente OU si son rendu échoue. */
@@ -50,8 +50,9 @@ export const isScreenTimeReportAvailable = hasNativeView(NAME)
 
 type NativeProps = ViewProps & {
   offset?: number
-  mode?: 'usage' | 'home' | 'hero'
+  mode?: 'usage' | 'home'
   reloadToken?: number
+  showsBlockedCard?: boolean
   onCommand?: (event: { nativeEvent: { command: string } }) => void
 }
 

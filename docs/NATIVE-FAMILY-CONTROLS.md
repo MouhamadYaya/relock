@@ -5,14 +5,14 @@ Voir aussi [choseafaire.md](../choseafaire.md).
 
 ## Ce qui est fait (code)
 
-- **`ios/ReactNativeStarter/BlocusScreenTime.swift`** — module natif :
+- **`ios/Relock/BlocusScreenTime.swift`** — module natif :
   - `requestAuthorization` / `authorizationStatus` (Family Controls, iOS 16+)
   - `presentPicker` → sélecteur d'apps Apple (`FamilyActivityPicker`), renvoie `{ count }` (jeton opaque)
   - `startBlocking` / `stopBlocking` → pose/retire le bouclier `ManagedSettings`
   - `getStatus` → `{ supported, authorized, blocking, count }`
-- **`ios/ReactNativeStarter/BlocusScreenTime.m`** — pont ObjC (`RCT_EXTERN_MODULE`).
+- **`ios/Relock/BlocusScreenTime.m`** — pont ObjC (`RCT_EXTERN_MODULE`).
 - Fichiers **ajoutés à la cible** app (Compile Sources).
-- Entitlement **`com.apple.developer.family-controls`** déjà dans `ReactNativeStarter.entitlements` (rattaché Debug + Release).
+- Entitlement **`com.apple.developer.family-controls`** déjà dans `Relock.entitlements` (rattaché Debug + Release).
 - **JS** : `src/shared/native/screen-time.ts` (wrapper, `isScreenTimeAvailable`), câblage écran Ajout + interrupteur Accueil.
   - Simulateur / module absent → comportement mock (crée la règle, pas de blocage réel).
   - iPhone → autorisation → sélecteur Apple → bouclier réel.
@@ -25,8 +25,8 @@ Voir aussi [choseafaire.md](../choseafaire.md).
 
 ## Session Xcode guidée (à faire sur device)
 
-1. Ouvrir `ios/ReactNativeStarter.xcworkspace` dans Xcode.
-2. Cible **ReactNativeStarter** → onglet **Signing & Capabilities** :
+1. Ouvrir `ios/Relock.xcworkspace` dans Xcode.
+2. Cible **Relock** → onglet **Signing & Capabilities** :
    - **Team** = ton compte développeur Apple.
    - **Bundle Identifier** = l'identifiant Relock **approuvé Family Controls**.
    - Vérifier que la capability **Family Controls** est listée (elle vient de l'entitlement).

@@ -11,12 +11,15 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 
 type DurationChangeEvent = NativeSyntheticEvent<{ minutes: number }>
 
-type NativeProps = Omit<ViewProps, 'onChange'> & {
+// `onChange` est déjà enregistré comme événement bubbling par le cœur RN
+// (`topChange`) : réutiliser ce nom pour un direct event fait planter le
+// renderer (« Event cannot be both direct and bubbling »). D'où `onDurationChange`.
+type NativeProps = ViewProps & {
   minutes: number
   minimumMinutes: number
   maximumMinutes: number
   minuteInterval: number
-  onChange: (event: DurationChangeEvent) => void
+  onDurationChange: (event: DurationChangeEvent) => void
 }
 
 const NATIVE_VIEW_NAME = 'NativeDurationPickerView'
@@ -46,7 +49,7 @@ export function NativeDurationPicker({
   onMinutesChange,
   style,
   ...rest
-}: Omit<NativeProps, 'onChange' | 'minutes' | 'minuteInterval'> & {
+}: Omit<NativeProps, 'onDurationChange' | 'minutes' | 'minuteInterval'> & {
   minutes: number
   minuteInterval?: number
   onMinutesChange: (minutes: number) => void
@@ -84,7 +87,7 @@ export function NativeDurationPicker({
       minimumMinutes={minimumMinutes}
       maximumMinutes={maximumMinutes}
       minuteInterval={minuteInterval}
-      onChange={handleChange}
+      onDurationChange={handleChange}
       style={[styles.picker, style]}
     />
   )

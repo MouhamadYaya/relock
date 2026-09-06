@@ -1,10 +1,10 @@
-# CLAUDE.md — React Native Starter
+# CLAUDE.md — Relock
 
 **Claude Code context** for this repo. **Canonical agent rules:** [AGENTS.md](../AGENTS.md) (structure, don’ts, “when adding”, documentation map). This file adds stack/commands for Claude; on conflict, prefer **AGENTS.md** and the codebase. **Path-scoped rules:** [.claude/rules/](rules/) (`config`, `features`, `shared-components`, `shared-services`).
 
 ## Project Overview
 
-Production-oriented React Native starter for mobile apps: feature-first architecture, strict TypeScript, centralized theme and navigation, i18n, offline-ready infra, and pluggable transport (REST/GraphQL/WebSocket/Firebase). For teams building maintainable, offline-first RN apps.
+Relock — mobile app-blocking product built on React Native (bare) + Expo SDK 54, with native iOS Family Controls extensions. Feature-first architecture, strict TypeScript, centralized theme and navigation, i18n, offline-ready infra, and pluggable transport (REST/GraphQL/WebSocket/Firebase).
 
 ## Tech Stack
 

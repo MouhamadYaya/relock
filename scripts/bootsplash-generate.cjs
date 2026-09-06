@@ -2,6 +2,16 @@
  * Regenerate react-native-bootsplash **iOS/Android** native splash.
  * Source of truth: assets/logo.png only.
  * Input is copied to a temp PNG so generator I/O never clashes with source files.
+ *
+ * ⚠️ LE LOGOTYPE DU BAS N'EST PAS REGÉNÉRÉ PAR CE SCRIPT. L'option `--brand`
+ * du générateur est derrière une licence payante : le logotype Relock a donc
+ * été posé À LA MAIN (2026-09-05) —
+ *   · iOS      : `ios/Relock/Images.xcassets/BootSplashBrand.imageset` +
+ *                l'`imageView` `brd-Wd-Mk0` de `ios/Relock/BootSplash.storyboard` ;
+ *   · Android  : `drawable-<densite>/bootsplash_brand.png` + `bootSplashBrand`
+ *                dans `android/app/src/main/res/values/styles.xml`.
+ * Relancer ce script ÉCRASE le storyboard et fait donc disparaître le
+ * logotype iOS : le remettre à la main après coup (l'imageset, lui, survit).
  */
 const { spawnSync } = require('node:child_process')
 const fs = require('node:fs')

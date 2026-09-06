@@ -1,4 +1,4 @@
-# Contributing to React Native Starter
+# Contributing to Relock
 
 Thanks for your interest in contributing. This document explains how to get your changes merged.
 

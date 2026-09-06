@@ -1,12 +1,11 @@
-# React Native Bare Starter
+# Relock
 
-[![Use this template](https://img.shields.io/badge/Use%20this%20template-2ea44f?logo=github&logoColor=white)](https://github.com/maximcoding/react-native-starter/generate)
-![CI](https://github.com/maximcoding/react-native-starter/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/MouhamadYaya/relock/actions/workflows/ci.yml/badge.svg)
 ![React Native](https://img.shields.io/badge/React%20Native-0.82.1-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-React native starter project (no Expo) - modern state management, fast storage, and a production-minded foundation.
+Relock — application mobile de blocage d'applications : React Native bare + Expo SDK 54, extensions natives iOS Family Controls.
 
 ## ✨ Features Included
 
@@ -72,8 +71,8 @@ Standard bare react native toolchain:
 - CocoaPods for iOS
 
 ```bash
-git clone https://github.com/maximcoding/react-native-starter.git
-cd react-native-starter
+git clone https://github.com/MouhamadYaya/relock.git
+cd relock
 npm install
 npx pod-install ios
 cp .env.example .env

@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, {
   Circle,
   ClipPath,
@@ -22,9 +23,12 @@ import { GradientLine } from './bits'
 import { Reveal } from './motion'
 import { haptic, OB } from './tokens'
 
-// ─── Acte 5 · Compte (Apple / Google, avant le paywall) ─────────────────
+// ─── Compte (Apple / Google, après le paywall) ──────────────────────────
 
 const MOON = require('@assets/moon.png')
+
+/** Diamètre de la sphère — un cran sous la maquette d'origine (168). */
+const ORB_SIZE = 148
 
 /**
  * Sphère de l'écran de compte : reprend l'image de `Moon` (bits.tsx) mais
@@ -251,7 +255,7 @@ function SocialButton({
 }
 
 /**
- * Écran de compte, juste avant le paywall : la sphère lumineuse de
+ * Écran de compte, juste après le paywall : la sphère lumineuse de
  * l'artefact réapparaît ici pour ancrer « sauvegarder » à « élévation ».
  * Sign in with Apple / Google — pas de mot de passe, pas de formulaire.
  */
@@ -264,6 +268,7 @@ export function SceneAuth({
   onGoogle: () => void
   busy?: boolean
 }) {
+  const insets = useSafeAreaInsets()
   const [appleAvailable, setAppleAvailable] = useState(false)
 
   useEffect(() => {
@@ -279,10 +284,15 @@ export function SceneAuth({
   return (
     <View style={styles.scene}>
       <AuthBackdrop />
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 6 },
+        ]}
+      >
         <View style={styles.top}>
           <Reveal index={0}>
-            <AuthOrb size={168} />
+            <AuthOrb size={ORB_SIZE} />
           </Reveal>
           <Reveal index={1} style={styles.title}>
             <GradientLine text="Sauvegarde ta" size={35} />
@@ -331,9 +341,19 @@ const styles = StyleSheet.create({
   // Pas de padding ici : `AuthBackdrop` est un enfant absoluteFill direct de
   // `scene` — un padding sur ce parent l'aurait resserré (position:absolute
   // se cale sur le bord de padding en RN), tronquant le fond aux bords.
+  // C'est aussi pour ça que la safe area est portée par `content` et non par
+  // le conteneur de `OnboardingFlow` : le dégradé et les étoiles montent
+  // jusque derrière l'heure et la batterie, sans bande noire à coins carrés.
   scene: { flex: 1 },
   content: { flex: 1, paddingHorizontal: 20 },
-  top: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // `paddingBottom` : remonte légèrement le bloc sphère + titre, centré sinon
+  // trop bas une fois la sphère réduite.
+  top: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 44,
+  },
   title: { marginTop: 26, alignSelf: 'stretch' },
   sub: {
     ...fonts.regular,

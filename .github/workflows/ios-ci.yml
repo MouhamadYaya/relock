@@ -50,8 +50,8 @@ jobs:
         run: |
           cd ios
           xcodebuild \
-            -workspace ReactNativeStarter.xcworkspace \
-            -scheme ReactNativeStarter \
+            -workspace Relock.xcworkspace \
+            -scheme Relock \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
@@ -71,4 +71,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-app
-          path: ios/build/Build/Products/Debug-iphonesimulator/ReactNativeStarter.app
+          path: ios/build/Build/Products/Debug-iphonesimulator/Relock.app

@@ -42,7 +42,7 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npm run ios
 
 ## AppDelegate (points sensibles à préserver)
 
-`ios/ReactNativeStarter/AppDelegate.swift` est en `ExpoAppDelegate` + `ExpoReactNativeFactory` :
+`ios/Relock/AppDelegate.swift` est en `ExpoAppDelegate` + `ExpoReactNativeFactory` :
 
 - `bindReactNativeFactory(factory)` doit être appelé (sinon **crash du dev launcher au démarrage** — assertion dans `ExpoAppDelegate.recreateRootView`).
 - `application(open:)` est un `override` qui fait `super.application(...) || RCTLinkingManager.application(...)` (deep links `relock://` + dev-client).

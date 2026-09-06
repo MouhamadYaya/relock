@@ -315,7 +315,7 @@ With React Native **New Architecture**, `Android-autolinking.cmake` may `add_sub
 
 Gradle built the APK; **`installDebug`** failed because the **AVD internal storage** is full (or install location is invalid).
 
-**Try:** In **Device Manager** → emulator ⋮ → **Wipe Data**, then cold boot. Or uninstall this app / other test apps: `adb uninstall com.reactnativestarter` (see `npm run android:uninstall`). Create a new AVD with a larger **Internal Storage** (e.g. 4–8 GB+). On the device, free space in **Settings → Storage**.
+**Try:** In **Device Manager** → emulator ⋮ → **Wipe Data**, then cold boot. Or uninstall this app / other test apps: `adb uninstall com.yaya.relock` (see `npm run android:uninstall`). Create a new AVD with a larger **Internal Storage** (e.g. 4–8 GB+). On the device, free space in **Settings → Storage**.
 
 #### `react-native-mmkv` and `react-native-nitro-modules`
 

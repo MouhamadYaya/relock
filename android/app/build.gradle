@@ -67,9 +67,9 @@ android {
         buildConfig = true
     }
 
-    namespace "com.reactnativestarter"
+    namespace "com.yaya.relock"
     defaultConfig {
-        applicationId "com.reactnativestarter"
+        applicationId "com.yaya.relock"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

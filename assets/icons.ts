@@ -11,6 +11,7 @@ import Check from '@assets/svgs/check.svg';
 import Clock from '@assets/svgs/clock.svg';
 import Close from '@assets/svgs/close.svg';
 import Flame from '@assets/svgs/flame.svg';
+import Focus from '@assets/svgs/focus.svg';
 import Forward from '@assets/svgs/forward.svg';
 import Globe from '@assets/svgs/globe.svg';
 import Home from '@assets/svgs/home.svg';
@@ -21,8 +22,11 @@ import Logout from '@assets/svgs/logout.svg';
 import Monitor from '@assets/svgs/monitor.svg';
 import Moon from '@assets/svgs/moon.svg';
 import Plus from '@assets/svgs/plus.svg';
+import Pulse from '@assets/svgs/pulse.svg';
+import Rest from '@assets/svgs/rest.svg';
 import Settings from '@assets/svgs/settings.svg';
 import Shield from '@assets/svgs/shield.svg';
+import Shieldfill from '@assets/svgs/shieldfill.svg';
 import Star from '@assets/svgs/star.svg';
 import Sun from '@assets/svgs/sun.svg';
 import User from '@assets/svgs/user.svg';
@@ -38,6 +42,7 @@ export enum IconName {
   CLOCK = 'CLOCK',
   CLOSE = 'CLOSE',
   FLAME = 'FLAME',
+  FOCUS = 'FOCUS',
   FORWARD = 'FORWARD',
   GLOBE = 'GLOBE',
   HOME = 'HOME',
@@ -48,8 +53,11 @@ export enum IconName {
   MONITOR = 'MONITOR',
   MOON = 'MOON',
   PLUS = 'PLUS',
+  PULSE = 'PULSE',
+  REST = 'REST',
   SETTINGS = 'SETTINGS',
   SHIELD = 'SHIELD',
+  SHIELDFILL = 'SHIELDFILL',
   STAR = 'STAR',
   SUN = 'SUN',
   USER = 'USER',
@@ -66,6 +74,7 @@ export const AppIcon = {
   [IconName.CLOCK]: Clock,
   [IconName.CLOSE]: Close,
   [IconName.FLAME]: Flame,
+  [IconName.FOCUS]: Focus,
   [IconName.FORWARD]: Forward,
   [IconName.GLOBE]: Globe,
   [IconName.HOME]: Home,
@@ -76,8 +85,11 @@ export const AppIcon = {
   [IconName.MONITOR]: Monitor,
   [IconName.MOON]: Moon,
   [IconName.PLUS]: Plus,
+  [IconName.PULSE]: Pulse,
+  [IconName.REST]: Rest,
   [IconName.SETTINGS]: Settings,
   [IconName.SHIELD]: Shield,
+  [IconName.SHIELDFILL]: Shieldfill,
   [IconName.STAR]: Star,
   [IconName.SUN]: Sun,
   [IconName.USER]: User,

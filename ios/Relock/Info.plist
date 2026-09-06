@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Relock</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.yaya.relock</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>relock</string>
+			</array>
+		</dict>
+		<!--
+			Sign in with Google: reversed form of GOOGLE_IOS_CLIENT_ID (.env).
+			Keep these two in sync if the OAuth client is ever recreated.
+		-->
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.894706345603-lgu5th2v330r3fl569ostmkpp07fq9h8</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<!--
+		Réseau local : iOS 14+ exige un consentement explicite pour joindre une
+		adresse du réseau local. Sans cette clé, l'app ne peut PAS charger son
+		bundle depuis Metro sur un iPhone physique — elle se lance et reste
+		muette, ce qui ressemble à une panne applicative. Le blocage d'apps
+		(Family Controls) n'en dépend pas, et la demande n'apparaît qu'en
+		développement, quand l'app tente réellement de joindre le Mac.
+	-->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_expo-dev-server._tcp</string>
+		<string>_exp._tcp</string>
+		<string>_http._tcp</string>
+	</array>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Cela nous permet de te proposer des contenus plus pertinents et de mesurer l’efficacité de nos campagnes.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Relock se connecte au serveur de développement sur ton réseau local. Le blocage d’apps n’en dépend pas.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>RCTNewArchEnabled</key>
+	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>JetBrainsMono-Regular.ttf</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>BootSplash</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
+</plist>

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import {
   Image,
   Pressable,
+  ScrollView,
   type StyleProp,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 import Animated, {
   FadeInDown,
   interpolateColor,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -211,7 +213,7 @@ export function GradientLine({
 
 // ─── Boutons ─────────────────────────────────────────────────────────────
 
-type PillKind = 'primary' | 'ghost' | 'danger'
+type PillKind = 'primary' | 'ghost' | 'danger' | 'gradient'
 
 /** CTA pilule avec ressort au toucher + haptique. `sub` : réassurance intégrée. */
 export function Pill({
@@ -222,6 +224,7 @@ export function Pill({
   disabled = false,
   icon,
   glow = false,
+  progress,
 }: {
   label: string
   sub?: string
@@ -230,10 +233,19 @@ export function Pill({
   disabled?: boolean
   icon?: React.ReactNode
   glow?: boolean
+  /**
+   * Remplissage 0→1 affiché tant que le bouton est désactivé — pour les
+   * attentes imposées (le temps qu'une démonstration se joue). Sans lui, un
+   * bouton éteint plusieurs secondes se lit comme une panne.
+   */
+  progress?: SharedValue<number>
 }) {
   const scale = useSharedValue(1)
   const aStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+  }))
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${(progress?.value ?? 0) * 100}%`,
   }))
   return (
     <Pressable
@@ -257,17 +269,43 @@ export function Pill({
           kind === 'primary' && styles.pillPrimary,
           kind === 'ghost' && styles.pillGhost,
           kind === 'danger' && styles.pillDanger,
+          kind === 'gradient' && styles.pillGradient,
           disabled && styles.pillDisabled,
           glow && styles.pillGlow,
           aStyle,
         ]}
       >
+        {kind === 'gradient' ? (
+          // `preserveAspectRatio="none"` + viewBox : sans lui le Rect ne
+          // couvrait qu'une partie de la pilule (couture nette à droite).
+          <Svg
+            style={StyleSheet.absoluteFill}
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            <Defs>
+              <LinearGradient id="pillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor={OB.grad[0]} />
+                <Stop offset="52%" stopColor={OB.grad[1]} />
+                <Stop offset="100%" stopColor={OB.grad[2]} />
+              </LinearGradient>
+            </Defs>
+            <Rect x={0} y={0} width={100} height={100} fill="url(#pillGrad)" />
+          </Svg>
+        ) : null}
+        {progress && disabled ? (
+          // Calque de rognage dédié : poser `overflow: 'hidden'` sur la
+          // pilule elle-même couperait l'ombre du `pillGlow` sur iOS.
+          <View pointerEvents="none" style={styles.pillFillClip}>
+            <Animated.View style={[styles.pillFill, fillStyle]} />
+          </View>
+        ) : null}
         <View style={styles.pillRow}>
           {icon}
           <Text
             style={[
               styles.pillLabel,
-              kind === 'primary'
+              kind === 'primary' || kind === 'gradient'
                 ? styles.pillLabelPrimary
                 : styles.pillLabelGhost,
               kind === 'danger' && styles.pillLabelDanger,
@@ -323,6 +361,9 @@ export function GhostLink({
 
 // ─── Cartes de choix ─────────────────────────────────────────────────────
 
+/** Sous cette hauteur d'écran, `ChoiceCard` passe en rendu serré. */
+const CHOICE_DENSE_MAX_H = 780
+
 /**
  * Carte de réponse. Sélection = INVERSION complète (fond clair, texte
  * sombre), le langage d'Opal et Cal AI : dans un univers sombre, le
@@ -341,6 +382,12 @@ export function ChoiceCard({
   onPress: () => void
   index?: number
 }) {
+  const { height } = useWindowDimensions()
+  // Les cartes respirent (72pt) sur un écran normal. Sous ce seuil — SE,
+  // mini — l'écran de question le plus chargé (6 apps) déborderait : on
+  // retombe alors sur des cartes serrées.
+  const dense = height < CHOICE_DENSE_MAX_H
+
   const t = useSharedValue(selected ? 1 : 0)
   useEffect(() => {
     t.value = withSpring(selected ? 1 : 0, { damping: 18, stiffness: 220 })
@@ -372,10 +419,16 @@ export function ChoiceCard({
           onPress()
         }}
       >
-        <Animated.View style={[styles.choice, cardStyle]}>
+        <Animated.View
+          style={[styles.choice, dense && styles.choiceDense, cardStyle]}
+        >
           {emoji ? <Text style={styles.choiceEmoji}>{emoji}</Text> : null}
           <Animated.Text
-            style={[styles.choiceLabel, labelStyle]}
+            style={[
+              styles.choiceLabel,
+              dense && styles.choiceLabelDense,
+              labelStyle,
+            ]}
             numberOfLines={2}
           >
             {label}
@@ -386,6 +439,121 @@ export function ChoiceCard({
         </Animated.View>
       </Pressable>
     </Animated.View>
+  )
+}
+
+/** Une case de `ChoiceGrid` : identifiant, emoji, libellé court. */
+export type GridChoice = { id: string; emoji: string; label: string }
+
+/** Trois colonnes : la largeur qui tient un emoji et deux lignes de libellé. */
+const GRID_COLS = 3
+const GRID_GAP = 10
+
+/**
+ * Tuile de réponse — emoji au-dessus, libellé dessous. Même langage de
+ * sélection que `ChoiceCard` (inversion complète : fond clair, texte
+ * sombre), pour que la grille et la liste se lisent comme un seul système.
+ */
+export function ChoiceTile({
+  label,
+  emoji,
+  selected,
+  onPress,
+  width,
+  index = 0,
+}: {
+  label: string
+  emoji: string
+  selected: boolean
+  onPress: () => void
+  /** Largeur calculée par la grille — la tuile ne la devine pas. */
+  width: number
+  index?: number
+}) {
+  const t = useSharedValue(selected ? 1 : 0)
+  useEffect(() => {
+    t.value = withSpring(selected ? 1 : 0, { damping: 18, stiffness: 220 })
+  }, [selected, t])
+
+  const tileStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(t.value, [0, 1], [OB.card, OB.ink]),
+    borderColor: interpolateColor(t.value, [0, 1], [OB.hairline, OB.accent]),
+    transform: [{ scale: 1 + t.value * 0.018 }],
+  }))
+  const labelStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(t.value, [0, 1], [OB.ink, '#0B0B10']),
+  }))
+
+  return (
+    <Animated.View entering={FadeInDown.duration(380).delay(80 + index * 28)}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ selected }}
+        onPress={() => {
+          haptic.select()
+          onPress()
+        }}
+      >
+        <Animated.View
+          style={[
+            styles.tile,
+            { width, minHeight: Math.round(width * 0.86) },
+            tileStyle,
+          ]}
+        >
+          <Text style={styles.tileEmoji}>{emoji}</Text>
+          <Animated.Text
+            style={[styles.tileLabel, labelStyle]}
+            numberOfLines={2}
+          >
+            {label}
+          </Animated.Text>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
+/**
+ * Grille de réponses à choix multiple. La largeur des tuiles est calculée
+ * (et non exprimée en pourcentage) pour que la gouttière reste exacte quel
+ * que soit l'écran ; la grille défile dès que les rangées débordent — le
+ * cas des petits iPhone avec douze réponses.
+ */
+export function ChoiceGrid({
+  items,
+  selected,
+  onToggle,
+  horizontalPadding = 20,
+}: {
+  items: readonly GridChoice[]
+  selected: readonly string[]
+  onToggle: (id: string) => void
+  /** Marge latérale de l'écran hôte, retirée du calcul de largeur. */
+  horizontalPadding?: number
+}) {
+  const { width } = useWindowDimensions()
+  const tileW = Math.floor(
+    (width - horizontalPadding * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS,
+  )
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.grid}
+    >
+      {items.map((item, i) => (
+        <ChoiceTile
+          key={item.id}
+          index={i}
+          emoji={item.emoji}
+          label={item.label}
+          width={tileW}
+          selected={selected.includes(item.id)}
+          onPress={() => onToggle(item.id)}
+        />
+      ))}
+    </ScrollView>
   )
 }
 
@@ -650,6 +818,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 11,
   },
+  pillFillClip: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 29,
+    overflow: 'hidden',
+  },
+  pillFill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(245,245,247,0.20)',
+  },
   pillPrimary: { backgroundColor: OB.ink },
   pillGhost: {
     backgroundColor: 'rgba(20,18,32,0.4)',
@@ -657,6 +837,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(164,154,254,0.28)',
   },
   pillDanger: { backgroundColor: OB.accent },
+  /** Variante « héros » : dégradé signature en fond, libellé sombre. */
+  pillGradient: { backgroundColor: OB.grad[1], overflow: 'hidden' },
   pillDisabled: { backgroundColor: 'rgba(255,255,255,0.09)' },
   pillGlow: {
     shadowColor: OB.accent,
@@ -693,18 +875,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 20,
-    paddingVertical: 17,
+    borderRadius: 22,
+    paddingVertical: 24,
     paddingHorizontal: 18,
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  choiceDense: {
+    borderRadius: 18,
+    paddingVertical: 16,
+    marginBottom: 8,
   },
   choiceEmoji: { fontSize: 22 },
   choiceLabel: {
     ...fonts.semiBold,
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     letterSpacing: -0.2,
   },
+  choiceLabelDense: { fontSize: 16 },
   choiceDot: {
     width: 24,
     height: 24,
@@ -714,6 +902,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   choiceCheck: { ...fonts.bold, fontSize: 13, color: OB.onAccent },
+
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GRID_GAP,
+    paddingBottom: 4,
+  },
+  tile: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  tileEmoji: { fontSize: 26 },
+  tileLabel: {
+    ...fonts.semiBold,
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: -0.1,
+    textAlign: 'center',
+  },
 
   progressTrack: {
     flex: 1,
