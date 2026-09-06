@@ -43,9 +43,11 @@ describe('NativeDurationPicker', () => {
 
     const nativePicker = renderer?.root
       .findAllByProps({ testID: 'native-duration-picker' })
-      .find(node => typeof node.props.onChange === 'function')
+      .find(node => typeof node.props.onDurationChange === 'function')
 
-    act(() => nativePicker?.props.onChange({ nativeEvent: { minutes: 45 } }))
+    act(() =>
+      nativePicker?.props.onDurationChange({ nativeEvent: { minutes: 45 } }),
+    )
 
     expect(nativePicker?.props.accessibilityRole).toBe('adjustable')
     expect(onMinutesChange).toHaveBeenCalledWith(45)

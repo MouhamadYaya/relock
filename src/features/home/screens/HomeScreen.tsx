@@ -1,365 +1,396 @@
 import { IconName } from '@assets/icons'
 import { router } from 'expo-router'
-import React, { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  AppState,
-  Image,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native'
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
-import { useExtendTimedBlockMutation } from '@/features/blocking/hooks/useExtendTimedBlockMutation'
-import { useFreshInstallReset } from '@/features/blocking/hooks/useFreshInstallReset'
-import { useHomeStats } from '@/features/blocking/hooks/useHomeStats'
-import { useLimitSteps } from '@/features/blocking/hooks/useLimitSteps'
-import { useRuleAutoCleanup } from '@/features/blocking/hooks/useRuleAutoCleanup'
-import { useRuleReconciler } from '@/features/blocking/hooks/useRuleReconciler'
-import { buildSessions, type RuleSession } from '@/features/blocking/session'
-import { ActiveProtectionCard } from '@/features/home/components/ActiveProtectionCard'
-import { DailyResultsCard } from '@/features/home/components/DailyResultsCard'
-import { EmptyProtectionCard } from '@/features/home/components/EmptyProtectionCard'
-import { QuickStartRail } from '@/features/home/components/QuickStartRail'
-import { ScreenTimeHero } from '@/features/home/components/ScreenTimeHero'
-import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
+import { DevRestartButton } from '@/features/home/components/DevRestartButton'
+import { HomeBackdrop } from '@/features/home/components/HomeBackdrop'
+import { HomeDashboardSurface } from '@/features/home/components/HomeDashboardSurface'
+import { HomeDetailSheet } from '@/features/home/components/HomeDetailSheet'
+import { HomeHeader } from '@/features/home/components/HomeHeader'
+import { HomeHeaderScrim } from '@/features/home/components/HomeHeaderScrim'
+import { HomeMyAppsCard } from '@/features/home/components/HomeMyAppsCard'
+import { HomeProgressCard } from '@/features/home/components/HomeProgressCard'
+import { HomeScoreCard } from '@/features/home/components/HomeScoreCard'
+import { HomeScoreDetail } from '@/features/home/components/HomeScoreDetail'
+import { useHomeDashboard } from '@/features/home/hooks/useHomeDashboard'
+import { durationParts } from '@/features/home/services/home-dashboard'
+import {
+  scoreBandKey,
+  scoreFooterKey,
+} from '@/features/home/services/home-score'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { showErrorToast } from '@/shared/utils/toast'
-
-const FW = {
-  400: fonts.regular,
-  500: fonts.medium,
-  600: fonts.semiBold,
-  700: fonts.bold,
-  800: fonts.bold,
-} as const
-const f = (w: keyof typeof FW) => FW[w]
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 const { colors, layout, radius, typography } = relockMaterial
 
 export default function HomeScreen() {
+  const t = useT()
   const insets = useSafeAreaInsets()
-  const { rules, isPending: rulesPending } = useBlockRulesQuery()
-  const stats = useHomeStats()
-  useFreshInstallReset()
-  // Auto-réparation : iOS peut perdre la surveillance native (réinstall,
-  // mise à jour) — on ré-arme les règles persistantes actives au lancement.
-  useRuleReconciler(rules, !rulesPending)
-  // Timers terminés / suspensions échues : retirés d'office, comme sur
-  // l'onglet Blocages — sans ça un timer fini traînerait sur l'Accueil.
-  useRuleAutoCleanup(rules)
+  const dashboard = useHomeDashboard()
+  const [streakOpen, setStreakOpen] = useState(false)
+  const [scoreOpen, setScoreOpen] = useState(false)
+  // Le voile de l'entete naît du défilement : on suit l'offset sur le thread
+  // UI (aucun aller-retour JS, donc aucun retard sur un scroll rapide).
+  const scrollY = useSharedValue(0)
+  const onScroll = useAnimatedScrollHandler(event => {
+    scrollY.value = event.contentOffset.y
+  })
+  const streak = dashboard.referenceFixture?.streak ?? dashboard.stats.streak
 
-  // Les libellés « encore X min » sont temporels : on retick régulièrement.
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30_000)
-    return () => clearInterval(id)
-  }, [])
-
-  const limitSteps = useLimitSteps()
-  const sessions = useMemo(
-    () => buildSessions(rules, now, limitSteps),
-    [rules, now, limitSteps],
-  )
-  // Tant que les règles n'ont pas encore chargé, `rules` vaut `[]` par
-  // défaut : `hasAnyBlockage` seul y lirait à tort « aucun blocage » et
-  // ferait clignoter un utilisateur protégé sur l'état « nouvel
-  // utilisateur » le temps du premier chargement.
-  const hasAnyBlockage = sessions.length > 0
-  const isActive = !rulesPending && hasAnyBlockage
-
-  // Priorité au « Bloquer maintenant » en cours pour piloter l'anneau/apps/
-  // +15 min ; une plage horaire simultanément active s'affiche en ligne
-  // d'info sous la carte plutôt que de prendre sa place.
-  const running = sessions.filter(s => s.state === 'running')
-  const runningTimed = running.find(s => s.rule.type === 'progressive_delay')
-  const runningSchedule = running.find(s => s.rule.type === 'schedule')
-  // Une limite quotidienne est toujours « en cours » tant que la règle est
-  // active (cf. deriveSession) : sans ce dernier repli, un utilisateur dont
-  // la SEULE protection est une limite se voyait afficher « Aucune
-  // protection active » alors qu'elle protège réellement.
-  const runningLimit = running.find(s => s.rule.type === 'daily_limit')
-  const primary = runningTimed ?? runningSchedule ?? runningLimit ?? null
-  const scheduleFooter =
-    primary && primary.rule.type !== 'schedule'
-      ? (runningSchedule ?? null)
-      : null
-  // Rien de « live » : on montre la protection la plus proche (à venir ou
-  // suspendue) pour dire ce qui se passe, plutôt qu'un vide muet.
-  const idleSession: RuleSession | null = primary
-    ? null
-    : (sessions.find(s => s.state === 'upcoming') ??
-      sessions.find(s => s.state === 'suspended') ??
-      sessions[0] ??
-      null)
-
-  useNotificationReconciler(stats.streak, running.length > 0)
-
-  const extendMutation = useExtendTimedBlockMutation()
-  const onExtend = () => {
-    if (!runningTimed) return
-    extendMutation.mutate(
-      { rule: runningTimed.rule, addMinutes: 15 },
-      { onError: e => showErrorToast(e) },
-    )
-  }
-
-  // Autorisation Temps d'écran : sans elle rien ne bloque.
-  const [needsScreenTime, setNeedsScreenTime] = useState(false)
-  useEffect(() => {
-    if (!ScreenTime.isAvailable) return
-    const check = () => {
-      ScreenTime.authorizationStatus()
-        .then(s => setNeedsScreenTime(s !== 'approved'))
-        .catch(() => {})
-    }
-    check()
-    const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') check()
+  const countdown = useMemo(() => {
+    const duration = durationParts(dashboard.streakMinutesRemaining)
+    if (duration.unit === 'minutes')
+      return t('home.duration_minutes', { minutes: duration.minutes })
+    if (duration.unit === 'hours')
+      return t('home.duration_hours', { hours: duration.hours })
+    return t('home.duration_hours_minutes', {
+      hours: duration.hours,
+      minutes: duration.minutes,
     })
-    return () => sub.remove()
-  }, [])
+  }, [dashboard.streakMinutesRemaining, t])
 
-  const requestScreenTimeAuth = () => {
-    const toSettings = () =>
+  const requestScreenTimeAuthorization = async () => {
+    if (!ScreenTime.isAvailable) return
+    const openSettingsAlert = () =>
       Alert.alert(
-        'Autorisation requise',
-        "Ouvre Réglages > Temps d'écran et autorise Relock à gérer le temps d'écran.",
+        t('home.permission_title'),
+        t('home.permission_settings_body'),
         [
-          { text: 'Plus tard', style: 'cancel' },
-          { text: 'Ouvrir Réglages', onPress: () => Linking.openSettings() },
+          { text: t('home.permission_later'), style: 'cancel' },
+          {
+            text: t('home.permission_open_settings'),
+            onPress: () => Linking.openSettings(),
+          },
         ],
       )
-    ScreenTime.requestAuthorization()
-      .then(s => {
-        const ok = s === 'approved'
-        setNeedsScreenTime(!ok)
-        if (!ok) toSettings()
-      })
-      .catch(() => toSettings())
+    try {
+      const status = await ScreenTime.requestAuthorization()
+      await dashboard.authorization.refresh()
+      if (status !== 'approved') openSettingsAlert()
+    } catch {
+      openSettingsAlert()
+    }
+  }
+
+  const openBlocks = () => {
+    if (dashboard.isNewUser && !dashboard.referenceFixture)
+      router.push('/add-block')
+    else router.navigate('/(tabs)/blocks')
   }
 
   return (
     <ScreenWrapper
       disableTopInset
+      disableBottomInset
+      backgroundColor={colors.homeCanvas}
       statusBarProps={{
         backgroundColor: colors.transparent,
         translucent: true,
       }}
     >
-      <ScrollView
+      <HomeBackdrop />
+      <Animated.ScrollView
+        testID="home-scroll"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        style={styles.scroll}
+        removeClippedSubviews={false}
+        automaticallyAdjustContentInsets={false}
+        bounces
+        alwaysBounceVertical
+        contentInsetAdjustmentBehavior="never"
+        directionalLockEnabled
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: insets.bottom + layout.homeTabBarHeight + spacing.lg,
+          },
+        ]}
       >
-        <View
-          style={[
-            styles.container,
-            { paddingTop: insets.top + layout.headerTop },
-          ]}
-        >
-          {/* Header : logo + série + réglages */}
-          <View style={styles.header}>
-            <Image
-              source={require('../../../../assets/relock-wordmark.png')}
-              style={styles.brandLogo}
-              resizeMode="contain"
-              accessibilityLabel="Relock"
-            />
-            <View style={styles.headerActions}>
-              {stats.streak > 0 && (
-                <Image
-                  source={require('@assets/home-flamme.png')}
-                  style={styles.flame}
-                  resizeMode="contain"
-                  accessibilityLabel={`Série de ${stats.streak} jour${stats.streak > 1 ? 's' : ''}`}
-                />
-              )}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Réglages"
-                onPress={() => router.push('/settings')}
-                hitSlop={10}
-                style={styles.gear}
-              >
-                <IconSvg
-                  name={IconName.SETTINGS}
-                  size={layout.headerIconSize}
-                  color={colors.textPrimary}
-                />
-              </Pressable>
-            </View>
-          </View>
-
-          {!rulesPending &&
-            (isActive ? (
-              <ScreenTimeHero />
-            ) : (
-              <View style={styles.welcome}>
-                <Text style={[f(600), styles.welcomeKicker]}>
-                  Bienvenue dans Relock
-                </Text>
-                <Text style={[f(400), styles.welcomeSub]}>
-                  Commence par protéger un premier{'\n'}moment de ta journée.
-                </Text>
-              </View>
-            ))}
-
-          {/* L'alerte passe AVANT le reste : sans cette autorisation rien ne
-              bloque, donc ce qui suit ne veut rien dire. */}
-          {needsScreenTime && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Activer le contrôle du temps d'écran"
-              onPress={requestScreenTimeAuth}
-              style={styles.alertCard}
-            >
-              <View style={styles.alertIcon}>
-                <IconSvg
-                  name={IconName.MONITOR}
-                  size={typography.sectionTitleSize}
-                  color={colors.alertText}
-                />
-              </View>
-              <View style={styles.alertCopy}>
-                <Text style={[f(700), styles.alertTitle]}>
-                  Active le contrôle du temps d'écran
-                </Text>
-                <Text style={[f(400), styles.alertSub]}>
-                  Sans cette autorisation, Relock ne peut pas bloquer tes apps.
-                  Appuie pour l'activer.
-                </Text>
-              </View>
-              <IconSvg
-                name={IconName.FORWARD}
-                size={typography.sectionTitleSize}
-                color={colors.alertText}
+        <View style={styles.container}>
+          <HomeDashboardSurface
+            authorization={dashboard.authorization.status}
+            heroAccessibilityLabel={t('home.screen_time_open_activity')}
+            topAppsAccessibilityLabel={t('home.top_apps_open_activity')}
+            screenTimeLabel={t('home.screen_time_today')}
+            permissionLabel={t('home.screen_time_permission')}
+            unavailableLabel={t('home.screen_time_unavailable')}
+            topAppsLabel={t('home.top_apps')}
+            emptyUsageLabel={t('home.usage_missing')}
+            activityLabel={t('navigation.tabs.activity')}
+            onPressHero={() => router.navigate('/(tabs)/activity')}
+            onPressScore={() => setScoreOpen(true)}
+            onRequestPermission={requestScreenTimeAuthorization}
+            scoreCard={
+              <HomeScoreCard
+                scores={dashboard.scores}
+                title={t('home.global_score')}
+                subtitle={t('home.score_today')}
+                bandLabel={t(scoreBandKey(dashboard.score))}
+                footerLabel={t(scoreFooterKey(dashboard.score))}
+                focusLabel={t('home.focus_score')}
+                restLabel={t('home.rest_score')}
+                accessibilityLabel={`${t('home.global_score')} ${
+                  dashboard.scores.global ?? '—'
+                }, ${t('home.focus_score')} ${
+                  dashboard.scores.focus ?? '—'
+                }, ${t('home.rest_score')} ${dashboard.scores.rest ?? '—'}`}
+                accessibilityHint={t('home.score_accessibility')}
+                onPress={() => setScoreOpen(true)}
               />
-            </Pressable>
+            }
+            blockedAppsCard={
+              dashboard.myApps ? (
+                <HomeMyAppsCard
+                  model={dashboard.myApps}
+                  now={dashboard.now}
+                  onPress={openBlocks}
+                  onUnlock={() =>
+                    router.navigate({
+                      pathname: '/(tabs)/blocks',
+                      params: { homeUnlockRequest: String(Date.now()) },
+                    })
+                  }
+                />
+              ) : null
+            }
+          />
+
+          {streak > 0 && (
+            <View style={styles.progressCard}>
+              <HomeProgressCard streak={streak} />
+            </View>
           )}
 
-          {!rulesPending &&
-            (isActive ? (
-              <ActiveProtectionCard
-                primaryRule={primary?.rule ?? null}
-                scheduleFooterRule={scheduleFooter?.rule ?? null}
-                idleSession={idleSession}
-                now={now}
-                onExtend={onExtend}
-                extending={extendMutation.isPending}
-              />
-            ) : (
-              <EmptyProtectionCard />
-            ))}
-
-          {!rulesPending &&
-            (isActive ? (
-              <DailyResultsCard
-                savedMinutesWeek={stats.savedMinutesWeek}
-                interceptions={stats.interceptions}
-                isPending={stats.isPending}
-              />
-            ) : (
-              <QuickStartRail rules={rules} />
-            ))}
+          {/* Dernier élément du contenu : ne rend rien hors DEV. */}
+          <DevRestartButton />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/*
+        L'entete vit HORS du `ScrollView` : c'est une barre fixe de l'ecran,
+        pas le haut du contenu. Elle etait deja en `position: absolute`, mais
+        ancree dans le conteneur de contenu — donc elle defilait avec lui.
+        `box-none` laisse passer le geste de defilement partout sauf sur les
+        deux boutons, sinon la bande du haut avalerait le scroll.
+      */}
+      <HomeHeaderScrim
+        scrollY={scrollY}
+        solidHeight={insets.top + spacing.xxs + layout.homeHeaderActionSize}
+        fadeHeight={layout.homeHeaderScrimFade}
+      />
+      <View
+        testID="home-header"
+        pointerEvents="box-none"
+        style={[styles.header, { top: insets.top + spacing.xxs }]}
+      >
+        <HomeHeader
+          streak={streak}
+          streakLabel={t('home.streak_accessibility', { days: streak })}
+          settingsLabel={t('home.settings_accessibility')}
+          onPressStreak={() => setStreakOpen(true)}
+          onPressSettings={() => router.push('/settings')}
+        />
+      </View>
+
+      {dashboard.state === 'error' && (
+        <View
+          accessibilityRole="alert"
+          style={[styles.errorCard, { top: insets.top + 68 }]}
+        >
+          <IconSvg
+            name={IconName.INFO}
+            size={layout.quickChevronSize}
+            color={colors.alertText}
+          />
+          <Text style={styles.errorText}>{t('home.data_error')}</Text>
+        </View>
+      )}
+
+      <HomeScoreDetail
+        visible={scoreOpen}
+        scores={dashboard.scores}
+        onClose={() => setScoreOpen(false)}
+      />
+
+      <HomeDetailSheet
+        visible={streakOpen}
+        title={t('home.streak_detail_title')}
+        closeLabel={t('home.close')}
+        onClose={() => setStreakOpen(false)}
+      >
+        <View style={styles.sheetMetrics}>
+          <View style={styles.sheetMetricNeutral}>
+            <Text style={styles.sheetMetricLabel}>
+              {t('home.streak_detail_current')}
+            </Text>
+            <Text style={styles.sheetMetricValue}>
+              {t('home.streak_detail_days', { count: streak })}
+            </Text>
+          </View>
+          <View style={styles.sheetMetricNeutral}>
+            <Text style={styles.sheetMetricLabel}>
+              {t('home.streak_detail_record')}
+            </Text>
+            <Text style={styles.sheetMetricValue}>
+              {t('home.streak_detail_days', {
+                count: Math.max(streak, dashboard.stats.record),
+              })}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.streakStatus}>
+          <IconSvg
+            name={dashboard.protectedToday ? IconName.CHECK : IconName.CLOCK}
+            size={layout.headerIconSize}
+            color={
+              dashboard.protectedToday ? colors.homeMint : colors.homeLavender
+            }
+          />
+          <Text style={styles.streakStatusText}>
+            {dashboard.protectedToday
+              ? t('home.streak_detail_protected')
+              : t('home.streak_detail_waiting')}
+          </Text>
+        </View>
+        <View style={styles.dayProgressTrack}>
+          <View
+            style={[
+              styles.dayProgressFill,
+              {
+                width: `${Math.max(0, Math.min(100, ((1440 - dashboard.streakMinutesRemaining) / 1440) * 100))}%`,
+              },
+            ]}
+          />
+        </View>
+        <Text style={styles.sheetBody}>
+          {t('home.streak_detail_next', { duration: countdown })}
+        </Text>
+        <Text style={styles.sheetHint}>{t('home.streak_detail_rule')}</Text>
+      </HomeDetailSheet>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1 },
   scrollContent: {
-    flexGrow: 1,
+    minHeight:
+      layout.homeHeroHeight +
+      layout.homeScoreHeight +
+      layout.homeReportHeight +
+      layout.homeCardGap * 2,
   },
   container: {
-    flexGrow: 1,
     width: '100%',
     maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
-    paddingHorizontal: layout.screenHorizontal,
-    paddingBottom: layout.bottomNavigationClearance + layout.scrollBottom,
+  },
+  progressCard: {
+    marginHorizontal: layout.screenHorizontal,
+    marginTop: layout.homeCardGap,
   },
   header: {
+    position: 'absolute',
+    left: layout.screenHorizontal,
+    right: layout.screenHorizontal,
+    zIndex: 4,
+  },
+  errorCard: {
+    position: 'absolute',
+    left: layout.screenHorizontal,
+    right: layout.screenHorizontal,
+    zIndex: 5,
+    minHeight: layout.homeHeaderActionSize,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  brandLogo: {
-    width: layout.headerLogoWidth,
-    height: layout.headerLogoHeight,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: layout.welcomeCopyGap,
-  },
-  flame: {
-    width: layout.headerFlameSize,
-    height: layout.headerFlameSize,
-  },
-  gear: {
-    width: layout.headerActionSize,
-    height: layout.headerActionSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  welcome: {
-    marginTop: layout.headerBottom,
-    marginBottom: layout.welcomeBottom,
-  },
-  welcomeKicker: {
-    fontSize: typography.welcomeTitleSize,
-    lineHeight: typography.welcomeTitleLineHeight,
-    color: colors.accentViolet,
-  },
-  welcomeSub: {
-    fontSize: typography.welcomeBodySize,
-    color: colors.textSecondary,
-    lineHeight: typography.welcomeBodyLineHeight,
-    marginTop: layout.welcomeCopyGap,
-  },
-
-  // Alerte autorisation
-  alertCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: layout.panelPadding,
-    marginBottom: layout.sectionGap,
-    padding: layout.panelPadding,
-    borderRadius: radius.action,
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.functional,
     backgroundColor: colors.alertBackground,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.alertBorder,
   },
-  alertIcon: {
-    width: layout.headerActionSize,
-    height: layout.headerActionSize,
-    borderRadius: radius.compact,
-    backgroundColor: colors.alertBackground,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  alertCopy: {
+  errorText: {
+    ...fonts.medium,
     flex: 1,
-    minWidth: 0,
-  },
-  alertTitle: {
-    fontSize: typography.welcomeBodySize,
-    lineHeight: typography.welcomeBodyLineHeight,
     color: colors.alertText,
+    fontSize: typography.blockingCompactBodySize,
+    lineHeight: typography.blockingCompactBodyLineHeight,
   },
-  alertSub: {
-    fontSize: typography.quickTitleSize - 3,
-    color: colors.alertTextMuted,
-    marginTop: layout.welcomeCopyGap,
-    lineHeight: typography.welcomeBodyLineHeight - 3,
+  sheetMetrics: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  sheetMetricNeutral: {
+    flex: 1,
+    gap: spacing.xs,
+    padding: spacing.md,
+    borderRadius: radius.functional,
+    backgroundColor: colors.homeCardSoft,
+  },
+  sheetMetricLabel: {
+    ...fonts.medium,
+    color: colors.textSecondary,
+    fontSize: typography.blockingMetaSize,
+    lineHeight: typography.blockingMetaLineHeight,
+  },
+  sheetMetricValue: {
+    ...fonts.bold,
+    color: colors.textPrimary,
+    fontSize: typography.homeMetricSize,
+    lineHeight: typography.homeMetricLineHeight,
+    fontVariant: ['tabular-nums'],
+  },
+  streakStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  streakStatusText: {
+    ...fonts.semiBold,
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: typography.homeCardTitleSize,
+    lineHeight: typography.homeCardTitleLineHeight,
+  },
+  dayProgressTrack: {
+    height: spacing.xs,
+    overflow: 'hidden',
+    borderRadius: radius.capsule,
+    backgroundColor: colors.homeProgressTrack,
+    marginBottom: spacing.md,
+  },
+  dayProgressFill: {
+    height: '100%',
+    borderRadius: radius.capsule,
+    backgroundColor: colors.homeMint,
+  },
+  sheetBody: {
+    ...fonts.regular,
+    color: colors.textPrimary,
+    fontSize: typography.homeSubtitleSize,
+    lineHeight: typography.homeSubtitleLineHeight,
+    marginBottom: spacing.sm,
+  },
+  sheetHint: {
+    ...fonts.regular,
+    color: colors.textTertiary,
+    fontSize: typography.blockingMetaSize,
+    lineHeight: typography.blockingMetaLineHeight,
   },
 })

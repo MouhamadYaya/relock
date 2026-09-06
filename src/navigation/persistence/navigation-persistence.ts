@@ -33,6 +33,35 @@ export function clearNavigationPersistence() {
   navigationStorage.delete(KEY)
 }
 
+/**
+ * Une ENTRÉE EXTERNE revendique la navigation initiale.
+ *
+ * Le mur système ouvre Relock sans deep link : `Linking.getInitialURL()`
+ * renvoie `null`, et la restauration du dernier onglet partait donc
+ * tranquillement écraser la destination demandée par le mur. Comme la demande
+ * est consommée de façon DESTRUCTIVE côté natif, elle était perdue pour de
+ * bon : l'utilisateur tapait « Ouvrir Relock » et atterrissait sur l'Accueil,
+ * sans rituel de déblocage et sans moyen de recommencer.
+ *
+ * On ne peut pas régler ça par un simple drapeau : les deux sondes sont
+ * asynchrones et la course changerait au gré des latences. La restauration
+ * ATTEND donc la réponse de l'entrée externe avant de décider.
+ */
+let externalEntry: Promise<boolean> | null = null
+
+/**
+ * À appeler SYNCHRONEMENT au montage, avec la promesse qui dira si une entrée
+ * externe pilote bien la navigation (`true` = ne restaure rien).
+ */
+export function claimExternalEntry(probe: Promise<boolean>) {
+  externalEntry = probe
+}
+
+/** Visible pour les tests. */
+export function _resetExternalEntryForTests() {
+  externalEntry = null
+}
+
 /** Flips once `useRestoreLastPath` has read (and possibly applied) the stored path. */
 let restoreDecided = false
 const restoreListeners = new Set<() => void>()
@@ -79,9 +108,14 @@ export function useRestoreLastPath(enabled: boolean) {
     if (!enabled || didRestore.current) return
     didRestore.current = true
 
-    Linking.getInitialURL()
-      .then(url => {
-        if (url) return
+    Promise.all([
+      Linking.getInitialURL().catch(() => null),
+      // `false` quand personne n'a revendiqué : la restauration reprend son
+      // comportement d'origine.
+      externalEntry ?? Promise.resolve(false),
+    ])
+      .then(([url, claimedByExternalEntry]) => {
+        if (url || claimedByExternalEntry) return
         const lastPath = loadLastPath()
         if (lastPath) router.replace(lastPath as Href)
       })

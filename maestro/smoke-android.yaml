@@ -1,4 +1,4 @@
-appId: com.reactnativestarter
+appId: com.yaya.relock
 ---
 - launchApp
 - extendedWaitUntil:

@@ -307,6 +307,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - ExpoVideo (3.0.16):
+    - ExpoModulesCore
   - EXUpdatesInterface (2.0.0):
     - ExpoModulesCore
   - fast_float (8.0.0)
@@ -398,6 +400,11 @@ PODS:
   - PromisesObjC (2.4.1)
   - PromisesSwift (2.4.1):
     - PromisesObjC (= 2.4.1)
+  - PurchasesHybridCommon (18.33.1):
+    - RevenueCat (= 5.87.1)
+  - PurchasesHybridCommonUI (18.33.1):
+    - PurchasesHybridCommon (= 18.33.1)
+    - RevenueCatUI (= 5.87.1)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2846,6 +2853,9 @@ PODS:
     - React-utils (= 0.81.6)
     - SocketRocket
   - RecaptchaInterop (101.0.0)
+  - RevenueCat (5.87.1)
+  - RevenueCatUI (5.87.1):
+    - RevenueCat (= 5.87.1)
   - RNBootSplash (6.3.12):
     - boost
     - DoubleConversion
@@ -3015,6 +3025,12 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNPaywalls (10.9.0):
+    - PurchasesHybridCommonUI (= 18.33.1)
+    - React-Core
+  - RNPurchases (10.9.0):
+    - PurchasesHybridCommon (= 18.33.1)
+    - React-Core
   - RNReactNativeHapticFeedback (3.0.0):
     - boost
     - DoubleConversion
@@ -3424,6 +3440,7 @@ DEPENDENCIES:
   - ExpoKeepAwake (from `../node_modules/expo/node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - ExpoVideo (from `../node_modules/expo-video/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -3508,6 +3525,8 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - RNPaywalls (from `../node_modules/react-native-purchases-ui`)
+  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -3529,7 +3548,11 @@ SPEC REPOS:
     - MMKVCore
     - PromisesObjC
     - PromisesSwift
+    - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
     - RecaptchaInterop
+    - RevenueCat
+    - RevenueCatUI
     - Sentry
     - SocketRocket
 
@@ -3572,6 +3595,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-linking/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
+  ExpoVideo:
+    :path: "../node_modules/expo-video/ios"
   EXUpdatesInterface:
     :path: "../node_modules/expo-updates-interface/ios"
   fast_float:
@@ -3739,6 +3764,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNPaywalls:
+    :path: "../node_modules/react-native-purchases-ui"
+  RNPurchases:
+    :path: "../node_modules/react-native-purchases"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -3778,6 +3807,7 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: 55f75eca6499bb9e4231ebad6f3e9cb8f99c0296
   ExpoLinking: 2ef632ad5013e3f1568fae9408d56ab9af5efc55
   ExpoModulesCore: 20899b4dd703e10a543ff4c50ee1543e47d90082
+  ExpoVideo: 8d9e8a1acd0c4c210e538b4355e34ae8ff5e04f7
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: 812782f0506ba4c4a1b9f4b793e6de1bfdfc4c25
@@ -3793,6 +3823,8 @@ SPEC CHECKSUMS:
   NitroModules: 1dc73273d6e3aee937eec41ef3ed9470804b9884
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
+  PurchasesHybridCommon: 10fa5043609584e834a84b4641f9c1166e69ea55
+  PurchasesHybridCommonUI: 72905af114e6f8f0d089b3b09bb9442ba053a933
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: d4ef510f229cea15314176aee5e3ba10064a8496
   RCTRequired: 1e41b794629558f6626e2bc39c166ac0ec1c5878
@@ -3863,12 +3895,16 @@ SPEC CHECKSUMS:
   ReactCodegen: b4ff5f79e481567c6f14115f8314399b64e70268
   ReactCommon: 8fafefb37d562f9e4bbbc9081ca4501f178a97ec
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  RevenueCat: 7d45133f048270481facf0f7b02530e503a01620
+  RevenueCatUI: 9e9a56493980e8186af3344022a81835b4553413
   RNBootSplash: a50a2908e25aa4a3e5e2eb429bcf5ed54cbcb9e2
   RNCClipboard: 4b58c780f63676367640f23c8e114e9bd0cf86ac
   RNDateTimePicker: 97a86d7c8b51f2d51f694a9dddfe5996dfd9a407
   RNGestureHandler: e37bdb684df1ac17c7e1d8f71a3311b2793c186b
   RNGoogleSignin: 44bff1aeca8d5fb0a4d3d597a56c0782d6dc4ee9
   RNLocalize: 1aedbc2c15073861a364174919d23c31c5924b16
+  RNPaywalls: fa9e27ed808695b22c63f51ae785cb5417eb63e8
+  RNPurchases: 4a47b7ae0cc9f29bb8734a4536e44806d3a68d25
   RNReactNativeHapticFeedback: b309b317c95fc3b9bc8276da1a78dae34b6ed46e
   RNReanimated: 0017f5b53563a6d2c7801d81bdb12ac346214d82
   RNScreens: 0bbf16c074ae6bb1058a7bf2d1ae017f4306797c
@@ -3880,6 +3916,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 3196a843cc5f4bc433f1a41cf17cdf804a01a529
 
-PODFILE CHECKSUM: a4b86e2a173da907f1e94571ba9e88dd22e9f124
+PODFILE CHECKSUM: dfe57ae2060a14044a58611be79eac86bf19967b
 
 COCOAPODS: 1.17.0

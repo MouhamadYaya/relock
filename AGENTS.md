@@ -1,4 +1,4 @@
-# Agent context — React Native Starter
+# Agent context — Relock
 
 Primary project context for AI agents: follow this file first when editing or adding code.
 
@@ -100,6 +100,7 @@ Before modifying any Relock UI, read [`docs/RELOCK_VISUAL_SYSTEM.md`](docs/RELOC
 | [.claude/rules/](../.claude/rules/) | Scoped agent rules: assets, navigation, state, react-query, performance, security, i18n, testing, features, shared-components, shared-services, config |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Sentry, Maestro, GitHub Actions, OTA policy, publishing checklist |
 | [docs/OFFLINE.md](docs/OFFLINE.md) | Offline stack (NetInfo, transport, mutation queue, Query + MMKV persistence) |
+| [docs/TESTS-IPHONE.md](docs/TESTS-IPHONE.md) | Tester sur iPhone physique : XCUITest + pont de dev, pièges réseau, commandes de vérification du blocage |
 | [docs/permissions-bare-rn.md](docs/permissions-bare-rn.md) | Android / iOS permission catalog |
 | [docs/TODO.md](docs/TODO.md) | Roadmap and backlog (not normative for architecture) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Pull requests, changelog entries, quality checks, security reporting |

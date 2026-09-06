@@ -24,3 +24,22 @@ export function completeOnboarding() {
   useAppGateStore.getState().setOnboardingDone()
   router.replace('/(tabs)/home')
 }
+
+/**
+ * DEV uniquement : rejoue le parcours complet depuis la première scène de
+ * l'onboarding, sans réinstaller l'app. Symétrique de `completeOnboarding()`,
+ * et pour la même raison son `router.replace` explicite n'est pas cosmétique :
+ * laisser `Stack.Protected` rediriger seul depuis l'écran (tabs) encore actif
+ * passe par l'ancre `app/index.tsx` (elle-même un `<Redirect>`), et ce rebond
+ * en deux temps laisse le stack natif non composité — écran entièrement noir
+ * jusqu'à la navigation suivante.
+ *
+ * Ne touche QUE la porte d'onboarding : la session Supabase, les règles et
+ * les statistiques restent en place. L'étape `auth` du parcours se rejoue
+ * telle quelle même avec une session ouverte.
+ */
+export function resetOnboarding() {
+  kvStorage.delete(constants.ONBOARDING_DONE)
+  useAppGateStore.getState().resetOnboardingDone()
+  router.replace('/onboarding')
+}

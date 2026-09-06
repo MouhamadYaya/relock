@@ -1,0 +1,1053 @@
+import DeviceActivity
+import React
+import SwiftUI
+import UIKit
+import os
+
+/// Héberge un rapport de temps d'écran (extension RelockActivityReport) dans une
+/// UIView pour RN.
+/// - `mode` : « usage » (Activité complète) ou « home » (héro et classement
+///   du tableau de bord dans un rapport unique).
+/// - `offset` : recule de 0 à 6 jours dans le temps.
+///
+/// Le rapport est rendu dans un autre processus. Son contrôleur doit rester
+/// enfant du contrôleur RN pour recevoir le cycle de vie UIKit. La Home le
+/// conserve lors des transitions et retours d'arrière-plan; seule une
+/// configuration modifiée demande sa reconstruction. Les props RN sont
+/// regroupées pour ne pas interrompre une agrégation encore en cours.
+@available(iOS 16.0, *)
+private struct ReportContainer: View {
+  let offset: Int
+  let mode: String
+  let showsBlockedCard: Bool
+  /// Change à chaque reconstruction : force SwiftUI à créer un NOUVEAU
+  /// DeviceActivityReport (nouvelle connexion à l'extension), au lieu de
+  /// « mettre à jour » une surface distante peut-être morte.
+  let epoch: Int
+
+  /// Intervalle du jour demandé.
+  private func interval(_ cal: Calendar, _ now: Date) -> DateInterval {
+    let safeOffset = min(max(offset, 0), 6)
+    let anchor = cal.date(byAdding: .day, value: -safeOffset, to: now) ?? now
+    return cal.dateInterval(of: .day, for: anchor)
+      ?? DateInterval(start: anchor, duration: 86_400)
+  }
+
+  @ViewBuilder
+  private var report: some View {
+    let cal = Calendar.current
+    let now = Date()
+    // iPhone uniquement : `.all` additionnerait Mac/iPad → total > 24 h/jour.
+    let devices = DeviceActivityFilter.Devices(.init([.iPhone]))
+
+    switch mode {
+    case "home":
+      // [J-7 00:00 → fin d'aujourd'hui] en segments QUOTIDIENS : la scène
+      // combinée en tire le total du jour, le delta vs hier, les pilules du
+      // jour ET la référence personnelle du score (le score compare
+      // l'utilisateur à sa propre médiane, pas à un absolu — sans ces jours de
+      // recul il n'y a rien à comparer). UN seul rapport pour tout le bloc.
+      let today =
+        cal.dateInterval(of: .day, for: now)
+        ?? DateInterval(start: now, duration: 86_400)
+      let start = cal.date(byAdding: .day, value: -7, to: today.start) ?? today.start
+      DeviceActivityReport(
+        DeviceActivityReport.Context(
+          showsBlockedCard ? "TodayHomeWithBlocks" : "TodayHomeWithoutBlocks"),
+        filter: DeviceActivityFilter(
+          segment: .daily(during: DateInterval(start: start, end: today.end)),
+          users: .all, devices: devices))
+
+    default:
+      // Activité : UN SEUL rapport plein écran. Son extension possède le seul
+      // ScrollView vertical de la page.
+      let iv = interval(cal, now)
+      let safeOffset = min(max(offset, 0), 6)
+      DeviceActivityReport(
+        DeviceActivityReport.Context("ActivityP0O\(safeOffset)"),
+        filter: DeviceActivityFilter(
+          segment: .hourly(during: iv), users: .all, devices: devices))
+    }
+  }
+
+  var body: some View {
+    report
+      .id(epoch)
+  }
+}
+
+private final class ActivityControlsOverlay: UIView {
+  var onSelect: ((Int) -> Void)?
+  var onRefresh: (() -> Void)?
+  var onSettings: (() -> Void)?
+
+  private let titleLabel = UILabel()
+  private let refreshButton = UIButton(type: .custom)
+  private let settingsButton = UIButton(type: .custom)
+  private let dateContainer = UIView()
+  private var dateButtons: [UIButton] = []
+  private var selectedOffset = 0
+  private var refreshRevision = 0
+
+  private let background = UIColor(red: 0.043, green: 0.047, blue: 0.063, alpha: 1)
+  private let accent = UIColor(red: 0.643, green: 0.604, blue: 0.996, alpha: 1)
+  private let ink = UIColor(red: 0.94, green: 0.94, blue: 0.96, alpha: 1)
+  private let ink2 = UIColor(red: 0.66, green: 0.67, blue: 0.75, alpha: 1)
+  private let ink3 = UIColor(red: 0.46, green: 0.48, blue: 0.56, alpha: 1)
+  private let surface = UIColor(red: 0.110, green: 0.122, blue: 0.169, alpha: 1)
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    configure()
+  }
+
+  required init?(coder: NSCoder) {
+    super.init(coder: coder)
+    configure()
+  }
+
+  private func configure() {
+    backgroundColor = background
+
+    titleLabel.text = "Activité"
+    titleLabel.textColor = ink
+    titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
+    titleLabel.accessibilityTraits = .header
+    titleLabel.accessibilityIdentifier = "activity-native-title"
+    addSubview(titleLabel)
+
+    configureHeaderButton(
+      refreshButton,
+      symbol: "arrow.clockwise",
+      label: "Rafraîchir",
+      identifier: "activity-native-refresh")
+    refreshButton.addAction(UIAction { [weak self] _ in self?.onRefresh?() }, for: .touchUpInside)
+
+    configureHeaderButton(
+      settingsButton,
+      symbol: "gearshape",
+      label: "Réglages",
+      identifier: "activity-native-settings")
+    settingsButton.addAction(UIAction { [weak self] _ in self?.onSettings?() }, for: .touchUpInside)
+
+    addSubview(dateContainer)
+    update(offset: 0)
+  }
+
+  private func configureHeaderButton(
+    _ button: UIButton,
+    symbol: String,
+    label: String,
+    identifier: String
+  ) {
+    let configuration = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+    button.setImage(UIImage(systemName: symbol, withConfiguration: configuration), for: .normal)
+    button.tintColor = ink2
+    button.backgroundColor = UIColor(white: 1, alpha: 0.06)
+    button.layer.cornerRadius = 19
+    button.layer.borderWidth = 1
+    button.layer.borderColor = UIColor(white: 1, alpha: 0.10).cgColor
+    button.accessibilityLabel = label
+    button.accessibilityIdentifier = identifier
+    addSubview(button)
+  }
+
+  func update(offset: Int) {
+    selectedOffset = min(max(offset, 0), 6)
+    rebuildDateButtons()
+    setNeedsLayout()
+  }
+
+  func acknowledgeRefresh() {
+    refreshRevision += 1
+    refreshButton.accessibilityValue = "Actualisé \(refreshRevision)"
+    UIView.animate(
+      withDuration: 0.28,
+      animations: {
+        self.refreshButton.imageView?.transform = CGAffineTransform(rotationAngle: .pi)
+      },
+      completion: { _ in
+        UIView.animate(withDuration: 0.28) {
+          self.refreshButton.imageView?.transform = .identity
+        }
+      })
+  }
+
+  private func rebuildDateButtons() {
+    dateButtons.forEach { $0.removeFromSuperview() }
+    dateButtons.removeAll()
+
+    for option in dayOptions() {
+      let button = UIButton(type: .custom)
+      button.tag = option.offset
+      button.setTitle(option.label, for: .normal)
+      button.setTitleColor(option.offset == selectedOffset ? background : ink, for: .normal)
+      button.titleLabel?.font = .systemFont(
+        ofSize: 13,
+        weight: option.offset == selectedOffset ? .bold : .medium)
+      button.titleLabel?.numberOfLines = 2
+      button.titleLabel?.textAlignment = .center
+      button.backgroundColor = option.offset == selectedOffset ? accent : surface
+      button.layer.cornerRadius = 22
+      button.accessibilityIdentifier = "activity-native-day-\(option.offset)"
+      button.accessibilityTraits =
+        option.offset == selectedOffset ? [.button, .selected] : .button
+      button.addAction(UIAction { [weak self, weak button] _ in
+        guard let button else { return }
+        self?.onSelect?(button.tag)
+      }, for: .touchUpInside)
+      dateContainer.addSubview(button)
+      dateButtons.append(button)
+    }
+  }
+
+  private func dayOptions() -> [(offset: Int, label: String)] {
+    let calendar = Calendar.current
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "fr_FR")
+    formatter.dateFormat = "EEEEE"
+    return stride(from: 6, through: 0, by: -1).map { offset in
+      let date = calendar.date(byAdding: .day, value: -offset, to: Date()) ?? Date()
+      let letter = formatter.string(from: date).uppercased()
+      return (offset, "\(letter)\n\(calendar.component(.day, from: date))")
+    }
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    let horizontal: CGFloat = 20
+    titleLabel.frame = CGRect(x: horizontal, y: 4, width: bounds.width - 150, height: 38)
+    settingsButton.frame = CGRect(x: bounds.width - horizontal - 38, y: 4, width: 38, height: 38)
+    refreshButton.frame = CGRect(x: settingsButton.frame.minX - 48, y: 4, width: 38, height: 38)
+
+    dateContainer.frame = CGRect(
+      x: horizontal, y: 56, width: bounds.width - horizontal * 2, height: 78)
+    let count = CGFloat(max(dateButtons.count, 1))
+    let spacing: CGFloat = 8
+    let width = (dateContainer.bounds.width - spacing * (count - 1)) / count
+    for (index, button) in dateButtons.enumerated() {
+      button.frame = CGRect(
+        x: CGFloat(index) * (width + spacing),
+        y: 8,
+        width: width,
+        height: 56)
+    }
+  }
+
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    guard let hit = super.hitTest(point, with: event) else { return nil }
+    var candidate: UIView? = hit
+    while let view = candidate, view !== self {
+      if view is UIControl { return hit }
+      candidate = view.superview
+    }
+    return nil
+  }
+}
+
+/// Local controls register touch regions above the out-of-process report.
+/// A transparent UIView alone does not reliably intercept it on real iOS.
+private final class HomeReportControls: UIControl {
+  var onCommand: ((String) -> Void)?
+  var showsBlockedCard = false { didSet { setNeedsLayout() } }
+  private let hero = UIButton(type: .custom)
+  private let score = UIButton(type: .custom)
+  private let apps = UIButton(type: .custom)
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    configure(hero, command: "home.hero", label: "Ouvrir le détail du temps d’écran")
+    configure(score, command: "home.score", label: "Comprendre le score global")
+    configure(apps, command: "home.apps", label: "Voir les applications dans Activité")
+  }
+
+  required init?(coder: NSCoder) { fatalError("init(coder:) unavailable") }
+
+  private func configure(_ button: UIButton, command: String, label: String) {
+    button.accessibilityIdentifier = command
+    button.accessibilityLabel = label
+    button.addAction(UIAction { [weak self] _ in self?.onCommand?(command) }, for: .touchUpInside)
+    addSubview(button)
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    // Miroir des tokens `homeHeroHeight` / `homeScoreHeight` / `homeBlockedHeight`
+    // (relock-material.ts) : hero 360, score 270, carte « Mes apps » 280, gouttières 24.
+    hero.frame = CGRect(x: 0, y: 140, width: bounds.width, height: 220)
+    score.frame = CGRect(x: 16, y: 360, width: bounds.width - 32, height: 290)
+    apps.frame = CGRect(
+      x: 16, y: showsBlockedCard ? 978 : 674, width: bounds.width - 32, height: 232)
+  }
+
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    // Leave the React Native greeting, streak and Settings controls above it.
+    guard point.y >= 140 else { return nil }
+    return super.hitTest(point, with: event)
+  }
+}
+
+@objc(ScreenTimeReportView)
+final class ScreenTimeReportView: UIView {
+  fileprivate static let log = Logger(
+    subsystem: "com.yaya.relock", category: "reportview")
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    clipsToBounds = true
+    isOpaque = false
+    backgroundColor = .clear
+    configureActivityControls()
+  }
+
+  required init?(coder: NSCoder) {
+    super.init(coder: coder)
+    clipsToBounds = true
+    isOpaque = false
+    backgroundColor = .clear
+    configureActivityControls()
+  }
+
+  @objc var offset: NSNumber = 0 {
+    didSet {
+      if oldValue != offset { setNeedsRebuild() }
+      updateActivityControls()
+    }
+  }
+  @objc var mode: NSString = "usage" {
+    didSet {
+      if oldValue != mode {
+        updateActivityControls()
+        setNeedsRebuild()
+      }
+    }
+  }
+  @objc var reloadToken: NSNumber = 0 {
+    didSet { if oldValue != reloadToken { setNeedsRebuild() } }
+  }
+  @objc var showsBlockedCard = false {
+    didSet {
+      homeTouchSurface.showsBlockedCard = showsBlockedCard
+      if oldValue != showsBlockedCard { setNeedsRebuild() }
+    }
+  }
+  @objc var onCommand: RCTDirectEventBlock?
+  var onNavigateToSettings: (() -> Void)?
+
+  private var hosting: UIViewController?
+  private var rebuildWorkItem: DispatchWorkItem?
+  private var epoch = 0
+  private var reportNeedsRebuild = true
+  private let activityControls = ActivityControlsOverlay()
+  // A local UIKit surface receives touches instead of the out-of-process
+  // DeviceActivity surface. Its ancestor RN ScrollView owns the vertical pan.
+  private let homeTouchSurface = HomeReportControls()
+
+  deinit {
+    let controller = hosting
+    DispatchQueue.main.async {
+      controller?.willMove(toParent: nil)
+      controller?.view.removeFromSuperview()
+      controller?.removeFromParent()
+    }
+  }
+
+  private func configureActivityControls() {
+    activityControls.onSelect = { [weak self] offset in
+      guard let self else { return }
+      self.offset = NSNumber(value: offset)
+      self.onCommand?(["command": "select.day\(offset)"])
+    }
+    activityControls.onRefresh = { [weak self] in
+      guard let self else { return }
+      // Ne jamais détruire ici le rapport visible : iOS peut refuser de
+      // repeindre une DeviceActivityReport recréée immédiatement et laisser
+      // l'écran vide. La surface courante reste alimentée par Temps d'écran;
+      // on invalide uniquement sa présentation locale.
+      self.activityControls.acknowledgeRefresh()
+      self.hosting?.view.setNeedsLayout()
+      self.hosting?.view.setNeedsDisplay()
+    }
+    activityControls.onSettings = { [weak self] in
+      self?.onNavigateToSettings?()
+    }
+    addSubview(activityControls)
+    homeTouchSurface.backgroundColor = .clear
+    homeTouchSurface.isOpaque = false
+    homeTouchSurface.onCommand = { [weak self] command in
+      self?.onCommand?(["command": command])
+    }
+    homeTouchSurface.accessibilityIdentifier = "home-native-touch-surface"
+    addSubview(homeTouchSurface)
+    updateActivityControls()
+  }
+
+  private func updateActivityControls() {
+    activityControls.isHidden = mode != "usage"
+    // Le plan tactile local laisse le ScrollView RN reconnaître les pans;
+    // les boutons Home sont des frères RN placés au-dessus de ce plan.
+    isUserInteractionEnabled = true
+    homeTouchSurface.isHidden = mode != "home"
+    activityControls.update(offset: offset.intValue)
+  }
+
+  override func didMoveToWindow() {
+    super.didMoveToWindow()
+    if window == nil {
+      rebuildWorkItem?.cancel()
+      rebuildWorkItem = nil
+      // Home has proper controller containment now. Preserve it across tab
+      // transitions and scroll clipping; UIKit forwards disappearance and
+      // reappearance to the remote report. Destroying it on every transient
+      // detach loses the rendered surface and starts a new slow aggregation.
+      if mode != "home" { removeHostingController() }
+    } else if hosting == nil || reportNeedsRebuild {
+      setNeedsRebuild()
+    }
+  }
+
+  private func removeHostingController() {
+    hosting?.willMove(toParent: nil)
+    hosting?.view.removeFromSuperview()
+    hosting?.removeFromParent()
+    hosting = nil
+  }
+
+  private var parentController: UIViewController? {
+    var responder: UIResponder? = next
+    while let current = responder {
+      if let controller = current as? UIViewController { return controller }
+      responder = current.next
+    }
+    return nil
+  }
+
+  /// RN affecte les props sur plusieurs cycles. Un léger debounce attend la
+  /// configuration complète avant de créer le rapport : aucune connexion
+  /// Apple intermédiaire n'est lancée puis détruite en plein calcul.
+  private func setNeedsRebuild() {
+    reportNeedsRebuild = true
+    rebuildWorkItem?.cancel()
+    let work = DispatchWorkItem { [weak self] in
+      self?.rebuildWorkItem = nil
+      self?.rebuild()
+    }
+    rebuildWorkItem = work
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: work)
+  }
+
+  private func rebuild() {
+    guard window != nil, bounds.width > 0, bounds.height > 0,
+      let parent = parentController, #available(iOS 16.0, *) else { return }
+    reportNeedsRebuild = false
+    epoch += 1
+    ScreenTimeReportView.log.info(
+      "rebuild #\(self.epoch, privacy: .public) mode=\(self.mode, privacy: .public) offset=\(self.offset.intValue, privacy: .public)"
+    )
+    // Toujours un contrôleur NEUF : c'est ce qui force une nouvelle connexion
+    // à l'extension de rapport. L'ancien contenu (peut-être mort) part avec.
+    removeHostingController()
+
+    #if targetEnvironment(simulator)
+      let vc = UIHostingController(
+        rootView: MockReport(
+          mode: mode as String,
+          showsBlockedCard: showsBlockedCard,
+          homeReferenceFixture: UserDefaults.standard.bool(
+            forKey: "HomeReferenceFixture")).ignoresSafeArea())
+    #else
+      let root = ReportContainer(
+        offset: offset.intValue, mode: mode as String,
+        showsBlockedCard: showsBlockedCard, epoch: epoch
+      ).ignoresSafeArea()
+      let vc = UIHostingController(rootView: root)
+    #endif
+    // Home already lays out its status bar/header and bottom tab clearance.
+    // SwiftUI otherwise inserts the phone's 59pt top inset inside the fixed
+    // report, silently clipping the last application row.
+    if mode == "home", #available(iOS 16.4, *) {
+      vc.safeAreaRegions = []
+    }
+    vc.view.backgroundColor = .clear
+    vc.view.isOpaque = false
+    vc.view.frame = bounds
+    vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    parent.addChild(vc)
+    addSubview(vc.view)
+    vc.didMove(toParent: parent)
+    hosting = vc
+    bringSubviewToFront(homeTouchSurface)
+    bringSubviewToFront(activityControls)
+    // Le JS attend CE signal pour retirer son écran d'attente : sans lui, le
+    // rapport se dessine derrière un placeholder qui ne part jamais.
+    let readyEpoch = epoch
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+      guard let self, self.epoch == readyEpoch, self.window != nil else { return }
+      self.onCommand?(["command": "ready"])
+    }
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    hosting?.view.frame = bounds
+    homeTouchSurface.frame = bounds
+    activityControls.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 134)
+    if window != nil, hosting == nil, rebuildWorkItem == nil { setNeedsRebuild() }
+  }
+}
+
+#if targetEnvironment(simulator)
+  // MARK: - Aperçu SIMULATEUR (chiffres fictifs)
+  //
+  // Family Controls ne tourne pas sur simulateur → un vrai DeviceActivityReport
+  // y reste blanc. Ces vues reproduisent la mise en page réelle avec des
+  // données inventées, pour juger l'écran sans iPhone. Jamais compilées pour un
+  // appareil physique (`#if targetEnvironment(simulator)`).
+
+  private struct MockApp {
+    let name: String
+    let minutes: Int
+    let symbol: String
+    let tint: Color
+  }
+
+  private let mockApps: [MockApp] = [
+    MockApp(name: "Instagram", minutes: 80, symbol: "camera.fill",
+            tint: Color(red: 0.79, green: 0.33, blue: 0.63)),
+    MockApp(name: "TikTok", minutes: 47, symbol: "music.note",
+            tint: Color(red: 0.13, green: 0.13, blue: 0.16)),
+    MockApp(name: "Safari", minutes: 22, symbol: "safari.fill",
+            tint: Color(red: 0.20, green: 0.55, blue: 0.95)),
+    MockApp(name: "Messages", minutes: 12, symbol: "message.fill",
+            tint: Color(red: 0.30, green: 0.78, blue: 0.36)),
+    MockApp(name: "YouTube", minutes: 8, symbol: "play.rectangle.fill",
+            tint: Color(red: 0.90, green: 0.22, blue: 0.21)),
+    MockApp(name: "Spotify", minutes: 5, symbol: "music.note.list",
+            tint: Color(red: 0.11, green: 0.73, blue: 0.33)),
+    MockApp(name: "Plans", minutes: 4, symbol: "map.fill",
+            tint: Color(red: 0.35, green: 0.69, blue: 0.43)),
+    MockApp(name: "Photos", minutes: 3, symbol: "photo.fill",
+            tint: Color(red: 0.38, green: 0.58, blue: 0.94)),
+  ]
+
+  private func mockDuration(_ m: Int) -> String {
+    if m < 60 { return "\(m)m" }
+    let h = m / 60
+    let r = m % 60
+    return r == 0 ? "\(h)h" : "\(h)h \(r)"
+  }
+
+  private struct MockReport: View {
+    let mode: String
+    let showsBlockedCard: Bool
+    let homeReferenceFixture: Bool
+
+    var body: some View {
+      if mode == "home" {
+        MockHomeView(
+          referenceFixture: homeReferenceFixture,
+          showsBlockedCard: showsBlockedCard)
+      } else {
+        MockUsageView()
+      }
+    }
+  }
+
+  /// Verre des cartes de l'Accueil — miroir de `HomeGlassCard`
+  /// (RelockActivityReport.swift) et de `HomeCardMaterial.tsx`. Les trois
+  /// surfaces DOIVENT bouger ensemble : ce simulateur est l'endroit où l'on
+  /// juge le rendu, un décalage ici se paie en aller-retours inutiles.
+  private struct HomeGlassCard: ViewModifier {
+    let fill: Double
+    let edge: Double
+    private let corner: CGFloat = 36
+
+    func body(content: Content) -> some View {
+      content
+        .background(
+          ZStack(alignment: .top) {
+            Color.white.opacity(fill)
+            Rectangle().fill(Color.white.opacity(edge)).frame(height: 1)
+          }
+          .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        )
+        .overlay(
+          RoundedRectangle(cornerRadius: corner, style: .continuous)
+            .stroke(Color.white.opacity(0.07), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.45), radius: 20, x: 0, y: 12)
+    }
+  }
+
+  /// Accueil factice : les valeurs n'existent QUE sur simulateur. La géométrie
+  /// reste identique à HomeSectionView afin de valider le rapport unique qui
+  /// traverse le héro et la carte des trois apps.
+  private struct MockHomeView: View {
+    let referenceFixture: Bool
+    let showsBlockedCard: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var selectedApp: String?
+    private let ink = Color(red: 0.961, green: 0.961, blue: 0.969)
+    private let unit = Color(red: 0.922, green: 0.922, blue: 0.961)
+    private let green = Color(red: 0.373, green: 0.788, blue: 0.545)
+    private let ink2 = Color(red: 0.725, green: 0.690, blue: 0.792)
+
+    var body: some View {
+      GeometryReader { geometry in
+        VStack(alignment: .leading, spacing: 0) {
+        ZStack(alignment: .top) {
+          VStack(alignment: .center, spacing: 5) {
+            Text("Temps d’écran aujourd’hui")
+              .font(.system(size: 15, weight: .medium))
+              .foregroundColor(ink.opacity(0.94))
+              .shadow(color: .black.opacity(0.9), radius: 7, x: 0, y: 2)
+            // « 5h34 » : aucune espace autour des unités, minutes sur deux
+            // chiffres, unité à 0.45x la taille du nombre et même graisse.
+            // Miroir de `segments` dans HeroTotalView.
+            HStack(alignment: .firstTextBaseline, spacing: 0) {
+              Text(referenceFixture ? "5" : "—").font(.system(size: 48, weight: .bold)).kerning(-1.2)
+                .foregroundColor(ink)
+              if referenceFixture {
+                Text("h").font(.system(size: 22, weight: .bold)).kerning(-0.4)
+                  .foregroundColor(unit.opacity(0.45))
+                Text("34").font(.system(size: 48, weight: .bold)).kerning(-1.2).foregroundColor(ink)
+              }
+            }
+            if referenceFixture {
+              // Comparaison à la référence PERSONNELLE proratisée, jamais au
+              // total d'hier — miroir de `comparison` dans HeroTotalView.
+              HStack(spacing: 6) {
+                Image(systemName: "arrow.down")
+                  .font(.system(size: 17, weight: .bold)).foregroundColor(green)
+                Text("1h12 sous ta moyenne")
+                  .font(.system(size: 17, weight: .semibold)).foregroundColor(green)
+              }
+            } else {
+              Text("Les données réelles ne sont pas simulées.")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(ink.opacity(0.68))
+            }
+          }
+          .frame(maxWidth: .infinity)
+          .padding(.top, 180)
+          .shadow(color: .black.opacity(0.9), radius: 8, x: 0, y: 2)
+        }
+        .frame(width: geometry.size.width, height: 360, alignment: .top)
+
+        mockScoreCard
+          .padding(.horizontal, 16)
+        Color.clear.frame(height: showsBlockedCard ? 328 : 24)
+
+        VStack(alignment: .leading, spacing: 16) {
+          Text("Top 3 applications aujourd’hui")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundColor(ink)
+          if referenceFixture {
+            VStack(spacing: 12) {
+              ForEach(Array(referenceApps.enumerated()), id: \.offset) { _, app in
+                Button {
+                  let action = { selectedApp = selectedApp == app.name ? nil : app.name }
+                  if reduceMotion { action() } else { withAnimation(.easeOut(duration: 0.2), action) }
+                } label: {
+                  HStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                      .fill(app.tint)
+                      .frame(width: 38, height: 38)
+                      .overlay(
+                        Image(systemName: app.symbol)
+                          .font(.system(size: 20, weight: .medium))
+                          .foregroundColor(.white))
+                    Text(app.name)
+                      .font(.system(size: 14, weight: .medium))
+                      .foregroundColor(ink)
+                      .lineLimit(1)
+                      .truncationMode(.tail)
+                      .frame(width: 96, alignment: .leading)
+                    if selectedApp == app.name {
+                      Text("Usage aujourd’hui · \(Int(round(Double(app.minutes) / Double(referenceApps[0].minutes) * 100))) %")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(ink2)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                      GeometryReader { bar in
+                        ZStack(alignment: .leading) {
+                          Capsule().fill(Color.white.opacity(0.08))
+                          Capsule()
+                            .fill(
+                              LinearGradient(
+                                colors: [
+                                  Color(red: 0.451, green: 0.341, blue: 0.863),
+                                  Color(red: 0.784, green: 0.722, blue: 1.0),
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing)
+                            )
+                            .frame(
+                              width: bar.size.width * CGFloat(app.minutes) / CGFloat(referenceApps[0].minutes))
+                        }
+                      }
+                      .frame(height: 6)
+                    }
+                    Text(mockDuration(app.minutes))
+                      .font(.system(size: 13, weight: .medium))
+                      .monospacedDigit()
+                      .foregroundColor(ink2)
+                      .lineLimit(1)
+                      .frame(width: 54, alignment: .trailing)
+                  }
+                  .frame(height: 46)
+                }
+                .buttonStyle(.plain)
+              }
+            }
+          } else {
+            VStack(spacing: 12) {
+              ForEach(0..<3, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                  .fill(Color.white.opacity(0.045)).frame(height: 46)
+              }
+            }
+          }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .frame(width: geometry.size.width - 32, height: 232, alignment: .topLeading)
+        .modifier(HomeGlassCard(fill: 0.035, edge: 0.06))
+        .padding(.horizontal, 16)
+        }
+        .frame(
+          width: geometry.size.width, height: geometry.size.height,
+          alignment: .topLeading)
+        .background(Color.clear)
+        .environment(\.colorScheme, .dark)
+      }
+    }
+
+    private var fixtureGlobal: Int { referenceFixture ? 72 : 86 }
+    private var fixtureFocus: Int { referenceFixture ? 78 : 88 }
+    private var fixtureRest: Int { referenceFixture ? 66 : 84 }
+    private var fixtureDelta: Int { referenceFixture ? 6 : -3 }
+
+    // Miroir des accents violet Relock et lavande côté React Native.
+      private let violet = Color(red: 0.655, green: 0.545, blue: 0.980)
+    private let lavender = Color(red: 0.784, green: 0.722, blue: 1.0)
+    private let amber = Color(red: 0.878, green: 0.635, blue: 0.306)
+    private let ink3 = Color(red: 0.522, green: 0.525, blue: 0.604)
+
+    private func band(_ value: Int) -> String {
+      if value >= 80 { return "Excellent équilibre" }
+      if value >= 60 { return "Bon équilibre" }
+      if value >= 35 { return "Équilibre moyen" }
+      return "Équilibre fragile"
+    }
+
+    /// Miroir de `scoreFooter` dans RelockActivityReport.swift : la phrase nomme
+    /// l'axe qui décroche. Le fixture prend Focus comme axe faible.
+    private var scoreFooter: String {
+      let value = fixtureGlobal
+      if value >= 80 { return "Journée maîtrisée : ton attention tient bon." }
+      if value >= 60 {
+        return "Bon rythme. Tu ouvres ton téléphone un peu plus que d’habitude."
+      }
+      if value >= 35 {
+        return "Ton attention se fragmente : beaucoup d’allers-retours aujourd’hui."
+      }
+      return "Tu décroches souvent aujourd’hui. Un blocage t’aiderait à tenir."
+    }
+
+    /// Carte « Score global » : anneau lumineux à gauche, les deux sous-scores à
+    /// droite, encouragement en pied. Hauteur miroir de `homeScoreHeight`
+    /// (relock-material.ts) et de la zone tactile de ScreenTimeReportView.
+    private var mockScoreCard: some View {
+      VStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 12) {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("Score global")
+              .font(.system(size: 20, weight: .bold))
+              .foregroundColor(ink)
+              .lineLimit(1)
+            Text("Aujourd’hui")
+              .font(.system(size: 14))
+              .foregroundColor(ink3)
+              .lineLimit(1)
+          }
+          Spacer(minLength: 8)
+          scoreDeltaPill(fixtureDelta)
+        }
+        .frame(height: 46)
+
+        Spacer(minLength: 0)
+
+        HStack(spacing: 0) {
+          scoreDial
+            .frame(width: 152, height: 152)
+          scoreSeparator
+          VStack(spacing: 0) {
+            scoreRow(
+              symbol: "circle.circle.fill", label: "Focus", value: fixtureFocus,
+              tint: violet)
+            Rectangle()
+              .fill(Color.white.opacity(0.09))
+              .frame(height: 1)
+            scoreRow(
+              symbol: "moon.fill", label: "Repos", value: fixtureRest,
+              tint: lavender)
+          }
+          .frame(height: 152)
+        }
+
+        Spacer(minLength: 0)
+
+        HStack(spacing: 8) {
+          Image(systemName: "heart")
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(lavender)
+          Text(scoreFooter)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(ink2)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
+        .frame(height: 20)
+      }
+      .padding(20)
+      .frame(maxWidth: .infinity, minHeight: 290, maxHeight: 290)
+      .modifier(HomeGlassCard(fill: 0.055, edge: 0.12))
+      .accessibilityElement(children: .combine)
+      .accessibilityLabel(
+        "Score global \(fixtureGlobal), \(band(fixtureGlobal)), Focus \(fixtureFocus), Repos \(fixtureRest)")
+    }
+
+    private func scoreDeltaPill(_ delta: Int) -> some View {
+      let rising = delta > 0
+      let tint = rising ? green : amber
+      return HStack(spacing: 4) {
+        Image(systemName: rising ? "arrow.up" : "arrow.down")
+          .font(.system(size: 12, weight: .bold))
+        Text(String(abs(delta)))
+          .font(.system(size: 15, weight: .semibold))
+          .monospacedDigit()
+        Text("vs hier")
+          .font(.system(size: 12, weight: .medium))
+          .opacity(0.72)
+          .lineLimit(1)
+      }
+      .foregroundColor(tint)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 7)
+      .background(Capsule().fill(tint.opacity(0.14)))
+    }
+
+    /// Miroir de `scoreDial` dans RelockActivityReport.swift.
+    private var scoreDial: some View {
+      ZStack {
+        Image("home-score-dial")
+          .resizable()
+          .scaledToFit()
+          .opacity(0.22)
+          .accessibilityHidden(true)
+
+        VStack(spacing: 1) {
+          Text(String(fixtureGlobal))
+            .font(.system(size: 44, weight: .bold))
+            .monospacedDigit()
+            .foregroundColor(ink)
+          Text(band(fixtureGlobal))
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(lavender)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+        }
+      }
+    }
+
+    private var scoreSeparator: some View {
+      Rectangle()
+        .fill(Color.white.opacity(0.09))
+        .frame(width: 1, height: 152)
+        .overlay(
+          Image(systemName: "arrowtriangle.right.fill")
+            .font(.system(size: 7))
+            .foregroundColor(Color.white.opacity(0.18))
+        )
+        .padding(.horizontal, 14)
+    }
+
+    private func scoreRow(
+      symbol: String,
+      label: String,
+      value: Int,
+      tint: Color
+    ) -> some View {
+      HStack(spacing: 10) {
+        Image(systemName: symbol)
+          .font(.system(size: 17, weight: .medium))
+          .foregroundColor(tint)
+          .frame(width: 24)
+        Text(label)
+          .font(.system(size: 15, weight: .medium))
+          .foregroundColor(ink)
+          .lineLimit(1)
+        Spacer(minLength: 8)
+        Text(String(value))
+          .font(.system(size: 22, weight: .bold))
+          .monospacedDigit()
+          .foregroundColor(ink)
+      }
+      .frame(maxHeight: .infinity)
+    }
+
+    private var referenceApps: [MockApp] {
+      [
+        MockApp(name: "TikTok", minutes: 132, symbol: "music.note", tint: Color.black),
+        MockApp(name: "Instagram", minutes: 88, symbol: "camera.fill", tint: Color(red: 0.79, green: 0.23, blue: 0.67)),
+        MockApp(name: "YouTube", minutes: 52, symbol: "play.fill", tint: Color(red: 0.92, green: 0.08, blue: 0.12)),
+      ]
+    }
+  }
+
+  /// Écran Activité factice : total, graphe, classement (miroir d'UsageReportView).
+  private struct MockUsageView: View {
+    private let ink = Color(red: 0.941, green: 0.941, blue: 0.957)
+    private let ink2 = Color(red: 0.66, green: 0.67, blue: 0.75)
+    private let accent = Color(red: 0.643, green: 0.604, blue: 0.996)
+    private let card = Color.white.opacity(0.045)
+
+    private let bars: [CGFloat] =
+      [0.2, 0.35, 0.5, 0.3, 0.8, 0.6, 0.9, 0.7, 0.4, 0.55, 0.65, 0.45]
+    private let axis = ["6h", "9h", "12h", "15h", "18h", "21h"]
+
+    var body: some View {
+      ScrollView(.vertical, showsIndicators: false) {
+        VStack(alignment: .leading, spacing: 18) {
+          Color.clear.frame(height: 134).accessibilityHidden(true)
+          // Résumé
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Temps d'écran").font(.system(size: 13)).foregroundColor(ink2)
+            Text("3 h 12").font(.system(size: 34, weight: .bold)).foregroundColor(ink)
+          }
+
+          // Graphe
+          VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 6) {
+              ForEach(bars.indices, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 4)
+                  .fill(i == bars.count - 2 ? accent : accent.opacity(0.35))
+                  .frame(maxWidth: .infinity)
+                  .frame(height: max(6, bars[i] * 130))
+              }
+            }
+            .frame(height: 130)
+            HStack {
+              ForEach(axis.indices, id: \.self) { i in
+                Text(axis[i]).font(.system(size: 11)).foregroundColor(ink2)
+                  .frame(maxWidth: .infinity)
+              }
+            }
+          }
+          .padding(14)
+          .background(RoundedRectangle(cornerRadius: 18).fill(card))
+
+          // Classement
+          VStack(spacing: 0) {
+            ForEach(mockApps.prefix(8).indices, id: \.self) { i in
+              let app = mockApps[i]
+              HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                  .fill(app.tint).frame(width: 34, height: 34)
+                  .overlay(Image(systemName: app.symbol)
+                    .font(.system(size: 15, weight: .medium)).foregroundColor(.white))
+                Text(app.name).font(.system(size: 15, weight: .medium)).foregroundColor(ink)
+                Spacer()
+                Text(mockDuration(app.minutes))
+                  .font(.system(size: 14, weight: .semibold)).foregroundColor(ink2)
+              }
+              .padding(.vertical, 11)
+              if i < 7 {
+                Divider().overlay(Color.white.opacity(0.06))
+              }
+            }
+          }
+          .padding(.horizontal, 14)
+          .background(RoundedRectangle(cornerRadius: 18).fill(card))
+          .accessibilityIdentifier("activity-native-apps")
+
+          VStack(alignment: .leading, spacing: 12) {
+            Text("Autres statistiques")
+              .font(.system(size: 23, weight: .bold))
+              .foregroundColor(ink)
+            mockStatCard(
+              value: 186,
+              title: "Notifications",
+              subtitle: "reçues sur la période",
+              imageName: "notification-card")
+            mockStatCard(
+              value: 42,
+              title: "Prises en main",
+              subtitle: "sur la période",
+              imageName: "pickups-card")
+          }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+        .padding(.bottom, 32)
+      }
+      .accessibilityIdentifier("activity-native-scroll")
+      .background(Color(red: 0.043, green: 0.047, blue: 0.063))
+      .environment(\.colorScheme, .dark)
+    }
+
+    private func mockStatCard(
+      value: Int,
+      title: String,
+      subtitle: String,
+      imageName: String
+    ) -> some View {
+      let surface = Color(red: 0.082, green: 0.086, blue: 0.102)
+      return ZStack(alignment: .leading) {
+        surface
+        Image(imageName)
+          .resizable()
+          .scaledToFill()
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .clipped()
+          .accessibilityHidden(true)
+        LinearGradient(
+          colors: [surface, surface.opacity(0.96), surface.opacity(0.20)],
+          startPoint: .leading,
+          endPoint: .trailing)
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+          Text("\(value)")
+            .font(.system(size: 52, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundColor(ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+            .layoutPriority(1)
+          VStack(alignment: .leading, spacing: 1) {
+            Text(title)
+              .font(.system(size: 18, weight: .semibold))
+              .foregroundColor(ink)
+              .lineLimit(1)
+              .minimumScaleFactor(0.82)
+            Text(subtitle)
+              .font(.system(size: 13))
+              .foregroundColor(ink2)
+              .lineLimit(1)
+              .minimumScaleFactor(0.82)
+          }
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 18)
+      }
+      .frame(height: 168)
+      .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+          .stroke(Color.white.opacity(0.08), lineWidth: 1)
+      )
+      .accessibilityElement(children: .combine)
+    }
+  }
+#endif

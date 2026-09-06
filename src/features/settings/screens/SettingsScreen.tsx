@@ -17,9 +17,14 @@ import {
   type NotifPrefs,
   setNotifPrefs,
 } from '@/features/notifications/prefs'
+import {
+  isRevenueCatEnabled,
+  openRevenueCatCustomerCenter,
+} from '@/features/onboarding/services/revenuecat'
 import { useProfile, useUpdateName } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
+import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { useTheme } from '@/shared/theme'
@@ -51,6 +56,7 @@ function showNativeDiagnostics() {
         `Build natif : ${d.nativeBuiltAt}`,
         `Autorisation : ${d.authorized ? 'accordée' : 'ABSENTE'}`,
         `App Group : ${d.appGroupOK ? 'OK' : 'INACCESSIBLE'}`,
+        `Transport Shield : ${d.shieldStateTransport}`,
         `Journal : ${d.eventLogCount} événement(s)`,
         `Résistances (total) : ${d.totalResisted}`,
         `Fenêtres actives : ${d.activeWindows.join(', ') || 'aucune'}`,
@@ -61,6 +67,8 @@ function showNativeDiagnostics() {
         `  → ${d.monitorLastWakeWhat}`,
         `Bouclier affiché : ${d.shieldShownTotal ?? 0}× (dernier : ${d.shieldLastShownAt ?? 'jamais'})`,
         `Bouclier tapé : ${d.shieldLastActionAt}`,
+        `  → ${d.shieldLastOpenRequestStatus} / ${d.shieldLastActionResponse}`,
+        `Contexte en attente : ${d.pendingShieldRequest?.applicationName ?? 'aucun'}`,
         `Quotas du jour : ${
           Object.entries(d.limitProgress ?? {})
             .map(([k, v]) => `${k.slice(14, 22)}…=${v}`)
@@ -180,6 +188,7 @@ export default function SettingsScreen() {
   const { name, displayName, email } = useProfile()
   const updateName = useUpdateName()
   const { mode } = useTheme()
+  const revenueCatEnabled = isRevenueCatEnabled()
 
   // Notifications : préférences persistées, appliquées IMMÉDIATEMENT.
   const [notif, setNotif] = React.useState<NotifPrefs>(getNotifPrefs)
@@ -214,6 +223,26 @@ export default function SettingsScreen() {
     ScreenTime.requestAuthorization()
       .then(s => setAuthorized(s === 'approved'))
       .catch(e => showErrorToast(e))
+  }
+
+  const showCustomerCenter = revenueCatEnabled
+
+  const openCustomerCenter = () => {
+    if (!revenueCatEnabled) {
+      Alert.alert(
+        'Gestion abonnement',
+        'RevenueCat n’est pas activé pour cette build.',
+      )
+      return
+    }
+
+    void (async () => {
+      try {
+        await openRevenueCatCustomerCenter()
+      } catch {
+        showErrorToast('Impossible d’ouvrir le Customer Center.')
+      }
+    })()
   }
 
   const onEditName = () => {
@@ -331,7 +360,7 @@ export default function SettingsScreen() {
               icon={IconName.MONITOR}
               label="Permissions · Temps d'écran"
               onPress={requestScreenTime}
-              right={
+                right={
                 <View style={styles.statusOn}>
                   <View
                     style={[
@@ -348,9 +377,17 @@ export default function SettingsScreen() {
                     {authorized ? 'Activé' : 'À activer'}
                   </Text>
                 </View>
-              }
-              last={!__DEV__}
+                }
+              last={__DEV__ || !showCustomerCenter}
             />
+            {showCustomerCenter ? (
+              <Row
+                icon={IconName.SETTINGS}
+                label="Centre de gestion des abonnements"
+                onPress={openCustomerCenter}
+                last={!__DEV__}
+              />
+            ) : null}
             {__DEV__ ? (
               <Row
                 icon={IconName.MONITOR}
@@ -361,9 +398,12 @@ export default function SettingsScreen() {
             ) : null}
           </View>
 
-          <Text style={[f(400), styles.footer]}>
-            Relock · version {appConfig.version}
-          </Text>
+          <View style={styles.signature}>
+            <RelockWordmark height={22} />
+            <Text style={[f(400), styles.footer]}>
+              version {appConfig.version}
+            </Text>
+          </View>
 
           <View style={{ height: 32 }} />
         </View>
@@ -459,10 +499,16 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 10,
   },
+  // Signature de bas de page : le logotype porte la marque, la ligne en
+  // dessous ne dit plus que le numero de version.
+  signature: {
+    alignItems: 'center',
+    paddingTop: 22,
+    gap: 6,
+  },
   footer: {
     textAlign: 'center',
     fontSize: 12,
     color: C.ink3,
-    paddingTop: 22,
   },
 })

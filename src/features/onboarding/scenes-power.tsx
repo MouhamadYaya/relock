@@ -1,20 +1,34 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { AppState, Linking, StyleSheet, Text, View } from 'react-native'
-import Animated, { FadeIn } from 'react-native-reanimated'
-import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  ActivityIndicator,
+  AppState,
+  Linking,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { NotificationService } from '@/features/notifications/notification.service'
+import { PaywallFlow } from '@/features/onboarding/components/paywall/PaywallFlow'
+import {
+  PREVIEW_OFFER,
+  PREVIEW_PLANS,
+} from '@/features/onboarding/components/paywall/paywall-preview'
+import type {
+  PaywallCatalog,
+  PaywallPurchase,
+} from '@/features/onboarding/types/paywall'
+import { useT } from '@/i18n/useT'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import {
-  Footnote,
-  GhostLink,
-  GradientLine,
-  GuideCard,
-  Moon,
-  Pill,
-  RedAlert,
-} from './bits'
+import { GhostLink, GuideCard, Pill, RedAlert } from './bits'
 import { Reveal } from './motion'
+import {
+  hasRelockProEntitlement,
+  isRevenueCatEnabled,
+  loadPaywallCatalog,
+  paywallPurchaseWithRevenueCat,
+  restoreRevenueCatPurchases,
+} from './services/revenuecat'
 import { GUIDE_BOTTOM_PADDING, GUIDE_SCENE_PADDING, haptic, OB } from './tokens'
 
 // ─── Acte 4 · Temps d'écran (blocage DUR) ───────────────────────────────
@@ -197,212 +211,101 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
   )
 }
 
-// ─── Acte 5 · Paywall (niveau Opal, paiement non branché) ───────────────
+/**
+ * Adaptateur d'aperçu, développement uniquement.
+ *
+ * Il ne facture rien et se comporte comme une feuille de paiement que
+ * l'utilisateur aurait refermée. `storeSheetPresented: false` est essentiel :
+ * c'est ce qui empêche l'offre de rattrapage à −50 % de s'ouvrir, puisqu'elle
+ * ne doit JAMAIS suivre autre chose qu'une annulation réelle.
+ */
+const previewPurchase: PaywallPurchase = async () => ({
+  status: 'cancelled',
+  storeSheetPresented: false,
+})
 
-const TIMELINE = [
-  {
-    k: "Aujourd'hui",
-    v: 'Accès complet à Relock, gratuitement.',
-  },
-  {
-    k: 'Jour 5',
-    v: "On te prévient que l'essai se termine bientôt.",
-  },
-  {
-    k: 'Jour 7',
-    v: 'Premier prélèvement. Annulable avant, en un geste.',
-  },
-]
+// Le paywall est isolé des écrans de permission et de notifications.
+export function ScenePaywall({ onNext }: { onNext: () => void }) {
+  const t = useT()
+  const hasNativeBilling = isRevenueCatEnabled()
+  const [loading, setLoading] = useState(hasNativeBilling)
+  const [catalog, setCatalog] = useState<PaywallCatalog | null>(null)
 
-export function ScenePaywall({
-  onDone,
-  onSkip,
-}: {
-  onDone: () => void
-  onSkip: () => void
-}) {
-  const [plan, setPlan] = useState<'year' | 'month'>('year')
-
-  return (
-    <View style={styles.scene}>
-      <View style={styles.paywallTopRow}>
-        <GhostLink label="Plus tard" onPress={onSkip} dim />
-      </View>
-      <View style={styles.paywallBody}>
-        <Reveal index={0}>
-          <Text style={styles.h1}>Débloque ton plan.</Text>
-        </Reveal>
-        <Reveal index={1} style={styles.timeline}>
-          {TIMELINE.map((t, i) => (
-            <View key={t.k} style={styles.timelineRow}>
-              <View style={styles.timelineRail}>
-                <View
-                  style={[
-                    styles.timelineDot,
-                    i === 0 && { backgroundColor: OB.accent },
-                  ]}
-                />
-                {i < TIMELINE.length - 1 ? (
-                  <View style={styles.timelineLine} />
-                ) : null}
-              </View>
-              <View style={styles.timelineText}>
-                <Text style={styles.timelineK}>{t.k}</Text>
-                <Text style={styles.timelineV}>{t.v}</Text>
-              </View>
-            </View>
-          ))}
-        </Reveal>
-        <Reveal index={2} style={styles.plans}>
-          <PlanCard
-            title="Annuel"
-            price="39,99 € par an"
-            sub="Soit 3,33 € par mois. 7 jours offerts."
-            badge="7 JOURS OFFERTS"
-            selected={plan === 'year'}
-            onPress={() => setPlan('year')}
-          />
-          <PlanCard
-            title="Mensuel"
-            price="6,99 € par mois"
-            sub="Sans engagement."
-            selected={plan === 'month'}
-            onPress={() => setPlan('month')}
-          />
-        </Reveal>
-      </View>
-      <Reveal index={3} style={styles.bottom}>
-        <Pill
-          label="Commencer mes 7 jours gratuits"
-          sub="Aucun paiement aujourd'hui"
-          onPress={onDone}
-          kind="danger"
-        />
-        <Footnote text="Prix indicatifs. Le paiement n'est pas activé dans cette version." />
-      </Reveal>
-    </View>
-  )
-}
-
-function PlanCard({
-  title,
-  price,
-  sub,
-  badge,
-  selected,
-  onPress,
-}: {
-  title: string
-  price: string
-  sub: string
-  badge?: string
-  selected: boolean
-  onPress: () => void
-}) {
-  return (
-    <Text
-      accessibilityRole="button"
-      onPress={() => {
-        haptic.select()
-        onPress()
-      }}
-      style={[styles.plan, selected && styles.planSelected]}
-    >
-      {badge ? (
-        <>
-          <Text style={styles.planBadge}>{badge}</Text>
-          {'\n'}
-        </>
-      ) : null}
-      <Text style={styles.planTitle}>{title}</Text>
-      {'\n'}
-      <Text style={styles.planPrice}>{price}</Text>
-      {'\n'}
-      <Text style={styles.planSub}>{sub}</Text>
-    </Text>
-  )
-}
-
-// ─── Acte 5 · L'artefact ────────────────────────────────────────────────
-
-/** Clôture en élévation : le ciel, la lune, une maxime. Pas de confetti. */
-export function SceneArtifact({ onEnter }: { onEnter: () => void }) {
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 34 }, (_, i) => ({
-        key: `s${i}`,
-        x: (i * 137.5) % 100,
-        y: ((i * 61.8) % 88) + 4,
-        r: 0.6 + ((i * 7) % 10) / 9,
-        o: 0.25 + ((i * 13) % 10) / 22,
-      })),
-    [],
-  )
-  const [ready, setReady] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setReady(true), 1400)
-    return () => clearTimeout(t)
-  }, [])
+    if (!hasNativeBilling) {
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+    void (async () => {
+      // Déjà abonné : on ne repropose rien, on laisse entrer.
+      const hasEntitlement = await hasRelockProEntitlement()
+      if (cancelled) return
+      if (hasEntitlement) {
+        onNext()
+        return
+      }
+      // Les tarifs viennent du store à chaque affichage — jamais du bundle.
+      const storeCatalog = await loadPaywallCatalog()
+      if (cancelled) return
+      setCatalog(storeCatalog)
+      setLoading(false)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [hasNativeBilling, onNext])
+
+  const restore = useCallback(async () => {
+    const restored = await restoreRevenueCatPurchases()
+    if (restored) {
+      onNext()
+    }
+  }, [onNext])
+
+  if (loading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
+      </View>
+    )
+  }
+
+  if (!hasNativeBilling || !catalog) {
+    // Sans clés RevenueCat — ou si le store n'a rien renvoyé — `PaywallFlow`
+    // refuse d'afficher le moindre tarif (garde `!purchase`) : on ne montre pas
+    // un prix qu'on ne peut pas encaisser. En développement seulement, on
+    // branche des décors et un adaptateur qui ne facture rien, pour pouvoir
+    // travailler les quatre écrans sans store.
+    return (
+      <PaywallFlow
+        plans={__DEV__ ? PREVIEW_PLANS : []}
+        offer={__DEV__ ? PREVIEW_OFFER : null}
+        onSkip={onNext}
+        purchase={__DEV__ ? previewPurchase : undefined}
+      />
+    )
+  }
 
   return (
-    <View style={styles.artifact}>
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-        <Defs>
-          <LinearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
-            <Stop offset="0%" stopColor="#0E0B1E" />
-            <Stop offset="100%" stopColor="#050507" />
-          </LinearGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#sky)" />
-        {stars.map(s => (
-          <Circle
-            key={s.key}
-            cx={`${s.x}%`}
-            cy={`${s.y}%`}
-            r={s.r}
-            fill="#FFFFFF"
-            opacity={s.o}
-          />
-        ))}
-      </Svg>
-      <View style={styles.artifactCenter}>
-        <Reveal index={0}>
-          <Moon size={148} glow />
-        </Reveal>
-        <Reveal index={2} style={{ marginTop: 34, alignSelf: 'stretch' }}>
-          <GradientLine text="Ton attention est ton bien" size={22} />
-          <GradientLine text="le plus précieux." size={22} />
-        </Reveal>
-        <Reveal index={3}>
-          <Text style={styles.artifactSub}>Bienvenue dans Relock.</Text>
-        </Reveal>
-      </View>
-      {ready ? (
-        <Animated.View entering={FadeIn.duration(600)} style={styles.bottom}>
-          <Pill label="Entrer" onPress={onEnter} />
-        </Animated.View>
-      ) : (
-        <View style={styles.bottomSpacer} />
-      )}
-    </View>
+    <PaywallFlow
+      plans={catalog.plans}
+      offer={catalog.offer}
+      onSkip={onNext}
+      purchase={paywallPurchaseWithRevenueCat}
+      onPurchaseSuccess={onNext}
+      onRestore={restore}
+      allowPurchases
+    />
   )
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  scene: { flex: 1, paddingHorizontal: 20 },
-  bottom: { gap: 8, paddingBottom: 10 },
-  bottomSpacer: { height: 76 },
-  center: { textAlign: 'center' },
-
-  h1: {
-    ...fonts.bold,
-    fontSize: 30,
-    lineHeight: 37,
-    letterSpacing: -0.7,
-    color: OB.ink,
-  },
   guideScene: { flex: 1 },
   guideHeroWrap: {
     paddingTop: 72,
@@ -435,64 +338,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 25,
   },
-
-  paywallTopRow: { alignItems: 'flex-end', paddingTop: 2 },
-  paywallBody: { flex: 1 },
-  timeline: { marginTop: 20 },
-  timelineRow: { flexDirection: 'row', gap: 14 },
-  timelineRail: { alignItems: 'center', width: 18 },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    marginTop: 3,
-  },
-  timelineLine: {
+  loading: {
     flex: 1,
-    width: 2,
-    borderRadius: 1,
-    backgroundColor: 'rgba(164,154,254,0.28)',
-    marginVertical: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    paddingBottom: 20,
   },
-  timelineText: { flex: 1, paddingBottom: 16 },
-  timelineK: { ...fonts.semiBold, fontSize: 15, color: OB.ink },
-  timelineV: {
+  loadingText: {
     ...fonts.regular,
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: OB.ink55,
-    marginTop: 2,
-  },
-
-  plans: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  plan: {
-    flex: 1,
-    backgroundColor: OB.card,
-    borderRadius: 20,
-    borderWidth: 1.6,
-    borderColor: 'rgba(255,255,255,0.06)',
-    padding: 16,
-    lineHeight: 22,
-  },
-  planSelected: { borderColor: OB.accent, backgroundColor: '#191721' },
-  planTitle: { ...fonts.semiBold, fontSize: 15, color: OB.ink },
-  planPrice: { ...fonts.bold, fontSize: 16, color: OB.ink },
-  planSub: { ...fonts.regular, fontSize: 12.5, color: OB.ink55 },
-  planBadge: {
-    ...fonts.bold,
-    fontSize: 10.5,
-    color: OB.accent,
-    letterSpacing: 0.6,
-  },
-
-  artifact: { flex: 1, paddingHorizontal: 20 },
-  artifactCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  artifactSub: {
-    ...fonts.medium,
-    fontSize: 14.5,
-    color: OB.ink55,
-    textAlign: 'center',
-    marginTop: 14,
+    color: OB.ink40,
   },
 })

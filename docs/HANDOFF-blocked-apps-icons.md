@@ -77,10 +77,10 @@ cadre trop grand. Le plafond exact n'a pas été mesuré.
 
 | Fichier | Rôle |
 |---|---|
-| `ios/ReactNativeStarter/BlockedAppIconsView.swift` | **⭐ LE FICHIER DU PROBLÈME.** Vue native qui rend une icône à partir d'une clé de jeton. C'est ici que se joue la taille/netteté. |
-| `ios/ReactNativeStarter/BlockedAppIconsViewManager.swift` / `.mm` | Enregistrement RN de la vue (interop Fabric obligatoire). |
-| `ios/ReactNativeStarter/BlocusScreenTime.swift` | Module natif : `appKeys`, `blockedAppKeys`, `reprievedKeys`, `unblockAppKey`, `recomputeShield`, sursis. |
-| `ios/ReactNativeStarter/BlocusScreenTime.m` | Exports ObjC des méthodes ci-dessus. |
+| `ios/Relock/BlockedAppIconsView.swift` | **⭐ LE FICHIER DU PROBLÈME.** Vue native qui rend une icône à partir d'une clé de jeton. C'est ici que se joue la taille/netteté. |
+| `ios/Relock/BlockedAppIconsViewManager.swift` / `.mm` | Enregistrement RN de la vue (interop Fabric obligatoire). |
+| `ios/Relock/BlocusScreenTime.swift` | Module natif : `appKeys`, `blockedAppKeys`, `reprievedKeys`, `unblockAppKey`, `recomputeShield`, sursis. |
+| `ios/Relock/BlocusScreenTime.m` | Exports ObjC des méthodes ci-dessus. |
 | `ios/RelockActivityReport/UsageReportView.swift` | **Référence qui marche** : `icon(_:)` rend les icônes en 26/30 pt. |
 | `ios/RelockMonitor/RelockMonitor.swift` | Miroir de `recomputeShield` + filtrage des sursis (app fermée). |
 
@@ -209,7 +209,7 @@ echo '{"id": 1001, "cmd": "blocked"}' > relock-dev-commands.json
 
 ```bash
 xcrun devicectl list devices
-xcrun devicectl device install app --device <UDID> <chemin>/ReactNativeStarter.app
+xcrun devicectl device install app --device <UDID> <chemin>/Relock.app
 xcrun devicectl device process launch --device <UDID> com.yaya.relock
 ```
 
@@ -224,8 +224,8 @@ xcrun devicectl device process launch --device <UDID> com.yaya.relock
   ```
 - Build device :
   ```bash
-  xcodebuild -workspace ios/ReactNativeStarter.xcworkspace \
-    -scheme ReactNativeStarter -configuration Debug \
+  xcodebuild -workspace ios/Relock.xcworkspace \
+    -scheme Relock -configuration Debug \
     -destination 'generic/platform=iOS' build
   ```
 - ⚠️ Les icônes réelles **n'apparaissent JAMAIS sur simulateur** (Family Controls

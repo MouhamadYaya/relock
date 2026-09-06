@@ -6,6 +6,13 @@ import { useNavigationTheme } from '@/navigation/helpers/use-navigation-theme'
 import { darkTheme } from '@/shared/theme'
 
 const tabColors = darkTheme.colors
+// Supported by the installed react-native-screens and forwarded by Expo's
+// native tab descriptor. Home owns its insets; never override them on reentry.
+const homeOptions: NonNullable<
+  React.ComponentProps<typeof NativeTabs.Trigger>['options']
+> & { overrideScrollViewContentInsetAdjustmentBehavior: boolean } = {
+  overrideScrollViewContentInsetAdjustmentBehavior: false,
+}
 
 export default function TabLayout() {
   const t = useT()
@@ -26,7 +33,7 @@ export default function TabLayout() {
           selected: { color: tabColors.textPrimary },
         }}
       >
-        <NativeTabs.Trigger name="home">
+        <NativeTabs.Trigger name="home" options={homeOptions}>
           <Icon sf="house.fill" drawable="ic_tab_home" />
           <Label>{t('navigation.tabs.home')}</Label>
         </NativeTabs.Trigger>

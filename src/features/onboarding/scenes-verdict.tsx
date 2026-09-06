@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+  Image,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
-  type SharedValue,
-  useAnimatedProps,
+  FadeOutUp,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -13,11 +18,18 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
-import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
+import { annualProjection } from '@/features/onboarding/services/annualProjection'
+import { recoveryGoal } from '@/features/onboarding/services/recoveryGoal'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { Footnote, GradientLine, Moon, Pill, StudyLine } from './bits'
+import { Footnote, GradientLine, Pill } from './bits'
 import { Reveal } from './motion'
-import { haptic, OB } from './tokens'
+import {
+  GOOD_NEWS,
+  haptic,
+  OB,
+  PERSONALIZED_PLAN,
+  PROJECTION_MAX_BARS,
+} from './tokens'
 
 // ─── Acte 2 · Le battement ──────────────────────────────────────────────
 
@@ -77,7 +89,7 @@ export function SceneMirror({
   hours: number
   onNext: () => void
 }) {
-  const days = Math.max(1, Math.round((hours * 365) / 24))
+  const { daysPerYear: days } = annualProjection(hours)
   const [n, setN] = useState(0)
   const [settled, setSettled] = useState(false)
   const lastTick = useRef(0)
@@ -124,7 +136,7 @@ export function SceneMirror({
     <View className="flex-1 px-5">
       <View className="flex-1 justify-center">
         <Reveal index={0}>
-          <Text style={styles.mirrorLabel}>À ce rythme, tu perds environ</Text>
+          <Text style={styles.mirrorLabel}>À ton rythme, environ</Text>
         </Reveal>
         <Animated.View className="items-center mt-3.5" style={pulseStyle}>
           <GradientLine text={`${n} jours`} size={76} />
@@ -138,9 +150,9 @@ export function SceneMirror({
       </View>
       {settled ? (
         <Animated.View entering={FadeIn.duration(400)} className="gap-2 pb-2.5">
-          <Pill label="Je veux changer ça" onPress={onNext} />
+          <Pill label="Voir la bonne nouvelle" onPress={onNext} />
           <Footnote
-            text={`Calcul : ${hours} h par jour × 365, converties en journées de 24 h.`}
+            text={`Estimation pour ta tranche : ${hours} h/jour × 365 ÷ 24. Arrondi en journées de 24 h.`}
           />
         </Animated.View>
       ) : null}
@@ -148,340 +160,413 @@ export function SceneMirror({
   )
 }
 
-// ─── Acte 2 · Le renversement ───────────────────────────────────────────
+// ─── Acte 2 · La bonne nouvelle ─────────────────────────────────────────
 
-export function SceneReversal({ onNext }: { onNext: () => void }) {
+/**
+ * Decorative progress segments: one segment is NOT one day. Capping their
+ * number preserves the original composition and duration for every estimate.
+ */
+const PROJECTION_BAR_H = 118
+const PROJECTION_BAR_GAP = 6
+const PROJECTION_BAR_MAX_W = 44
+const PROJECTION_BAR_MIN_W = 8
+/** Assez lent pour compter, assez vif pour ne pas attendre. */
+const PROJECTION_BAR_FIRST_MS = 420
+const PROJECTION_BAR_STEP_MS = 175
+
+function projectionBarWidth(count: number, totalW: number) {
+  return Math.max(
+    PROJECTION_BAR_MIN_W,
+    Math.min(PROJECTION_BAR_MAX_W, totalW / count - PROJECTION_BAR_GAP),
+  )
+}
+
+/**
+ * Un segment de la projection. Il pousse depuis le socle (la rangée est
+ * alignée en bas), puis se resserre à chaque nouvelle voisine.
+ */
+function ProjectionBar({ w }: { w: number }) {
+  const grow = useSharedValue(0)
+  const width = useSharedValue(w)
+
+  useEffect(() => {
+    grow.value = withSpring(1, { damping: 14, stiffness: 180, mass: 0.7 })
+  }, [grow])
+
+  useEffect(() => {
+    width.value = withSpring(w, { damping: 22, stiffness: 190 })
+  }, [w, width])
+
+  const style = useAnimatedStyle(() => ({
+    width: width.value,
+    height: PROJECTION_BAR_H * grow.value,
+    // Le fondu court plus vite que la pousse : la barre est déjà pleine
+    // quand elle finit de monter, sinon elle paraît fantomatique.
+    opacity: Math.min(1, grow.value * 1.4),
+  }))
+
+  return <Animated.View style={[styles.goodBar, style]} />
+}
+
+/**
+ * Le dernier mot du verdict défile : la même durée rendue, plusieurs vies
+ * possibles. « Par an » ouvre la projection, les autres mots évoquent
+ * des usages possibles de ce temps, sans promettre un résultat.
+ */
+const GOOD_WORDS = [
+  'par an',
+  'de Présence',
+  'de Sommeil',
+  'de Calme',
+  'de Liberté',
+  'de Vie',
+] as const
+const GOOD_WORD_MS = 1600
+
+export function SceneGoodNews({
+  hours,
+  onNext,
+}: {
+  hours: number
+  onNext: () => void
+}) {
+  const { width } = useWindowDimensions()
+  const goal = useMemo(() => recoveryGoal(hours), [hours])
+  const days = goal.days
+  const barCount = Math.max(1, Math.min(PROJECTION_MAX_BARS, days))
+  const [shown, setShown] = useState(0)
+  const [word, setWord] = useState(0)
+  const pulse = useSharedValue(1)
+  const done = shown >= barCount
+
+  // La rangée respire avec l'écran : sur un SE elle ne doit pas toucher les
+  // marges, sur un Pro Max elle ne doit pas s'étaler.
+  const barsW = Math.min(214, width - 116)
+  const barW = projectionBarWidth(Math.max(1, shown), barsW)
+  const heroSize = Math.min(52, Math.round(width * 0.132))
+  const heroLineH = Math.ceil(heroSize * 1.24)
+
+  // Bounded decorative progression; the counter still reaches the exact estimate.
+  useEffect(() => {
+    setShown(0)
+    setWord(0)
+    const timers = Array.from({ length: barCount }, (_, i) =>
+      setTimeout(
+        () => {
+          setShown(i + 1)
+          if (i === barCount - 1) {
+            haptic.heavy()
+            pulse.value = withSequence(
+              withSpring(1.07, { damping: 9, stiffness: 300 }),
+              withSpring(1, { damping: 14, stiffness: 220 }),
+            )
+          } else {
+            haptic.tick()
+          }
+        },
+        PROJECTION_BAR_FIRST_MS + i * PROJECTION_BAR_STEP_MS,
+      ),
+    )
+    return () => {
+      for (const t of timers) clearTimeout(t)
+    }
+  }, [barCount, pulse])
+
+  // Le défilé des mots ne démarre qu'une fois le compte posé : deux
+  // mouvements à la fois, et plus personne ne lit le chiffre.
+  useEffect(() => {
+    if (!done) return
+    const id = setInterval(() => {
+      haptic.select()
+      setWord(w => (w + 1) % GOOD_WORDS.length)
+    }, GOOD_WORD_MS)
+    return () => clearInterval(id)
+  }, [done])
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }))
+
+  const displayedDays = Math.round(
+    (Math.min(shown, barCount) / barCount) * days,
+  )
+  const label = `${displayedDays} ${displayedDays === 1 ? 'jour' : 'jours'}`
+  const suffix = GOOD_WORDS[word]
+
   return (
     <View className="flex-1 px-5">
-      <View className="flex-1 justify-center gap-3">
+      <View className="flex-1 justify-center">
+        {/* Hauteur réservée : la rangée pousse vers le haut sans jamais
+            déplacer le texte qui la suit. */}
+        <View
+          style={[styles.goodBars, { width: barsW }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {Array.from({ length: shown }, (_, i) => (
+            <ProjectionBar key={`projection-${i}`} w={barW} />
+          ))}
+        </View>
+        <Reveal index={0}>
+          <Text testID="good-news-lead" style={styles.goodLead}>
+            Relock va t’aider à récupérer{'\n'}du temps pour toi.
+          </Text>
+        </Reveal>
+        <View style={{ height: heroLineH * 2 }}>
+          {shown > 0 ? (
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={pulseStyle}
+              accessibilityRole="text"
+              accessibilityLabel={`Objectif : ${displayedDays} jours par an, à adapter à ton usage`}
+            >
+              <GradientLine text={label} size={heroSize} />
+              <View style={{ height: heroLineH }}>
+                <Animated.View
+                  key={suffix}
+                  entering={FadeInDown.duration(420).easing(
+                    Easing.out(Easing.cubic),
+                  )}
+                  exiting={FadeOutUp.duration(280)}
+                  style={StyleSheet.absoluteFill}
+                >
+                  <GradientLine text={suffix} size={heroSize} />
+                </Animated.View>
+              </View>
+            </Animated.View>
+          ) : null}
+        </View>
+      </View>
+      {/* Le socle occupe sa place avant l'arrivée du CTA, sinon tout
+          l'écran remonterait d'un cran au dernier tick. */}
+      <View style={styles.goodFoot}>
+        {done ? (
+          <Animated.View entering={FadeIn.duration(420)} className="gap-2">
+            <Pill label="Continuer" onPress={onNext} glow />
+            <Text style={styles.goodNote}>{goal.note}</Text>
+          </Animated.View>
+        ) : null}
+      </View>
+    </View>
+  )
+}
+
+// ─── Acte 2 · Le renversement ───────────────────────────────────────────
+
+/**
+ * Le dossier à charge. Trois coupures de presse s'empilent une par une,
+ * la dernière recouvrant les précédentes dont seul le haut de la photo
+ * dépasse — l'accusation se construit sous les yeux plutôt que de
+ * s'afficher d'un bloc. Chaque carte reste seule en tête assez longtemps
+ * pour être lue. Verdict et CTA n'apparaissent qu'avec la DERNIÈRE carte :
+ * impossible de survoler le dossier.
+ *
+ * Ordre voulu : Meta (ils savaient) → tribunal (ils sont poursuivis) →
+ * TikTok (l'addiction est un objectif produit, chiffré). On finit sur
+ * TikTok, la plus concrète des trois.
+ *
+ * ⚠️ Faits publics réels, traduits et resserrés pour l'écran — à
+ * revérifier mot pour mot avant publication (ils nomment de vraies
+ * entreprises et de vrais médias) :
+ * - « The Facebook Files », The Wall Street Journal, septembre 2021 :
+ *   documents internes révélés par Frances Haugen.
+ * - Octobre 2023 : 41 États américains + le district de Columbia
+ *   assignent Meta pour des fonctionnalités jugées addictives pour les
+ *   mineurs.
+ * - Octobre 2024 : documents internes de TikTok descellés dans la plainte
+ *   du procureur général du Kentucky (révélés par NPR) — le seuil de
+ *   formation de l'habitude y est chiffré.
+ *
+ * ⚠️ Photos : `assets/press/*.jpg` (voir le README du dossier), recadrées
+ * au ratio de la zone photo et déclinées en 1x/2x/3x. Ce sont des images
+ * d'agence — licence à vérifier avant publication.
+ */
+const PRESS = [
+  {
+    id: 'meta',
+    photo: require('@assets/press/meta.jpg'),
+    quote: "« Facebook sait qu'Instagram est toxique pour les adolescentes. »",
+    source: 'The Wall Street Journal',
+    year: '2021',
+    context: "Documents internes, révélés par une lanceuse d'alerte.",
+  },
+  {
+    id: 'trial',
+    photo: require('@assets/press/zuckerberg.jpg'),
+    quote:
+      '« 41 États poursuivent Meta pour avoir conçu des fonctions addictives. »',
+    source: 'Plainte fédérale des procureurs généraux',
+    year: '2023',
+    context: "Visées : la notification, le scroll infini, les « j'aime ».",
+  },
+  {
+    id: 'tiktok',
+    photo: require('@assets/press/tiktok.jpg'),
+    quote: "« Environ 260 vidéos, et l'habitude est formée. »",
+    source: 'Documents internes TikTok',
+    year: '2024',
+    context: 'Moins de 35 minutes. Leur chiffre, pas le nôtre.',
+  },
+] as const
+
+/** Bloc texte sous la photo : citation sur 2 lignes + source + contexte. */
+const PRESS_TEXT_H = 110
+/** Part de la carte précédente qui reste visible sous la suivante. */
+const PRESS_PEEK = 26
+
+/**
+ * Hauteur de la photo, proportionnelle à l'écran.
+ *
+ * Fixe, elle obligeait à un cadrage très panoramique (les visuels
+ * arrivaient tronqués) ou débordait des petits écrans. Bornée ainsi, la
+ * pile tient sur un iPhone SE (667 pt) comme sur un Pro Max sans jamais
+ * pousser le CTA hors de l'écran.
+ */
+function pressPhotoHeight(screenH: number) {
+  return Math.round(Math.min(205, Math.max(142, screenH * 0.225)))
+}
+/**
+ * Rythme calé pour que la dernière carte — celle qui ouvre le CTA — tombe
+ * à 4,00 s pile : 620 ms + 2 × 1690 ms.
+ */
+const PRESS_FIRST_MS = 620
+const PRESS_STEP_MS = 1690
+
+/**
+ * Une coupure. Elle monte depuis le bas, se pose sur la pile, puis
+ * s'éteint d'un cran à chaque nouvelle arrivée (`depth`) pour que le
+ * regard reste sur la dernière.
+ */
+function PressCard({
+  item,
+  index,
+  depth,
+  photoH,
+}: {
+  item: (typeof PRESS)[number]
+  index: number
+  depth: number
+  photoH: number
+}) {
+  const enter = useSharedValue(0)
+  const fade = useSharedValue(0)
+  const dim = useSharedValue(1)
+
+  useEffect(() => {
+    enter.value = withSpring(1, { damping: 18, stiffness: 150, mass: 0.9 })
+    fade.value = withTiming(1, { duration: 280 })
+  }, [enter, fade])
+
+  useEffect(() => {
+    dim.value = withTiming(depth === 0 ? 1 : depth === 1 ? 0.5 : 0.26, {
+      duration: 420,
+    })
+  }, [depth, dim])
+
+  const style = useAnimatedStyle(() => ({
+    // `fade` reste en timing : un ressort dépasserait 1 sur l'opacité.
+    opacity: fade.value * dim.value,
+    transform: [
+      { translateY: index * PRESS_PEEK + (1 - enter.value) * 92 },
+      { scale: 0.955 + enter.value * 0.045 },
+    ],
+  }))
+
+  return (
+    <Animated.View
+      style={[
+        styles.pressCard,
+        { height: photoH + PRESS_TEXT_H, zIndex: index },
+        style,
+      ]}
+    >
+      <View style={[styles.pressPhotoWrap, { height: photoH }]}>
+        <Image source={item.photo} style={styles.pressPhoto} />
+        {/* Voile sombre : les visuels de presse sont sur fond blanc, ils
+            brûleraient l'écran noir de l'onboarding sans ça. */}
+        <View style={styles.pressScrim} pointerEvents="none" />
+      </View>
+      <View style={styles.pressBody}>
+        <Text style={styles.pressQuote} numberOfLines={2}>
+          {item.quote}
+        </Text>
+        <Text style={styles.pressSource} numberOfLines={1}>
+          {item.source} · {item.year}
+        </Text>
+        <Text style={styles.pressContext} numberOfLines={1}>
+          {item.context}
+        </Text>
+      </View>
+    </Animated.View>
+  )
+}
+
+export function SceneReversal({ onNext }: { onNext: () => void }) {
+  const { height } = useWindowDimensions()
+  const photoH = pressPhotoHeight(height)
+  const [shown, setShown] = useState(0)
+  const last = shown >= PRESS.length
+
+  useEffect(() => {
+    const timers = PRESS.map((_, i) =>
+      setTimeout(
+        () => {
+          // La dernière carte frappe plus fort : c'est elle qui ouvre le CTA.
+          if (i === PRESS.length - 1) haptic.tap()
+          else haptic.tick()
+          setShown(i + 1)
+        },
+        PRESS_FIRST_MS + i * PRESS_STEP_MS,
+      ),
+    )
+    return () => {
+      for (const t of timers) clearTimeout(t)
+    }
+  }, [])
+
+  return (
+    <View className="flex-1 px-5">
+      <View className="flex-1 justify-center">
         <Reveal index={0}>
           <Text style={styles.reversalTitle}>Tu n'es pas le problème.</Text>
         </Reveal>
         <Reveal index={1}>
           <Text style={styles.reversalBody}>
             Ces apps sont réglées par des milliers d'ingénieurs pour te retenir.
-            Relock rééquilibre les règles, en ta faveur.
           </Text>
         </Reveal>
-        <Reveal index={2} style={{ marginTop: 26 }}>
-          <StudyLine text="Merci pour ton honnêteté. On peut construire, maintenant." />
-        </Reveal>
-      </View>
-      <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Construire mon plan" onPress={onNext} />
-      </Reveal>
-    </View>
-  )
-}
-
-// ─── Acte 3 · La reformulation ──────────────────────────────────────────
-
-export function ScenePlan({
-  apps,
-  momentPhrase,
-  hours,
-  onNext,
-}: {
-  apps: string[]
-  momentPhrase: string
-  hours: number
-  onNext: () => void
-}) {
-  const list =
-    apps.length === 0
-      ? 'tes apps à scroll'
-      : apps.slice(0, 2).join(' et ') +
-        (apps.length > 2 ? ', entre autres' : '')
-  return (
-    <View className="flex-1 px-5">
-      <View className="flex-1 justify-center gap-3">
-        <Reveal index={0}>
-          <Text style={styles.reversalTitle}>Ton plan, en une phrase.</Text>
-        </Reveal>
-        <Reveal index={1} style={styles.planCard}>
-          <Text style={styles.planText}>
-            Bloquer <Text style={styles.planAccent}>{list}</Text>,{' '}
-            {momentPhrase}, et te rendre{' '}
-            <Text style={styles.planAccent}>{hours} h chaque jour</Text>.
-          </Text>
-        </Reveal>
-      </View>
-      <Reveal index={2} className="gap-2 pb-2.5">
-        <Pill label="Générer mon plan" onPress={onNext} />
-      </Reveal>
-    </View>
-  )
-}
-
-// ─── Acte 3 · Le chargement théâtral ────────────────────────────────────
-
-const LOAD_STEPS = [
-  'Analyse de tes réponses',
-  'Calibrage de tes blocages',
-  'Préparation de ton espace',
-  'Dernier réglage',
-]
-
-/** Le « travail » qui fabrique la valeur du plan. Avance tout seul. */
-export function SceneLoading({ onDone }: { onDone: () => void }) {
-  const [pct, setPct] = useState(0)
-  const doneRef = useRef(false)
-  const DURATION = 3000
-
-  useEffect(() => {
-    const started = Date.now()
-    const id = setInterval(() => {
-      const t = Math.min(1, (Date.now() - started) / DURATION)
-      const eased = 1 - (1 - t) ** 2
-      setPct(Math.round(eased * 100))
-      if (t >= 1 && !doneRef.current) {
-        doneRef.current = true
-        clearInterval(id)
-        haptic.success()
-        setTimeout(onDone, 420)
-      }
-    }, 40)
-    return () => clearInterval(id)
-  }, [onDone])
-
-  const checked = Math.floor((pct / 100) * LOAD_STEPS.length)
-
-  return (
-    <View className="flex-1 px-5">
-      <View className="flex-1 justify-center">
-        <GradientLine text={`${pct} %`} size={64} />
-        <View style={styles.loadTrack}>
-          <View style={[styles.loadFill, { width: `${pct}%` }]} />
-        </View>
-        <View className="mt-7 gap-3.5">
-          {LOAD_STEPS.map((s, i) => (
-            <View key={s} className="flex-row items-center gap-3">
-              <View
-                style={[styles.loadDot, i < checked && styles.loadDotDone]}
-              />
-              <Text
-                style={[styles.loadText, i < checked && styles.loadTextDone]}
-              >
-                {s}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    </View>
-  )
-}
-
-// ─── Acte 3 · La révélation ─────────────────────────────────────────────
-
-export function SceneSuccess({
-  name,
-  apps,
-  momentLabel,
-  days,
-  onNext,
-}: {
-  name: string
-  apps: string[]
-  momentLabel: string
-  days: number
-  onNext: () => void
-}) {
-  const list = apps.length === 0 ? 'Tes apps à scroll' : apps.join(', ')
-  return (
-    <View className="flex-1 px-5">
-      <View className="flex-1 pt-[26px] gap-[18px]">
-        <Reveal index={0} className="items-center">
-          <Moon size={84} glow />
-        </Reveal>
-        <Reveal index={1}>
-          <Text style={styles.successTitle}>
-            Ton plan est prêt{name ? `, ${name}` : ''}.
-          </Text>
-        </Reveal>
-        <View className="gap-2.5 mt-2">
-          {[
-            { k: 'Apps bloquées', v: list },
-            { k: 'Fenêtre critique', v: momentLabel },
-            { k: 'Objectif', v: `Environ ${days} jours récupérés par an` },
-          ].map((row, i) => (
-            <Reveal key={row.k} index={2 + i} style={styles.successCard}>
-              <Text style={styles.successK}>{row.k}</Text>
-              <Text style={styles.successV}>{row.v}</Text>
-            </Reveal>
-          ))}
-        </View>
-      </View>
-      <Reveal index={5} className="gap-2 pb-2.5">
-        <Pill label="Sceller mon engagement" onPress={onNext} />
-      </Reveal>
-    </View>
-  )
-}
-
-// ─── Acte 3 · Le rituel du verrou ───────────────────────────────────────
-
-const RING_R = 84
-const RING_C = 2 * Math.PI * RING_R
-const AnimatedCircle = Animated.createAnimatedComponent(Circle)
-const HOLD_MS = 1150
-
-const PARTICLES = Array.from({ length: 10 }, (_, i) => {
-  const angle = (i / 10) * Math.PI * 2
-  return { dx: Math.cos(angle), dy: Math.sin(angle), key: `p${i}` }
-})
-
-/** Un éclat de l'explosion du verrou (hooks isolés du parent). */
-function Particle({
-  dx,
-  dy,
-  burst,
-}: {
-  dx: number
-  dy: number
-  burst: SharedValue<number>
-}) {
-  const style = useAnimatedStyle(() => ({
-    opacity: burst.value === 0 ? 0 : 1 - burst.value,
-    transform: [
-      { translateX: dx * burst.value * 104 },
-      { translateY: dy * burst.value * 104 },
-      { scale: 1 - burst.value * 0.4 },
-    ],
-  }))
-  return <Animated.View style={[styles.particle, style]} />
-}
-
-/**
- * LE moment signature : maintenir la lune jusqu'au verrou. Anneau qui se
- * remplit, haptiques en crescendo, impact lourd et éclat de particules au
- * verrouillage. C'est le fist bump de Relock, et c'est son nom : re-lock.
- */
-export function SceneRitual({ onDone }: { onDone: () => void }) {
-  const progress = useSharedValue(0)
-  const burst = useSharedValue(0)
-  const moonScale = useSharedValue(1)
-  const [locked, setLocked] = useState(false)
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
-
-  const clearTimers = () => {
-    for (const t of timers.current) clearTimeout(t)
-    timers.current = []
-  }
-
-  const lock = () => {
-    clearTimers()
-    setLocked(true)
-    haptic.heavy()
-    haptic.success()
-    moonScale.value = withSequence(
-      withSpring(0.92, { damping: 10, stiffness: 340 }),
-      withSpring(1.05, { damping: 9, stiffness: 260 }),
-      withSpring(1, { damping: 14, stiffness: 200 }),
-    )
-    burst.value = 0
-    burst.value = withTiming(1, {
-      duration: 750,
-      easing: Easing.out(Easing.cubic),
-    })
-    timers.current.push(setTimeout(onDone, 1250))
-  }
-
-  const onPressIn = () => {
-    if (locked) return
-    haptic.select()
-    progress.value = withTiming(1, {
-      duration: HOLD_MS,
-      easing: Easing.out(Easing.quad),
-    })
-    timers.current.push(setTimeout(() => haptic.tick(), 300))
-    timers.current.push(setTimeout(() => haptic.select(), 600))
-    timers.current.push(setTimeout(() => haptic.tap(), 880))
-    timers.current.push(setTimeout(lock, HOLD_MS))
-  }
-
-  const onPressOut = () => {
-    if (locked) return
-    clearTimers()
-    progress.value = withTiming(0, { duration: 260 })
-  }
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: purge des timers au démontage uniquement
-  useEffect(() => clearTimers, [])
-
-  const ringProps = useAnimatedProps(() => ({
-    strokeDashoffset: RING_C * (1 - progress.value),
-  }))
-  const moonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: moonScale.value }],
-  }))
-
-  return (
-    <View className="flex-1 px-5">
-      <View className="flex-1 items-center justify-center">
-        <Reveal index={0}>
-          <Text style={styles.reversalTitle}>
-            {locked ? 'Engagement scellé.' : 'Scellons ton engagement.'}
-          </Text>
-        </Reveal>
-        <Reveal index={1}>
-          <Text style={styles.ritualSub}>
-            {locked
-              ? 'Ta parole est verrouillée avec ton plan.'
-              : "Maintiens la lune jusqu'au verrou."}
-          </Text>
-        </Reveal>
-        <Reveal
-          index={2}
-          className="items-center justify-center mt-10"
-          style={{ width: RING_R * 2 + 20, height: RING_R * 2 + 20 }}
+        {/* Hauteur réservée dès le départ : les cartes arrivent en absolu,
+            rien ne se décale quand la pile se remplit. */}
+        <View
+          style={[
+            styles.pressStack,
+            {
+              height: photoH + PRESS_TEXT_H + PRESS_PEEK * (PRESS.length - 1),
+            },
+          ]}
         >
-          <Svg
-            width={RING_R * 2 + 20}
-            height={RING_R * 2 + 20}
-            style={StyleSheet.absoluteFill}
-          >
-            <Defs>
-              <LinearGradient id="ritualGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={OB.grad[0]} />
-                <Stop offset="100%" stopColor={OB.grad[2]} />
-              </LinearGradient>
-            </Defs>
-            <Circle
-              cx={RING_R + 10}
-              cy={RING_R + 10}
-              r={RING_R}
-              stroke="rgba(255,255,255,0.10)"
-              strokeWidth={5}
-              fill="none"
+          {PRESS.slice(0, shown).map((item, i) => (
+            <PressCard
+              key={item.id}
+              item={item}
+              index={i}
+              depth={shown - 1 - i}
+              photoH={photoH}
             />
-            <AnimatedCircle
-              cx={RING_R + 10}
-              cy={RING_R + 10}
-              r={RING_R}
-              stroke="url(#ritualGrad)"
-              strokeWidth={5}
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray={RING_C}
-              animatedProps={ringProps}
-              transform={`rotate(-90 ${RING_R + 10} ${RING_R + 10})`}
-            />
-          </Svg>
-          {PARTICLES.map(p => (
-            <Particle key={p.key} dx={p.dx} dy={p.dy} burst={burst} />
           ))}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Maintenir pour sceller"
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-          >
-            <Animated.View style={moonStyle}>
-              <Moon size={124} glow />
-            </Animated.View>
-          </Pressable>
-        </Reveal>
+        </View>
+      </View>
+      {/* Même principe en bas : le socle occupe sa place avant que le
+          verdict n'apparaisse, sinon tout l'écran remonterait d'un cran. */}
+      <View style={styles.reversalFoot}>
+        {last ? (
+          <Animated.View entering={FadeIn.duration(420)} className="gap-4">
+            <Text style={styles.reversalVerdict}>
+              Relock rééquilibre les règles,{'\n'}en ta faveur.
+            </Text>
+            <Pill label="Construire mon plan" onPress={onNext} />
+          </Animated.View>
+        ) : null}
       </View>
     </View>
   )
@@ -520,6 +605,47 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
 
+  goodBars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    gap: PROJECTION_BAR_GAP,
+    height: PROJECTION_BAR_H,
+    marginBottom: 34,
+  },
+  goodBar: {
+    borderRadius: 7,
+    backgroundColor: OB.ink,
+    // Halo lavande : les barres restent blanches (lisibilité maximale)
+    // mais baignent dans l'accent, sans peindre le dégradé dessus.
+    shadowColor: OB.accent,
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+  goodLead: {
+    ...fonts.semiBold,
+    fontSize: GOOD_NEWS.leadSize,
+    lineHeight: GOOD_NEWS.leadLineHeight,
+    color: OB.ink,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  goodFoot: {
+    minHeight: 96,
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
+  },
+  goodNote: {
+    ...fonts.regular,
+    fontSize: PERSONALIZED_PLAN.captionSize,
+    lineHeight: PERSONALIZED_PLAN.captionLineHeight,
+    color: OB.ink70,
+    textAlign: 'center',
+  },
+
   reversalTitle: {
     ...fonts.bold,
     fontSize: 30,
@@ -536,69 +662,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 14,
   },
+  reversalVerdict: {
+    ...fonts.bold,
+    fontSize: 22,
+    lineHeight: 29,
+    letterSpacing: -0.4,
+    color: OB.ink,
+    textAlign: 'center',
+  },
+  reversalFoot: {
+    minHeight: 144,
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
+  },
 
-  planCard: {
-    marginTop: 26,
+  pressStack: { marginTop: 26 },
+  pressCard: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
     backgroundColor: OB.card,
     borderRadius: 22,
-    padding: 22,
-  },
-  planText: {
-    ...fonts.semiBold,
-    fontSize: 21,
-    lineHeight: 31,
-    color: OB.ink,
-    textAlign: 'center',
-  },
-  planAccent: { color: OB.accent },
-
-  loadTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 1,
+    borderColor: OB.hairline,
     overflow: 'hidden',
-    marginTop: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.55,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 10,
   },
-  loadFill: { height: 6, borderRadius: 3, backgroundColor: OB.accent },
-  loadDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.6,
-    borderColor: OB.ink28,
+  pressPhotoWrap: { backgroundColor: OB.card2 },
+  pressPhoto: { width: '100%', height: '100%', resizeMode: 'cover' },
+  pressScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(5,5,7,0.26)',
   },
-  loadDotDone: { backgroundColor: OB.accent, borderColor: OB.accent },
-  loadText: { ...fonts.medium, fontSize: 15, color: OB.ink40 },
-  loadTextDone: { color: OB.ink },
-
-  successTitle: {
-    ...fonts.bold,
-    fontSize: 28,
-    letterSpacing: -0.6,
+  pressBody: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 5,
+  },
+  pressQuote: {
+    ...fonts.semiBold,
+    fontSize: 15,
+    lineHeight: 20,
     color: OB.ink,
-    textAlign: 'center',
   },
-  successCard: {
-    backgroundColor: OB.card,
-    borderRadius: 18,
-    paddingVertical: 15,
-    paddingHorizontal: 18,
+  pressSource: {
+    ...fonts.medium,
+    fontSize: 12,
+    letterSpacing: 0.3,
+    color: OB.accent,
   },
-  successK: { ...fonts.medium, fontSize: 12.5, color: OB.ink40 },
-  successV: { ...fonts.semiBold, fontSize: 16, color: OB.ink, marginTop: 3 },
-
-  ritualSub: {
-    ...fonts.regular,
-    fontSize: 16,
-    color: OB.ink55,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  particle: {
-    position: 'absolute',
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: OB.accent,
-  },
+  pressContext: { ...fonts.regular, fontSize: 12, color: OB.ink40 },
 })

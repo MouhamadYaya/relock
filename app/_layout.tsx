@@ -10,11 +10,13 @@ import '@/i18n/i18n'
 import '../global.css'
 
 import { flags } from '@/config/constants'
+import { usePendingShieldRequest } from '@/features/blocking/hooks/usePendingShieldRequest'
 import { runInstallReset } from '@/features/blocking/services/reset.service'
 import { userKeys } from '@/features/user/api/keys'
 import { useT } from '@/i18n/useT'
 import { useBackButtonHandler } from '@/navigation/helpers/use-back-handler'
 import { useNavigationTheme } from '@/navigation/helpers/use-navigation-theme'
+import { initializeRevenueCat } from '@/features/onboarding/services/revenuecat'
 import {
   clearNavigationPersistence,
   usePersistLastPath,
@@ -49,6 +51,7 @@ function AppShell() {
   const navigationTheme = useNavigationTheme({ forceDark: true })
 
   const onboardingDone = useAppGateStore(s => s.onboardingDone)
+  usePendingShieldRequest(onboardingDone)
 
   useEffect(() => {
     setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
@@ -58,6 +61,7 @@ function AppShell() {
     initDevTestBridge()
     // (Ré)installation : purge le blocage résiduel au niveau système.
     runInstallReset().catch(() => undefined)
+    initializeRevenueCat().catch(() => undefined)
   }, [])
 
   useEffect(() => {

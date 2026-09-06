@@ -91,6 +91,74 @@ export const relockMaterial = {
     // distingue du dégradé violet, réservé à l'action principale de l'écran.
     blockingGlassBright: 'rgba(255, 255, 255, 0.24)',
     blockingGlassBrightEdge: 'rgba(255, 255, 255, 0.42)',
+    // Base de la scene d'Accueil. JAMAIS #000000 : le noir pur n'a pas de
+    // profondeur, les degrades qui s'y fondent bandent et les cartes en verre
+    // n'ont plus rien a refleter.
+    homeCanvas: '#05060B',
+    homeNight: '#0B0D18',
+    homeCanvasRaised: '#0D0F18',
+    homeBackdropShade: 'rgba(9, 10, 17, 0.86)',
+    // Lumiere de la scene : le limbe eclaire de la planete. Le chaud
+    // n'apparait QUE la ou cette lumiere tombe (halo, limbe, serie) — nulle
+    // part ailleurs, sinon la palette repart dans deux directions.
+    homeDawn: '#F2C879',
+    homeDawnGlow: 'rgba(242, 200, 121, 0.16)',
+    homeDawnHalo: 'rgba(242, 200, 121, 0.14)',
+    homeVignette: 'rgba(5, 6, 11, 0.85)',
+    // Barres d'apps : la couleur porte le jugement, pas seulement la longueur.
+    homeDrain: '#E2707A',
+    homeCalm: '#7FD8B0',
+    // Verre des cartes. Trois paliers : plus une carte est haute dans l'ecran,
+    // plus elle capte la lumiere. Voir §4.1 du brief.
+    homeGlass1: 'rgba(255, 255, 255, 0.055)',
+    homeGlass2: 'rgba(255, 255, 255, 0.045)',
+    homeGlass3: 'rgba(255, 255, 255, 0.035)',
+    // Arete haute : le 1px clair qui donne son epaisseur a un objet.
+    homeGlassEdge1: 'rgba(255, 255, 255, 0.12)',
+    homeGlassEdge2: 'rgba(255, 255, 255, 0.09)',
+    homeGlassEdge3: 'rgba(255, 255, 255, 0.06)',
+    homeGlassBorder: 'rgba(255, 255, 255, 0.07)',
+    homeCard: '#101015',
+    homeCardStrong: '#191620',
+    homeCardInk: '#F7FAF8',
+    homeCardMuted: '#B9B0CA',
+    homeCardGlow: '#1E1929',
+    homeShieldLight: '#C8B8FF',
+    homeShieldCool: '#A78BFA',
+    homeAppShade: 'rgba(20, 17, 28, 0.62)',
+    homeRewardGold: '#FFE996',
+    homeRewardGlow: '#A17936',
+    homeCardSoft: 'rgba(255, 255, 255, 0.055)',
+    homeBorder: 'rgba(255, 255, 255, 0.09)',
+    homeBorderStrong: 'rgba(235, 226, 255, 0.12)',
+    homeHeroShade: 'rgba(8, 9, 24, 0.03)',
+    homeHeroShadeStrong: 'rgba(8, 9, 24, 0.34)',
+    homeHeaderControl: 'rgba(8, 10, 22, 0.64)',
+    homeTextShadow: 'rgba(0, 0, 0, 0.88)',
+    homeHeroInk: '#FBFAFF',
+    homeMint: '#82E6C5',
+    homeCyan: '#50E9E1',
+    homeBlue: '#68C7F2',
+    homeFlame: '#FF8B57',
+    homeShieldSoft: 'rgba(104, 199, 242, 0.14)',
+    homeShieldBorder: 'rgba(104, 199, 242, 0.24)',
+    homeTabBar: 'rgba(18, 21, 30, 0.94)',
+    homeTabSelected: 'rgba(255, 255, 255, 0.14)',
+    homeFixtureInstagram: '#D83AD2',
+    homeFixtureTikTok: '#05060A',
+    homeFixtureYouTube: '#F5F5F7',
+    homeFixtureYouTubeMark: '#F0192C',
+    homeMintSoft: 'rgba(130, 230, 197, 0.16)',
+    homeMintEdge: 'rgba(130, 230, 197, 0.3)',
+    homeMintGlow: 'rgba(130, 230, 197, 0.1)',
+    homeLavender: '#C8B8FF',
+    homeLavenderSoft: 'rgba(200, 184, 255, 0.15)',
+    homeLavenderEdge: 'rgba(200, 184, 255, 0.3)',
+    homeLavenderGlow: 'rgba(167, 139, 250, 0.12)',
+    homeScoreTile: 'rgba(255, 255, 255, 0.04)',
+    homeProgressTrack: 'rgba(255, 255, 255, 0.10)',
+    homeSkeleton: 'rgba(255, 255, 255, 0.08)',
+    homeModalBackdrop: 'rgba(4, 5, 9, 0.78)',
   },
   radius: {
     hero: 28,
@@ -101,6 +169,7 @@ export const relockMaterial = {
     button: 17,
     compact: 12,
     capsule: 999,
+    homeCard: 36,
   },
   layout: {
     contentMaxWidth: 540,
@@ -150,6 +219,86 @@ export const relockMaterial = {
     blockingLockedTileSize: 68,
     blockingScrollBottom: 112,
     blockingCardColumnWidth: '48.4%',
+    homeHeaderActionSize: 44,
+    // Entete d'Accueil : le logotype a gauche, la serie et les reglages a
+    // droite. 26 pt de haut, c'est la hauteur a laquelle le chrome du
+    // logotype reste lisible sans ecraser la rangee d'actions (44 pt).
+    homeLogoHeight: 26,
+    homeHeaderFlameSize: 22,
+    // Voile de l'entete fixe : il couvre l'encoche + la rangee d'actions,
+    // puis se dissipe sur 44 pt. Le coude du degrade n'est PAS un token : il
+    // se calcule depuis la hauteur reelle de la bande (voir `HomeHeaderScrim`),
+    // parce que l'encoche change d'un appareil a l'autre.
+    homeHeaderScrimFade: 44,
+    // Empilement du haut de l'Accueil : contenu (0) < voile < entete < alerte.
+    homeHeaderScrimZ: 3,
+    // Le fond ne s'arrete jamais : il court derriere tout le contenu
+    // scrollable. `homeBackdropHeight` ne borne plus que le cadre de l'image
+    // du globe, pas la scene.
+    homeBackdropHeight: 428,
+    homeBackdropImageScale: 1.2,
+    homeBackdropImageOffsetY: 112,
+    // Foyer lumineux : le limbe eclaire du globe, a 22 % de la hauteur. Halo
+    // et vignette sont centres dessus — une scene, une lumiere.
+    homeHaloCenterX: 0.5,
+    homeHaloCenterY: 0.22,
+    homeHaloRadiusX: 0.7,
+    homeHaloRadiusY: 0.45,
+    homeHaloFalloff: 0.65,
+    homeVignetteCenterY: 0.35,
+    homeVignetteInner: 0.4,
+    // Tuile de bruit repetee (assets/home-grain.png).
+    homeGrainTile: 128,
+    // Arete haute des cartes en verre : 1 px, jamais mis a l'echelle.
+    homeGlassEdgeHeight: 1,
+    homeHeroHeight: 360,
+    homeHeroReportTop: 180,
+    homeHeroReportHeight: 128,
+    homeCardGap: 24,
+    homeCardPadding: 16,
+    // Hauteur miroir de `homeScoreCard` dans RelockActivityReport.swift et de
+    // la zone tactile `score` dans ScreenTimeReportView.swift : les trois
+    // doivent bouger ensemble.
+    homeScoreHeight: 290,
+    homeScoreCardPadding: 20,
+    homeScoreHeadingHeight: 46,
+    // Cote de l'illustration `home-score-dial` (assets/ + les deux .xcassets).
+    homeScoreDialSize: 152,
+    homeScoreSeparatorGap: 14,
+    homeScoreRowGlyphSize: 20,
+    homeScoreLegendGlyphSize: 16,
+    homeScoreTileGlyphSize: 18,
+    homeScoreChevronSize: 32,
+    homeScoreBarHeight: 4,
+    homeScoreFooterHeight: 28,
+    homeScoreDialogMaxWidth: 400,
+    homeScoreDialogPadding: 20,
+    homeScoreDialogRingSize: 84,
+    homeScoreDialogRingStroke: 7,
+    homeScoreDialogRingGap: 5,
+    homeScoreDialogGlyphSize: 22,
+    // Keep the native Home report's transparent slot in sync with this height.
+    homeBlockedHeight: 280,
+    homeMyAppsTileSize: 62,
+    homeMyAppsStageHeight: 96,
+    homeProgressMinHeight: 128,
+    homeProgressArtSize: 84,
+    homeBlockedAppSize: 42,
+    // Miroir exact de la carte « Top 3 » dessinee en SwiftUI
+    // (RelockActivityReport.swift + ScreenTimeReportView.swift).
+    homeReportHeight: 232,
+    homeReportPaddingVertical: 18,
+    homeReportPaddingHorizontal: 20,
+    homeReportTitleGap: 16,
+    homeReportRowHeight: 46,
+    homeReportRowGap: 12,
+    // Haut de carte -> premiere ligne : padding 18 + titre 18 + gouttiere 16.
+    homeReportTopAppsStart: 52,
+    homeTabBarHeight: 74,
+    homeTabBarHorizontal: 16,
+    homeTabBarBottom: 8,
+    homeSheetMaxWidth: 540,
+    homeSheetPadding: 20,
   },
   typography: {
     welcomeTitleSize: 16,
@@ -187,8 +336,78 @@ export const relockMaterial = {
     blockingCompactBodyLineHeight: 15,
     blockingSectionLetterSpacing: -0.35,
     blockingTitleLetterSpacing: -0.8,
+    homeGreetingSize: 24,
+    homeGreetingLineHeight: 29,
+    homeGreetingLetterSpacing: -0.65,
+    homeSubtitleSize: 14,
+    homeSubtitleLineHeight: 20,
+    homeHeroLabelSize: 13,
+    homeHeroLabelLineHeight: 18,
+    homeCardTitleSize: 15,
+    homeCardTitleLineHeight: 19,
+    homeScoreSize: 30,
+    homeScoreLineHeight: 34,
+    homeScoreValueSize: 44,
+    homeScoreValueLineHeight: 48,
+    homeScoreCaptionSize: 11,
+    homeScoreCaptionLineHeight: 14,
+    homeScoreTitleSize: 17,
+    homeScoreTitleLineHeight: 22,
+    // La carte d'Accueil porte un titre et des lignes plus grands que la
+    // feuille de detail, qui garde les tailles ci-dessus.
+    homeScoreCardTitleSize: 20,
+    homeScoreCardTitleLineHeight: 25,
+    homeScoreCardRowLabelSize: 15,
+    homeScoreCardRowLabelLineHeight: 20,
+    homeScoreRowLabelSize: 13,
+    homeScoreRowLabelLineHeight: 17,
+    homeScoreRowValueSize: 22,
+    homeScoreRowValueLineHeight: 26,
+    homeScoreDetailValueSize: 21,
+    homeScoreDetailValueLineHeight: 25,
+    homeScoreBandSize: 11,
+    homeScoreBandLineHeight: 14,
+    homeScoreFooterSize: 12,
+    homeScoreFooterLineHeight: 16,
+    homeScoreDialogTitleSize: 22,
+    homeScoreDialogTitleLineHeight: 28,
+    homeScoreSectionSize: 14,
+    homeScoreSectionLineHeight: 18,
+    homeScoreBodySize: 13,
+    homeScoreBodyLineHeight: 19,
+    homeMetricSize: 21,
+    homeMetricLineHeight: 25,
+    homeSheetTitleSize: 24,
+    homeSheetTitleLineHeight: 30,
+    homeTabLabelSize: 12,
   },
   opacity: {
+    // Grain : invisible consciemment, decisif contre le banding des degrades.
+    // Pose en fondu `overlay` sur un gris moyen, il n'eclaircit ni n'assombrit.
+    homeGrain: 0.03,
+    // Unites (« h », « min ») : meme graisse que le nombre, 0.45x sa taille et
+    // 0.45 d'opacite. Elles accompagnent la valeur, elles ne la concurrencent pas.
+    homeHeroUnit: 0.45,
+    homeHeroUnitScale: 0.45,
+    // Voile de l'entete. Il ne se montre qu'au defilement, donc il peut etre
+    // franc : c'est ce qu'il faut pour que le chrome clair du logotype garde
+    // son contraste quand le titre blanc d'une carte passe dessous. Il ne
+    // tombe a zero qu'apres le bas des boutons.
+    homeHeaderScrimTop: 0.86,
+    homeHeaderScrimKnee: 0.66,
+    homeBackdropTop: 1,
+    homeBackdropMiddle: 0.35,
+    // Le voile est presque plein a 0.85 de la hauteur du cadre (~364 pt), soit
+    // juste avant le haut de la 1re carte (360 pt). Sans cela l'illustration
+    // continue derriere le verre : la ligne d'horizon et la silhouette
+    // traversaient la carte, et comme le rendu natif ne peut pas flouter son
+    // arriere-plan, rien ne venait les adoucir. La scene ne doit garder qu'une
+    // seule forme lumineuse — le limbe.
+    homeBackdropFade: 0.94,
+    // Anneau du score : l'illustration brute brille trop et mange le chiffre.
+    // Ramene au meme niveau que `decorative` — c'est un decor, pas un signal.
+    // Miroir de `.opacity(...)` sur `scoreDial` dans les deux fichiers Swift.
+    homeScoreDial: 0.22,
     decorative: 0.22,
     decorativeStrong: 0.34,
     disabled: 0.52,
@@ -222,6 +441,15 @@ export const relockMaterial = {
       shadowOpacity: 0.28,
       shadowRadius: 13,
       shadowOffset: { width: 0, height: 5 },
+    },
+    // Decollement des cartes en verre. Le rayon CSS `40px` du brief vaut
+    // ~20 en `shadowRadius` iOS (le flou CSS couvre deux fois le rayon natif).
+    glass: {
+      elevation: 6,
+      shadowColor: '#000000',
+      shadowOpacity: 0.45,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 12 },
     },
     blockingSubtle: {
       elevation: 1,

@@ -12,6 +12,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
   Extrapolation,
+  FadeInDown,
   interpolate,
   runOnJS,
   useAnimatedStyle,
@@ -32,6 +33,7 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg'
+import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import {
   Footnote,
@@ -52,6 +54,7 @@ import { haptic, OB } from './tokens'
  * son halo s'allume, puis on passe à la promesse. Un tap saute.
  */
 export function SceneIgnition({ onDone }: { onDone: () => void }) {
+  const insets = useSafeAreaInsets()
   const breath = useSharedValue(1)
   const glow = useSharedValue(0)
   const done = useRef(false)
@@ -95,6 +98,15 @@ export function SceneIgnition({ onDone }: { onDone: () => void }) {
           <Moon size={160} glow />
         </Animated.View>
       </Animated.View>
+      {/*
+        Le logotype est posé en ABSOLU, pas en frère de flux : la lune doit
+        rester au centre exact de l'écran pour prolonger le splash natif sans
+        saut. Il n'a pas non plus d'animation d'entrée — le splash natif
+        l'affiche déjà, le faire réapparaître ferait clignoter la marque.
+      */}
+      <View style={[styles.ignitionBrand, { bottom: insets.bottom + 48 }]}>
+        <RelockWordmark height={34} />
+      </View>
     </Pressable>
   )
 }
@@ -109,11 +121,11 @@ export function SceneIgnition({ onDone }: { onDone: () => void }) {
 // (863 px) pour rester fidèles à ses proportions sur n'importe quel écran.
 
 /**
- * Un <Text> RN natif imbriqué (pas de SVG) : react-native-svg ne fiabilise
- * pas `textLength`/`lengthAdjust` sur du texte à tspans multiples (constaté
- * à l'écran — dépassement silencieux), alors que le moteur de texte natif
- * enroule et centre correctement quel que soit l'appareil. Couleur unie
- * (au lieu du dégradé signature) : compromis assumé pour cette fiabilité.
+ * Un <Text> RN natif (pas de SVG) : react-native-svg ne fiabilise pas
+ * `textLength`/`lengthAdjust` sur ce titre (constaté à l'écran —
+ * dépassement silencieux), alors que le moteur de texte natif enroule et
+ * centre correctement quel que soit l'appareil. Couleur unie (au lieu du
+ * dégradé signature) : compromis assumé pour cette fiabilité.
  */
 function HeroLine2({
   fontSize,
@@ -130,10 +142,10 @@ function HeroLine2({
         lineHeight,
         letterSpacing: -1.2,
         textAlign: 'center',
+        color: OB.grad[1],
       }}
     >
-      <Text style={{ color: OB.ink }}>qui </Text>
-      <Text style={{ color: OB.grad[1] }}>te volent ton temps.</Text>
+      Sauve ton cerveau.
     </Text>
   )
 }
@@ -205,7 +217,13 @@ function WelcomeGlow({
   )
 }
 
-export function SceneWelcome({ onNext }: { onNext: () => void }) {
+export function SceneWelcome({
+  onNext,
+  onSkipDev,
+}: {
+  onNext: () => void
+  onSkipDev?: () => void
+}) {
   const { width: windowW, height: windowH } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const availableH = windowH - insets.top - insets.bottom - 12
@@ -276,7 +294,7 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
               textAlign: 'center',
             }}
           >
-            Bloque les apps
+            Arrête de scroller.
           </Text>
           <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
         </Reveal>
@@ -300,6 +318,11 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
 
         <Reveal index={3} style={{ paddingBottom: 10 }}>
           <Pill label="Commencer" onPress={onNext} />
+          {__DEV__ && onSkipDev ? (
+            <View className="items-center pt-3">
+              <GhostLink label="Passer (dev)" onPress={onSkipDev} dim />
+            </View>
+          ) : null}
         </Reveal>
       </View>
     </View>
@@ -615,95 +638,347 @@ export function SceneHours({
 // ─── Acte 1 · La preuve (courbe de divergence) ──────────────────────────
 
 /**
- * L'interstitiel qui « donne » après les aveux : ta trajectoire sans
- * Relock, et avec. Les deux courbes se dessinent, la seconde en dégradé,
- * son point d'arrivée est la lune.
+ * ⚠️ PLACEHOLDER — chiffres INVENTÉS, pour la maquette uniquement.
+ *
+ * L'app n'est pas publiée : ce bloc existe pour valider la composition de
+ * l'écran. AVANT toute mise en ligne sur l'App Store, remplacer par les
+ * vrais chiffres, ou remettre `null` (la ligne d'étude reprend alors la
+ * place). Annoncer une note et un volume d'utilisateurs qui n'existent pas
+ * sur un écran d'acquisition, c'est une allégation trompeuse.
  */
-const CURVE_LEN = 420
+const SOCIAL_PROOF: { stars: number; text: string } | null = {
+  stars: 5,
+  text: '12K+ avis · 300K d’utilisateurs',
+}
 
+/** Repère du graphe, en unités viewBox. Tout se positionne à partir de là. */
+const CHART_VB_W = 390
+const CHART_VB_H = 208
+/** Longueurs de tracé (légèrement surestimées : garantit un tracé complet). */
+const GREY_LEN = 520
+const ACCENT_LEN = 480
+/** Fin de la courbe Relock — le point d'arrivée, ancre de la bulle. */
+const END_X = 322
+const END_Y = 158
+/** Hauteur de la ligne « sans rien », où s'accroche l'étiquette grise. */
+const FLAT_Y = 40
+
+const BENEFITS = [
+  {
+    Icon: IconShield,
+    lead: 'Travaille sans interruption.',
+    rest: ' Donne le meilleur de toi-même.',
+  },
+  {
+    Icon: IconCalendar,
+    lead: 'Reprends le contrôle de ton temps.',
+    rest: ' Vis chaque journée pleinement.',
+  },
+  {
+    Icon: IconPeople,
+    lead: 'Sois présent dans l’instant.',
+    rest: ' La vie ne se passe pas sur un écran.',
+  },
+] as const
+
+/**
+ * L'interstitiel qui « donne » après les aveux : ta trajectoire sans
+ * Relock, et avec. Le graphe est plein cadre (bord à bord), les deux
+ * courbes se dessinent, celle de Relock plonge sous une aire dégradée et
+ * son point d'arrivée porte l'étiquette. Sous le graphe : l'axe du temps,
+ * les trois bénéfices, la preuve, le CTA.
+ */
 export function SceneProof({ onNext }: { onNext: () => void }) {
+  const { width } = useWindowDimensions()
   // Tracé progressif des courbes : un progrès JS suffit largement ici
   // (33 valeurs par seconde sur un strokeDashoffset).
   const [progress, setProgress] = useState(0)
   useEffect(() => {
     const start = Date.now()
     const id = setInterval(() => {
-      const t = Math.min(1, (Date.now() - start - 500) / 1400)
+      const t = Math.min(1, (Date.now() - start - 400) / 1400)
       setProgress(Math.max(0, t))
       if (t >= 1) clearInterval(id)
     }, 32)
     return () => clearInterval(id)
   }, [])
 
+  // Le graphe occupe toute la largeur : les étiquettes flottantes sont des
+  // vues RN (vraies polices système) posées sur le SVG, donc converties du
+  // repère viewBox vers les points écran.
+  const scale = width / CHART_VB_W
+  const chartH = CHART_VB_H * scale
+  const px = (v: number) => v * scale
+  const settled = progress >= 1
+
   return (
-    <View className="flex-1 px-5">
-      <View className="flex-1 justify-center">
-        <Reveal index={0}>
-          <Text style={styles.h1}>Deux semaines.</Text>
-          <Text style={styles.h1Dim}>
-            C'est ce qu'il faut pour sentir la différence.
-          </Text>
-        </Reveal>
-        <Reveal index={1} style={styles.chartCard}>
-          <Svg width="100%" height={190} viewBox="0 0 320 190">
-            <Defs>
-              <LinearGradient id="proofGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={OB.grad[0]} />
-                <Stop offset="100%" stopColor={OB.grad[2]} />
-              </LinearGradient>
-            </Defs>
-            {/* Sans Relock : plate, haute. */}
-            <Path
-              d="M16 52 C 90 46, 180 54, 304 44"
-              stroke={OB.ink28}
-              strokeWidth={3}
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray={CURVE_LEN}
-              strokeDashoffset={CURVE_LEN * (1 - progress)}
+    <View className="flex-1">
+      <Reveal index={0} className="px-6 pt-1">
+        <Text style={styles.proofTitle}>
+          Deux semaines pour récupérer{' '}
+          <Text style={styles.proofTitleAccent}>+ 2 heures</Text> par jour
+        </Text>
+      </Reveal>
+
+      <View style={styles.hairline} className="mt-5" />
+
+      <View style={{ height: chartH }}>
+        <Svg
+          width={width}
+          height={chartH}
+          viewBox={`0 0 ${CHART_VB_W} ${CHART_VB_H}`}
+        >
+          <Defs>
+            <LinearGradient id="proofGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor={OB.grad[0]} />
+              <Stop offset="55%" stopColor={OB.grad[1]} />
+              <Stop offset="100%" stopColor={OB.grad[2]} />
+            </LinearGradient>
+            <LinearGradient id="proofFill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <Stop offset="0%" stopColor={OB.grad[1]} stopOpacity={0.32} />
+              <Stop offset="45%" stopColor={OB.grad[2]} stopOpacity={0.11} />
+              <Stop offset="100%" stopColor={OB.grad[2]} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+
+          {/* Grille : trois repères horizontaux à peine perceptibles. */}
+          {[26, 88, 150].map(y => (
+            <Rect
+              key={y}
+              x={0}
+              y={y}
+              width={CHART_VB_W}
+              height={0.75}
+              fill="rgba(255,255,255,0.055)"
             />
-            {/* Avec Relock : plonge. */}
-            <Path
-              d="M16 56 C 110 62, 170 130, 296 152"
-              stroke="url(#proofGrad)"
-              strokeWidth={4}
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray={CURVE_LEN}
-              strokeDashoffset={CURVE_LEN * (1 - progress)}
-            />
-            {progress >= 1 ? (
-              <Circle cx={296} cy={152} r={7} fill={OB.accent} />
-            ) : null}
-          </Svg>
-          <View className="flex-row justify-center gap-[18px] mt-1">
-            <View className="flex-row items-center gap-[7px]">
-              <View
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: OB.ink28 }}
-              />
-              <Text style={styles.legendText}>
-                Ton temps d'écran, sans rien
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-[7px]">
-              <View
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: OB.accent }}
-              />
-              <Text style={styles.legendText}>Avec Relock</Text>
-            </View>
-          </View>
-        </Reveal>
-        <Reveal index={2} style={{ marginTop: 18 }}>
-          <StudyLine text="En moyenne, on consulte son téléphone plus de 140 fois par jour." />
-        </Reveal>
+          ))}
+
+          {/* Aire sous la courbe Relock : le « territoire » regagné. */}
+          <Path
+            d={`M -30 52 C 55 58, 105 84, 160 106 C 225 132, 268 150, ${END_X} ${END_Y} L 420 ${END_Y + 7} L 420 ${CHART_VB_H} L -30 ${CHART_VB_H} Z`}
+            fill="url(#proofFill)"
+            opacity={progress}
+          />
+
+          {/* Sans Relock : plate, haute, elle sort du cadre. */}
+          <Path
+            d="M -30 40 C 60 30, 150 44, 240 42 C 300 41, 350 44, 420 40"
+            stroke={OB.ink28}
+            strokeWidth={3}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={GREY_LEN}
+            strokeDashoffset={GREY_LEN * (1 - progress)}
+          />
+          {/* Avec Relock : plonge. */}
+          <Path
+            d={`M -30 52 C 55 58, 105 84, 160 106 C 225 132, 268 150, ${END_X} ${END_Y}`}
+            stroke="url(#proofGrad)"
+            strokeWidth={4.5}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={ACCENT_LEN}
+            strokeDashoffset={ACCENT_LEN * (1 - progress)}
+          />
+
+          {settled ? (
+            <>
+              <Circle cx={END_X} cy={END_Y} r={12} fill={OB.grad[1]} />
+              <Circle cx={END_X} cy={END_Y} r={7.5} fill="#0A0A0E" />
+              <Circle cx={END_X} cy={END_Y} r={4} fill={OB.grad[1]} />
+            </>
+          ) : null}
+        </Svg>
+
+        {settled ? (
+          <>
+            {/* Étiquette « sans rien » : pilule sombre + avatar, ancrée sur
+                la ligne plate et coupée par le bord droit, comme la réf. */}
+            <Animated.View
+              entering={FadeInDown.duration(340)}
+              style={[styles.tagRow, { top: px(FLAT_Y) - 19 }]}
+              pointerEvents="none"
+            >
+              <View style={styles.tagDim}>
+                <Text style={styles.tagDimText}>Sans rien</Text>
+              </View>
+              <View style={styles.tagAvatar}>
+                <IconPerson />
+              </View>
+            </Animated.View>
+
+            {/* Étiquette « avec Relock » : bulle en dégradé, queue pointant
+                le point d'arrivée. */}
+            <Animated.View
+              entering={FadeInDown.duration(340).delay(120)}
+              style={[
+                styles.tagAccentWrap,
+                { top: px(END_Y) - 26 - 36, right: width - px(END_X) - 23 },
+              ]}
+              pointerEvents="none"
+            >
+              <View style={styles.tagAccent}>
+                <Text style={styles.tagAccentText}>Avec Relock</Text>
+              </View>
+              <View style={styles.tagTail} />
+            </Animated.View>
+          </>
+        ) : null}
       </View>
-      <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Continuer" onPress={onNext} />
+
+      <View style={styles.hairline} />
+      <Reveal index={1} className="flex-row justify-between px-6 py-3">
+        <Text style={styles.axisDim}>Aujourd’hui</Text>
+        <Text style={styles.axisAccent}>Ton écran dans 2 semaines</Text>
+      </Reveal>
+      <View style={styles.hairline} />
+
+      <View className="flex-1 justify-center px-6 gap-[18px] py-4">
+        {BENEFITS.map((b, i) => (
+          <Reveal
+            key={b.lead}
+            index={2 + i}
+            className="flex-row items-center gap-[14px]"
+          >
+            <b.Icon />
+            <Text style={styles.benefitText} className="flex-1">
+              <Text style={styles.benefitLead}>{b.lead}</Text>
+              {b.rest}
+            </Text>
+          </Reveal>
+        ))}
+      </View>
+
+      <Reveal index={5} className="px-6 items-center">
+        {SOCIAL_PROOF ? (
+          <>
+            <View className="flex-row gap-1">
+              {Array.from({ length: SOCIAL_PROOF.stars }, (_, i) => (
+                <IconStar key={`star-${i}`} />
+              ))}
+            </View>
+            <Text style={styles.socialText}>{SOCIAL_PROOF.text}</Text>
+          </>
+        ) : (
+          <StudyLine text="En moyenne, on consulte son téléphone plus de 140 fois par jour." />
+        )}
+      </Reveal>
+
+      <Reveal index={6} className="gap-2 px-5 pt-5 pb-2.5">
+        <Pill label="Continuer" kind="gradient" onPress={onNext} />
         <Footnote text="Projection basée sur tes blocages planifiés. Pas une promesse magique." />
       </Reveal>
     </View>
+  )
+}
+
+// ─── Glyphes de l'écran de preuve ───────────────────────────────────────
+// Dessinés ici plutôt que tirés d'`assets/icons.ts` : ils portent le
+// dégradé signature et une graisse propre à cet écran.
+
+function IconShield() {
+  return (
+    <Svg width={26} height={26} viewBox="0 0 26 26">
+      <Path
+        d="M13 2.4 22 6.1v6.6c0 5.4-3.8 9.3-9 11-5.2-1.7-9-5.6-9-11V6.1Z"
+        fill={OB.accentDim}
+        stroke={OB.grad[1]}
+        strokeWidth={1.7}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M10.6 12.2v-1.8a2.4 2.4 0 0 1 4.8 0v1.8"
+        stroke={OB.grad[1]}
+        strokeWidth={1.5}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <Rect
+        x={9.5}
+        y={12.1}
+        width={7}
+        height={5.6}
+        rx={1.6}
+        fill={OB.grad[1]}
+      />
+    </Svg>
+  )
+}
+
+function IconCalendar() {
+  return (
+    <Svg width={26} height={26} viewBox="0 0 26 26">
+      <Rect
+        x={3}
+        y={5}
+        width={20}
+        height={18}
+        rx={4.5}
+        fill={OB.accentDim}
+        stroke={OB.grad[1]}
+        strokeWidth={1.7}
+      />
+      <Path
+        d="M3.8 10.6h18.4"
+        stroke={OB.grad[1]}
+        strokeWidth={1.7}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M8.6 3.2v3.4M17.4 3.2v3.4"
+        stroke={OB.grad[1]}
+        strokeWidth={1.7}
+        strokeLinecap="round"
+      />
+      {[9, 13, 17].map(x =>
+        [14.6, 18.4].map(y => (
+          <Circle key={`${x}-${y}`} cx={x} cy={y} r={1.25} fill={OB.grad[1]} />
+        )),
+      )}
+    </Svg>
+  )
+}
+
+function IconPeople() {
+  return (
+    <Svg width={26} height={26} viewBox="0 0 26 26">
+      {/* Silhouette d'arrière-plan, en retrait. */}
+      <Circle cx={18.6} cy={9.2} r={3.3} fill={OB.grad[1]} opacity={0.45} />
+      <Path
+        d="M12.4 21.2c0-3.4 2.8-5.6 6.2-5.6s6.2 2.2 6.2 5.6Z"
+        fill={OB.grad[1]}
+        opacity={0.45}
+      />
+      {/* Silhouette de premier plan, pleine. */}
+      <Circle cx={9.4} cy={8.4} r={4.2} fill={OB.grad[1]} />
+      <Path
+        d="M1.8 21.6c0-4.2 3.4-6.8 7.6-6.8s7.6 2.6 7.6 6.8Z"
+        fill={OB.grad[1]}
+      />
+    </Svg>
+  )
+}
+
+function IconPerson() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 18 18">
+      <Circle cx={9} cy={6.2} r={3.1} fill={OB.ink70} />
+      <Path
+        d="M2.8 16c0-3.3 2.8-5.4 6.2-5.4s6.2 2.1 6.2 5.4Z"
+        fill={OB.ink70}
+      />
+    </Svg>
+  )
+}
+
+function IconStar() {
+  return (
+    <Svg width={17} height={17} viewBox="0 0 20 20">
+      <Path
+        d="M10 1.6 12.47 6.6 18 7.4l-4 3.9.94 5.5L10 14.2l-4.94 2.6L6 11.3 2 7.4l5.53-.8Z"
+        fill="#F5C451"
+      />
+    </Svg>
   )
 }
 
@@ -715,6 +990,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#000000',
+  },
+
+  // Bande de marque du bas : pleine largeur pour centrer le logotype sans
+  // dépendre de sa largeur, et hors flux pour ne pas décaler la lune.
+  ignitionBrand: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
 
   h1: {
@@ -821,12 +1105,74 @@ const styles = StyleSheet.create({
     backgroundColor: OB.ink,
   },
 
-  chartCard: {
-    marginTop: 26,
-    backgroundColor: OB.card,
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 6,
+  hairline: { height: StyleSheet.hairlineWidth, backgroundColor: OB.hairline },
+
+  proofTitle: {
+    ...fonts.bold,
+    fontSize: 27,
+    lineHeight: 34,
+    letterSpacing: -0.7,
+    color: OB.ink,
+    textAlign: 'center',
   },
-  legendText: { ...fonts.medium, fontSize: 12.5, color: OB.ink55 },
+  proofTitleAccent: { color: OB.grad[1] },
+
+  tagRow: {
+    position: 'absolute',
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  tagDim: {
+    backgroundColor: '#2A2A31',
+    borderRadius: 19,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  tagDimText: { ...fonts.bold, fontSize: 15, color: OB.ink },
+  tagAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#2A2A31',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  tagAccentWrap: { position: 'absolute', alignItems: 'flex-end' },
+  tagAccent: {
+    backgroundColor: OB.grad[1],
+    borderRadius: 19,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  tagAccentText: { ...fonts.bold, fontSize: 15, color: OB.onAccent },
+  tagTail: {
+    width: 13,
+    height: 13,
+    marginTop: -7,
+    marginRight: 17,
+    borderRadius: 3,
+    backgroundColor: OB.grad[1],
+    transform: [{ rotate: '45deg' }],
+  },
+
+  axisDim: { ...fonts.medium, fontSize: 14, color: OB.ink40 },
+  axisAccent: { ...fonts.semiBold, fontSize: 14, color: OB.grad[1] },
+
+  benefitText: {
+    ...fonts.regular,
+    fontSize: 15.5,
+    lineHeight: 21,
+    color: OB.ink70,
+  },
+  benefitLead: { ...fonts.bold, color: OB.ink },
+
+  socialText: {
+    ...fonts.bold,
+    fontSize: 16,
+    color: OB.ink,
+    marginTop: 8,
+  },
 })
