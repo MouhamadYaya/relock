@@ -110,6 +110,7 @@
     "preview_title": "Aperçu du paywall",
     "preview_label": "DEV · Tarifs provisoires",
     "purchase_unavailable": "Les achats ne sont pas encore connectés à RevenueCat. Aucun paiement ni abonnement n’a été déclenché.",
+    "restore_none": "Aucun abonnement actif à restaurer sur ce compte.",
     "restore_unavailable": "La restauration sera disponible après le branchement à RevenueCat. Aucun achat n’a été restauré.",
     "legal_unavailable": "Les liens définitifs des conditions et de confidentialité seront ajoutés avant l’activation des achats.",
     "understood": "Compris",

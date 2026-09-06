@@ -118,6 +118,7 @@ declare module 'i18next' {
           preview_title: string
           preview_label: string
           purchase_unavailable: string
+          restore_none: string
           restore_unavailable: string
           legal_unavailable: string
           understood: string

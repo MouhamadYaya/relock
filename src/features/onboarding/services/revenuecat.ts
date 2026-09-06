@@ -138,10 +138,15 @@ export async function loadPaywallCatalog(): Promise<PaywallCatalog | null> {
 
     const annualPackage = findPackage(current, 'year')
     const weeklyPackage = findPackage(current, 'week')
-    const plans = [
-      annualPackage && toPlan('annual', 'year', current, annualPackage),
-      weeklyPackage && toPlan('weekly', 'week', current, weeklyPackage),
-    ].filter((plan): plan is PaywallPlan => plan !== null)
+    const annualPlan = annualPackage
+      ? toPlan('annual', 'year', current, annualPackage)
+      : null
+    const weeklyPlan = weeklyPackage
+      ? toPlan('weekly', 'week', current, weeklyPackage)
+      : null
+    const plans = [annualPlan, weeklyPlan].filter(
+      (plan): plan is PaywallPlan => plan !== null,
+    )
 
     if (plans.length === 0) {
       debug('offering courant sans produit exploitable', {
@@ -154,9 +159,7 @@ export async function loadPaywallCatalog(): Promise<PaywallCatalog | null> {
     // La remise se compare TOUJOURS à l'annuel plein tarif : sans annuel au
     // catalogue, le barré comparerait deux périodes de facturation et
     // afficherait une réduction fausse.
-    const discount = annualPackage
-      ? await getOffering(discountOfferingId)
-      : null
+    const discount = annualPlan ? await getOffering(discountOfferingId) : null
     const discountPackage = discount ? findPackage(discount, 'year') : null
     const offer =
       discount && discountPackage

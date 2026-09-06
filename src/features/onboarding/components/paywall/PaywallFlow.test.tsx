@@ -247,6 +247,47 @@ describe('Reference paywall and strictly separated offers', () => {
     )
   })
 
+  const mountWithRestore = (onRestore: () => boolean | Promise<boolean>) =>
+    act(() => {
+      renderer = create(
+        <PaywallFlow
+          plans={PREVIEW_PLANS}
+          offer={PREVIEW_OFFER}
+          onSkip={skip}
+          purchase={jest.fn()}
+          onPurchaseSuccess={success}
+          onRestore={onRestore}
+        />,
+      )
+    })
+  const pressRestore = async () => {
+    await act(async () => {
+      await renderer.root.findByProps({ label: 'Restaurer' }).props.onPress()
+    })
+  }
+
+  it('warns the user when the store restores no active subscription', async () => {
+    const onRestore = jest.fn().mockResolvedValue(false)
+    mountWithRestore(onRestore)
+    openPlans()
+    await pressRestore()
+    expect(onRestore).toHaveBeenCalledTimes(1)
+    expect(Alert.alert).toHaveBeenLastCalledWith(
+      'Aperçu du paywall',
+      expect.stringContaining('Aucun abonnement actif'),
+      expect.any(Array),
+    )
+  })
+
+  it('stays silent when the restore succeeds', async () => {
+    const onRestore = jest.fn().mockResolvedValue(true)
+    mountWithRestore(onRestore)
+    openPlans()
+    await pressRestore()
+    expect(onRestore).toHaveBeenCalledTimes(1)
+    expect(Alert.alert).not.toHaveBeenCalled()
+  })
+
   it('opens 50% only after a real-store-sheet cancellation and sends the selected plan', async () => {
     const purchase = jest
       .fn()

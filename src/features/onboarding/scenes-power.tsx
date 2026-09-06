@@ -263,6 +263,7 @@ export function ScenePaywall({ onNext }: { onNext: () => void }) {
     if (restored) {
       onNext()
     }
+    return restored
   }, [onNext])
 
   if (loading) {

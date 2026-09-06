@@ -59,7 +59,8 @@ export function PaywallFlow({
   purchase?: PaywallPurchase
   onPurchaseSuccess?: () => void
   allowPurchases?: boolean
-  onRestore?: () => void | Promise<void>
+  /** Renvoie `false` quand le store n'a rendu aucun abonnement actif. */
+  onRestore?: () => boolean | Promise<boolean>
 }) {
   const t = useT()
   const insets = useSafeAreaInsets()
@@ -214,7 +215,9 @@ export function PaywallFlow({
     purchasing.current = true
     setBusy(true)
     try {
-      await onRestore()
+      const restored = await onRestore()
+      if (!restored && mounted.current && !finished.current)
+        alert(t('paywall.restore_none'))
     } catch {
       if (mounted.current && !finished.current)
         alert(t('paywall_reference.payment_failed'))
