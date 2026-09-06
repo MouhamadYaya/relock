@@ -432,7 +432,19 @@ final class ShieldAttemptStore {
         locked = true
         break
       }
+      if errno != EWOULDBLOCK && errno != EINTR { break }
       usleep(Self.lockRetryMicroseconds)
+    }
+    // Le fichier d'état est lu-modifié-écrit en entier : une exécution sans
+    // verrou laisserait l'app et les extensions s'écraser mutuellement. Après
+    // la fenêtre non bloquante, on attend donc réellement le verrou ; les
+    // sections critiques ne font qu'un chargement et une écriture atomique.
+    while !locked {
+      if flock(fd, LOCK_EX) == 0 {
+        locked = true
+        break
+      }
+      if errno != EINTR { break }
     }
     defer {
       if locked { flock(fd, LOCK_UN) }
@@ -441,8 +453,8 @@ final class ShieldAttemptStore {
     return body()
   }
 
-  /// ~50 ms au total, puis l'opération continue sans verrou plutôt que de
-  /// retenir un geste utilisateur derrière un autre processus.
+  /// ~50 ms de tentatives non bloquantes avant de basculer sur une attente
+  /// bloquante : le chemin sans contention reste sans latence.
   private static let lockAttempts = 25
   private static let lockRetryMicroseconds: UInt32 = 2_000
 }

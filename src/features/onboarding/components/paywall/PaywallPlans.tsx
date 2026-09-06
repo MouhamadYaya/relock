@@ -146,18 +146,14 @@ export function PaywallPlans({
                 author={t(`paywall_reference.author_${index}`)}
               />
             ))}
-            <View style={styles.devFooter}>
-              <PaywallTextButton
-                label={t('paywall.restore')}
-                onPress={onRestore}
-              />
-              {onWindow ? (
+            {onWindow ? (
+              <View style={styles.devFooter}>
                 <PaywallTextButton
                   label={t('paywall_reference.dev_window')}
                   onPress={onWindow}
                 />
-              ) : null}
-            </View>
+              </View>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
@@ -183,6 +179,15 @@ export function PaywallPlans({
           disabled={busy}
           compact={compact}
         />
+        {/* La restauration reste accessible en production : un abonné qui
+            réinstalle doit retrouver son accès sans repayer. */}
+        <View style={styles.restore}>
+          <PaywallTextButton
+            label={t('paywall.restore')}
+            onPress={onRestore}
+            disabled={busy}
+          />
+        </View>
       </View>
     </View>
   )
@@ -445,6 +450,7 @@ const styles = StyleSheet.create({
     paddingTop: PW.space.xs,
     gap: PW.space.xs,
   },
+  restore: { alignItems: 'center' },
   reassurance: {
     flexDirection: 'row',
     alignItems: 'center',

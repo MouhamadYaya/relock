@@ -151,7 +151,12 @@ export async function loadPaywallCatalog(): Promise<PaywallCatalog | null> {
       return null
     }
 
-    const discount = await getOffering(discountOfferingId)
+    // La remise se compare TOUJOURS à l'annuel plein tarif : sans annuel au
+    // catalogue, le barré comparerait deux périodes de facturation et
+    // afficherait une réduction fausse.
+    const discount = annualPackage
+      ? await getOffering(discountOfferingId)
+      : null
     const discountPackage = discount ? findPackage(discount, 'year') : null
     const offer =
       discount && discountPackage

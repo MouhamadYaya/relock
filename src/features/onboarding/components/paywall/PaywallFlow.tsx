@@ -205,15 +205,22 @@ export function PaywallFlow({
   const annual = plans.find(plan => plan.period === 'year') ?? selected
 
   const handleRestore = async () => {
+    if (purchasing.current || finished.current) return
     if (!onRestore) {
       alert(t('paywall.restore_unavailable'))
       return
     }
 
+    purchasing.current = true
+    setBusy(true)
     try {
       await onRestore()
     } catch {
-      alert(t('paywall_reference.payment_failed'))
+      if (mounted.current && !finished.current)
+        alert(t('paywall_reference.payment_failed'))
+    } finally {
+      purchasing.current = false
+      if (mounted.current) setBusy(false)
     }
   }
 
