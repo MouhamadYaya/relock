@@ -13,6 +13,7 @@ import {
 import type {
   PaywallPurchase,
   PaywallPurchaseResult,
+  PaywallRestore,
 } from '@/features/onboarding/types/paywall'
 
 jest.mock('@assets/icons', () => ({
@@ -247,7 +248,7 @@ describe('Reference paywall and strictly separated offers', () => {
     )
   })
 
-  const mountWithRestore = (onRestore: () => boolean | Promise<boolean>) =>
+  const mountWithRestore = (onRestore: PaywallRestore) =>
     act(() => {
       renderer = create(
         <PaywallFlow
@@ -267,7 +268,7 @@ describe('Reference paywall and strictly separated offers', () => {
   }
 
   it('warns the user when the store restores no active subscription', async () => {
-    const onRestore = jest.fn().mockResolvedValue(false)
+    const onRestore = jest.fn().mockResolvedValue('none')
     mountWithRestore(onRestore)
     openPlans()
     await pressRestore()
@@ -280,12 +281,24 @@ describe('Reference paywall and strictly separated offers', () => {
   })
 
   it('stays silent when the restore succeeds', async () => {
-    const onRestore = jest.fn().mockResolvedValue(true)
+    const onRestore = jest.fn().mockResolvedValue('restored')
     mountWithRestore(onRestore)
     openPlans()
     await pressRestore()
     expect(onRestore).toHaveBeenCalledTimes(1)
     expect(Alert.alert).not.toHaveBeenCalled()
+  })
+
+  it('reports a store failure as retryable instead of an empty account', async () => {
+    const onRestore = jest.fn().mockResolvedValue('failed')
+    mountWithRestore(onRestore)
+    openPlans()
+    await pressRestore()
+    expect(Alert.alert).toHaveBeenLastCalledWith(
+      'Aperçu du paywall',
+      expect.not.stringContaining('Aucun abonnement actif'),
+      expect.any(Array),
+    )
   })
 
   it('opens 50% only after a real-store-sheet cancellation and sends the selected plan', async () => {

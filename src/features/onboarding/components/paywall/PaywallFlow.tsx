@@ -29,6 +29,7 @@ import type {
   PaywallPlan,
   PaywallPurchase,
   PaywallPurchaseSource,
+  PaywallRestore,
 } from '@/features/onboarding/types/paywall'
 import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -59,8 +60,7 @@ export function PaywallFlow({
   purchase?: PaywallPurchase
   onPurchaseSuccess?: () => void
   allowPurchases?: boolean
-  /** Renvoie `false` quand le store n'a rendu aucun abonnement actif. */
-  onRestore?: () => boolean | Promise<boolean>
+  onRestore?: PaywallRestore
 }) {
   const t = useT()
   const insets = useSafeAreaInsets()
@@ -215,9 +215,15 @@ export function PaywallFlow({
     purchasing.current = true
     setBusy(true)
     try {
-      const restored = await onRestore()
-      if (!restored && mounted.current && !finished.current)
-        alert(t('paywall.restore_none'))
+      const result = await onRestore()
+      if (result === 'restored' || !mounted.current || finished.current) return
+      // « Aucun abonnement » est un diagnostic de compte : on ne le prononce que
+      // si le store a vraiment répondu, jamais sur une panne réessayable.
+      alert(
+        result === 'none'
+          ? t('paywall.restore_none')
+          : t('paywall_reference.payment_failed'),
+      )
     } catch {
       if (mounted.current && !finished.current)
         alert(t('paywall_reference.payment_failed'))

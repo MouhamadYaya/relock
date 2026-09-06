@@ -15,6 +15,7 @@ import type {
   PaywallPlan,
   PaywallPlanId,
   PaywallPurchase,
+  PaywallRestoreResult,
 } from '@/features/onboarding/types/paywall'
 
 const entitlementId = env.REVENUECAT_ENTITLEMENT_ID || 'relock_pro'
@@ -288,16 +289,26 @@ export const paywallPurchaseWithRevenueCat: PaywallPurchase = async plan => {
   }
 }
 
-export async function restoreRevenueCatPurchases(): Promise<boolean> {
+/**
+ * Restaure les achats et dit LEQUEL des deux cas s'est produit : ce compte n'a
+ * aucun abonnement actif, ou le store n'a pas pu répondre. Un abonné hors ligne
+ * ne doit jamais lire qu'il n'a pas d'abonnement.
+ */
+export async function restoreRevenueCatPurchases(): Promise<PaywallRestoreResult> {
   if (!(await initializeRevenueCat())) {
-    return false
+    return 'failed'
   }
 
   try {
-    await Purchases.restorePurchases()
-    return hasRelockProEntitlement()
-  } catch {
-    return false
+    // `restorePurchases` renvoie déjà le CustomerInfo à jour : pas de second
+    // appel réseau qui pourrait échouer après une restauration réussie.
+    const customerInfo = await Purchases.restorePurchases()
+    return hasRelockProEntitlementFromCustomerInfo(customerInfo)
+      ? 'restored'
+      : 'none'
+  } catch (error) {
+    debug('échec de la restauration', { error: String(error) })
+    return 'failed'
   }
 }
 

@@ -11,12 +11,14 @@ jest.mock('@/config/env', () => ({
 }))
 
 const mockGetOfferings = jest.fn()
+const mockRestorePurchases = jest.fn()
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
   default: {
     setLogLevel: jest.fn(),
     configure: jest.fn(),
     getOfferings: (...args: unknown[]) => mockGetOfferings(...args),
+    restorePurchases: (...args: unknown[]) => mockRestorePurchases(...args),
   },
   LOG_LEVEL: { VERBOSE: 'verbose', INFO: 'info' },
   PACKAGE_TYPE: { ANNUAL: 'ANNUAL', WEEKLY: 'WEEKLY' },
@@ -101,5 +103,34 @@ describe('loadPaywallCatalog discount gating', () => {
     const catalog = await loadPaywallCatalog()
     expect(catalog?.plans.map(plan => plan.id)).toEqual(['weekly'])
     expect(catalog?.offer).toBeNull()
+  })
+})
+
+describe('restoreRevenueCatPurchases outcomes', () => {
+  let restoreRevenueCatPurchases: typeof import('./revenuecat').restoreRevenueCatPurchases
+
+  beforeEach(() => {
+    jest.resetModules()
+    mockRestorePurchases.mockReset()
+    restoreRevenueCatPurchases =
+      require('./revenuecat').restoreRevenueCatPurchases
+  })
+
+  it('restores from the customer info returned by the store', async () => {
+    mockRestorePurchases.mockResolvedValue({
+      entitlements: { active: { relock_pro: {} } },
+    })
+    await expect(restoreRevenueCatPurchases()).resolves.toBe('restored')
+  })
+
+  it('answers "none" when the store replies without the entitlement', async () => {
+    mockRestorePurchases.mockResolvedValue({ entitlements: { active: {} } })
+    await expect(restoreRevenueCatPurchases()).resolves.toBe('none')
+  })
+
+  it('answers "failed" when the store cannot be reached', async () => {
+    // Un abonné hors ligne ne doit jamais lire qu'il n'a aucun abonnement.
+    mockRestorePurchases.mockRejectedValue(new Error('offline'))
+    await expect(restoreRevenueCatPurchases()).resolves.toBe('failed')
   })
 })

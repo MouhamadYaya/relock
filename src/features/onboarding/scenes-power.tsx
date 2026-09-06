@@ -259,11 +259,11 @@ export function ScenePaywall({ onNext }: { onNext: () => void }) {
   }, [hasNativeBilling, onNext])
 
   const restore = useCallback(async () => {
-    const restored = await restoreRevenueCatPurchases()
-    if (restored) {
+    const result = await restoreRevenueCatPurchases()
+    if (result === 'restored') {
       onNext()
     }
-    return restored
+    return result
   }, [onNext])
 
   if (loading) {
