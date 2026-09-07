@@ -95,3 +95,10 @@ expo-env.d.ts
 # @end expo-cli
 # Sorties de build Xcode (xcresult, captures de test) — jamais versionnées
 artifacts/
+
+# Sentry — identifiants sentry-cli (upload des source maps / dSYM au build).
+# Le modèle `sentry.properties.example` est commité, les vrais fichiers non :
+# `auth.token` est un secret d'organisation.
+ios/sentry.properties
+android/sentry.properties
+.env.sentry-build-plugin

@@ -29,8 +29,11 @@ import { fonts } from '@/shared/theme/tokens/fonts'
  * Deux gestes font toute la feuille. Le ruban CHEVAUCHE son bord haut :
  * posé à cheval sur deux plans, il annonce la remise avant qu'on lise le
  * prix et il donne à la feuille sa personnalité. Et la page derrière reste
- * LISIBLE — un voile clair, pas un rideau noir : l'offre doit se lire comme
- * quelque chose qui arrive par-dessus une page qu'on connaît déjà.
+ * LISIBLE sous son voile : l'offre doit se lire comme quelque chose qui
+ * arrive par-dessus une page qu'on connaît déjà.
+ *
+ * La feuille elle-même est en nuit violette, pas en blanc. Un aplat clair
+ * plein cadre au milieu d'un parcours nocturne éblouit — voir `paper`.
  */
 export function PaywallOffer({
   regular,
@@ -138,6 +141,12 @@ const styles = StyleSheet.create({
     backgroundColor: PW.color.paper,
     borderTopLeftRadius: PW.radius.xl,
     borderTopRightRadius: PW.radius.xl,
+    // La feuille n'est plus claire : une ombre portée ne suffit plus à la
+    // détacher d'un fond sombre (noir sur noir ne dessine rien). Le liseré
+    // haut fait le travail — la même lumière tombant d'en haut que les
+    // cartes de l'onboarding.
+    borderTopWidth: PW.layout.hairline,
+    borderColor: PW.color.paperEdge,
     ...PW.shadow.sheet,
   },
   grip: {
@@ -172,7 +181,9 @@ const styles = StyleSheet.create({
     fontSize: PW.text.h1,
     lineHeight: PW.text.h1Line,
     letterSpacing: PW.text.tight,
-    color: PW.color.violetDeep,
+    // Sur la nuit violette de la feuille, `violetDeep` s'éteindrait : le
+    // titre prend la lavande de la marque.
+    color: PW.color.paperAccent,
     textAlign: 'center',
   },
   compactTitle: {

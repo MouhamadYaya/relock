@@ -30,8 +30,11 @@
   "scripts": {
     "start": "expo start --dev-client --lan --scheme relock",
     "env:ensure": "node scripts/ensure-env.cjs",
-    "ios": "node scripts/ensure-env.cjs && expo run:ios",
-    "android": "node scripts/ensure-env.cjs && node scripts/wait-for-android-device.cjs && expo run:android",
+    "ios": "node scripts/ensure-env.cjs && node scripts/dev-run.cjs --platform ios",
+    "ios:raw": "node scripts/ensure-env.cjs && expo run:ios",
+    "dev:open": "node scripts/dev-open.cjs",
+    "android": "node scripts/ensure-env.cjs && node scripts/wait-for-android-device.cjs && node scripts/dev-run.cjs --platform android",
+    "android:raw": "node scripts/ensure-env.cjs && node scripts/wait-for-android-device.cjs && expo run:android",
     "android:devices": "adb devices",
     "android:uninstall": "adb uninstall com.yaya.relock || true",
     "npx:ios": "node scripts/ensure-env.cjs && npx expo run:ios",

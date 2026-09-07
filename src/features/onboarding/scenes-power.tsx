@@ -211,98 +211,12 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
   )
 }
 
-/**
- * Adaptateur d'aperçu, développement uniquement.
- *
- * Il ne facture rien et se comporte comme une feuille de paiement que
- * l'utilisateur aurait refermée. `storeSheetPresented: false` est essentiel :
- * c'est ce qui empêche l'offre de rattrapage à −50 % de s'ouvrir, puisqu'elle
- * ne doit JAMAIS suivre autre chose qu'une annulation réelle.
+/*
+ * L'offre a quitté ce fichier : elle vit maintenant dans
+ * `src/features/onboarding/screens/PaywallScreen.tsx`, derrière sa propre
+ * route. Ce n'est plus une étape du récit mais un état réévalué à chaque
+ * démarrage — voir l'en-tête d'`OnboardingFlow.tsx`.
  */
-const previewPurchase: PaywallPurchase = async () => ({
-  status: 'cancelled',
-  storeSheetPresented: false,
-})
-
-// Le paywall est isolé des écrans de permission et de notifications.
-export function ScenePaywall({ onNext }: { onNext: () => void }) {
-  const t = useT()
-  const hasNativeBilling = isRevenueCatEnabled()
-  const [loading, setLoading] = useState(hasNativeBilling)
-  const [catalog, setCatalog] = useState<PaywallCatalog | null>(null)
-
-  useEffect(() => {
-    if (!hasNativeBilling) {
-      setLoading(false)
-      return
-    }
-
-    let cancelled = false
-    void (async () => {
-      // Déjà abonné : on ne repropose rien, on laisse entrer.
-      const hasEntitlement = await hasRelockProEntitlement()
-      if (cancelled) return
-      if (hasEntitlement) {
-        onNext()
-        return
-      }
-      // Les tarifs viennent du store à chaque affichage — jamais du bundle.
-      const storeCatalog = await loadPaywallCatalog()
-      if (cancelled) return
-      setCatalog(storeCatalog)
-      setLoading(false)
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [hasNativeBilling, onNext])
-
-  const restore = useCallback(async () => {
-    const result = await restoreRevenueCatPurchases()
-    if (result === 'restored') {
-      onNext()
-    }
-    return result
-  }, [onNext])
-
-  if (loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>{t('common.loading')}</Text>
-      </View>
-    )
-  }
-
-  if (!hasNativeBilling || !catalog) {
-    // Sans clés RevenueCat — ou si le store n'a rien renvoyé — `PaywallFlow`
-    // refuse d'afficher le moindre tarif (garde `!purchase`) : on ne montre pas
-    // un prix qu'on ne peut pas encaisser. En développement seulement, on
-    // branche des décors et un adaptateur qui ne facture rien, pour pouvoir
-    // travailler les quatre écrans sans store.
-    return (
-      <PaywallFlow
-        plans={__DEV__ ? PREVIEW_PLANS : []}
-        offer={__DEV__ ? PREVIEW_OFFER : null}
-        onSkip={onNext}
-        purchase={__DEV__ ? previewPurchase : undefined}
-      />
-    )
-  }
-
-  return (
-    <PaywallFlow
-      plans={catalog.plans}
-      offer={catalog.offer}
-      onSkip={onNext}
-      purchase={paywallPurchaseWithRevenueCat}
-      onPurchaseSuccess={onNext}
-      onRestore={restore}
-      allowPurchases
-    />
-  )
-}
 
 // ─── Styles ──────────────────────────────────────────────────────────────
 

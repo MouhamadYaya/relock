@@ -74,8 +74,10 @@ final class RelockShieldAction: ShieldActionDelegate {
     }
 
     // Cette écriture atomique doit précéder l'ouverture : Relock peut démarrer
-    // à froid dès le rappel du completion handler. Le store borne son verrou à
-    // ~50 ms puis continue, afin qu'aucun autre processus ne fige le bouton.
+    // à froid dès le rappel du completion handler. Le store borne son attente
+    // du verrou à ~50 ms, afin qu'aucun autre processus ne fige le bouton ;
+    // au-delà il renonce à écrire (`nil`) plutôt que d'écraser l'état d'un
+    // autre processus, et l'action répond quand même.
     let queuedRequest = opensRelock
       ? attempts?.enqueueOpenRequest(
         applicationKey: applicationKey,
@@ -104,6 +106,8 @@ final class RelockShieldAction: ShieldActionDelegate {
     }
 
     let resisted = action == .secondaryButtonPressed
+    // `nil` = rien n'a été persisté (verrou indisponible) : on ne fête pas un
+    // palier qui n'existe pas sur disque.
     let total = attempts?.recordAction(
       requestStatus: requestStatus,
       response: responseName,

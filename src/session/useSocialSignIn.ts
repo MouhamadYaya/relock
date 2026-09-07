@@ -4,6 +4,7 @@ import {
   useGoogleSignInMutation,
 } from '@/features/auth/hooks/useSocialSignInMutation'
 import { isAuthCanceled } from '@/features/auth/services/auth/auth.service'
+import { attachBillingIdentity } from '@/session/billing-identity'
 import {
   type NormalizedError,
   normalizeError,
@@ -28,6 +29,9 @@ export function useSocialSignIn() {
   const signInWithApple = useCallback(async (): Promise<SignInResult> => {
     try {
       await apple.mutateAsync()
+      // Le compte existe : ses achats lui appartiennent désormais, où qu'il
+      // se connecte ensuite. Voir `attachBillingIdentity`.
+      await attachBillingIdentity()
       return { ok: true }
     } catch (e) {
       const error = normalizeError(e)
@@ -38,6 +42,7 @@ export function useSocialSignIn() {
   const signInWithGoogle = useCallback(async (): Promise<SignInResult> => {
     try {
       await google.mutateAsync()
+      await attachBillingIdentity()
       return { ok: true }
     } catch (e) {
       const error = normalizeError(e)

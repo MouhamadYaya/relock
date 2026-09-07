@@ -16,6 +16,10 @@ jest.mock('react-native-purchases', () => ({
   __esModule: true,
   default: {
     setLogLevel: jest.fn(),
+    // `initializeRevenueCat` détourne les journaux du SDK : sans ce double,
+    // l'initialisation lève, est rattrapée, et TOUS les cas ci-dessous
+    // deviendraient des pannes plutôt que le scénario visé.
+    setLogHandler: jest.fn(),
     configure: jest.fn(),
     getOfferings: (...args: unknown[]) => mockGetOfferings(...args),
     restorePurchases: (...args: unknown[]) => mockRestorePurchases(...args),

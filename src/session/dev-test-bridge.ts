@@ -7,8 +7,17 @@ import {
   NativeModules,
 } from 'react-native'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
-import { completeOnboarding, resetOnboarding } from '@/session/bootstrap'
+import {
+  applyEntitlement,
+  completeSetup,
+  resetOnboarding,
+} from '@/session/bootstrap'
 import { ScreenTime } from '@/shared/native/screen-time'
+import {
+  captureError,
+  isSentryEnabled,
+  triggerNativeCrashForTesting,
+} from '@/shared/services/monitoring/sentry'
 import { genUUID } from '@/shared/utils/uuid'
 
 /** Événement interne (dev) : force le jour affiché par l'écran Activité. */
@@ -23,7 +32,8 @@ export const DEV_EVENT_ONBOARDING_JUMP = 'relock-dev-onboarding-jump'
  *   xcrun simctl openurl booted "relock://dev/diag"
  *
  * Commandes : `diag` (bilan natif), `pull` (journal brut), `sync` (synchro
- * stats + ligne du jour), `home` / `activity` / `settings` (navigation).
+ * stats + ligne du jour), `home` / `activity` / `settings` (navigation),
+ * `sentry-status` / `sentry-js` / `sentry-native` (vérification Sentry).
  * Résultats dans la console Metro, préfixés `[DEV-BRIDGE]`.
  * Inactif en release (jamais enregistré).
  */
@@ -216,6 +226,33 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} authorization → ${status}`)
       return
     }
+    // --- Sentry : vérification de bout en bout ---------------------------
+    case 'sentry-status': {
+      // Répond à la seule question qui compte au départ : « est-ce que les
+      // événements partent, oui ou non ? » Un DSN vide ou un
+      // SENTRY_ENABLE_IN_DEV oublié rendent tout le reste invisible, et rien
+      // dans l'app ne le signale autrement.
+      const payload = JSON.stringify({ enabled: isSentryEnabled() }, null, 2)
+      console.log(`${TAG} sentry-status`, payload)
+      await report('sentry-status', payload)
+      return
+    }
+    case 'sentry-js': {
+      // Erreur JS NON FATALE : vérifie DSN, scrubbing, contexte utilisateur
+      // et — en build release — la symbolication par les source maps.
+      captureError(new Error('[TEST] erreur JS déclenchée par le dev-bridge'), {
+        tags: { test: 'dev-bridge' },
+      })
+      console.log(`${TAG} sentry-js envoyé`)
+      return
+    }
+    case 'sentry-native': {
+      // Crash NATIF volontaire : l'app se ferme. C'est le seul test qui
+      // prouve que les dSYM sont bien téléversés (symboles Swift/ObjC).
+      console.log(`${TAG} sentry-native → crash volontaire`)
+      triggerNativeCrashForTesting()
+      return
+    }
     case 'home':
       router.navigate('/(tabs)/home')
       console.log(`${TAG} navigate home`)
@@ -237,11 +274,22 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} onboarding réinitialisé`)
       return
     case 'onboarding-complete':
-      // Symétrique de `onboarding-reset` : `completeOnboarding()` fait déjà
-      // le flip + le `replace` explicite (voir son commentaire pour le
-      // pourquoi du `replace`).
-      completeOnboarding()
+      // Symétrique de `onboarding-reset` : `completeSetup()` fait déjà le
+      // flip + le `replace` explicite (voir son commentaire pour le pourquoi
+      // du `replace`).
+      completeSetup()
       console.log(`${TAG} onboarding marqué terminé`)
+      return
+    // La porte dure ne se teste pas sans pouvoir la refermer : `onboarding-reset`
+    // ne touche PAS à l'abonnement (c'est un achat réel). Ces deux commandes
+    // simulent l'abonné et l'expiré, replace explicite compris.
+    case 'entitlement-lock':
+      applyEntitlement(false)
+      console.log(`${TAG} abonnement retiré (paywall)`)
+      return
+    case 'entitlement-unlock':
+      applyEntitlement(true)
+      console.log(`${TAG} abonnement accordé`)
       return
     case 'dev-session': {
       // Déconnecte le compte courant (souvent restauré depuis le Keychain,
@@ -309,7 +357,12 @@ async function run(cmd: string): Promise<void> {
               : 'progressive_delay'
         if (kind === 'schedule') {
           await ScreenTime.startSchedule(
-            id, value, 0, (value + 2) % 24, 0, [1, 2, 3, 4, 5],
+            id,
+            value,
+            0,
+            (value + 2) % 24,
+            0,
+            [1, 2, 3, 4, 5],
           )
         } else if (kind === 'daily_limit') {
           await ScreenTime.startDailyLimit(id, value)
@@ -327,11 +380,7 @@ async function run(cmd: string): Promise<void> {
         const diag = await ScreenTime.getDiagnostics().catch(() => null)
         await report(
           'mkrule',
-          JSON.stringify(
-            { id, type, config, seeded, armed, diag },
-            null,
-            2,
-          ),
+          JSON.stringify({ id, type, config, seeded, armed, diag }, null, 2),
         )
         return
       }
@@ -401,18 +450,15 @@ async function run(cmd: string): Promise<void> {
         )
         for (const rule of targets) {
           await BlockRulesService.remove(rule.id)
-          await ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(
-            () => {},
-          )
+          await ScreenTime.clearRuleData(
+            rule.id,
+            nativeKindOf(rule.type),
+          ).catch(() => {})
         }
         const diag = await ScreenTime.getDiagnostics().catch(() => null)
         await report(
           'rmtest',
-          JSON.stringify(
-            { supprimées: targets.map(r => r.id), diag },
-            null,
-            2,
-          ),
+          JSON.stringify({ supprimées: targets.map(r => r.id), diag }, null, 2),
         )
         return
       }
@@ -578,7 +624,9 @@ function pollCommands(): void {
     } catch {
       misses += 1
       if (misses === MISSES_BEFORE_SLOWDOWN) {
-        console.log(`${TAG} serveur injoignable — cadence réduite à ${SLOW_MS}ms`)
+        console.log(
+          `${TAG} serveur injoignable — cadence réduite à ${SLOW_MS}ms`,
+        )
       }
       delay = misses >= MISSES_BEFORE_SLOWDOWN ? SLOW_MS : FAST_MS
     }

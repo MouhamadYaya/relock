@@ -45,6 +45,12 @@ export type DailyStats = {
   streak_respected: boolean
 }
 
+export type OnboardingAnswersRow = {
+  user_id: string
+  answers: Record<string, unknown>
+  updated_at: string
+}
+
 export type Settings = {
   user_id: string
   theme: string
@@ -68,6 +74,7 @@ export interface Database {
       block_events: Row<BlockEvent>
       daily_stats: Row<DailyStats>
       settings: Row<Settings>
+      onboarding_answers: Row<OnboardingAnswersRow>
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }

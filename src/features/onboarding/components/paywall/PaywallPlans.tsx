@@ -1,17 +1,19 @@
 import { IconName } from '@assets/icons'
-import React, { useState } from 'react'
+import React, { useId, useState } from 'react'
 import {
   type LayoutChangeEvent,
   ScrollView,
+  type StyleProp,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
+  type ViewStyle,
 } from 'react-native'
-import { PaywallTiles } from '@/features/onboarding/components/paywall/PaywallArtwork'
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
+import { PaywallMarquee } from '@/features/onboarding/components/paywall/PaywallMarquee'
 import {
   PaywallButton,
-  PaywallRibbon,
   PaywallStars,
   PaywallTextButton,
 } from '@/features/onboarding/components/paywall/PaywallPrimitives'
@@ -30,18 +32,22 @@ const EXTRA_REVIEWS = [2, 3] as const
 /**
  * L'écran de choix de formule.
  *
- * Hiérarchie : 1. les deux formules — 2. le bouton — 3. le titre — 4. la
- * grille de quatre visuels — 5. l'avis et la promesse d'annulation.
+ * Ordre de lecture : 1. la bande — 2. le titre — 3. les deux formules —
+ * 4. l'avis — 5. la promesse d'annulation et le bouton.
  *
- * La grille 2 × 2 tient le premier tiers de la page, comme la référence.
- * Elle est DÉCORATIVE : sans libellé, sans zone tactile, sans état
- * sélectionné — quatre scènes qui racontent la vie qu'on achète, pas quatre
- * options à choisir. Ce qui se choisit, ce sont les deux cartes en dessous,
- * et la sélectionnée s'INVERSE en clair : le geste de `ChoiceCard` dans
- * l'onboarding, où le contraste maximal fait office de couleur.
+ * **Le rythme vertical est écrit, pas négocié.** Tous les écarts sont des
+ * constantes ; seule la bande est élastique et absorbe la hauteur en trop.
+ * La version précédente faisait l'inverse — un `space-between` répartissait
+ * le rab également entre les quatre blocs et creusait ~50 pt de vide
+ * partout, y compris entre le titre et le prix, là où il ne doit y en avoir
+ * presque aucun.
  *
- * Le pli reste mesuré (`onLayout`) plutôt que deviné : tout ce qui décide de
- * l'achat tient dans le premier écran, le reste de la preuve vit dessous.
+ * La bande est purement décorative : aucun libellé cliquable, aucune zone
+ * tactile, aucun état sélectionné. Ce qui se choisit, ce sont les deux
+ * cartes en dessous.
+ *
+ * La fermeture et la restauration ne vivent pas ici : ce sont deux actions
+ * natives que `PaywallFlow` pose en surimpression de la bande.
  */
 export function PaywallPlans({
   plans,
@@ -49,7 +55,6 @@ export function PaywallPlans({
   onSelect,
   onPurchase,
   onWindow,
-  onRestore,
   busy = false,
 }: {
   plans: readonly PaywallPlan[]
@@ -57,11 +62,12 @@ export function PaywallPlans({
   onSelect: (plan: PaywallPlan) => void
   onPurchase: () => void
   onWindow?: () => void
-  onRestore: () => void
+  /** Un achat OU une restauration est en cours : l'écran se verrouille. */
   busy?: boolean
 }) {
   const t = useT()
   const compact = useWindowDimensions().height < PW.layout.compactHeight
+  const locked = busy
   const [fold, setFold] = useState(0)
   const measureFold = ({ nativeEvent: { layout } }: LayoutChangeEvent) => {
     if (layout.height !== fold) setFold(layout.height)
@@ -86,20 +92,42 @@ export function PaywallPlans({
             fold > 0 && { minHeight: fold },
           ]}
         >
-          <Text
-            accessibilityRole="header"
-            style={[styles.title, compact && styles.compactTitle]}
-            maxFontSizeMultiplier={1.2}
-          >
-            {t('paywall_reference.plans_title')}
-          </Text>
+          {/*
+            La bande annule la marge de page pour toucher les deux bords :
+            c'est la seule chose de l'écran qui sorte de la colonne de texte,
+            et le seul bloc à qui on laisse de la hauteur à prendre.
+          */}
+          <View testID="paywall-marquee-slot" style={styles.marqueeSlot}>
+            <PaywallMarquee />
+          </View>
 
-          {/* Seul bloc élastique : la décoration cède, jamais le prix. */}
-          <View
-            testID="paywall-tiles-slot"
-            style={[styles.tilesSlot, compact && styles.compactTilesSlot]}
-          >
-            <PaywallTiles />
+          {/*
+            Le titre bascule en lavande sur sa seconde ligne. La couleur
+            n'est pas un ornement : elle annonce le violet des cartes de prix
+            qui arrivent seize points plus bas, et fait lire les deux lignes
+            comme une bascule — l'écran d'un côté, la vie de l'autre.
+          */}
+          <View style={styles.heading}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.title, compact && styles.compactTitle]}
+              maxFontSizeMultiplier={1.2}
+            >
+              {t('paywall_reference.plans_title')}
+              {'\n'}
+              <Text style={styles.titleAccent}>
+                {t('paywall_reference.plans_title_accent')}
+              </Text>
+            </Text>
+            {/*
+              Ce que l'écran vend, écrit noir sur blanc. Sans cette ligne, le
+              titre promet un bénéfice mais rien ne dit qu'on est devant un
+              abonnement payant — l'utilisateur doit savoir ce qu'il achète
+              avant d'atteindre le bouton.
+            */}
+            <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+              {t('paywall_reference.plans_subtitle')}
+            </Text>
           </View>
 
           <View
@@ -112,20 +140,25 @@ export function PaywallPlans({
                 key={plan.id}
                 plan={plan}
                 selected={plan.id === selected.id}
-                disabled={busy}
+                disabled={locked}
                 compact={compact}
                 onSelect={() => onSelect(plan)}
               />
             ))}
           </View>
 
-          {__DEV__ ? (
-            <PaywallReview
-              quote={t('paywall_reference.testimonial')}
-              author={t('paywall_reference.author')}
-              testID="paywall-reference-testimonial"
-            />
-          ) : null}
+          {/*
+            ⚠️ Le texte de cet avis est un PLACEHOLDER. Il doit être remplacé
+            par une citation réelle (et son pseudo App Store réel) avant toute
+            soumission : publier un avis fabriqué tombe sous la règle App Store
+            2.3.1 et sous le droit européen des pratiques commerciales.
+          */}
+          <PaywallReview
+            quote={t('paywall_reference.testimonial')}
+            author={t('paywall_reference.author')}
+            testID="paywall-reference-testimonial"
+            style={styles.leadReview}
+          />
         </View>
 
         {__DEV__ ? (
@@ -151,6 +184,7 @@ export function PaywallPlans({
                 <PaywallTextButton
                   label={t('paywall_reference.dev_window')}
                   onPress={onWindow}
+                  disabled={locked}
                 />
               </View>
             ) : null}
@@ -176,18 +210,9 @@ export function PaywallPlans({
               : t('paywall_reference.continue')
           }
           onPress={onPurchase}
-          disabled={busy}
+          disabled={locked}
           compact={compact}
         />
-        {/* La restauration reste accessible en production : un abonné qui
-            réinstalle doit retrouver son accès sans repayer. */}
-        <View style={styles.restore}>
-          <PaywallTextButton
-            label={t('paywall.restore')}
-            onPress={onRestore}
-            disabled={busy}
-          />
-        </View>
       </View>
     </View>
   )
@@ -202,15 +227,17 @@ function PaywallReview({
   quote,
   author,
   testID,
+  style,
 }: {
   quote: string
   author: string
   testID?: string
+  style?: StyleProp<ViewStyle>
 }) {
   return (
-    <View testID={testID} style={styles.review}>
+    <View testID={testID} style={[styles.review, style]}>
       <View style={styles.reviewHeading}>
-        <PaywallStars size={PW.layout.star + 3} />
+        <PaywallStars size={PW.layout.star + 6} />
         <Text style={styles.author} numberOfLines={1}>
           {author}
         </Text>
@@ -222,6 +249,23 @@ function PaywallReview({
   )
 }
 
+/**
+ * Une formule.
+ *
+ * Le ruban n'est PAS une bandelette posée sur la carte : le ruban et la
+ * carte forment un seul objet — une coque violette arrondie dont la bande
+ * haute porte le texte et dont le corps sombre est encastré à quatre points.
+ * C'est ce détail d'assemblage, plus que la couleur, qui sépare un paywall
+ * correct d'un paywall cher : deux rectangles empilés se lisent comme deux
+ * éléments, une coque se lit comme un produit.
+ *
+ * La coque reste sur la formule annuelle même NON sélectionnée — « le
+ * meilleur tarif » est une promesse permanente, pas une conséquence du
+ * choix — mais son violet s'éteint alors, et le halo disparaît.
+ *
+ * La formule hebdomadaire n'a pas de coque : rien à y annoncer. Quand c'est
+ * elle qui est choisie, c'est sa bordure qui passe en lavande.
+ */
 export function PaywallPlanCard({
   plan,
   selected,
@@ -247,6 +291,48 @@ export function PaywallPlanCard({
     ? t('paywall_reference.annual_billing', { price: plan.priceString })
     : undefined
 
+  const body = (
+    <View
+      style={[
+        styles.body,
+        !annual && styles.bareBody,
+        !annual && selected && styles.bareBodyOn,
+        compact && styles.compactBody,
+      ]}
+    >
+      <View style={styles.planCopy}>
+        <Text style={[styles.planTitle, selected && styles.planTitleOn]}>
+          {title}
+        </Text>
+        {billing ? (
+          <Text style={[styles.planBilling, selected && styles.planBillingOn]}>
+            {billing}
+          </Text>
+        ) : null}
+      </View>
+      <Text
+        style={[styles.planPrice, selected && styles.planTitleOn]}
+        maxFontSizeMultiplier={1.2}
+      >
+        {price}
+        <Text style={[styles.planUnit, selected && styles.planBillingOn]}>
+          {t('paywall_reference.per_week_unit')}
+        </Text>
+      </Text>
+      <View style={[styles.radio, selected && styles.radioSelected]}>
+        {selected ? (
+          <IconSvg
+            name={IconName.CHECK}
+            size={PW.space.md}
+            /* Encre sombre, jamais blanc : du blanc sur la lavande `accent`
+               tombe sous le seuil de contraste et le check disparaît. */
+            color={PW.color.onAccent}
+          />
+        ) : null}
+      </View>
+    </View>
+  )
+
   return (
     <PressableScale
       testID={`paywall-plan-${plan.id}`}
@@ -258,56 +344,90 @@ export function PaywallPlanCard({
         haptic.select()
         onSelect()
       }}
-      style={[styles.plan, selected && styles.planSelected]}
+      /* Le halo vit sur la vue extérieure : la coque rogne (`overflow`) pour
+         contenir son dégradé, et un rognage couperait l'ombre portée. */
+      style={selected ? PW.shadow.select : undefined}
     >
-      {annual ? <PaywallRibbon label={t('paywall_reference.lowest')} /> : null}
-      <View style={[styles.planBody, compact && styles.compactPlanBody]}>
-        <View style={styles.planCopy}>
-          <Text style={[styles.planTitle, selected && styles.planTitleOn]}>
-            {title}
+      {annual ? (
+        <View style={styles.shell}>
+          <PaywallShellField selected={selected} />
+          <Text
+            style={styles.shellRibbon}
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+          >
+            {t('paywall_reference.lowest')}
           </Text>
-          {billing ? (
-            <Text
-              style={[styles.planBilling, selected && styles.planBillingOn]}
-            >
-              {billing}
-            </Text>
-          ) : null}
+          {body}
         </View>
-        <Text
-          style={[styles.planPrice, selected && styles.planTitleOn]}
-          maxFontSizeMultiplier={1.2}
-        >
-          {price}
-          <Text style={[styles.planUnit, selected && styles.planBillingOn]}>
-            {t('paywall_reference.per_week_unit')}
-          </Text>
-        </Text>
-        <View style={[styles.radio, selected && styles.radioSelected]}>
-          {selected ? (
-            <IconSvg
-              name={IconName.CHECK}
-              size={PW.space.md}
-              color={PW.color.paper}
-            />
-          ) : null}
-        </View>
-      </View>
+      ) : (
+        body
+      )}
     </PressableScale>
+  )
+}
+
+/** Le dégradé de la coque : vif quand la formule est choisie, éteint sinon. */
+function PaywallShellField({ selected }: { selected: boolean }) {
+  const id = useId()
+  // Choisie : un violet franc mais assagi — l'ancien couple partait de
+  // `violetInk`, deux crans plus clair, et l'aplat écrasait le prix qu'il
+  // portait. Non choisie : le violet éteint.
+  const colors = selected
+    ? [PW.color.violetDeep, PW.color.violetShade]
+    : [PW.color.halo, PW.color.violetMuted]
+  return (
+    <Svg
+      pointerEvents="none"
+      style={StyleSheet.absoluteFill}
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <Defs>
+        <LinearGradient id={id} x1="0%" y1="0%" x2="20%" y2="100%">
+          <Stop offset="0" stopColor={colors[0]} />
+          <Stop offset="1" stopColor={colors[1]} />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100" height="100" fill={`url(#${id})`} />
+    </Svg>
   )
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: PW.layout.page },
-  // `space-between` : la hauteur en trop se répartit dans le rythme vertical
-  // au lieu de creuser un seul grand vide sous le dernier bloc.
-  fold: {
-    justifyContent: 'space-between',
-    paddingBottom: PW.space.md,
-    gap: PW.space.md,
+  /**
+   * Le rythme vertical de l'écran, écrit écart par écart.
+   *
+   * Il n'y a plus de `justifyContent` : chaque espace est une constante, et
+   * c'est la bande (`marqueeSlot`, seule à porter `flexGrow`) qui absorbe la
+   * hauteur en trop. Le budget mesuré sur un iPhone 15 (852 pt) :
+   *
+   *   59 barre d'état (LIBRE : aucune carte ne la touche) · 211 mosaïque ·
+   *   20 · 104 titre + promesse · 24 · 162 formules · 28 · 118 avis · 4 ·
+   *   92 pied (promesse + bouton) · 34 safe area
+   *
+   * Les seize points entre le titre et les formules sont volontaires et
+   * volontairement petits : le titre doit toucher le prix. Le seul grand
+   * écart est SOUS les formules, pour détacher la preuve sociale de l'achat.
+   *
+   * La version d'avant faisait exactement l'inverse — un `space-between`
+   * répartissait le rab également entre les quatre blocs et creusait ~50 pt
+   * de vide partout, y compris là où il n'en faut aucun.
+   */
+  fold: { paddingBottom: PW.space.xxs, gap: PW.space.lg },
+  compactFold: { paddingBottom: PW.space.xs, gap: PW.space.md },
+  // La marge négative annule `content.paddingHorizontal` : la bande est le
+  // seul élément qui touche les deux bords de l'écran, et le seul à qui on
+  // laisse de la hauteur à prendre.
+  marqueeSlot: {
+    marginHorizontal: -PW.layout.page,
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: PW.layout.marqueeMin,
+    maxHeight: PW.layout.marqueeMax,
   },
-  compactFold: { paddingBottom: PW.space.sm, gap: PW.space.sm },
   title: {
     ...fonts.bold,
     color: PW.color.ink,
@@ -316,36 +436,61 @@ const styles = StyleSheet.create({
     letterSpacing: PW.text.tight,
     textAlign: 'center',
   },
+  heading: { gap: PW.space.xxs },
   compactTitle: {
     fontSize: PW.text.compactH1,
     lineHeight: PW.text.compactH1Line,
   },
-  tilesSlot: {
-    height: PW.layout.tiles,
-    minHeight: PW.layout.minTiles,
-    maxHeight: PW.layout.maxTiles,
-    flexGrow: 1,
-    flexShrink: 1,
-  },
-  compactTilesSlot: { height: PW.layout.minTiles },
-  plans: { gap: PW.space.xs },
   /**
-   * Non sélectionnée : une surface nocturne, discrète. Sélectionnée : la
-   * carte s'INVERSE en clair — impossible de se tromper sur celle qui est
-   * active, même à 20 % de zoom.
+   * La seconde ligne bascule en lavande. La couleur n'est pas un ornement :
+   * elle annonce le violet des formules seize points plus bas et fait lire
+   * les deux lignes comme une bascule — l'écran d'un côté, la vie de l'autre.
    */
-  plan: {
-    borderRadius: PW.radius.md,
+  titleAccent: { color: PW.color.accent },
+  /** La promesse se lit APRÈS le titre : deux crans plus bas en contraste. */
+  subtitle: {
+    ...fonts.regular,
+    color: PW.color.inkFaint,
+    fontSize: PW.text.caption,
+    lineHeight: PW.text.captionLine,
+    textAlign: 'center',
+  },
+  /**
+   * Les deux formules ont leur propre bulle d'air, au-dessus comme en
+   * dessous : c'est le bloc qui décide de l'achat, il ne doit pas se lire
+   * comme la suite du titre ni comme le début de l'avis. Les 16 pt qu'elle
+   * coûte ont été repris sur l'écart des rangées de la mosaïque, sur
+   * l'interligne de l'avis et sur les rembourrages du pied.
+   */
+  plans: {
+    gap: PW.space.xxs + 6,
+    marginTop: PW.space.xxs,
+    marginBottom: PW.space.xs,
+  },
+  /**
+   * La coque : elle réunit le ruban et la carte en un seul objet. Son
+   * `padding` de quatre points est ce qui fait apparaître le liseré violet
+   * autour du corps sombre — c'est tout le geste. Deux rectangles empilés se
+   * lisent comme deux éléments ; une coque se lit comme un produit.
+   */
+  shell: {
+    borderRadius: PW.radius.lg,
     overflow: 'hidden',
+    padding: PW.layout.shellPad,
+  },
+  shellRibbon: {
+    ...fonts.bold,
+    height: PW.layout.shellRibbon,
+    lineHeight: PW.layout.shellRibbon,
+    fontSize: PW.text.eyebrow - 1,
+    letterSpacing: PW.text.tracking,
+    color: PW.color.onViolet,
+    textAlign: 'center',
+  },
+  /** Le corps sombre, encastré dans la coque ou posé seul (hebdomadaire). */
+  body: {
+    borderRadius: PW.radius.md,
     backgroundColor: PW.color.surface,
-    borderWidth: 1.5,
-    borderColor: PW.color.hairline,
-  },
-  planSelected: {
-    backgroundColor: PW.color.paper,
-    borderColor: PW.color.accent,
-  },
-  planBody: {
     minHeight: PW.layout.planBody,
     flexDirection: 'row',
     alignItems: 'center',
@@ -353,9 +498,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: PW.space.md,
     paddingVertical: PW.space.sm,
   },
-  compactPlanBody: {
+  compactBody: {
     minHeight: PW.layout.compactPlanBody,
     paddingHorizontal: PW.space.sm,
+  },
+  // Sans coque, c'est la bordure qui porte l'état. Le liseré haut plus clair
+  // est le même geste que sur les cartes de la bande : la lumière d'en haut.
+  bareBody: {
+    borderWidth: 2,
+    borderColor: PW.color.edge,
+    borderTopColor: PW.color.edgeTop,
+  },
+  bareBodyOn: {
+    borderColor: PW.color.accent,
+    borderTopColor: PW.color.accent,
   },
   planCopy: { flex: 1, gap: 2 },
   planTitle: {
@@ -364,14 +520,14 @@ const styles = StyleSheet.create({
     lineHeight: PW.text.bodyLine,
     color: PW.color.inkMuted,
   },
-  planTitleOn: { color: PW.color.paperInk },
+  planTitleOn: { color: PW.color.ink },
   planBilling: {
     ...fonts.regular,
     fontSize: PW.text.fine,
     lineHeight: PW.text.fineLine,
     color: PW.color.inkFaint,
   },
-  planBillingOn: { color: PW.color.paperMuted },
+  planBillingOn: { color: PW.color.inkMuted },
   planPrice: {
     ...fonts.bold,
     fontSize: PW.text.h2,
@@ -396,10 +552,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioSelected: {
-    borderColor: PW.color.violetDeep,
-    backgroundColor: PW.color.violetDeep,
+    borderColor: PW.color.accent,
+    backgroundColor: PW.color.accent,
   },
   review: { gap: PW.space.xs },
+  // L'avis se détache du prix par le seul écart du conteneur : le supplément
+  // qu'il portait a été rendu à la mosaïque, qui en avait plus besoin.
+  leadReview: {},
   reviewHeading: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -408,15 +567,15 @@ const styles = StyleSheet.create({
   },
   author: {
     ...fonts.medium,
-    fontSize: PW.text.fine,
-    lineHeight: PW.text.fineLine,
+    fontSize: PW.text.caption,
+    lineHeight: PW.text.captionLine,
     color: PW.color.inkFaint,
     flexShrink: 1,
   },
   quote: {
     ...fonts.regular,
-    fontSize: PW.text.compactBody,
-    lineHeight: PW.text.compactBodyLine,
+    fontSize: PW.text.body,
+    lineHeight: PW.text.bodyLine - 1,
     color: PW.color.ink,
   },
   moreProof: {
@@ -447,10 +606,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: PW.layout.page,
-    paddingTop: PW.space.xs,
+    paddingTop: PW.space.xxs + 2,
     gap: PW.space.xs,
   },
-  restore: { alignItems: 'center' },
   reassurance: {
     flexDirection: 'row',
     alignItems: 'center',

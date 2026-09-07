@@ -36,7 +36,7 @@ const SPARKLES = [
 /**
  * L'offre unique, plein écran.
  *
- * Hiérarchie : 1. « −50 % À VIE » dans le grand panneau clair — 2. le prix —
+ * Hiérarchie : 1. « −50 % À VIE » dans le grand panneau de remise — 2. le prix —
  * 3. le CTA — 4. la carte annuelle et l'urgence — 5. le kicker, le refus
  * bordé et la réassurance.
  *
@@ -195,12 +195,17 @@ const styles = StyleSheet.create({
 
   /** Le panneau et sa constellation partagent la même boîte. */
   promoSlot: { justifyContent: 'center' },
-  // Le renversement de valeur : le seul aplat clair du parcours sombre.
+  // Le renversement de valeur, en nuit violette plutôt qu'en blanc : le
+  // panneau reste le seul plan ÉCLAIRÉ du parcours, sans en être la lampe.
+  // Le liseré haut et le halo violet font le relief que l'aplat clair
+  // obtenait gratuitement par sa seule luminosité.
   promo: {
     height: PW.layout.promo,
     marginHorizontal: PW.space.xl,
     borderRadius: PW.radius.lg,
     backgroundColor: PW.color.paper,
+    borderWidth: PW.layout.hairline,
+    borderColor: PW.color.paperEdge,
     alignItems: 'center',
     justifyContent: 'center',
     ...PW.shadow.promo,
@@ -212,7 +217,9 @@ const styles = StyleSheet.create({
     fontSize: PW.text.display,
     lineHeight: PW.text.displayLine,
     letterSpacing: PW.text.tighter,
-    color: PW.color.violetDeep,
+    // Le chiffre porte le violet : sur la nuit violette du panneau, c'est
+    // la lavande qui le tient — `violetDeep` y disparaîtrait.
+    color: PW.color.paperAccent,
     fontVariant: ['tabular-nums'],
   },
   compactDiscount: {

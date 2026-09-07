@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { setSentryUser } from '@/shared/services/monitoring/sentry'
 import { supabase } from '@/shared/services/supabase/client'
 
 /**
@@ -21,6 +22,12 @@ const listeners = new Set<() => void>()
 function publish(next: string | null) {
   if (next === currentUserId) return
   currentUserId = next
+  // Sentry suit la MÊME source de vérité que les requêtes. C'est ce qui
+  // permet de dire « ce crash touche 3 comptes » plutôt que « 3 fois ». Seul
+  // l'UUID part — jamais l'e-mail (cf. `scrubEvent`). `null` à la
+  // déconnexion, sans quoi le crash suivant serait attribué au compte
+  // précédent.
+  setSentryUser(next)
   for (const l of listeners) l()
 }
 
