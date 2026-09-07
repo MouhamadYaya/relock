@@ -173,7 +173,8 @@
   },
   "overrides": {
     "react-native-nitro-modules": "0.35.0",
-    "react-dom": "19.1.4"
+    "react-dom": "19.1.4",
+    "joi": "^17.13.4"
   },
   "engines": {
     "node": ">=20"

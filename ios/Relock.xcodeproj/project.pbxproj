@@ -44,6 +44,7 @@
 		AB1CE0000000000000000007 /* RelockBlockAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000002 /* RelockBlockAttributes.swift */; };
 		AB1CE0000000000000000008 /* RelockWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000004 /* RelockWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */; };
+		C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */; };
 		C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */; };
 		C0DE10000000000000000001 /* ShieldAttemptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000011 /* ShieldAttemptStore.swift */; };
 		C0DE10000000000000000002 /* ShieldAttemptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000011 /* ShieldAttemptStore.swift */; };
@@ -202,6 +203,7 @@
 		BA36F585153B5E7C7D71D1B7 /* RelockShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA97067EDAE6D8F92FDAD17E /* RelockShieldAction.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShieldAction.entitlements; path = RelockShieldAction/RelockShieldAction.entitlements; sourceTree = "<group>"; };
 		BE6C76F37A41348D6134E60C /* RelockActivityReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = RelockActivityReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeReportSurvivalTests.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityPhysicalScrollTests.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000003 /* RelockUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RelockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0DE10000000000000000011 /* ShieldAttemptStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShieldAttemptStore.swift; sourceTree = "<group>"; };
@@ -473,6 +475,7 @@
 			isa = PBXGroup;
 			children = (
 				C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */,
+				C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */,
 				C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */,
 				C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */,
 				C0DE20000000000000000003 /* ExtensionLogTests.swift */,
@@ -1049,6 +1052,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */,
+				C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */,
 				C0DE10000000000000000004 /* ShieldAttemptStore.swift in Sources */,
 				C0DE10000000000000000006 /* ShieldAttemptStoreTests.swift in Sources */,
 				C0DE10000000000000000021 /* RelockBridgeDiagnosticsTests.swift in Sources */,

@@ -80,6 +80,33 @@ describe('Home score detail window', () => {
     )
   })
 
+  it('keeps every section title on a single line', () => {
+    act(() => {
+      renderer = create(
+        <HomeScoreDetail visible snapshot={snapshot()} onClose={jest.fn()} />,
+      )
+    })
+    // Les titres portent des phrases (« Astuces pour faire monter le score »)
+    // qui frôlent la largeur utile : ils doivent se resserrer, jamais passer
+    // à la ligne ni se faire tronquer par une ellipse.
+    const titles = renderer!.root
+      .findAllByType(Text)
+      .filter(node =>
+        [
+          'home.score_trend_title',
+          'home.score_how_title',
+          'home.score_today',
+          'home.score_improve_title',
+          'home.score_lowers_title',
+        ].includes(node.props.children),
+      )
+    expect(titles).toHaveLength(5)
+    for (const title of titles) {
+      expect(title.props.numberOfLines).toBe(1)
+      expect(title.props.adjustsFontSizeToFit).toBe(true)
+    }
+  })
+
   it('shows the raw measure behind each score, not a paragraph about it', () => {
     act(() => {
       renderer = create(

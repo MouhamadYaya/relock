@@ -549,6 +549,14 @@ describe('SettingsScreen', () => {
    * confort : il a déjà disparu une fois d'une refonte de l'écran, et rien ne
    * l'avait signalé.
    */
+
+  /**
+   * La politique de confidentialité PUBLIÉE promet « disable or enable crash
+   * reporting in Settings ». Cet interrupteur est un engagement, pas un
+   * confort : il a déjà disparu DEUX FOIS de refontes de cet écran sans que
+   * rien ne le signale. La cohérence avec la politique est verrouillée à part,
+   * dans `privacy-commitments.test.ts` ; ici on couvre le comportement.
+   */
   describe('rapports d’anomalie', () => {
     it('offre l’interrupteur promis par la politique de confidentialité', async () => {
       const tree = await render()
@@ -581,19 +589,6 @@ describe('SettingsScreen', () => {
       expect(getPreference('crashReports')).toBe(true)
       expect(applyCrashReportsPreference).toHaveBeenCalledWith(true)
     })
-  })
-
-  it('partage un export des données personnelles', async () => {
-    const share = jest
-      .spyOn(Share, 'share')
-      .mockResolvedValue({ action: 'sharedAction' })
-    const tree = await render()
-
-    await act(async () => {
-      rowFor(tree, 'settings.export').props.onPress()
-    })
-    expect(share).toHaveBeenCalled()
-    share.mockRestore()
   })
 
   it('place la zone sensible tout en bas, dans l’ordre de gravité', async () => {

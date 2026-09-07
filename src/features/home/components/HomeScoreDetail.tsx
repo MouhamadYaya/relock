@@ -236,6 +236,28 @@ function Trend({ snapshot }: { snapshot: HomeScoreSnapshot }) {
   )
 }
 
+/**
+ * Titre de section. Il tient sur UNE ligne, toujours.
+ *
+ * « Astuces pour faire monter le score » frôle la largeur utile sur les
+ * petits écrans, et l'allemand rallonge encore. Plutôt que de passer à la
+ * ligne — ce qui casse le rythme des sections — ou de tronquer par une
+ * ellipse, le titre se resserre très légèrement : la mise en page tient, et
+ * la phrase reste entière.
+ */
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.85}
+      style={styles.section}
+    >
+      {children}
+    </Text>
+  )
+}
+
 /** Une puce de conseil : un glyphe, une phrase, rien d'autre. */
 function Hint({
   icon,
@@ -424,15 +446,13 @@ export function HomeScoreDetail({ visible, snapshot, onClose }: Props) {
 
               {snapshot.trend.length > 0 && (
                 <>
-                  <Text style={styles.section}>
-                    {t('home.score_trend_title')}
-                  </Text>
+                  <SectionTitle>{t('home.score_trend_title')}</SectionTitle>
                   <Trend snapshot={snapshot} />
                   <Text style={styles.scale}>{t('home.score_what_body')}</Text>
                 </>
               )}
 
-              <Text style={styles.section}>{t('home.score_how_title')}</Text>
+              <SectionTitle>{t('home.score_how_title')}</SectionTitle>
               <AxisRow
                 icon={IconName.FOCUS}
                 axis="focus"
@@ -455,7 +475,7 @@ export function HomeScoreDetail({ visible, snapshot, onClose }: Props) {
 
               {snapshot.components.length > 0 && (
                 <>
-                  <Text style={styles.section}>{t('home.score_today')}</Text>
+                  <SectionTitle>{t('home.score_today')}</SectionTitle>
                   <View style={styles.signals}>
                     {snapshot.components.map(component => {
                       const meta = SIGNALS[component.signal]
@@ -476,9 +496,7 @@ export function HomeScoreDetail({ visible, snapshot, onClose }: Props) {
                 </>
               )}
 
-              <Text style={styles.section}>
-                {t('home.score_improve_title')}
-              </Text>
+              <SectionTitle>{t('home.score_improve_title')}</SectionTitle>
               <View style={styles.hints}>
                 <Hint
                   icon={IconName.SHIELDFILL}
@@ -497,7 +515,7 @@ export function HomeScoreDetail({ visible, snapshot, onClose }: Props) {
                 />
               </View>
 
-              <Text style={styles.section}>{t('home.score_lowers_title')}</Text>
+              <SectionTitle>{t('home.score_lowers_title')}</SectionTitle>
               <View style={styles.hints}>
                 <Hint
                   icon={IconName.ARROWDOWN}

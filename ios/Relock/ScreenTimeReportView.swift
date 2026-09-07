@@ -339,6 +339,22 @@ final class ScreenTimeReportView: UIView {
   private var rebuildWorkItem: DispatchWorkItem?
   private var epoch = 0
   private var reportNeedsRebuild = true
+  #if DEBUG
+    // Instrumentation du cycle de vie de la surface distante.
+    //
+    // Les logs `os_log` d'un iPhone appairé en Wi-Fi ne sont plus lisibles
+    // depuis le Mac (`log stream --device` a disparu de macOS 26), et le
+    // contenu d'une extension DeviceActivityReport n'entre pas dans l'arbre
+    // d'accessibilité de l'app hôte. Sans ce relais, un rapport vide et un
+    // rapport jamais reconstruit sont indiscernables depuis un test.
+    private var detachCount = 0
+    private var attachCount = 0
+    private var requestCount = 0
+    private var skipCount = 0
+    private var foregroundCount = 0
+    private var lastRebuildAt: CFTimeInterval = 0
+    private let diagnostics = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+  #endif
   private let activityControls = ActivityControlsOverlay()
   // A local UIKit surface receives touches instead of the out-of-process
   // DeviceActivity surface. Its ancestor RN ScrollView owns the vertical pan.
@@ -380,8 +396,28 @@ final class ScreenTimeReportView: UIView {
     }
     homeTouchSurface.accessibilityIdentifier = "home-native-touch-surface"
     addSubview(homeTouchSurface)
+    #if DEBUG
+      diagnostics.isAccessibilityElement = true
+      diagnostics.accessibilityIdentifier = "screen-time-report-diagnostics"
+      diagnostics.accessibilityLabel = "diagnostic du rapport"
+      diagnostics.isUserInteractionEnabled = false
+      addSubview(diagnostics)
+      publishDiagnostics()
+    #endif
     updateActivityControls()
   }
+
+  #if DEBUG
+    /// Etat du cycle de vie, lisible par XCUITest via `element.value`.
+    private func publishDiagnostics() {
+      let age = lastRebuildAt == 0 ? -1 : Int((CACurrentMediaTime() - lastRebuildAt) * 1000)
+      diagnostics.accessibilityValue =
+        "mode=\(mode) win=\(window == nil ? 0 : 1) host=\(hosting == nil ? 0 : 1)"
+        + " epoch=\(epoch) req=\(requestCount) skip=\(skipCount)"
+        + " det=\(detachCount) att=\(attachCount) fg=\(foregroundCount)"
+        + " tok=\(reloadToken.intValue) age=\(age)"
+    }
+  #endif
 
   private func updateActivityControls() {
     activityControls.isHidden = mode != "usage"
@@ -394,6 +430,10 @@ final class ScreenTimeReportView: UIView {
 
   override func didMoveToWindow() {
     super.didMoveToWindow()
+    #if DEBUG
+      if window == nil { detachCount += 1 } else { attachCount += 1 }
+      publishDiagnostics()
+    #endif
     if window == nil {
       rebuildWorkItem?.cancel()
       rebuildWorkItem = nil
@@ -428,6 +468,10 @@ final class ScreenTimeReportView: UIView {
   /// Apple intermédiaire n'est lancée puis détruite en plein calcul.
   private func setNeedsRebuild() {
     reportNeedsRebuild = true
+    #if DEBUG
+      requestCount += 1
+      publishDiagnostics()
+    #endif
     rebuildWorkItem?.cancel()
     let work = DispatchWorkItem { [weak self] in
       self?.rebuildWorkItem = nil
@@ -439,9 +483,20 @@ final class ScreenTimeReportView: UIView {
 
   private func rebuild() {
     guard window != nil, bounds.width > 0, bounds.height > 0,
-      let parent = parentController, #available(iOS 16.0, *) else { return }
+      let parent = parentController, #available(iOS 16.0, *)
+    else {
+      #if DEBUG
+        skipCount += 1
+        publishDiagnostics()
+      #endif
+      return
+    }
     reportNeedsRebuild = false
     epoch += 1
+    #if DEBUG
+      lastRebuildAt = CACurrentMediaTime()
+      publishDiagnostics()
+    #endif
     ScreenTimeReportView.log.info(
       "rebuild #\(self.epoch, privacy: .public) mode=\(self.mode, privacy: .public) offset=\(self.offset.intValue, privacy: .public)"
     )
@@ -492,6 +547,11 @@ final class ScreenTimeReportView: UIView {
     super.layoutSubviews()
     hosting?.view.frame = bounds
     homeTouchSurface.frame = bounds
+    #if DEBUG
+      diagnostics.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+      bringSubviewToFront(diagnostics)
+      publishDiagnostics()
+    #endif
     activityControls.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 134)
     if window != nil, hosting == nil, rebuildWorkItem == nil { setNeedsRebuild() }
   }

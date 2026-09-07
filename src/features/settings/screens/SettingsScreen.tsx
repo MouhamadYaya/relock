@@ -8,12 +8,10 @@ import {
   Alert,
   AppState,
   Linking,
-  Modal,
   ScrollView,
   Share,
   StyleSheet,
   Text,
-  View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { appBuild, appConfig, appVersion, links } from '@/config/app-config'
@@ -96,11 +94,18 @@ export default function SettingsScreen() {
   const revenueCatEnabled = isRevenueCatEnabled()
   const { rules, refetch: refetchRules } = useBlockRulesQuery()
 
+  // Rapports d'anomalie. La politique de confidentialité PUBLIÉE
+  // (`src/legal/privacy/`) promet « disable or enable crash reporting in
+  // Settings », et la ligne « Politique de confidentialité » de cet écran y
+  // renvoie. Cet interrupteur est donc un engagement, pas un confort : le
+  // retirer sans changer la politique fait mentir l'app.
+  // Verrouillé par `privacy-commitments.test.tsx`.
+  const crashReports = usePreferences(state => state.crashReports)
+  const setPreference = usePreferences(state => state.setPreference)
+
   // Rapports d'anomalie : la politique de confidentialité publiée promet
   // « disable or enable crash reporting in Settings ». L'interrupteur est donc
   // un engagement, pas un confort — il ne peut pas disparaître de l'écran.
-  const crashReports = usePreferences(state => state.crashReports)
-  const setPreference = usePreferences(state => state.setPreference)
 
   const [restoring, setRestoring] = React.useState(false)
   const [unlocking, setUnlocking] = React.useState(false)
