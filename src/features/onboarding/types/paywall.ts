@@ -46,6 +46,15 @@ export type PaywallPurchaseResult =
   | { status: 'pending' }
   | { status: 'failed' }
 
+/**
+ * Une restauration doit séparer « le store a répondu, ce compte n'a aucun
+ * abonnement » d'une panne (init, réseau, store injoignable) : le premier est un
+ * diagnostic de compte, le second est réessayable.
+ */
+export type PaywallRestoreResult = 'restored' | 'none' | 'failed'
+
+export type PaywallRestore = () => Promise<PaywallRestoreResult>
+
 export type PaywallPurchase = (
   plan: PaywallPlan,
   source: PaywallPurchaseSource,

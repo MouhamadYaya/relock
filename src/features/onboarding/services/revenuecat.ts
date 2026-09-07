@@ -16,6 +16,7 @@ import type {
   PaywallPlan,
   PaywallPlanId,
   PaywallPurchase,
+  PaywallRestoreResult,
 } from '@/features/onboarding/types/paywall'
 
 const entitlementId = env.REVENUECAT_ENTITLEMENT_ID || 'relock_pro'
@@ -139,10 +140,15 @@ export async function loadPaywallCatalog(): Promise<PaywallCatalog | null> {
 
     const annualPackage = findPackage(current, 'year')
     const weeklyPackage = findPackage(current, 'week')
-    const plans = [
-      annualPackage && toPlan('annual', 'year', current, annualPackage),
-      weeklyPackage && toPlan('weekly', 'week', current, weeklyPackage),
-    ].filter((plan): plan is PaywallPlan => plan !== null)
+    const annualPlan = annualPackage
+      ? toPlan('annual', 'year', current, annualPackage)
+      : null
+    const weeklyPlan = weeklyPackage
+      ? toPlan('weekly', 'week', current, weeklyPackage)
+      : null
+    const plans = [annualPlan, weeklyPlan].filter(
+      (plan): plan is PaywallPlan => plan !== null,
+    )
 
     if (plans.length === 0) {
       debug('offering courant sans produit exploitable', {
@@ -155,9 +161,7 @@ export async function loadPaywallCatalog(): Promise<PaywallCatalog | null> {
     // La remise se compare TOUJOURS à l'annuel plein tarif : sans annuel au
     // catalogue, le barré comparerait deux périodes de facturation et
     // afficherait une réduction fausse.
-    const discount = annualPackage
-      ? await getOffering(discountOfferingId)
-      : null
+    const discount = annualPlan ? await getOffering(discountOfferingId) : null
     const discountPackage = discount ? findPackage(discount, 'year') : null
     const offer =
       discount && discountPackage
@@ -418,16 +422,26 @@ export const paywallPurchaseWithRevenueCat: PaywallPurchase = async plan => {
   }
 }
 
-export async function restoreRevenueCatPurchases(): Promise<boolean> {
+/**
+ * Restaure les achats et dit LEQUEL des deux cas s'est produit : ce compte n'a
+ * aucun abonnement actif, ou le store n'a pas pu répondre. Un abonné hors ligne
+ * ne doit jamais lire qu'il n'a pas d'abonnement.
+ */
+export async function restoreRevenueCatPurchases(): Promise<PaywallRestoreResult> {
   if (!(await initializeRevenueCat())) {
-    return false
+    return 'failed'
   }
 
   try {
-    await Purchases.restorePurchases()
-    return hasRelockProEntitlement()
-  } catch {
-    return false
+    // `restorePurchases` renvoie déjà le CustomerInfo à jour : pas de second
+    // appel réseau qui pourrait échouer après une restauration réussie.
+    const customerInfo = await Purchases.restorePurchases()
+    return hasRelockProEntitlementFromCustomerInfo(customerInfo)
+      ? 'restored'
+      : 'none'
+  } catch (error) {
+    debug('échec de la restauration', { error: String(error) })
+    return 'failed'
   }
 }
 

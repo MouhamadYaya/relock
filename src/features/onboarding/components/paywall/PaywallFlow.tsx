@@ -28,6 +28,7 @@ import type {
   PaywallPlan,
   PaywallPurchase,
   PaywallPurchaseSource,
+  PaywallRestore,
 } from '@/features/onboarding/types/paywall'
 import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -78,10 +79,13 @@ export function PaywallFlow({
   /** « J'ai déjà un compte » : la seule issue d'un abonné qui a réinstallé. */
   onSignIn?: () => void
   /**
-   * Rend la main sur `false` quand le store n'a rendu aucun achat à
-   * restaurer — l'écran le dit alors, plutôt que de laisser un silence.
+   * Sépare les trois issues d'une restauration — `restored`, `none`,
+   * `failed`. Un booléen ne le pouvait pas : « ce compte n'a aucun
+   * abonnement » est un diagnostic définitif, une panne du store est
+   * réessayable, et les confondre fait dire à un abonné hors ligne qu'il
+   * n'a rien acheté.
    */
-  onRestore?: () => boolean | void | Promise<boolean | void>
+  onRestore?: PaywallRestore
 }) {
   const t = useT()
   const insets = useSafeAreaInsets()
@@ -242,11 +246,16 @@ export function PaywallFlow({
     restoringRef.current = true
     setRestoring(true)
     try {
-      // `false` = le store a répondu, sans rien à rendre. `undefined` = un
-      // adaptateur qui ne se prononce pas : on ne prétend alors rien.
-      const restored = await onRestore()
-      if (mounted.current && !finished.current && restored === false)
-        alert(t('paywall.restore_none'))
+      const result = await onRestore()
+      if (result === 'restored' || !mounted.current || finished.current) return
+      // « Aucun abonnement » est un diagnostic de compte : on ne le prononce
+      // que si le store a vraiment répondu, jamais sur une panne réessayable,
+      // qui elle invite à recommencer.
+      alert(
+        result === 'none'
+          ? t('paywall.restore_none')
+          : t('paywall_reference.payment_failed'),
+      )
     } catch {
       if (mounted.current && !finished.current)
         alert(t('paywall_reference.payment_failed'))

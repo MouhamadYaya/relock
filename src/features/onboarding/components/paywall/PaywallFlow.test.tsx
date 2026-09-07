@@ -13,6 +13,8 @@ import {
 import type {
   PaywallPurchase,
   PaywallPurchaseResult,
+  PaywallRestore,
+  PaywallRestoreResult,
 } from '@/features/onboarding/types/paywall'
 
 jest.mock('@assets/icons', () => ({
@@ -321,10 +323,10 @@ describe('Reference paywall and strictly separated offers', () => {
   })
 
   it('never runs a purchase while a restore is in flight, and says what came back', async () => {
-    let release: (restored: boolean) => void = () => {}
+    let release: (result: PaywallRestoreResult) => void = () => {}
     const restore = jest.fn(
       () =>
-        new Promise<boolean>(resolve => {
+        new Promise<PaywallRestoreResult>(resolve => {
           release = resolve
         }),
     )
@@ -358,7 +360,7 @@ describe('Reference paywall and strictly separated offers', () => {
     expect(restore).toHaveBeenCalledTimes(1)
 
     await act(async () => {
-      release(false)
+      release('none')
       await Promise.resolve()
     })
     expect(restoreButton().props.disabled).toBe(false)
@@ -393,6 +395,59 @@ describe('Reference paywall and strictly separated offers', () => {
     expect(Alert.alert).toHaveBeenLastCalledWith(
       'Relock',
       expect.stringContaining('paiement'),
+      expect.any(Array),
+    )
+  })
+
+  const mountWithRestore = (onRestore: PaywallRestore) =>
+    act(() => {
+      renderer = create(
+        <PaywallFlow
+          plans={PREVIEW_PLANS}
+          offer={PREVIEW_OFFER}
+          onSkip={skip}
+          purchase={jest.fn()}
+          onPurchaseSuccess={success}
+          onRestore={onRestore}
+        />,
+      )
+    })
+  const pressRestore = async () => {
+    await act(async () => {
+      await renderer.root.findByProps({ label: 'Restaurer' }).props.onPress()
+    })
+  }
+
+  it('warns the user when the store restores no active subscription', async () => {
+    const onRestore = jest.fn().mockResolvedValue('none')
+    mountWithRestore(onRestore)
+    openPlans()
+    await pressRestore()
+    expect(onRestore).toHaveBeenCalledTimes(1)
+    expect(Alert.alert).toHaveBeenLastCalledWith(
+      'Relock',
+      expect.stringContaining('Aucun achat à restaurer'),
+      expect.any(Array),
+    )
+  })
+
+  it('stays silent when the restore succeeds', async () => {
+    const onRestore = jest.fn().mockResolvedValue('restored')
+    mountWithRestore(onRestore)
+    openPlans()
+    await pressRestore()
+    expect(onRestore).toHaveBeenCalledTimes(1)
+    expect(Alert.alert).not.toHaveBeenCalled()
+  })
+
+  it('reports a store failure as retryable instead of an empty account', async () => {
+    const onRestore = jest.fn().mockResolvedValue('failed')
+    mountWithRestore(onRestore)
+    openPlans()
+    await pressRestore()
+    expect(Alert.alert).toHaveBeenLastCalledWith(
+      'Relock',
+      expect.not.stringContaining('Aucun achat à restaurer'),
       expect.any(Array),
     )
   })

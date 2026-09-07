@@ -121,11 +121,12 @@ export default function PaywallScreen() {
   }, [load])
 
   const restore = useCallback(async () => {
-    const restored = await restoreRevenueCatPurchases()
-    if (restored) unlockAfterPurchase()
-    // `false` : le store a répondu, il n'y avait rien à restaurer. L'écran le
-    // dit, au lieu de laisser le bouton retomber dans le silence.
-    return restored
+    const result = await restoreRevenueCatPurchases()
+    // On n'ouvre la porte que sur `restored`. `none` et `failed` sont deux
+    // messages, pas deux déblocages — et un test de véracité sur la valeur
+    // brute les aurait tous deux laissés passer, la chaîne étant vraie.
+    if (result === 'restored') unlockAfterPurchase()
+    return result
   }, [])
 
   /**
