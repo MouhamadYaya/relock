@@ -47,7 +47,11 @@ function renderIndex(): string[] {
 beforeEach(() => {
   redirects.length = 0
   setShieldRequest(null)
-  useAppGateStore.setState({ surveyDone: true, entitled: true, setupDone: true })
+  useAppGateStore.setState({
+    surveyDone: true,
+    entitled: true,
+    setupDone: true,
+  })
 })
 
 describe('redirection racine', () => {
