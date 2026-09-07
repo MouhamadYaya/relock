@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native'
+import {
+  DeviceEventEmitter,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RuleTemplateCard as RuleTemplate } from '@/features/blocking/rule-templates'
@@ -16,6 +22,7 @@ import {
   saveOnboardingCheckpoint,
 } from '@/features/onboarding/services/onboarding-checkpoint'
 import { buildPersonalizedPlan } from '@/features/onboarding/services/personalizedPlan'
+import { recoveryGoal } from '@/features/onboarding/services/recoveryGoal'
 import { setOnboardingAttributes } from '@/features/onboarding/services/revenuecat'
 import {
   applyEntitlement,
@@ -24,7 +31,6 @@ import {
 } from '@/session/bootstrap'
 import { DEV_EVENT_ONBOARDING_JUMP } from '@/session/dev-test-bridge'
 import { useSocialSignIn } from '@/session/useSocialSignIn'
-import { useTrackingPrompt } from '@/shared/native/useTrackingPrompt'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -48,6 +54,7 @@ import {
   SceneHardMode,
   SceneLockDemo,
   ScenePickApps,
+  ScenePickerDemo,
   SceneRules,
 } from './scenes-tutorial'
 import {
@@ -85,7 +92,10 @@ type StepId =
   | 'apps'
   | 'moment'
   | 'feelings'
+  | 'stolen'
+  | 'attempts'
   | 'screenTime'
+  | 'aspiration'
   | 'plan'
   | 'beat'
   | 'mirror'
@@ -99,6 +109,7 @@ type StepId =
   | 'tutoGround'
   | 'tutoLock'
   | 'tutoHard'
+  | 'tutoPicker'
   | 'tutoApps'
   | 'tutoRules'
   | 'victory'
@@ -112,7 +123,10 @@ const STEPS: StepId[] = [
   'apps',
   'moment',
   'feelings',
+  'stolen',
+  'attempts',
   'screenTime',
+  'aspiration',
   'beat',
   'mirror',
   'goodNews',
@@ -125,6 +139,7 @@ const STEPS: StepId[] = [
   'tutoLock',
   'tutoHard',
   'permission',
+  'tutoPicker',
   'tutoApps',
   'tutoRules',
   'notifs',
@@ -138,7 +153,10 @@ const DIAGNOSTIC: StepId[] = [
   'apps',
   'moment',
   'feelings',
+  'stolen',
+  'attempts',
   'screenTime',
+  'aspiration',
 ]
 
 /** Étapes où revenir en arrière a du sens. */
@@ -147,7 +165,10 @@ const BACKABLE: StepId[] = [
   'apps',
   'moment',
   'feelings',
+  'stolen',
+  'attempts',
   'screenTime',
+  'aspiration',
 ]
 
 /** Première étape d'APRÈS l'offre : le parcours d'activation du produit. */
@@ -164,6 +185,16 @@ const SETUP_START: StepId = 'auth'
  *
  * Une étape inconnue (parcours remanié depuis la sauvegarde) fait repartir
  * du début, seul état sûr.
+ *
+ * Et la règle qui prime sur toutes les autres : SANS ABONNEMENT, on ne
+ * reprend jamais au-delà du récit. Le parcours d'activation — à commencer par
+ * l'écran de compte — se joue après l'offre, jamais avant. `app/_layout.tsx`
+ * l'assure déjà en montant le paywall à la place de ce parcours ; on ne s'en
+ * remet pas à lui seul. Une sauvegarde héritée d'une version antérieure, un
+ * ordre d'étapes remanié, une porte élargie un jour de refonte : il ne doit
+ * pas exister de chemin, même indirect, où la connexion arrive avant le
+ * paiement. Une reprise trop avancée revient donc au rituel, qui reconduit
+ * proprement au paywall.
  */
 function resumeIndex(
   checkpoint: OnboardingCheckpoint | null,
@@ -171,23 +202,72 @@ function resumeIndex(
 ): number {
   const saved = checkpoint ? STEPS.indexOf(checkpoint.step as StepId) : -1
   const start = saved > 0 ? saved : 0
-  if (!(entitled && surveyDone)) return start
-  return Math.max(start, STEPS.indexOf(SETUP_START))
+  const setupStart = STEPS.indexOf(SETUP_START)
+  if (!entitled) return Math.min(start, setupStart - 1)
+  if (!surveyDone) return start
+  return Math.max(start, setupStart)
 }
 
+/**
+ * TOUTES les questions du diagnostic sont à choix multiple, sans plafond :
+ * personne n'a une seule raison de vouloir décrocher, ni un seul moment de
+ * faiblesse. Le plancher, lui, reste à une réponse — ces réponses NOURRISSENT
+ * le plan, passer sans rien cocher le viderait de sa substance.
+ *
+ * Seule exception, `screenTime` : elle demande une estimation de durée, et
+ * cocher « moins de 2 h » ET « plus de 8 h » ne veut rien dire. C'est aussi
+ * la seule réponse qui se convertit en nombre (`hours`).
+ */
 const TRIGGERS = [
   { id: 'time', emoji: '⏳', label: 'Je perds trop de temps' },
   { id: 'bed', emoji: '🌙', label: 'Je scrolle au lit' },
   { id: 'focus', emoji: '🎯', label: "Je n'arrive plus à me concentrer" },
   { id: 'control', emoji: '🔒', label: 'Je veux reprendre le contrôle' },
+  { id: 'sleep', emoji: '😴', label: 'Je dors mal' },
+  { id: 'habit', emoji: '🔁', label: "J'ouvre les apps sans même y penser" },
+  { id: 'mood', emoji: '🌧️', label: 'Ça joue sur mon moral' },
+  { id: 'presence', emoji: '🤍', label: 'Je veux être plus présent' },
+  { id: 'goals', emoji: '🎓', label: 'Mes études ou mon travail en pâtissent' },
 ]
 
-const APPS = ['TikTok', 'Instagram', 'YouTube', 'Snapchat', 'X', 'Reddit']
+/**
+ * Les apps qui retiennent, en cartes larges — le même gabarit que les autres
+ * questions à phrases. La grille demandait un pictogramme par case, et un
+ * emoji n'est PAS l'icône d'une app : « 📸 » ne se lit pas Instagram, « ✖️ »
+ * ne se lit pas X. Le nom seul, en pleine largeur, dit exactement ce qu'il
+ * désigne sans promettre une iconographie qu'on n'a pas le droit d'embarquer.
+ *
+ * Les libellés SONT les identifiants : ils ressortent tels quels dans le
+ * récapitulatif du plan (« tu scrolles sur TikTok et Instagram »), donc
+ * uniquement des noms qui se glissent dans cette phrase — pas de catégorie
+ * (« jeux mobiles ») qui la rendrait bancale.
+ */
+const APPS: readonly string[] = [
+  'TikTok',
+  'Instagram',
+  'YouTube',
+  'Snapchat',
+  'X',
+  'Reddit',
+  'Facebook',
+  'WhatsApp',
+  'Threads',
+  'Netflix',
+  'Twitch',
+  'Pinterest',
+  'LinkedIn',
+  'Discord',
+  'Telegram',
+]
 
 const MOMENTS = [
   { id: 'bed', emoji: '🌙', label: 'Le soir, au lit' },
   { id: 'wake', emoji: '☀️', label: 'Dès le réveil' },
   { id: 'work', emoji: '💻', label: 'Pendant le travail ou les cours' },
+  { id: 'break', emoji: '☕', label: 'Pendant mes pauses' },
+  { id: 'transport', emoji: '🚇', label: 'Dans les transports' },
+  { id: 'meals', emoji: '🍽️', label: 'Pendant les repas' },
+  { id: 'weekend', emoji: '🛋️', label: 'Le week-end, des heures entières' },
   { id: 'always', emoji: '🌀', label: 'Un peu tout le temps' },
 ]
 
@@ -208,6 +288,131 @@ const FEELINGS: readonly GridChoice[] = [
   { id: 'disconnected', emoji: '🫥', label: 'Déconnecté du réel' },
   { id: 'angry', emoji: '😡', label: 'Énervé' },
   { id: 'hopeless', emoji: '🤕', label: 'Sans espoir' },
+  { id: 'ashamed', emoji: '🫣', label: 'Honteux' },
+  { id: 'lonely', emoji: '🥲', label: 'Seul' },
+  { id: 'restless', emoji: '😬', label: 'Agité' },
+  { id: 'numb', emoji: '🫠', label: 'Anesthésié' },
+]
+
+/**
+ * Bascule une réponse. AUCUN plafond : refuser le quatrième tap donnait un
+ * écran qui ne répond plus, et il n'appartient pas au questionnaire de
+ * décider combien de choses le scroll a coûté à quelqu'un.
+ *
+ * Le plan reste lisible sans ce plafond parce qu'il cite lui-même au plus
+ * deux réponses en prose (`MAX_QUOTED` dans `personalizedPlan.ts`) : la
+ * limite est du côté de la PHRASE, pas du côté de la personne qui répond.
+ */
+function togglePick(list: string[], id: string) {
+  return list.includes(id) ? list.filter(x => x !== id) : [...list, id]
+}
+
+/**
+ * La question qui fait le plus mal : ce que le scroll a pris, pas ce qu'il
+ * fait ressentir. Les libellés sont à la première personne — c'est un aveu
+ * que l'utilisateur signe, pas un constat qu'on lui impose.
+ */
+const STOLEN = [
+  {
+    id: 'nights',
+    emoji: '🌙',
+    label: 'Des nuits que je ne récupérerai jamais',
+  },
+  { id: 'people', emoji: '💬', label: "Des moments avec les gens que j'aime" },
+  {
+    id: 'becoming',
+    emoji: '🌱',
+    label: 'Du temps pour devenir qui je veux être',
+  },
+  { id: 'focus', emoji: '🧠', label: 'Ma capacité à me concentrer' },
+  {
+    id: 'presence',
+    emoji: '🤍',
+    label: "Des moments où j'aurais aimé être présent",
+  },
+  {
+    id: 'energy',
+    emoji: '🔋',
+    label: "L'énergie que je n'ai plus pour le reste",
+  },
+  { id: 'mornings', emoji: '☀️', label: 'Mes matins, avant même de me lever' },
+  { id: 'sport', emoji: '🏃', label: "L'envie de bouger" },
+  {
+    id: 'projects',
+    emoji: '🎸',
+    label: "Des projets que je n'ai jamais commencés",
+  },
+  { id: 'calm', emoji: '🧘', label: 'Le calme dans ma tête' },
+  { id: 'pride', emoji: '🪞', label: "La fierté d'une journée bien remplie" },
+]
+
+/** « Jamais vraiment essayé » : la seule réponse qui exclut les autres. */
+const ATTEMPT_NEVER = 'never'
+
+/**
+ * L'impuissance. Cet écran fait dire à l'utilisateur, avec ses mots, pourquoi
+ * la volonté seule ne suffit pas — et c'est ce qui justifie la friction du
+ * produit bien mieux qu'un argumentaire.
+ */
+const ATTEMPTS = [
+  { id: 'deleted', emoji: '🗑️', label: "J'ai supprimé l'app… puis réinstallé" },
+  {
+    id: 'limit',
+    emoji: '⏱️',
+    label: "J'ai mis une limite… puis « encore 15 min »",
+  },
+  {
+    id: 'willpower',
+    emoji: '💪',
+    label: "J'ai tenu à la volonté. Ça n'a pas duré",
+  },
+  {
+    id: 'distance',
+    emoji: '📵',
+    label: "J'ai posé le téléphone loin. J'y suis retourné",
+  },
+  { id: 'hidden', emoji: '🙈', label: "J'ai caché les apps dans un dossier" },
+  {
+    id: 'grayscale',
+    emoji: '🌑',
+    label: "J'ai passé l'écran en noir et blanc",
+  },
+  { id: 'notifications', emoji: '🔕', label: "J'ai coupé les notifications" },
+  { id: 'blocker', emoji: '🧱', label: "J'ai essayé une autre app de blocage" },
+  { id: 'detox', emoji: '🏝️', label: "J'ai fait une détox. Puis j'ai rechuté" },
+  {
+    id: 'logout',
+    emoji: '🚪',
+    label: 'Je me suis déconnecté de mes comptes',
+  },
+  { id: ATTEMPT_NEVER, emoji: '🤍', label: 'Jamais vraiment essayé' },
+]
+
+/**
+ * La bascule vers le désir, et la dernière question du diagnostic : le
+ * verdict qui suit (« Une nouvelle difficile. Et une bonne. ») frappe d'autant
+ * plus fort que la personne vient de nommer ce qu'elle voudrait récupérer.
+ * C'est aussi cette réponse qui remplit le « pour toi » du plan.
+ */
+const ASPIRATIONS: readonly GridChoice[] = [
+  { id: 'sleep', emoji: '😴', label: 'Dormir' },
+  { id: 'move', emoji: '🏃', label: 'Bouger' },
+  { id: 'read', emoji: '📚', label: 'Lire' },
+  { id: 'people', emoji: '💬', label: 'Mes proches' },
+  { id: 'project', emoji: '🎯', label: 'Un projet' },
+  { id: 'hobby', emoji: '🎸', label: 'Un hobby' },
+  { id: 'breathe', emoji: '🧘', label: 'Souffler' },
+  { id: 'cook', emoji: '🍳', label: 'Cuisiner' },
+  { id: 'work', emoji: '💼', label: 'Mieux bosser' },
+  { id: 'morning', emoji: '☀️', label: 'Mes matins' },
+  { id: 'study', emoji: '🎓', label: 'Mes études' },
+  { id: 'present', emoji: '🧠', label: 'Être présent' },
+  { id: 'family', emoji: '👨‍👩‍👧', label: 'Ma famille' },
+  { id: 'nature', emoji: '🌿', label: 'Sortir dehors' },
+  { id: 'learn', emoji: '🧩', label: 'Apprendre' },
+  { id: 'create', emoji: '🎨', label: 'Créer' },
+  { id: 'music', emoji: '🎹', label: 'La musique' },
+  { id: 'silence', emoji: '🌙', label: 'Ne rien faire' },
 ]
 
 /**
@@ -236,23 +441,47 @@ export default function OnboardingFlow() {
 
   // Réponses (elles nourrissent la projection et le plan).
   const [name, setName] = useState(saved?.name ?? '')
-  const [trigger, setTrigger] = useState<string | null>(saved?.trigger ?? null)
+  const [trigger, setTrigger] = useState<string[]>(saved?.trigger ?? [])
   const [apps, setApps] = useState<string[]>(saved?.apps ?? [])
-  const [moment, setMoment] = useState<string | null>(saved?.moment ?? null)
+  const [moment, setMoment] = useState<string[]>(saved?.moment ?? [])
   const [feelings, setFeelings] = useState<string[]>(saved?.feelings ?? [])
+  const [stolen, setStolen] = useState<string[]>(saved?.stolen ?? [])
+  const [attempts, setAttempts] = useState<string[]>(saved?.attempts ?? [])
+  const [aspirations, setAspirations] = useState<string[]>(
+    saved?.aspirations ?? [],
+  )
   const [screenTime, setScreenTime] = useState<string | null>(
     saved?.screenTime ?? null,
   )
   const [hours, setHours] = useState(saved?.hours ?? 4)
   const personalizedPlan = useMemo(
     () =>
-      buildPersonalizedPlan({ name, apps, moment, trigger, feelings, hours }),
-    [name, apps, moment, trigger, feelings, hours],
+      buildPersonalizedPlan({
+        name,
+        apps,
+        moment,
+        trigger,
+        feelings,
+        stolen,
+        attempts,
+        aspirations,
+        hours,
+      }),
+    [
+      name,
+      apps,
+      moment,
+      trigger,
+      feelings,
+      stolen,
+      attempts,
+      aspirations,
+      hours,
+    ],
   )
 
   // Tutoriel post-paywall : ces trois réponses produisent la règle réellement
   // armée à la sortie de l'onboarding.
-  const [hardMode, setHardMode] = useState(saved?.hardMode ?? true)
   const [appCount, setAppCount] = useState(saved?.appCount ?? 0)
   const [rulePresetIds, setRulePresetIds] = useState<string[]>(
     saved?.rulePresetIds ?? DEFAULT_RULE_PRESET_IDS,
@@ -278,9 +507,11 @@ export default function OnboardingFlow() {
         apps,
         moment,
         feelings,
+        stolen,
+        attempts,
+        aspirations,
         screenTime,
         hours,
-        hardMode,
         appCount,
         rulePresetIds,
       },
@@ -293,17 +524,14 @@ export default function OnboardingFlow() {
     apps,
     moment,
     feelings,
+    stolen,
+    attempts,
+    aspirations,
     screenTime,
     hours,
-    hardMode,
     appCount,
     rulePresetIds,
   ])
-
-  // Autorisation de suivi (ATT) : à la toute première page tenue à l'écran.
-  // Pas sur `ignition`, qui prolonge le splash et s'enchaîne tout seul —
-  // l'alerte système s'y poserait sur une animation en cours.
-  useTrackingPrompt(step === 'welcome')
 
   const goNext = useCallback(() => {
     dirRef.current = 'fwd'
@@ -344,9 +572,11 @@ export default function OnboardingFlow() {
       apps,
       moment,
       feelings,
+      stolen,
+      attempts,
+      aspirations,
       screenTime,
       hours,
-      hardMode,
       appCount,
       rulePresetIds,
     })
@@ -356,9 +586,11 @@ export default function OnboardingFlow() {
     apps,
     moment,
     feelings,
+    stolen,
+    attempts,
+    aspirations,
     screenTime,
     hours,
-    hardMode,
     appCount,
     rulePresetIds,
   ])
@@ -414,9 +646,28 @@ export default function OnboardingFlow() {
    * ce qu'elle vient chercher.
    */
   const finishSurvey = useCallback(() => {
-    void setOnboardingAttributes({ trigger, moment, hours, apps, feelings })
+    void setOnboardingAttributes({
+      trigger,
+      moment,
+      hours,
+      apps,
+      feelings,
+      stolen,
+      attempts,
+      aspirations,
+    })
     if (!completeSurvey()) goNext()
-  }, [trigger, moment, hours, apps, feelings, goNext])
+  }, [
+    trigger,
+    moment,
+    hours,
+    apps,
+    feelings,
+    stolen,
+    attempts,
+    aspirations,
+    goNext,
+  ])
 
   const skipOnboardingDev = useCallback(() => {
     if (!__DEV__) return
@@ -459,7 +710,6 @@ export default function OnboardingFlow() {
       await activateFirstRule({
         presetIds: rulePresetIds,
         count: appCount,
-        strict: hardMode,
       })
       haptic.success()
       goStep('notifs')
@@ -473,13 +723,19 @@ export default function OnboardingFlow() {
     } finally {
       setActivating(false)
     }
-  }, [rulePresetIds, activateFirstRule, appCount, hardMode, finish, goStep])
+  }, [rulePresetIds, activateFirstRule, appCount, finish, goStep])
 
-  const toggleApp = (a: string) => {
-    setApps(prev =>
-      prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a],
-    )
-  }
+  const toggleApp = useCallback((id: string) => {
+    setApps(prev => togglePick(prev, id))
+  }, [])
+
+  const toggleTrigger = useCallback((id: string) => {
+    setTrigger(prev => togglePick(prev, id))
+  }, [])
+
+  const toggleMoment = useCallback((id: string) => {
+    setMoment(prev => togglePick(prev, id))
+  }, [])
 
   const toggleRulePreset = useCallback((template: RuleTemplate) => {
     setRulePresetIds(prev =>
@@ -490,9 +746,30 @@ export default function OnboardingFlow() {
   }, [])
 
   const toggleFeeling = useCallback((id: string) => {
-    setFeelings(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id],
-    )
+    setFeelings(prev => togglePick(prev, id))
+  }, [])
+
+  const toggleStolen = useCallback((id: string) => {
+    setStolen(prev => togglePick(prev, id))
+  }, [])
+
+  const toggleAspiration = useCallback((id: string) => {
+    setAspirations(prev => togglePick(prev, id))
+  }, [])
+
+  /**
+   * « Jamais vraiment essayé » dit l'ABSENCE des autres réponses : le cumuler
+   * avec « j'ai supprimé l'app » serait une contradiction, et la phrase que
+   * le plan en tire (« Tu as déjà essayé, mais… ») deviendrait fausse.
+   */
+  const toggleAttempt = useCallback((id: string) => {
+    setAttempts(prev => {
+      if (id === ATTEMPT_NEVER) return prev.includes(id) ? [] : [id]
+      return togglePick(
+        prev.filter(x => x !== ATTEMPT_NEVER),
+        id,
+      )
+    })
   }, [])
 
   const scene = (() => {
@@ -515,8 +792,9 @@ export default function OnboardingFlow() {
         return (
           <QuestionScene
             title={`Qu'est-ce qui t'amène${name.trim() ? `, ${name.trim()}` : ''} ?`}
-            sub="Sois honnête. C'est entre toi et toi."
-            onNext={trigger ? goNext : undefined}
+            sub="Sois honnête. Coche tout ce qui est vrai."
+            scroll
+            onNext={trigger.length > 0 ? goNext : undefined}
           >
             {TRIGGERS.map((t, i) => (
               <ChoiceCard
@@ -524,8 +802,8 @@ export default function OnboardingFlow() {
                 index={i}
                 emoji={t.emoji}
                 label={t.label}
-                selected={trigger === t.id}
-                onPress={() => setTrigger(t.id)}
+                selected={trigger.includes(t.id)}
+                onPress={() => toggleTrigger(t.id)}
               />
             ))}
           </QuestionScene>
@@ -535,6 +813,7 @@ export default function OnboardingFlow() {
           <QuestionScene
             title="Quelles apps te retiennent le plus ?"
             sub="Sélectionnes-en autant que tu veux."
+            scroll
             onNext={apps.length > 0 ? goNext : undefined}
             extra={
               apps.length > 0 ? (
@@ -542,13 +821,13 @@ export default function OnboardingFlow() {
               ) : null
             }
           >
-            {APPS.map((a, i) => (
+            {APPS.map((app, i) => (
               <ChoiceCard
-                key={a}
+                key={app}
                 index={i}
-                label={a}
-                selected={apps.includes(a)}
-                onPress={() => toggleApp(a)}
+                label={app}
+                selected={apps.includes(app)}
+                onPress={() => toggleApp(app)}
               />
             ))}
           </QuestionScene>
@@ -557,8 +836,9 @@ export default function OnboardingFlow() {
         return (
           <QuestionScene
             title="Quand est-ce que tu décroches ?"
-            sub="Ton plan protégera d'abord ce moment."
-            onNext={moment ? goNext : undefined}
+            sub="Ton plan protégera d'abord ces moments."
+            scroll
+            onNext={moment.length > 0 ? goNext : undefined}
           >
             {MOMENTS.map((m, i) => (
               <ChoiceCard
@@ -566,8 +846,8 @@ export default function OnboardingFlow() {
                 index={i}
                 emoji={m.emoji}
                 label={m.label}
-                selected={moment === m.id}
-                onPress={() => setMoment(m.id)}
+                selected={moment.includes(m.id)}
+                onPress={() => toggleMoment(m.id)}
               />
             ))}
           </QuestionScene>
@@ -592,11 +872,98 @@ export default function OnboardingFlow() {
             />
           </QuestionScene>
         )
+      case 'stolen':
+        return (
+          <QuestionScene
+            title="Qu'est-ce que le scroll t'a déjà volé ?"
+            sub="Coche tout ce qui te parle, surtout ce qui fait le plus mal."
+            scroll
+            onNext={stolen.length > 0 ? goNext : undefined}
+            extra={
+              <PickHint
+                picks={stolen}
+                text="Ce que tu coches ici, ton plan va essayer de te le rendre."
+              />
+            }
+          >
+            {STOLEN.map((item, i) => (
+              <ChoiceCard
+                key={item.id}
+                index={i}
+                emoji={item.emoji}
+                label={item.label}
+                selected={stolen.includes(item.id)}
+                onPress={() => toggleStolen(item.id)}
+              />
+            ))}
+          </QuestionScene>
+        )
+      case 'attempts':
+        return (
+          <QuestionScene
+            title="Tu as déjà essayé d'arrêter ?"
+            sub="Coche tout ce que tu as tenté. Il n'y a pas de mauvaise réponse."
+            scroll
+            onNext={attempts.length > 0 ? goNext : undefined}
+            extra={
+              <PickHint
+                picks={attempts}
+                text={
+                  attempts.includes(ATTEMPT_NEVER)
+                    ? 'Alors autant commencer par une méthode qui tient toute seule.'
+                    : 'Toutes ces méthodes ont un point commun : elles se désactivent en trois secondes.'
+                }
+              />
+            }
+          >
+            {ATTEMPTS.map((item, i) => (
+              <ChoiceCard
+                key={item.id}
+                index={i}
+                emoji={item.emoji}
+                label={item.label}
+                selected={attempts.includes(item.id)}
+                onPress={() => toggleAttempt(item.id)}
+              />
+            ))}
+          </QuestionScene>
+        )
+      case 'aspiration':
+        return (
+          <QuestionScene
+            // Le temps annoncé sort de SES réponses. Quand le plancher de
+            // l'objectif dépasse son usage réel (petit scrolleur), on ne lui
+            // promet pas un temps qu'il n'a pas : la question reste ouverte.
+            title={
+              recoveryGoal(hours).exceedsUsage
+                ? 'Et ce temps, tu en ferais quoi ?'
+                : `Si tu récupérais ${recoveryGoal(hours).dailyTime} par jour, tu en ferais quoi ?`
+            }
+            sub="Coche tout ce que tu veux retrouver. Ce sera l'objectif de ton plan."
+            fill
+            onNext={aspirations.length > 0 ? goNext : undefined}
+            extra={
+              <PickHint
+                picks={aspirations}
+                text="C'est ça qu'on va protéger."
+              />
+            }
+          >
+            <ChoiceGrid
+              items={ASPIRATIONS}
+              selected={aspirations}
+              onToggle={toggleAspiration}
+            />
+          </QuestionScene>
+        )
       case 'screenTime':
         return (
           <QuestionScene
-            title="Combien de temps par jour, à peu près ?"
-            sub="Une estimation honnête suffit."
+            // Seule question du diagnostic à réponse unique : elle se
+            // convertit en un nombre d'heures, et deux tranches cochées ne
+            // désignent aucune durée.
+            title="Tu scrolles combien de temps par jour ?"
+            sub="Une seule réponse — une estimation honnête suffit."
             onNext={screenTime ? goNext : undefined}
           >
             {SCREEN_TIME.map((s, i) => (
@@ -628,7 +995,13 @@ export default function OnboardingFlow() {
       case 'mirror':
         return <SceneMirror hours={hours} onNext={goNext} />
       case 'goodNews':
-        return <SceneGoodNews hours={hours} onNext={goNext} />
+        return (
+          <SceneGoodNews
+            hours={hours}
+            words={personalizedPlan.aspirationWords}
+            onNext={goNext}
+          />
+        )
       case 'reversal':
         return <SceneReversal onNext={goNext} />
       case 'loading':
@@ -654,13 +1027,12 @@ export default function OnboardingFlow() {
       case 'tutoLock':
         return <SceneLockDemo onNext={goNext} />
       case 'tutoHard':
-        return (
-          <SceneHardMode
-            value={hardMode}
-            onChange={setHardMode}
-            onNext={goNext}
-          />
-        )
+        return <SceneHardMode onNext={goNext} />
+      case 'tutoPicker':
+        // La démonstration précède TOUJOURS la feuille d'Apple : elle s'ouvre
+        // désormais d'elle-même à l'écran suivant, et personne ne doit y
+        // arriver sans avoir vu qu'une catégorie se déplie.
+        return <ScenePickerDemo onNext={goNext} cta="Choisir mes apps" />
       case 'tutoApps':
         return (
           <ScenePickApps
@@ -678,6 +1050,7 @@ export default function OnboardingFlow() {
             onToggle={toggleRulePreset}
             busy={activating}
             onActivate={activateAndContinue}
+            appCount={appCount}
           />
         )
     }
@@ -733,6 +1106,15 @@ export default function OnboardingFlow() {
   )
 }
 
+/**
+ * La ligne sous les réponses : l'écho qui dit qu'on a entendu. Rien tant que
+ * rien n'est coché — une phrase d'empathie affichée devant une liste vierge
+ * ne répond à personne.
+ */
+function PickHint({ picks, text }: { picks: string[]; text: string }) {
+  return picks.length > 0 ? <StudyLine text={text} /> : null
+}
+
 /** Gabarit des écrans de question : titre géant, justification, cartes. */
 function QuestionScene({
   title,
@@ -740,6 +1122,7 @@ function QuestionScene({
   children,
   extra,
   fill = false,
+  scroll = false,
   onNext,
 }: {
   title: string
@@ -748,6 +1131,13 @@ function QuestionScene({
   extra?: React.ReactNode
   /** Les réponses prennent toute la hauteur libre (grille défilante). */
   fill?: boolean
+  /**
+   * Idem, mais c'est le gabarit qui défile. Réservé aux listes de cartes à
+   * phrases longues : `fill` suppose un enfant qui gère son propre
+   * défilement (`ChoiceGrid`), et une pile de six cartes sur deux lignes
+   * serait simplement rognée par le bas.
+   */
+  scroll?: boolean
   onNext?: () => void
 }) {
   return (
@@ -759,9 +1149,19 @@ function QuestionScene({
         <Reveal index={1}>
           <Text style={styles.qSub}>{sub}</Text>
         </Reveal>
-        {fill ? (
+        {fill || scroll ? (
           <>
-            <View className="flex-1">{children}</View>
+            {scroll ? (
+              <ScrollView
+                className="flex-1"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollAnswers}
+              >
+                {children}
+              </ScrollView>
+            ) : (
+              <View className="flex-1">{children}</View>
+            )}
             {extra ? <View className="mt-1.5">{extra}</View> : null}
           </>
         ) : (
@@ -809,4 +1209,7 @@ const styles = StyleSheet.create({
   },
   answersLead: { flex: 1 },
   answersTrail: { flex: 3 },
+  // Centré tant que la pile tient dans la hauteur, défilant dès qu'elle
+  // déborde — le cas des petits écrans avec six cartes sur deux lignes.
+  scrollAnswers: { flexGrow: 1, justifyContent: 'center', paddingBottom: 4 },
 })

@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
-import { SceneWelcome } from '@/features/onboarding/scenes-intro'
+import { SceneName, SceneWelcome } from '@/features/onboarding/scenes-intro'
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
@@ -72,5 +72,49 @@ describe('Welcome development shortcut', () => {
     expect(renderer!.root.findAllByProps({ label: 'Commencer' })).toHaveLength(
       1,
     )
+  })
+})
+
+describe('Name step', () => {
+  let renderer: ReactTestRenderer | undefined
+
+  afterEach(() => act(() => renderer?.unmount()))
+
+  const render = (value: string, onNext = jest.fn()) => {
+    act(() => {
+      renderer = create(
+        <SceneName value={value} onChange={jest.fn()} onNext={onNext} />,
+      )
+    })
+    return onNext
+  }
+
+  it('keeps the CTA disabled until a name is typed', () => {
+    render('   ')
+    expect(
+      renderer!.root.findByProps({ label: 'Continuer' }).props.disabled,
+    ).toBe(true)
+  })
+
+  it('enables the CTA once a name is typed', () => {
+    render('Léa')
+    expect(
+      renderer!.root.findByProps({ label: 'Continuer' }).props.disabled,
+    ).toBe(false)
+  })
+
+  it('offers no way to skip the name', () => {
+    render('')
+    expect(renderer!.root.findAllByProps({ label: 'Passer' })).toHaveLength(0)
+  })
+
+  it('ignores the keyboard submit while the field is empty', () => {
+    const onNext = render('')
+    act(() =>
+      renderer!.root
+        .findByProps({ placeholder: 'Ton prénom' })
+        .props.onSubmitEditing(),
+    )
+    expect(onNext).not.toHaveBeenCalled()
   })
 })

@@ -19,6 +19,15 @@ import os
 /// ⚠️ Helpers miroir de ceux de `BlocusScreenTime.swift` — garder en phase.
 final class RelockMonitor: DeviceActivityMonitor {
 
+  /// Démarre sentry-cocoa dès l'instanciation par iOS : c'est le premier
+  /// instant où ce processus existe, et donc le seul endroit d'où un crash
+  /// survenant plus loin puisse être capté. Muet tant que l'app n'a pas
+  /// publié le DSN dans le groupe d'app (voir `ExtensionSentry`).
+  override init() {
+    super.init()
+    ExtensionSentry.startIfNeeded(source: "monitor")
+  }
+
   private static let suite = "group.com.yaya.relock"
   private static let storeName = "blocus.default"
   private static let log = Logger(
@@ -108,6 +117,24 @@ final class RelockMonitor: DeviceActivityMonitor {
     return raw.filter { $0.value > now }
   }
 
+  /// Pose ou lève la restriction de suppression d'application.
+  ///
+  /// ⚠️ Miroir exact de `BlocusScreenTime.applyRemovalPolicy` — garder les
+  /// deux en phase. C'est ICI que ça se joue le plus souvent : quand iOS
+  /// réveille l'extension pour ouvrir ou fermer une fenêtre, l'app ne tourne
+  /// pas. Si seule l'app savait poser la restriction, la protection ne
+  /// s'armerait jamais sur un blocage programmé.
+  ///
+  /// La restriction est GLOBALE (aucune app supprimable sur l'appareil) et
+  /// n'est donc armée que si l'utilisateur l'a demandée ET qu'un blocage
+  /// protège réellement.
+  private func applyRemovalPolicy(blocking: Bool) {
+    let wanted =
+      blocking
+      && (defaults?.bool(forKey: "blocus.uninstallProtection") ?? false)
+    store.application.denyAppRemoval = wanted ? true : nil
+  }
+
   /// Union des sélections des fenêtres actives → bouclier (ou retrait).
   private func recomputeShield() {
     var apps = Set<ApplicationToken>()
@@ -137,11 +164,13 @@ final class RelockMonitor: DeviceActivityMonitor {
       store.shield.applicationCategories = nil
       store.shield.webDomains = nil
       defaults?.set(false, forKey: "blocus.isBlocking")
+      applyRemovalPolicy(blocking: false)
     } else {
       store.shield.applications = apps.isEmpty ? nil : apps
       store.shield.applicationCategories = cats.isEmpty ? nil : .specific(cats)
       store.shield.webDomains = webs.isEmpty ? nil : webs
       defaults?.set(true, forKey: "blocus.isBlocking")
+      applyRemovalPolicy(blocking: true)
     }
   }
 
@@ -172,6 +201,14 @@ final class RelockMonitor: DeviceActivityMonitor {
       // annule donc et le bouclier revient tout de suite : un blocage qui
       // revient trop tôt se corrige d'un geste, un blocage qui ne revient
       // jamais, non.
+      //
+      // Ce repli est correct mais il MASQUE la cause. Sans la trace, on ne
+      // verrait qu'un symptôme incompréhensible côté utilisateur : « mon
+      // déblocage de 5 minutes s'est arrêté au bout de 10 secondes ».
+      ExtensionLog.error(
+        "monitor",
+        "startMonitoring a échoué : sursis annulés et bouclier rétabli",
+        error)
       Self.withGroupLock { defaults?.removeObject(forKey: "reprieves") }
       recomputeShield()
     }
@@ -322,9 +359,14 @@ final class RelockMonitor: DeviceActivityMonitor {
     heartbeat("eventDidReachThreshold \(activity.rawValue) \(event.rawValue)")
     guard let id = ruleId(from: activity.rawValue) else { return }
 
-    // Palier intermédiaire : on informe l'app de l'avancement, RIEN DE PLUS.
-    // Bloquer ici viderait le quota à 25 % — le contraire de la promesse.
-    if let pct = ["p25": 25, "p50": 50, "p75": 75][event.rawValue] {
+    // Palier intermédiaire (« p10 » … « p90 ») : on informe l'app de
+    // l'avancement, RIEN DE PLUS. Bloquer ici viderait le quota à 10 % — le
+    // contraire de la promesse. Le nombre porté par le nom est le pourcentage
+    // ABSOLU de la limite : après un ré-armement en cours de journée, le seuil
+    // iOS est décalé du temps déjà consommé, pas le jalon qu'il représente.
+    if event.rawValue.hasPrefix("p"),
+      let pct = Int(event.rawValue.dropFirst()), pct > 0, pct < 100
+    {
       Self.log.info(
         "palier \(pct, privacy: .public) % — \(activity.rawValue, privacy: .public)"
       )

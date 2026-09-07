@@ -74,6 +74,28 @@ export function completeSetup() {
 }
 
 /**
+ * Retour à la porte « compte », après une déconnexion ou une suppression.
+ *
+ * On rouvre la porte d'activation (`setupDone`) et rien d'autre. Le récit
+ * (`surveyDone`) et l'abonnement restent acquis : ils appartiennent à
+ * l'APPAREIL et au compte App Store, pas à la session Supabase qu'on vient
+ * de fermer. `OnboardingFlow.resumeIndex` reprend alors exactement à l'étape
+ * `auth` — l'écran de connexion, sans rejouer les treize écrans du récit.
+ *
+ * Conséquence assumée : après s'être reconnecté, l'utilisateur repasse par le
+ * tutoriel et l'armement d'une première règle. C'est le prix d'une porte qui
+ * se déduit de l'état plutôt que d'une position mémorisée — et c'est
+ * exactement le parcours d'une nouvelle installation, donc un chemin déjà
+ * éprouvé plutôt qu'un cas particulier de plus.
+ */
+export function signOutToAuth() {
+  kvStorage.delete(constants.ONBOARDING_DONE)
+  clearOnboardingCheckpoint()
+  useAppGateStore.getState().clearSetupDone()
+  replace('/onboarding')
+}
+
+/**
  * Applique un état d'abonnement CONNU.
  *
  * `unknown` n'arrive jamais ici : l'appelant garde alors la dernière valeur.

@@ -10,6 +10,7 @@
 import { create } from 'apisauce'
 import { constants } from '@/config/constants'
 import type { RequestConfig } from '@/shared/services/api/http/http.types'
+import { getAuthToken } from '@/shared/services/storage/credentials'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 function shouldSkipAuth(config: RequestConfig): boolean {
@@ -22,7 +23,7 @@ export function attachAuth(api: ReturnType<typeof create>): void {
   api.addRequestTransform((config: RequestConfig) => {
     if (!config) return
     if (shouldSkipAuth(config)) return
-    const token = kvStorage.getString(constants.AUTH_TOKEN)
+    const token = getAuthToken()
     if (token) {
       config.headers = config.headers ?? {}
       config.headers.Authorization = `Bearer ${token}`

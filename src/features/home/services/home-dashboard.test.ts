@@ -1,32 +1,12 @@
 import {
   dashboardState,
   durationParts,
-  globalScore,
-  homeScores,
   isHomeNewUser,
   minutesUntilTomorrow,
   scoreBand,
 } from '@/features/home/services/home-dashboard'
 
 describe('Home dashboard model', () => {
-  it('uses the documented mean for the global score', () => {
-    expect(globalScore(78, 66)).toBe(72)
-    expect(globalScore(79, 66)).toBe(73)
-  })
-
-  it('never invents a score from missing or invalid inputs', () => {
-    expect(globalScore(null, 66)).toBeNull()
-    expect(globalScore(78, undefined)).toBeNull()
-    expect(globalScore(-1, 66)).toBeNull()
-    expect(globalScore(78, 101)).toBeNull()
-    expect(homeScores(null, null)).toEqual({
-      focus: null,
-      rest: null,
-      global: null,
-      available: false,
-    })
-  })
-
   it('distinguishes permission, loading, error and ready states', () => {
     expect(
       dashboardState({

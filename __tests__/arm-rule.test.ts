@@ -11,10 +11,11 @@ jest.mock('@/shared/native/screen-time', () => ({
     startTimedBlock: jest.fn().mockResolvedValue(true),
     startSchedule: jest.fn().mockResolvedValue(true),
     startDailyLimit: jest.fn().mockResolvedValue(true),
+    armedActivities: jest.fn().mockResolvedValue([]),
   },
 }))
 
-import { armRule } from '@/features/blocking/services/arm'
+import { armRule, armRuleIfNeeded } from '@/features/blocking/services/arm'
 import type { BlockRuleView } from '@/features/blocking/types'
 import { ScreenTime } from '@/shared/native/screen-time'
 
@@ -89,5 +90,37 @@ describe('armRule', () => {
   it('config absente → la règle est quand même armée, jamais ignorée', async () => {
     await armRule(rule({ type: 'daily_limit' }))
     expect(ScreenTime.startDailyLimit).toHaveBeenCalledWith('r1', 60)
+  })
+})
+
+/**
+ * Une limite de temps compte à partir de son armement le jour de sa création :
+ * la ré-armer ce jour-là rendrait à l'utilisateur le quota qu'il vient de
+ * consommer. Une pause suivie d'une reprise deviendrait le moyen le plus simple
+ * d'effacer sa matinée — d'où ce garde sur les chemins de simple reprise.
+ */
+describe('armRuleIfNeeded', () => {
+  it('surveillance déjà armée côté iOS → on ne touche à rien', async () => {
+    ;(ScreenTime.armedActivities as jest.Mock).mockResolvedValueOnce([
+      'limit.r1',
+    ])
+    await armRuleIfNeeded(rule({ type: 'daily_limit', config: {} }))
+    expect(ScreenTime.startDailyLimit).not.toHaveBeenCalled()
+  })
+
+  it('surveillance perdue (réinstallation) → la règle est ré-armée', async () => {
+    ;(ScreenTime.armedActivities as jest.Mock).mockResolvedValueOnce([
+      'limit.autre-regle',
+    ])
+    await armRuleIfNeeded(rule({ type: 'daily_limit', config: {} }))
+    expect(ScreenTime.startDailyLimit).toHaveBeenCalledWith('r1', 60)
+  })
+
+  it('natif muet → on ré-arme plutôt que de laisser la règle sans surveillance', async () => {
+    ;(ScreenTime.armedActivities as jest.Mock).mockRejectedValueOnce(
+      new Error('nope'),
+    )
+    await armRuleIfNeeded(rule({ type: 'schedule', config: {} }))
+    expect(ScreenTime.startSchedule).toHaveBeenCalled()
   })
 })

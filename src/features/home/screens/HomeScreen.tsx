@@ -131,13 +131,14 @@ export default function HomeScreen() {
             emptyUsageLabel={t('home.usage_missing')}
             activityLabel={t('navigation.tabs.activity')}
             onPressHero={() => router.navigate('/(tabs)/activity')}
-            onPressScore={() => setScoreOpen(true)}
             onRequestPermission={requestScreenTimeAuthorization}
             scoreCard={
               <HomeScoreCard
                 scores={dashboard.scores}
                 title={t('home.global_score')}
                 subtitle={t('home.score_today')}
+                delta={dashboard.score.delta}
+                deltaSuffix={t('home.score_delta_suffix')}
                 bandLabel={t(scoreBandKey(dashboard.score))}
                 footerLabel={t(scoreFooterKey(dashboard.score))}
                 focusLabel={t('home.focus_score')}
@@ -221,7 +222,7 @@ export default function HomeScreen() {
 
       <HomeScoreDetail
         visible={scoreOpen}
-        scores={dashboard.scores}
+        snapshot={dashboard.score}
         onClose={() => setScoreOpen(false)}
       />
 

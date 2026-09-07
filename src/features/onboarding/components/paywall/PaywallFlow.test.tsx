@@ -52,6 +52,7 @@ jest.mock('@/features/onboarding/components/paywall/PaywallPrimitives', () => ({
   PaywallClose: 'PaywallClose',
   PaywallOutlineButton: 'PaywallOutlineButton',
   PaywallEyebrow: 'PaywallEyebrow',
+  PaywallLegalLinks: 'PaywallLegalLinks',
   PaywallMark: 'PaywallMark',
   PaywallPrice: 'PaywallPrice',
   PaywallRibbon: 'PaywallRibbon',
@@ -588,7 +589,7 @@ describe('Reference paywall and strictly separated offers', () => {
    * compte abonné ouvrent, et c'est le gate de `app/_layout.tsx` qui le fait.
    */
   describe('porte dure (escapable={false})', () => {
-    const mountLocked = (initialScreen: 'benefits' | 'plans' = 'benefits') =>
+    const mountLocked = () =>
       act(() => {
         renderer = create(
           <PaywallFlow
@@ -598,38 +599,50 @@ describe('Reference paywall and strictly separated offers', () => {
             purchase={jest.fn()}
             onPurchaseSuccess={success}
             onSignIn={signIn}
-            initialScreen={initialScreen}
             escapable={false}
           />,
         )
       })
 
-    it('ne laisse jamais sortir : « Passer » boucle sur l’offre puis le pitch', () => {
+    it('ne laisse jamais sortir : refuser l’offre relance le parcours au pitch', () => {
       mountLocked()
+      // Le pitch ouvre toujours le paywall — jamais les tarifs nus.
+      expect(renderer.root.findAllByType(PaywallBenefits)).toHaveLength(1)
       openPlans()
-      // 1er « Passer » → l'offre de rattrapage.
+      // « Passer » → l'offre de rattrapage.
       dismiss()
       expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(1)
-      // Refus → retour aux tarifs.
+      // Refus de l'offre → le pitch, PAS les tarifs et PAS la sortie.
       act(() => renderer.root.findByType(PaywallExitOffer).props.onClose())
-      expect(renderer.root.findAllByType(PaywallPlans)).toHaveLength(1)
-      // 2e « Passer » → le pitch, PAS la sortie.
-      dismiss()
       expect(renderer.root.findAllByType(PaywallBenefits)).toHaveLength(1)
+      expect(renderer.root.findAllByType(PaywallPlans)).toHaveLength(0)
       expect(skip).not.toHaveBeenCalled()
 
-      // …et l'offre redevient disponible au tour suivant : sinon « Passer »
-      // ne mènerait plus nulle part et l'illusion tomberait.
+      // …et le tour suivant rejoue le parcours à l'identique : l'offre est
+      // réarmée, sinon « Passer » ne mènerait plus nulle part.
       openPlans()
       dismiss()
       expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(1)
       expect(skip).not.toHaveBeenCalled()
     })
 
-    it('ouvre directement sur les tarifs à partir de la 2ᵉ présentation', () => {
-      mountLocked('plans')
-      expect(renderer.root.findAllByType(PaywallBenefits)).toHaveLength(0)
-      expect(renderer.root.findAllByType(PaywallPlans)).toHaveLength(1)
+    it('repart du pitch même sans produit remisé à jouer', () => {
+      act(() => {
+        renderer = create(
+          <PaywallFlow
+            plans={PREVIEW_PLANS}
+            offer={null}
+            onSkip={skip}
+            purchase={jest.fn()}
+            onPurchaseSuccess={success}
+            escapable={false}
+          />,
+        )
+      })
+      openPlans()
+      dismiss()
+      expect(renderer.root.findAllByType(PaywallBenefits)).toHaveLength(1)
+      expect(skip).not.toHaveBeenCalled()
     })
 
     it('offre une porte de sortie à l’abonné qui a réinstallé', () => {
@@ -660,7 +673,8 @@ describe('Reference paywall and strictly separated offers', () => {
     })
 
     it('ne met aucun lien « J’ai déjà un compte » dans la barre du paywall', () => {
-      mountLocked('plans')
+      mountLocked()
+      openPlans()
       expect(
         renderer.root.findAllByProps({ testID: 'paywall-sign-in' }),
       ).toHaveLength(0)

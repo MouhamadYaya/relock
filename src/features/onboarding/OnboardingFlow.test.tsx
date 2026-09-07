@@ -30,9 +30,6 @@ jest.mock('@/session/dev-test-bridge', () => ({
 jest.mock('@/session/useSocialSignIn', () => ({
   useSocialSignIn: jest.fn(),
 }))
-jest.mock('@/shared/native/useTrackingPrompt', () => ({
-  useTrackingPrompt: jest.fn(),
-}))
 jest.mock('@/features/onboarding/useActivateFirstRule', () => ({
   useActivateFirstRule: jest.fn(),
 }))
@@ -68,6 +65,7 @@ jest.mock('@/features/onboarding/scenes-tutorial', () => ({
   SceneLockDemo: 'SceneLockDemo',
   SceneHardMode: 'SceneHardMode',
   ScenePickApps: 'ScenePickApps',
+  ScenePickerDemo: 'ScenePickerDemo',
 }))
 jest.mock('@/features/onboarding/scenes-power', () => ({
   ScenePermission: 'ScenePermission',
@@ -153,13 +151,135 @@ describe('personalized plan flow', () => {
     expect(host('SceneRules').props.selectedIds).toEqual([])
   })
 
-  it('starts the emotional sequence directly after the daily usage question', () => {
-    jump('screenTime')
-    act(() =>
-      renderer.root.findByProps({ label: '4 à 6 heures' }).props.onPress(),
-    )
+  const cont = () =>
     act(() => renderer.root.findByProps({ label: 'Continuer' }).props.onPress())
+  const pick = (label: string) =>
+    act(() => renderer.root.findByProps({ label }).props.onPress())
+
+  it('ferme le diagnostic sur l’objectif, juste avant le verdict', () => {
+    jump('screenTime')
+    pick('4 à 6 heures')
+    cont()
+    // La dernière question du diagnostic annonce le temps calculé depuis SES
+    // réponses — pas un chiffre générique.
+    expect(
+      renderer.root.findByProps({
+        title: 'Si tu récupérais 2 h 30 par jour, tu en ferais quoi ?',
+      }),
+    ).toBeDefined()
+    // Et on ne passe pas sans avoir nommé au moins une chose à récupérer.
+    cont()
+    expect(
+      renderer.root.findAll(node => (node.type as unknown) === 'SceneBeat'),
+    ).toHaveLength(0)
+    act(() => host('ChoiceGrid').props.onToggle('sleep'))
+    cont()
     expect(host('SceneBeat')).toBeDefined()
+  })
+
+  const selected = (label: string) =>
+    renderer.root.findByProps({ label }).props.selected
+
+  it('exige au moins une réponse sur les écrans d’aveu, et n’en plafonne aucune', () => {
+    jump('stolen')
+    // Sans réponse, le bouton est là mais inerte : ces aveux nourrissent le
+    // plan, passer sans rien cocher le viderait de sa substance.
+    cont()
+    expect(
+      renderer.root.findByProps({
+        title: "Qu'est-ce que le scroll t'a déjà volé ?",
+      }),
+    ).toBeDefined()
+    const losses = [
+      'Des nuits que je ne récupérerai jamais',
+      'Ma capacité à me concentrer',
+      "L'énergie que je n'ai plus pour le reste",
+      "Des moments avec les gens que j'aime",
+      'Le calme dans ma tête',
+    ]
+    for (const label of losses) pick(label)
+    // Aucun tap n'est refusé : il n'appartient pas au questionnaire de décider
+    // combien de choses le scroll a coûté à quelqu'un.
+    for (const label of losses) expect(selected(label)).toBe(true)
+    // Et décocher reste possible, sans rien libérer pour autant.
+    pick('Ma capacité à me concentrer')
+    expect(selected('Ma capacité à me concentrer')).toBe(false)
+    // Il en reste quatre : le plancher est tenu, on avance.
+    cont()
+    expect(
+      renderer.root.findByProps({ title: "Tu as déjà essayé d'arrêter ?" }),
+    ).toBeDefined()
+  })
+
+  it('laisse cocher plusieurs motivations et plusieurs moments', () => {
+    jump('trigger')
+    // Sans réponse, on ne passe pas.
+    cont()
+    expect(selected('Je scrolle au lit')).toBe(false)
+    pick('Je scrolle au lit')
+    pick('Je veux reprendre le contrôle')
+    // La deuxième n'efface plus la première — c'était le comportement à un
+    // seul choix, et il n'y a aucune raison de n'avoir qu'une motivation.
+    expect(selected('Je scrolle au lit')).toBe(true)
+    expect(selected('Je veux reprendre le contrôle')).toBe(true)
+    jump('moment')
+    pick('Le soir, au lit')
+    pick('Dans les transports')
+    expect(selected('Le soir, au lit')).toBe(true)
+    expect(selected('Dans les transports')).toBe(true)
+    jump('plan')
+    const plan = host('ScenePersonalizedPlan').props.plan
+    expect(plan.recap).toContain(
+      'surtout le soir, au lit et dans les transports',
+    )
+    expect(plan.intention).toBe('Ton objectif : retrouver tes nuits.')
+  })
+
+  it('garde une réponse unique sur l’estimation de temps d’écran', () => {
+    jump('screenTime')
+    pick('4 à 6 heures')
+    pick('Plus de 8 heures')
+    // Deux tranches cochées ne désignent aucune durée : c'est la seule
+    // question du diagnostic qui se convertit en un nombre d'heures.
+    expect(selected('4 à 6 heures')).toBe(false)
+    expect(selected('Plus de 8 heures')).toBe(true)
+  })
+
+  it('traite « jamais vraiment essayé » comme l’absence des autres réponses', () => {
+    jump('attempts')
+    pick("J'ai supprimé l'app… puis réinstallé")
+    pick("J'ai caché les apps dans un dossier")
+    pick('Jamais vraiment essayé')
+    // Sélectionner l'absence efface le reste : « tu as déjà essayé, mais… »
+    // deviendrait faux sinon.
+    for (const label of [
+      "J'ai supprimé l'app… puis réinstallé",
+      "J'ai caché les apps dans un dossier",
+    ])
+      expect(renderer.root.findByProps({ label }).props.selected).toBe(false)
+    // Et l'inverse est vrai aussi.
+    pick("J'ai tenu à la volonté. Ça n'a pas duré")
+    expect(
+      renderer.root.findByProps({ label: 'Jamais vraiment essayé' }).props
+        .selected,
+    ).toBe(false)
+  })
+
+  it('porte les trois nouvelles réponses jusqu’au plan', () => {
+    jump('stolen')
+    pick('Des nuits que je ne récupérerai jamais')
+    cont()
+    pick("J'ai mis une limite… puis « encore 15 min »")
+    cont()
+    pick('4 à 6 heures')
+    cont()
+    act(() => host('ChoiceGrid').props.onToggle('sleep'))
+    cont()
+    jump('plan')
+    const plan = host('ScenePersonalizedPlan').props.plan
+    expect(plan.loss).toBe("Et ça t'a déjà pris des nuits.")
+    expect(plan.defense).toContain("une limite d'écran se repousse d'un tap")
+    expect(plan.aspirationSummary).toBe('dormir')
   })
 
   it('arrête le parcours au rituel : l’offre est une route, pas une étape', () => {
@@ -185,6 +305,9 @@ describe('personalized plan flow', () => {
     act(() => host('SceneLockDemo').props.onNext())
     act(() => host('SceneHardMode').props.onNext())
     act(() => host('ScenePermission').props.onNext())
+    // La démonstration du sélecteur est un passage obligé, jamais un renvoi
+    // optionnel : elle s'intercale AVANT l'écran de sélection.
+    act(() => host('ScenePickerDemo').props.onNext())
     act(() => host('ScenePickApps').props.onNext())
     expect(host('SceneRules')).toBeDefined()
     expect(completeSetup).not.toHaveBeenCalled()
@@ -277,13 +400,15 @@ describe("reprise de l'onboarding après fermeture de l'app", () => {
     })
   const answers = {
     name: 'Léa',
-    trigger: 'bed',
+    trigger: ['bed'],
     apps: ['TikTok'],
-    moment: 'wake',
+    moment: ['wake'],
     feelings: ['guilt'],
+    stolen: ['nights'],
+    attempts: ['limit'],
+    aspirations: ['sleep'],
     screenTime: '4-6',
     hours: 5,
-    hardMode: false,
     appCount: 3,
     rulePresetIds: [IDS.morning],
   }
@@ -332,6 +457,52 @@ describe("reprise de l'onboarding après fermeture de l'app", () => {
     expect(scene).toBeDefined()
     // Les réponses aussi sont restaurées, pas seulement la position.
     expect(scene.props.count).toBe(3)
+  })
+
+  /**
+   * La garantie commerciale du produit, vue depuis l'intérieur du parcours :
+   * l'écran de compte — et tout ce qui le suit — appartient à l'APRÈS-offre.
+   * `app/_layout.tsx` monte déjà le paywall à la place de ce parcours quand
+   * l'abonnement manque ; ce test verrouille la même règle une seconde fois,
+   * ici, pour qu'aucune sauvegarde héritée ni aucun remaniement des étapes ne
+   * puisse un jour faire apparaître la connexion avant le paiement.
+   */
+  it('ne montre JAMAIS l’écran de compte sans abonnement', () => {
+    useAppGateStore.setState({ surveyDone: true, entitled: false })
+    saveOnboardingCheckpoint({ step: 'auth', answers })
+    render()
+    expect(
+      renderer.root.findAll(node => (node.type as unknown) === 'SceneAuth'),
+    ).toHaveLength(0)
+    // Il repart du rituel, qui reconduit au paywall — pas dans un écran mort.
+    expect(host('SceneRitual')).toBeDefined()
+  })
+
+  it('ne laisse pas non plus reprendre le tutoriel d’après-offre sans abonnement', () => {
+    useAppGateStore.setState({ surveyDone: true, entitled: false })
+    saveOnboardingCheckpoint({ step: 'tutoApps', answers })
+    render()
+    expect(
+      renderer.root.findAll(node => (node.type as unknown) === 'ScenePickApps'),
+    ).toHaveLength(0)
+    expect(host('SceneRitual')).toBeDefined()
+  })
+
+  it('reprend une sauvegarde écrite AVANT le passage au choix multiple', () => {
+    // `trigger` et `moment` y valaient une chaîne. Sans la conversion du
+    // schéma, tout onboarding en cours repartirait de zéro à la mise à jour.
+    saveOnboardingCheckpoint({
+      step: 'moment',
+      answers: {
+        ...answers,
+        trigger: 'bed',
+        moment: 'wake',
+      } as unknown as typeof answers,
+    })
+    render()
+    expect(
+      renderer.root.findByProps({ label: 'Dès le réveil' }).props.selected,
+    ).toBe(true)
   })
 
   it('repart du début sans sauvegarde, ou après une refonte des étapes', () => {

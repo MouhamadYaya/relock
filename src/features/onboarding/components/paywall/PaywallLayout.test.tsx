@@ -1,6 +1,7 @@
 import React from 'react'
-import { ScrollView, StyleSheet } from 'react-native'
+import { Linking, ScrollView, StyleSheet } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
+import { links } from '@/config/app-config'
 import { PaywallBenefits } from '@/features/onboarding/components/paywall/PaywallBenefits'
 import { PaywallOffer } from '@/features/onboarding/components/paywall/PaywallOffer'
 import { PaywallPlans } from '@/features/onboarding/components/paywall/PaywallPlans'
@@ -102,6 +103,33 @@ describe('Paywall composition', () => {
       expect(scroll.findAllByProps(promise)).toHaveLength(0)
       expect(renderer.root.findAllByProps(cta)).not.toHaveLength(0)
       expect(renderer.root.findAllByProps(promise)).not.toHaveLength(0)
+    })
+
+    it('carries the App Store legal links out of the scroll', () => {
+      // Guideline 3.1.2 : un écran d'abonnement à renouvellement automatique
+      // DOIT porter un lien fonctionnel vers les conditions et vers la
+      // politique de confidentialité. Leur absence est un motif de rejet, et
+      // ils doivent rester visibles sans défilement.
+      const scroll = renderer.root.findByType(ScrollView)
+      expect(scroll.findAllByProps({ testID: 'paywall-legal' })).toHaveLength(0)
+      expect(
+        renderer.root.findByProps({ testID: 'paywall-legal' }),
+      ).toBeDefined()
+
+      const openURL = jest
+        .spyOn(Linking, 'openURL')
+        .mockResolvedValue(undefined as never)
+      try {
+        for (const [testID, url] of [
+          ['paywall-terms', links.termsFr],
+          ['paywall-privacy', links.privacyFr],
+        ] as const) {
+          renderer.root.findByProps({ testID }).props.onPress()
+          expect(openURL).toHaveBeenLastCalledWith(url)
+        }
+      } finally {
+        openURL.mockRestore()
+      }
     })
 
     it('leaves the band decorative, edge to edge, and elastic', () => {

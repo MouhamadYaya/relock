@@ -54,11 +54,98 @@ export const PERSONALIZED_PLAN = {
   bodyLineHeight: 25,
   captionSize: 13,
   captionLineHeight: 19,
-  successSize: 40,
   iconSize: 22,
-  goalSize: 30,
   revealDuration: 450,
-  readingDelays: [200, 800, 1000, 1000, 1000],
+  // Un temps par bloc révélé de l'écran de plan : titre, écho des réponses,
+  // objectif, réflexes, note finale. Ajouter un bloc SANS ajouter un délai ici
+  // laisserait le CTA définitivement désactivé (`revealed` compare à cette
+  // longueur) — et en ajouter un sans place dans le budget de `PLAN_SUMMARY`
+  // repousserait du contenu sous la ligne de flottaison.
+  readingDelays: [200, 850, 950, 900, 800],
+} as const
+
+/**
+ * Maquette de l'écran « Ton plan est prêt » — pensée pour tenir SANS SCROLL,
+ * sur tous les iPhone supportés.
+ *
+ * Les valeurs sont celles de la maquette de RÉFÉRENCE (iPhone 14 : 844pt
+ * d'écran, dont 751 réellement offerts à la scène une fois les encoches et
+ * les marges du conteneur retirées). À l'exécution, tout est multiplié par
+ * `hauteur disponible / referenceHeight`, borné entre `minScale` et
+ * `maxScale` : la composition garde ses proportions au lieu de basculer d'un
+ * palier « compact » à un autre, et l'iPhone SE reçoit le même dessin en plus
+ * serré.
+ *
+ * ⚠️ BUDGET VERTICAL de la référence, PIRE CAS (chaque texte à la limite de
+ * son `numberOfLines`, résumé d'objectif sur deux lignes) :
+ *
+ *   marge haute            6
+ *   en-tête              120   (badge 38 + 10 + titre 2×36)
+ *   écho                 104   (surtitre 15 + 5 + texte 4×21)
+ *   carte objectif       193   (36 de padding + 2 de liseré + 15 + 3×4
+ *                               + 48 de chiffre + 2×23 + 2×17)
+ *   réflexes              76   (tuile 36 + 8 + libellé 2×16)
+ *   note finale           68   (4×17)
+ *   4 écarts de 18        72
+ *   pied (16 + pilule 58) 74
+ *   ------------------------
+ *   total                713  ≤ 751 ✓
+ *
+ * Toute ligne AJOUTÉE ici doit être réintégrée à ce calcul : c'est lui, et
+ * rien d'autre, qui garantit qu'aucun contenu ne tombe hors de l'écran — et
+ * `ScenePersonalizedPlan.test.tsx` refait la somme à chaque exécution.
+ */
+export const PLAN_SUMMARY = {
+  /** Hauteur offerte à la scène sur la maquette de référence. */
+  referenceHeight: 751,
+  /** Marges que `OnboardingFlow` ajoute autour de la scène (6 + 6). */
+  chrome: 12,
+  minScale: 0.84,
+  maxScale: 1.06,
+  maxWidth: 440,
+  screenPaddingH: 24,
+  screenPaddingTop: 6,
+  gap: 18,
+  // En-tête
+  badgeSize: 38,
+  badgeIconSize: 20,
+  headingGap: 10,
+  titleSize: 29,
+  titleLineHeight: 36,
+  // Écho des réponses
+  eyebrowSize: 11,
+  eyebrowLineHeight: 15,
+  eyebrowTracking: 1.1,
+  quoteRuleWidth: 2.5,
+  quoteGap: 13,
+  echoGap: 5,
+  echoSize: 15,
+  echoLineHeight: 21,
+  echoLines: 4,
+  // Carte objectif
+  cardPadding: 18,
+  cardGap: 4,
+  goalSize: 38,
+  goalSummarySize: 17,
+  goalSummaryLineHeight: 23,
+  goalSummaryLines: 2,
+  noteSize: 12.5,
+  noteLineHeight: 17,
+  // Bande des trois réflexes
+  tileSize: 36,
+  tileIconSize: 19,
+  tileGap: 8,
+  tileLabelSize: 12,
+  tileLabelLineHeight: 16,
+  // Note finale + pied
+  footnoteLines: 4,
+  footerGap: 16,
+  /**
+   * Un écran sans scroll ne peut pas absorber les tailles d'accessibilité les
+   * plus hautes : on borne le grossissement plutôt que de laisser le contenu
+   * déborder hors de l'écran, sans recours.
+   */
+  maxFontScale: 1.2,
 } as const
 
 export const PLAN_PREPARATION = {

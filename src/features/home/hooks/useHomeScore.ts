@@ -1,62 +1,63 @@
-import { useFocusEffect } from '@react-navigation/native'
-import { useCallback, useEffect, useState } from 'react'
-import { AppState } from 'react-native'
-import { toHomeScoreSnapshot } from '@/features/home/services/home-score'
+import { useMemo } from 'react'
+import type { BlockRuleView } from '@/features/blocking/types'
+import {
+  computeHomeScore,
+  type ScoreDayStats,
+} from '@/features/home/services/score-engine'
 import type { HomeScoreSnapshot } from '@/features/home/types'
-import { ScreenTime } from '@/shared/native/screen-time'
+import type { DailyStats } from '@/shared/services/supabase/database.types'
 
-/** Rythme de relecture : l'extension réécrit le score à chacun de ses rendus. */
-const POLL_INTERVAL_MS = 60_000
+interface Params {
+  now: Date
+  /** Journal quotidien du compte (`daily_stats`), récents en premier. */
+  history: DailyStats[]
+  rules: BlockRuleView[]
+  /** Avancement des quotas du jour par règle (id → 0…1). */
+  limitSteps: Record<string, number>
+  /** Apps actuellement rouvertes par un sursis. */
+  reprievedApps: number
+}
+
+/** Ne garde de `daily_stats` que ce que le score consomme. */
+function toScoreDays(rows: DailyStats[]): ScoreDayStats[] {
+  return rows.map(row => ({
+    date: row.date,
+    interceptions_count: row.interceptions_count ?? 0,
+    opens_stopped: row.opens_stopped ?? 0,
+    streak_respected: row.streak_respected ?? false,
+  }))
+}
 
 /**
- * Lit le score déposé par l'extension `RelockActivityReport` dans le conteneur
- * App Group.
+ * Le score d'Accueil, calculé sur les données réelles du compte.
  *
- * Le calcul n'a pas lieu ici et ne peut pas y avoir lieu : les mesures de Temps
- * d'écran ne quittent jamais le bac à sable Apple. L'app ne fait que relire le
- * résultat, que l'extension rafraîchit à chaque rendu de son rapport — d'où la
- * relecture au focus, au retour en avant-plan et sur intervalle.
+ * Il ne lit plus le conteneur App Group : l'extension `RelockActivityReport`
+ * ne peut pas y écrire (sandbox Apple, cf. docs/ARCHITECTURE.md), si bien que
+ * le score natif n'atteignait jamais le JS — la carte montrait un chiffre que
+ * la feuille de détail était incapable de retrouver. Tout est désormais
+ * calculé ici, à partir du journal quotidien et des règles, donc reproductible
+ * et explicable au chiffre près.
+ *
+ * Le calcul est pur et bon marché : un `useMemo` suffit, la fraîcheur vient
+ * des sources (`now` avance toutes les 30 s, React Query rafraîchit le
+ * journal, les quotas sont relus à chaque retour au premier plan).
  */
-export function useHomeScore(): HomeScoreSnapshot {
-  const [snapshot, setSnapshot] = useState<HomeScoreSnapshot>(() =>
-    toHomeScoreSnapshot(null),
+export function useHomeScore({
+  now,
+  history,
+  rules,
+  limitSteps,
+  reprievedApps,
+}: Params): HomeScoreSnapshot {
+  return useMemo(
+    () =>
+      computeHomeScore({
+        now,
+        history: toScoreDays(history),
+        rules,
+        limitSteps,
+        reprievedApps,
+      }),
+    [now, history, rules, limitSteps, reprievedApps],
   )
-
-  const read = useCallback(() => {
-    let active = true
-    ScreenTime.homeScore()
-      .then(payload => {
-        if (active) setSnapshot(toHomeScoreSnapshot(payload))
-      })
-      // Un score illisible n'est pas une erreur à remonter : on reste sur
-      // « calcul en cours » plutôt que d'afficher un chiffre faux.
-      .catch(() => {
-        if (active) setSnapshot(toHomeScoreSnapshot(null))
-      })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancel = read()
-    const id = setInterval(() => {
-      cancel()
-      cancel = read()
-    }, POLL_INTERVAL_MS)
-    const sub = AppState.addEventListener('change', state => {
-      if (state !== 'active') return
-      cancel()
-      cancel = read()
-    })
-    return () => {
-      cancel()
-      clearInterval(id)
-      sub.remove()
-    }
-  }, [read])
-
-  useFocusEffect(read)
-
-  return snapshot
 }

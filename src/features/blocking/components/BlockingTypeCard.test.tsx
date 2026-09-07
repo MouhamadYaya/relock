@@ -53,7 +53,7 @@ describe('BlockingTypeCard material', () => {
       })
       const style = StyleSheet.flatten(card?.props.style)
       expect(style.minHeight).toBe(
-        relockMaterial.layout.blockingTypeCardMinHeight,
+        relockMaterial.layout.blockingTypeRowMinHeight,
       )
       expect(style.overflow).toBe('hidden')
       expect(style.backgroundColor).toBe(relockMaterial.colors.blockingSurface)
@@ -67,6 +67,35 @@ describe('BlockingTypeCard material', () => {
         renderer?.root.findByProps({ testID: `rule-type-glyph-${kind}` }),
       ).toBeTruthy()
     }
+  })
+
+  it('lays each type out as a full-width row so the copy can be explicit', () => {
+    act(() => {
+      renderer = create(
+        <BlockingTypeCard
+          kind="session"
+          title="Bloquer maintenant"
+          description="Tout de suite, pour la durée que tu choisis"
+          onPress={jest.fn()}
+        />,
+      )
+    })
+
+    const card = renderer?.root.findByProps({
+      testID: 'blocking-type-card-session',
+    })
+    const style = StyleSheet.flatten(card?.props.style)
+    // Une grille en trois colonnes ne laissait tenir que « p. ex. 30 min » :
+    // la rangée est ce qui rend la description lisible.
+    expect(style.flexDirection).toBe('row')
+    expect(style.alignItems).toBe('center')
+
+    const description = renderer?.root.findByProps({
+      children: 'Tout de suite, pour la durée que tu choisis',
+    })
+    expect(StyleSheet.flatten(description?.props.style).fontSize).toBe(
+      relockMaterial.typography.blockingCardBodySize,
+    )
   })
 
   it('keeps the icon stage larger than the glyph for visible depth', () => {

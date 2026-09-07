@@ -21,6 +21,7 @@ import {
   setSentryUser,
 } from '@/shared/services/monitoring/sentry'
 import { cacheEngine } from '@/shared/services/storage/cache-engine'
+import { clearCredentials } from '@/shared/services/storage/credentials'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 let inflightLogout: Promise<void> | null = null
@@ -52,8 +53,7 @@ async function runLogout(qc?: QueryClient): Promise<void> {
     setSentryUser(null)
 
     // 1) Remove sensitive credentials
-    kvStorage.delete(constants.AUTH_TOKEN)
-    kvStorage.delete(constants.REFRESH_TOKEN)
+    clearCredentials()
 
     // 2) Drop persisted RQ cache snapshot
     kvStorage.delete(constants.RQ_CACHE)

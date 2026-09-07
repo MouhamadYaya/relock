@@ -484,7 +484,7 @@ private struct HomeReportCopy {
           "Équilibre fragile", "Équilibre moyen", "Bon équilibre",
           "Excellent équilibre",
         ],
-        footerPending: "Ton score arrive dès que quelques jours seront mesurés.",
+        footerPending: "Calcul en cours",
         footerProvisional: "Score encore approximatif : il se précise chaque jour.",
         footerFocus: [
           "Tu décroches souvent aujourd’hui. Un blocage t’aiderait à tenir.",
@@ -519,7 +519,7 @@ private struct HomeReportCopy {
           "Fragile Balance", "Mittlere Balance", "Gute Balance",
           "Ausgezeichnete Balance",
         ],
-        footerPending: "Dein Score erscheint, sobald einige Tage gemessen sind.",
+        footerPending: "Wird berechnet",
         footerProvisional: "Noch ungefähr — der Score wird täglich genauer.",
         footerFocus: [
           "Du greifst heute oft zum Handy. Eine Sperre würde helfen.",
@@ -554,7 +554,7 @@ private struct HomeReportCopy {
           "Хрупкий баланс", "Средний баланс", "Хороший баланс",
           "Отличный баланс",
         ],
-        footerPending: "Балл появится, когда наберётся несколько дней замеров.",
+        footerPending: "Идёт расчёт",
         footerProvisional: "Пока приблизительно — балл уточняется каждый день.",
         footerFocus: [
           "Сегодня ты часто отвлекаешься. Блокировка помогла бы удержаться.",
@@ -589,7 +589,7 @@ private struct HomeReportCopy {
           "Fragile balance", "Fair balance", "Good balance",
           "Excellent balance",
         ],
-        footerPending: "Your score arrives once a few days have been measured.",
+        footerPending: "Calculating",
         footerProvisional: "Still approximate — the score sharpens every day.",
         footerFocus: [
           "You are drifting often today. A block would help you hold on.",
@@ -629,48 +629,10 @@ let heroComparisonMinimumDays = 7
 /// l'impression d'un bug plutôt que d'une mesure.
 let heroComparisonCapSeconds: Double = 3 * 3_600
 
-/// Etat de confiance du score. `pending` n'est pas un score bas : c'est
-/// l'absence de score. Un nouvel utilisateur n'a aucun historique auquel se
-/// comparer, on le dit au lieu d'inventer un 100.
-enum HomeScoreStatus: String {
-  case pending
-  case provisional
-  case ready
-}
-
-/// L'axe le plus faible du jour. Sert a formuler l'encouragement : nommer ce
-/// qui decroche vaut mieux qu'une phrase generique.
-enum HomeScoreAxis: String {
-  case focus
-  case rest
-}
-
-struct HomeScoreModel {
-  /// `nil` tant que le score n'est pas calculable — la carte affiche « — ».
-  var focus: Int?
-  var rest: Int?
-  var global: Int?
-  /// Score global d'hier, calcule a l'identique sur une journee pleine.
-  var previousGlobal: Int?
-  var status: HomeScoreStatus = .pending
-  var weakestAxis: HomeScoreAxis = .focus
-  /// Jours complets ayant servi de reference. Pilote la confiance.
-  var historyDays: Int = 0
-
-  var delta: Int? {
-    guard let global, let previousGlobal else { return nil }
-    return global - previousGlobal
-  }
-}
-
 /// Usage d'une journee, reduit a ce que le score consomme.
 struct DayUsage {
   var seconds: Double = 0
   var pickups: Int = 0
-}
-
-private func boundedScore(_ value: Int) -> Int {
-  min(max(value, 0), 100)
 }
 
 private func median(_ values: [Double]) -> Double {
@@ -679,78 +641,6 @@ private func median(_ values: [Double]) -> Double {
   let mid = sorted.count / 2
   if sorted.count % 2 == 1 { return sorted[mid] }
   return (sorted[mid - 1] + sorted[mid]) / 2
-}
-
-/// Traduit « combien de fois ta normale » en note.
-///
-/// 50 = exactement ta normale, 100 = deux fois mieux, 0 = deux fois pire.
-/// La courbe est volontairement lineaire par morceaux : elle doit pouvoir
-/// s'expliquer en une phrase dans la feuille de detail.
-private func relativeScore(_ ratio: Double) -> Int {
-  if ratio <= 0.5 { return 100 }
-  if ratio >= 2 { return 0 }
-  if ratio <= 1 { return boundedScore(Int((100 - 100 * (ratio - 0.5)).rounded())) }
-  return boundedScore(Int((50 - 50 * (ratio - 1)).rounded()))
-}
-
-/// Il faut un minimum de journee mesuree avant de la caracteriser. Sans ce
-/// garde-fou, chaque jour demarrerait a 100 a minuit — un compte a rebours,
-/// pas un score.
-private let scoreMinimumPickups = 3
-private let scoreMinimumSeconds: Double = 300
-
-/// Nombre de jours complets a partir duquel le score est pleinement fiable.
-/// En dessous, il est tire vers la neutralite (50) au prorata.
-private let scoreConfidenceDays = 5.0
-
-/// Score relatif a l'utilisateur lui-meme, jamais a un absolu : 2 h d'ecran
-/// sont excellentes pour l'un et une rechute pour l'autre.
-///
-/// - `focus` : prises en main par heure ecoulee, contre la mediane des jours
-///   complets. La fragmentation compte plus que le volume.
-/// - `rest` : secondes d'ecran par heure ecoulee, meme reference.
-///
-/// `elapsedHours` est plancher a 3 h : a 1 h du matin, diviser par 1 ferait
-/// exploser le ratio sur deux prises en main sans signification.
-private func makeHomeScore(
-  today: DayUsage,
-  elapsedHours: Double,
-  history: [DayUsage]
-) -> HomeScoreModel {
-  var model = HomeScoreModel(historyDays: history.count)
-
-  // Pas de reference : rien a comparer, donc rien a afficher.
-  guard !history.isEmpty else { return model }
-  // Journee pas encore assez mesuree pour etre caracterisee.
-  guard today.pickups >= scoreMinimumPickups || today.seconds >= scoreMinimumSeconds
-  else { return model }
-
-  let hours = max(3, elapsedHours)
-  let baselineFocus = median(history.map { Double($0.pickups) / 24 })
-  let baselineRest = median(history.map { $0.seconds / 24 })
-  // Un historique entierement vide ne fait pas une reference exploitable.
-  guard baselineFocus > 0, baselineRest > 0 else { return model }
-
-  let rawFocus = relativeScore(Double(today.pickups) / hours / baselineFocus)
-  let rawRest = relativeScore(today.seconds / hours / baselineRest)
-
-  // Confiance progressive : avec un seul jour de recul le score existe deja,
-  // mais reste proche de la neutralite; il se precise en s'appuyant sur plus
-  // de jours. On ne fait jamais croire a une precision qu'on n'a pas.
-  let confidence = min(1, Double(history.count) / scoreConfidenceDays)
-  let blended = { (raw: Int) in
-    boundedScore(Int((50 + (Double(raw) - 50) * confidence).rounded()))
-  }
-
-  let focus = blended(rawFocus)
-  let rest = blended(rawRest)
-  model.focus = focus
-  model.rest = rest
-  // Deux axes, poids egaux : aucun des deux ne prime sur l'autre.
-  model.global = boundedScore(Int((Double(focus + rest) / 2).rounded()))
-  model.weakestAxis = focus <= rest ? .focus : .rest
-  model.status = confidence >= 1 ? .ready : .provisional
-  return model
 }
 
 /// Rendu centré dans l'anneau lumineux du hero.
@@ -855,7 +745,6 @@ struct HeroTotalView: View {
 struct HomeModel {
   var hero = HeroModel()
   var apps: [AppUsage] = []
-  var score = HomeScoreModel()
 }
 
 struct HomeReport: DeviceActivityReportScene {
@@ -884,7 +773,6 @@ struct HomeReport: DeviceActivityReportScene {
     }
 
     let todayKey = cal.startOfDay(for: now)
-    let yesterdayKey = cal.date(byAdding: .day, value: -1, to: todayKey) ?? todayKey
     let today = days[todayKey] ?? DayUsage()
     model.hero.todaySeconds = today.seconds
 
@@ -905,10 +793,6 @@ struct HomeReport: DeviceActivityReportScene {
 
     let elapsedHours = now.timeIntervalSince(todayKey) / 3_600
     let reference = history(before: todayKey)
-    model.score = makeHomeScore(
-      today: today,
-      elapsedHours: elapsedHours,
-      history: reference)
 
     // Fenetres EQUIVALENTES : la mediane personnelle par heure, ramenee aux
     // heures reellement ecoulees aujourd'hui. Comparer un aujourd'hui partiel
@@ -920,41 +804,11 @@ struct HomeReport: DeviceActivityReportScene {
     if baselinePerHour > 0 {
       model.hero.expectedSeconds = baselinePerHour * max(1, elapsedHours)
     }
-    // Delta : hier note exactement comme aujourd'hui, sur une journee pleine
-    // et sa propre reference. Comparer autrement fausserait l'ecart.
-    if let yesterday = days[yesterdayKey] {
-      model.score.previousGlobal = makeHomeScore(
-        today: yesterday,
-        elapsedHours: 24,
-        history: history(before: yesterdayKey)
-      ).global
-    }
-
-    publishHomeScore(model.score)
     RelockReportLog.log.info(
-      "home: today=\(Int(model.hero.todaySeconds), privacy: .public)s apps=\(model.apps.count, privacy: .public) score=\(model.score.global ?? -1, privacy: .public) status=\(model.score.status.rawValue, privacy: .public) history=\(model.score.historyDays, privacy: .public)d"
+      "home: today=\(Int(model.hero.todaySeconds), privacy: .public)s apps=\(model.apps.count, privacy: .public) history=\(model.hero.historyDays, privacy: .public)d"
     )
     return model
   }
-}
-
-/// Depose le score dans le conteneur App Group. Les mesures de Temps d'ecran ne
-/// sortent jamais du bac a sable Apple ; seul le resultat agrege le fait, pour
-/// que React Native puisse afficher la meme chose dans la feuille de detail
-/// sans jamais toucher aux donnees brutes.
-private func publishHomeScore(_ score: HomeScoreModel) {
-  guard let defaults = UserDefaults(suiteName: "group.com.yaya.relock") else { return }
-  var payload: [String: Any] = [
-    "status": score.status.rawValue,
-    "weakestAxis": score.weakestAxis.rawValue,
-    "historyDays": score.historyDays,
-    "updatedAt": Date().timeIntervalSince1970,
-  ]
-  if let global = score.global { payload["global"] = global }
-  if let focus = score.focus { payload["focus"] = focus }
-  if let rest = score.rest { payload["rest"] = rest }
-  if let delta = score.delta { payload["delta"] = delta }
-  defaults.set(payload, forKey: "homeScore")
 }
 
 /// Surface Accueil complète. Le hero, le score et les trois apps restent dans
@@ -1031,8 +885,13 @@ struct HomeSectionView: View {
       }
       .frame(width: geometry.size.width, height: 360, alignment: .top)
 
-      homeScoreCard
-        .padding(.horizontal, 16)
+      // Emplacement de la carte « Score global », rendue par React Native
+      // par-dessus ce rapport. Elle ne peut pas etre dessinee ici : cette
+      // extension n'a pas le droit d'ecrire dans l'App Group, donc son score
+      // n'atteignait jamais le JS et la feuille de detail etait incapable
+      // d'expliquer le chiffre affiche. Meme geste que la carte « Mes apps ».
+      Color.clear.frame(height: 290)
+        .accessibilityHidden(true)
 
       // Carte RN « Mes apps » : 280 pt, entre deux espaces de 24 pt.
       Color.clear.frame(height: showsBlockedCard ? 328 : 24)
@@ -1077,189 +936,6 @@ struct HomeSectionView: View {
     // Home gestures belong to the hosting app's controls and ScrollView.
     // Disabling the host UIView alone cannot disable out-of-process buttons.
     .allowsHitTesting(false)
-  }
-
-  // Miroir des accents violet Relock et lavande côté React Native.
-  private let violet = Color(red: 0.655, green: 0.545, blue: 0.980)
-  private let lavender = Color(red: 0.784, green: 0.722, blue: 1.0)
-  private let green = Color(red: 0.373, green: 0.788, blue: 0.545)  // #5FC98B
-  private let amber = Color(red: 0.878, green: 0.635, blue: 0.306)  // #E0A24E
-
-  /// 0 = a ameliorer, 3 = excellent. Sert d'index aux tableaux de copie.
-  private func bandRank(_ value: Int) -> Int {
-    if value >= 80 { return 3 }
-    if value >= 60 { return 2 }
-    if value >= 35 { return 1 }
-    return 0
-  }
-
-  /// Palier affiche sous le chiffre. Sans score, on dit qu'on calcule — on
-  /// n'affiche pas un palier qui n'a pas ete mesure.
-  private var scoreBandLabel: String {
-    guard let global = model.score.global else { return copy.scoreCalculating }
-    return copy.bands[bandRank(global)]
-  }
-
-  /// Encouragement du pied de carte. Il nomme l'axe qui decroche plutot que de
-  /// resumer la journee : « c'est le nombre de prises en main qui coince » est
-  /// actionnable, « ton rythme est sain » ne l'est pas.
-  private var scoreFooter: String {
-    guard let global = model.score.global else { return copy.footerPending }
-    if model.score.status == .provisional { return copy.footerProvisional }
-    let rank = bandRank(global)
-    return model.score.weakestAxis == .focus
-      ? copy.footerFocus[rank]
-      : copy.footerRest[rank]
-  }
-
-  /// Carte « Score global » : la rosace et son chiffre a gauche, les sous-scores
-  /// en liste a droite, l'encouragement en pied. Hauteur miroir de
-  /// `homeScoreHeight` (relock-material.ts) et de la zone tactile de
-  /// ScreenTimeReportView.
-  private var homeScoreCard: some View {
-    VStack(spacing: 0) {
-      HStack(alignment: .top, spacing: 12) {
-        VStack(alignment: .leading, spacing: 2) {
-          Text(copy.globalScore)
-            .font(.system(size: 20, weight: .bold))
-            .foregroundColor(ink)
-            .lineLimit(1)
-          Text(copy.today)
-            .font(.system(size: 14))
-            .foregroundColor(ink3)
-            .lineLimit(1)
-        }
-        Spacer(minLength: 8)
-        // Pastille masquee tant qu'hier n'est pas mesure : pas de faux progres.
-        if let delta = model.score.delta, delta != 0 {
-          scoreDeltaPill(delta)
-        }
-      }
-      .frame(height: 46)
-
-      Spacer(minLength: 0)
-
-      HStack(spacing: 0) {
-        scoreDial
-          .frame(width: 152, height: 152)
-        scoreSeparator
-        VStack(spacing: 0) {
-          scoreRow(
-            symbol: "circle.circle.fill", label: copy.focusScore,
-            value: model.score.focus, tint: violet)
-          Rectangle()
-            .fill(Color.white.opacity(0.09))
-            .frame(height: 1)
-          scoreRow(
-            symbol: "moon.fill", label: copy.restScore,
-            value: model.score.rest, tint: lavender)
-        }
-        .frame(height: 152)
-      }
-
-      Spacer(minLength: 0)
-
-      HStack(spacing: 8) {
-        Image(systemName: "heart")
-          .font(.system(size: 14, weight: .medium))
-          .foregroundColor(lavender)
-        Text(scoreFooter)
-          .font(.system(size: 14, weight: .medium))
-          .foregroundColor(ink2)
-          .lineLimit(1)
-          .minimumScaleFactor(0.8)
-      }
-      .frame(height: 20)
-    }
-    .padding(20)
-    .frame(maxWidth: .infinity, minHeight: 290, maxHeight: 290)
-    .homeGlass(tier: 1)
-    .accessibilityElement(children: .combine)
-    .accessibilityLabel(
-      "\(copy.globalScore) \(model.score.global.map(String.init) ?? copy.scoreCalculating), \(scoreBandLabel), \(copy.focusScore) \(model.score.focus.map(String.init) ?? "—"), \(copy.restScore) \(model.score.rest.map(String.init) ?? "—"). \(scoreFooter)"
-    )
-  }
-
-  /// Ecart avec le score d'hier. Vert quand ca progresse, ambre quand ca recule.
-  private func scoreDeltaPill(_ delta: Int) -> some View {
-    let rising = delta > 0
-    let tint = rising ? green : amber
-    return HStack(spacing: 4) {
-      Image(systemName: rising ? "arrow.up" : "arrow.down")
-        .font(.system(size: 12, weight: .bold))
-      Text(String(abs(delta)))
-        .font(.system(size: 15, weight: .semibold))
-        .monospacedDigit()
-      Text(copy.scoreDeltaSuffix)
-        .font(.system(size: 12, weight: .medium))
-        .opacity(0.72)
-        .lineLimit(1)
-    }
-    .foregroundColor(tint)
-    .padding(.horizontal, 12)
-    .padding(.vertical, 7)
-    .background(Capsule().fill(tint.opacity(0.14)))
-  }
-
-  /// Anneau du score : illustration fournie (`home-score-dial`), centre
-  /// transparent pour que la valeur se lise dedans. Rien n'est dessine ici —
-  /// le motif est un asset, pas une jauge.
-  private var scoreDial: some View {
-    ZStack {
-      Image("home-score-dial")
-        .resizable()
-        .scaledToFit()
-        .opacity(0.22)
-        .accessibilityHidden(true)
-
-      VStack(spacing: 1) {
-        Text(model.score.global.map(String.init) ?? "—")
-          .font(.system(size: 44, weight: .bold))
-          .monospacedDigit()
-          .foregroundColor(ink)
-        Text(scoreBandLabel)
-          .font(.system(size: 13, weight: .medium))
-          .foregroundColor(lavender)
-          .lineLimit(1)
-          .minimumScaleFactor(0.7)
-      }
-    }
-  }
-
-  private var scoreSeparator: some View {
-    Rectangle()
-      .fill(Color.white.opacity(0.09))
-      .frame(width: 1, height: 152)
-      .overlay(
-        Image(systemName: "arrowtriangle.right.fill")
-          .font(.system(size: 7))
-          .foregroundColor(Color.white.opacity(0.18))
-      )
-      .padding(.horizontal, 14)
-  }
-
-  private func scoreRow(
-    symbol: String,
-    label: String,
-    value: Int?,
-    tint: Color
-  ) -> some View {
-    HStack(spacing: 10) {
-      Image(systemName: symbol)
-        .font(.system(size: 17, weight: .medium))
-        .foregroundColor(tint)
-        .frame(width: 24)
-      Text(label)
-        .font(.system(size: 15, weight: .medium))
-        .foregroundColor(ink)
-        .lineLimit(1)
-      Spacer(minLength: 8)
-      Text(value.map(String.init) ?? "—")
-        .font(.system(size: 22, weight: .bold))
-        .monospacedDigit()
-        .foregroundColor(value == nil ? ink3 : ink)
-    }
-    .frame(maxHeight: .infinity)
   }
 
   private func homeAppRow(app: AppUsage, maxSeconds: Double) -> some View {

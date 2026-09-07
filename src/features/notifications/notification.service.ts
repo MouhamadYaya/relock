@@ -10,6 +10,7 @@
  * Toutes les heures de tir tombent dans la fenêtre utile (jamais 22h–8h).
  */
 import { Notif } from '@/shared/native/notifications'
+import { getReminderMinutes } from '@/shared/services/storage/app-preferences'
 import { NotifContent } from './content'
 import { getNotifPrefs } from './prefs'
 
@@ -35,6 +36,18 @@ function todayAt(h: number, m: number): number {
   const d = new Date()
   d.setHours(h, m, 0, 0)
   return unix(d)
+}
+
+/**
+ * L'heure des rappels du soir, telle que l'utilisateur l'a réglée.
+ *
+ * Relue à CHAQUE reconciliation, jamais mise en cache : changer l'heure dans
+ * les Réglages replanifie tout dans la foulée (le reconciler est idempotent),
+ * et le rappel de ce soir tombe déjà à la nouvelle heure.
+ */
+function reminderHourMinute(): [number, number] {
+  const total = getReminderMinutes()
+  return [Math.floor(total / 60), total % 60]
 }
 
 /** Timestamp du prochain dimanche à h:m (aujourd'hui si dimanche avant l'heure). */
@@ -73,22 +86,25 @@ export const NotificationService = {
     const now = unix(new Date())
 
     if (p.reminders) {
-      // Rappel « série en danger » : ce soir 20h30, si une série est en jeu et
-      // que rien ne protège aujourd'hui. (Ré-annulé au prochain reconcile si
-      // l'utilisateur arme un blocage → jamais de faux rappel.)
+      // Rappel « série en danger » : ce soir, à l'heure choisie dans les
+      // Réglages, si une série est en jeu et que rien ne protège aujourd'hui.
+      // (Ré-annulé au prochain reconcile si l'utilisateur arme un blocage →
+      // jamais de faux rappel.)
       if (state.streak >= 1 && !state.protectedToday) {
-        const t = todayAt(20, 30)
+        const [hour, minute] = reminderHourMinute()
+        const t = todayAt(hour, minute)
         if (t > now) {
           const c = NotifContent.streakRisk(state.streak)
           await Notif.schedule(`${PREFIX}streakRisk`, t, c.title, c.body)
         }
       }
-      // Win-back : dans 3 jours à 20h. Replanifié à chaque ouverture → ne tire
+      // Win-back : dans 3 jours, à la même heure. Replanifié à chaque ouverture → ne tire
       // que si l'utilisateur reste réellement absent 3 jours d'affilée.
       const c = NotifContent.winback()
+      const [hour, minute] = reminderHourMinute()
       await Notif.schedule(
         `${PREFIX}winback`,
-        inDaysAt(3, 20, 0),
+        inDaysAt(3, hour, minute),
         c.title,
         c.body,
       )

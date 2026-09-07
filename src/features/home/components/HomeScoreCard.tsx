@@ -16,6 +16,9 @@ interface Props {
   scores: HomeScores
   title: string
   subtitle: string
+  /** Écart avec le score d'hier. `null` tant qu'hier n'est pas noté. */
+  delta: number | null
+  deltaSuffix: string
   bandLabel: string
   footerLabel: string
   focusLabel: string
@@ -23,6 +26,40 @@ interface Props {
   accessibilityLabel: string
   accessibilityHint: string
   onPress: () => void
+}
+
+/**
+ * Écart avec hier. Masquée à zéro et tant qu'hier n'est pas noté : une
+ * pastille « 0 » se lit comme un échec, alors qu'elle ne dit rien.
+ */
+function DeltaPill({ delta, suffix }: { delta: number; suffix: string }) {
+  const rising = delta > 0
+  const tint = rising ? colors.homeScoreUp : colors.homeScoreDown
+  return (
+    <View
+      accessibilityElementsHidden
+      style={[
+        styles.delta,
+        {
+          backgroundColor: rising
+            ? colors.homeScoreUpSoft
+            : colors.homeScoreDownSoft,
+        },
+      ]}
+    >
+      <IconSvg
+        name={rising ? IconName.ARROWUP : IconName.ARROWDOWN}
+        size={layout.homeScoreDeltaGlyphSize}
+        color={tint}
+      />
+      <Text style={[styles.deltaValue, { color: tint }]}>
+        {Math.abs(delta)}
+      </Text>
+      <Text numberOfLines={1} style={[styles.deltaSuffix, { color: tint }]}>
+        {suffix}
+      </Text>
+    </View>
+  )
 }
 
 function ScoreRow({
@@ -61,6 +98,8 @@ export function HomeScoreCard({
   scores,
   title,
   subtitle,
+  delta,
+  deltaSuffix,
   bandLabel,
   footerLabel,
   focusLabel,
@@ -91,6 +130,9 @@ export function HomeScoreCard({
             {subtitle}
           </Text>
         </View>
+        {delta !== null && delta !== 0 ? (
+          <DeltaPill delta={delta} suffix={deltaSuffix} />
+        ) : null}
         <View style={styles.chevron} accessibilityElementsHidden>
           <IconSvg
             name={IconName.FORWARD}
@@ -179,6 +221,26 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontSize: typography.homeSubtitleSize,
     lineHeight: typography.homeSubtitleLineHeight,
+  },
+  delta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.micro,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.capsule,
+  },
+  deltaValue: {
+    ...fonts.semiBold,
+    fontSize: typography.homeScoreCardRowLabelSize,
+    lineHeight: typography.homeScoreCardRowLabelLineHeight,
+    fontVariant: ['tabular-nums'],
+  },
+  deltaSuffix: {
+    ...fonts.medium,
+    opacity: opacity.homeScoreDeltaSuffix,
+    fontSize: typography.homeScoreBandSize,
+    lineHeight: typography.homeScoreBandLineHeight,
   },
   chevron: {
     width: layout.homeScoreChevronSize,

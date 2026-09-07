@@ -4,9 +4,20 @@
  *
  * Elle raconte une boucle en quatre temps : les distractions sont verrouillées,
  * la règle s'éteint et les cadenas sautent, la règle se rallume en émettant une
- * onde, et les cadenas retombent UN PAR UN dans son sillage. Le Téléphone reste
- * vert et libre du début à la fin : c'est lui qui fait comprendre qu'on bloque
- * les distractions, pas le téléphone.
+ * onde, et les cadenas RETOMBENT DANS LE SILLAGE DE L'ONDE — de l'app la plus
+ * proche de la carte à la plus lointaine. Le Téléphone reste vert et libre du
+ * début à la fin, alors même que l'onde lui passe dessus : c'est lui qui fait
+ * comprendre qu'on bloque les distractions, pas le téléphone.
+ *
+ * ⚠️ Cette scène est une DÉMONSTRATION, pas une décoration : si l'utilisateur
+ * ne voit pas que les icônes se ferment, l'écran ne sert à rien. D'où trois
+ * partis pris volontairement appuyés, à ne pas « adoucir » :
+ *   1. le cadenas est posé sur une PASTILLE sombre cerclée d'accent — un
+ *      glyphe blanc nu se noyait dans les icônes colorées ;
+ *   2. le verrouillage est un IMPACT (le cadenas s'abat, l'icône encaisse,
+ *      un anneau claque autour de la tuile), pas un fondu ;
+ *   3. l'onde traverse tout l'écran de l'appareil au lieu de ceinturer la
+ *      carte — c'est le lien de cause à effet entre la règle et les apps.
  *
  * Tout est piloté par UNE seule `progress` en boucle linéaire : chaque élément
  * lit la même horloge via `interpolate`. Ça garantit que rien ne dérive les uns
@@ -36,6 +47,7 @@ import Svg, {
   Defs,
   LinearGradient,
   Path,
+  RadialGradient,
   Rect,
   Stop,
 } from 'react-native-svg'
@@ -46,7 +58,12 @@ import { OB } from './tokens'
 
 // ─── Chronologie (fractions de la boucle) ────────────────────────────────
 
-const LOOP_MS = 4200
+/**
+ * Plus lent que le premier jet (4200 ms) : chaque temps fort a besoin d'être
+ * TENU pour être lu. La boucle s'ouvre et se ferme sur un palier « tout est
+ * bloqué » — sans lui, l'œil arrive toujours au milieu d'une transition.
+ */
+const LOOP_MS = 5400
 
 /**
  * Repères de la boucle, en fraction de `LOOP_MS`. Les garder groupés ici est
@@ -54,28 +71,40 @@ const LOOP_MS = 4200
  * cadenas retombent PENDANT que l'onde se propage, pas après.
  */
 const T = {
-  /** Les cadenas s'effacent (la règle s'éteint). */
-  unlockStart: 0.19,
-  unlockEnd: 0.25,
-  /** La carte se décolore et descend légèrement. */
-  cardOffStart: 0.2,
-  cardOffEnd: 0.3,
+  /** Les cadenas sautent, échelonnés (la règle s'éteint). */
+  unlockStart: 0.14,
+  unlockStagger: 0.03,
+  unlockDuration: 0.07,
+  /** La carte se décolore, se tasse et descend légèrement. */
+  cardOffStart: 0.15,
+  cardOffEnd: 0.25,
+  /** Creux de la respiration : la carte est au plus bas / au plus petit. */
+  cardRest: 0.36,
   /** La carte se rallume — le bouclier d'abord, le titre juste après. */
-  shieldOnStart: 0.45,
-  shieldOnEnd: 0.53,
+  shieldOnStart: 0.46,
+  shieldOnEnd: 0.54,
   titleOnStart: 0.5,
-  titleOnEnd: 0.58,
-  /** L'onde part de la carte et s'estompe en s'agrandissant. */
-  pulseStart: 0.5,
-  pulseEnd: 0.74,
-  /** Les trois cadenas retombent, échelonnés. */
-  lockStart: 0.55,
-  lockStagger: 0.055,
-  lockDuration: 0.07,
+  titleOnEnd: 0.6,
+  /** L'onde part de la carte et balaie l'appareil en s'estompant. */
+  pulseStart: 0.48,
+  pulseEnd: 0.9,
+  /** Décalage de la seconde onde — une seule ligne se lit comme un artefact. */
+  pulseStagger: 0.075,
+  /** Les trois cadenas s'abattent, échelonnés, dans le sillage de l'onde. */
+  lockStart: 0.56,
+  lockStagger: 0.075,
+  lockDuration: 0.1,
 } as const
 
-/** Débordement maximal de l'onde au-delà du bord de la carte. */
-const PULSE_MAX_GROWTH = 0.22
+/**
+ * Débordement maximal de l'onde, en multiples de la carte. À 2.4 (donc une
+ * échelle finale de 3.4) le front dépasse la rangée d'icônes AVANT de
+ * s'éteindre : l'onde arrive vraiment jusqu'aux apps qu'elle referme.
+ */
+const PULSE_MAX_GROWTH = 2.4
+
+/** Échelle d'une icône verrouillée : elle se retire un peu, comme désactivée. */
+const LOCKED_TILE_SCALE = 0.93
 
 /** Les six tuiles de la fausse grille d'accueil, dans l'ordre de lecture. */
 type TileId =
@@ -86,8 +115,14 @@ type TileId =
   | 'calendar'
   | 'calculator'
 
-/** Seules les distractions se verrouillent — et dans cet ordre. */
-const LOCK_ORDER: TileId[] = ['instagram', 'tiktok', 'facebook']
+/**
+ * Seules les distractions se verrouillent — et dans CET ordre : de la tuile la
+ * plus proche de la carte à la plus lointaine. C'est ce qui fait lire la
+ * cascade comme la conséquence de l'onde, et non comme une animation qui
+ * tourne à côté (un balayage gauche→droite, à l'inverse du front, cassait le
+ * lien de cause à effet).
+ */
+const LOCK_ORDER: TileId[] = ['facebook', 'tiktok', 'instagram']
 
 // ─── Icônes du décor ─────────────────────────────────────────────────────
 
@@ -132,28 +167,50 @@ function TileGlyph({ id, size }: { id: TileId; size: number }) {
   return <CalculatorIcon size={size} />
 }
 
-/** Le cadenas posé sur une app bloquée — plaque sombre + arceau clair. */
+/**
+ * Le cadenas posé sur une app bloquée : pastille sombre, cerclée d'accent,
+ * arceau blanc plein.
+ *
+ * ⚠️ Ne pas revenir au glyphe blanc posé nu sur l'icône. Les logos d'apps sont
+ * clairs, saturés et bavards : un cadenas blanc sans fond s'y dissolvait, et
+ * l'écran perdait sa seule information. La pastille garantit le contraste quel
+ * que soit ce qu'il y a dessous, et son cercle accent la relie visuellement à
+ * l'onde émise par la carte — même couleur, même cause.
+ */
 function LockBadge({ size }: { size: number }) {
-  const s = size * 0.52
+  const plate = size * 0.7
+  const glyph = plate * 0.6
   return (
     <View style={styles.lockCenter}>
-      <Svg width={s} height={s} viewBox="0 0 24 24">
-        <Path
-          d="M8 10V7.5a4 4 0 0 1 8 0V10"
-          fill="none"
-          stroke="#FFFFFF"
-          strokeWidth={2.3}
-          strokeLinecap="round"
-        />
-        <Rect
-          x={4.8}
-          y={10}
-          width={14.4}
-          height={10.5}
-          rx={3.2}
-          fill="#FFFFFF"
-        />
-      </Svg>
+      <View
+        style={[
+          styles.lockPlate,
+          {
+            width: plate,
+            height: plate,
+            borderRadius: plate / 2,
+            borderWidth: Math.max(1.3, plate * 0.055),
+          },
+        ]}
+      >
+        <Svg width={glyph} height={glyph} viewBox="0 0 24 24">
+          <Path
+            d="M8 10.5V7.6a4 4 0 0 1 8 0v2.9"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth={2.7}
+            strokeLinecap="round"
+          />
+          <Rect
+            x={4.6}
+            y={10}
+            width={14.8}
+            height={11}
+            rx={3.3}
+            fill="#FFFFFF"
+          />
+        </Svg>
+      </View>
     </View>
   )
 }
@@ -175,41 +232,119 @@ function AppTile({
   frozen: boolean
 }) {
   const locked = lockIndex >= 0
-  const start = T.lockStart + lockIndex * T.lockStagger
+  const off = T.unlockStart + lockIndex * T.unlockStagger
+  const offEnd = off + T.unlockDuration
+  const on = T.lockStart + lockIndex * T.lockStagger
+  const onMid = on + T.lockDuration * 0.5
+  const onEnd = on + T.lockDuration
 
-  // Le cadenas est présent au repos (début ET fin de boucle), absent pendant
-  // la fenêtre déverrouillée. D'où les quatre points plutôt que deux.
+  // Une seule grille de temps pour les trois calques de la tuile : le cadenas
+  // est présent au repos (début ET fin de boucle), absent pendant la fenêtre
+  // déverrouillée. D'où les sept points plutôt que deux.
+  const stops = [0, off, offEnd, on, onMid, onEnd, 1]
+
+  // Le cadenas s'abat : il arrive surdimensionné, dépasse sa taille au contact,
+  // puis se pose. Un simple fondu passait inaperçu à cette échelle.
   const lockStyle = useAnimatedStyle(() => {
     if (!locked) return { opacity: 0 }
     if (frozen) return { opacity: 1 }
-    const o = interpolate(
-      progress.value,
-      [0, T.unlockStart, T.unlockEnd, start, start + T.lockDuration, 1],
-      [1, 1, 0, 0, 1, 1],
-      Extrapolation.CLAMP,
-    )
-    return { opacity: o }
+    return {
+      opacity: interpolate(
+        progress.value,
+        stops,
+        [1, 1, 0, 0, 1, 1, 1],
+        Extrapolation.CLAMP,
+      ),
+      transform: [
+        {
+          scale: interpolate(
+            progress.value,
+            stops,
+            [1, 1, 1.75, 1.95, 0.88, 1, 1],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    }
   })
 
   // L'icône s'assombrit exactement au même rythme que son cadenas.
   const shadeStyle = useAnimatedStyle(() => {
     if (!locked) return { opacity: 0 }
     if (frozen) return { opacity: 1 }
-    const o = interpolate(
+    return {
+      opacity: interpolate(
+        progress.value,
+        stops,
+        [1, 1, 0, 0, 0.85, 1, 1],
+        Extrapolation.CLAMP,
+      ),
+    }
+  })
+
+  // L'icône encaisse le choc (elle se tasse au contact) et reste légèrement
+  // en retrait tant qu'elle est bloquée — la même app, mais éteinte.
+  const glyphStyle = useAnimatedStyle(() => {
+    if (!locked) return {}
+    if (frozen) return { transform: [{ scale: LOCKED_TILE_SCALE }] }
+    return {
+      transform: [
+        {
+          scale: interpolate(
+            progress.value,
+            stops,
+            [
+              LOCKED_TILE_SCALE,
+              LOCKED_TILE_SCALE,
+              1,
+              1,
+              0.84,
+              LOCKED_TILE_SCALE,
+              LOCKED_TILE_SCALE,
+            ],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    }
+  })
+
+  // L'anneau d'impact : il se resserre sur la tuile au moment exact du
+  // verrouillage. C'est lui qui donne le « clac » que l'opacité seule ne
+  // pouvait pas rendre.
+  const impactStyle = useAnimatedStyle(() => {
+    if (!locked || frozen) return { opacity: 0 }
+    const span = T.lockDuration * 1.3
+    const live = progress.value >= on && progress.value <= on + span
+    if (!live) return { opacity: 0 }
+    const k = interpolate(
       progress.value,
-      [0, T.unlockStart, T.unlockEnd, start, start + T.lockDuration, 1],
-      [1, 1, 0, 0, 1, 1],
+      [on, on + span],
+      [0, 1],
       Extrapolation.CLAMP,
     )
-    return { opacity: o }
+    return {
+      opacity: interpolate(k, [0, 0.22, 1], [0, 1, 0]),
+      transform: [{ scale: 1.95 - k * 0.95 }],
+    }
   })
 
   return (
     <View style={{ width: size, height: size }}>
-      <TileGlyph id={id} size={size} />
+      <Animated.View style={glyphStyle}>
+        <TileGlyph id={id} size={size} />
+      </Animated.View>
       <Animated.View
         pointerEvents="none"
         style={[styles.tileShade, { borderRadius: size * 0.24 }, shadeStyle]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.tileImpact,
+          { borderRadius: size * 0.3, borderWidth: Math.max(1.4, size * 0.05) },
+          impactStyle,
+        ]}
       />
       <Animated.View
         pointerEvents="none"
@@ -349,18 +484,62 @@ function RuleCard({
     }
   })
 
-  // Respiration : la carte descend et grossit un peu pendant qu'elle est
-  // éteinte, puis reprend sa place en se rallumant.
+  // Respiration : la carte se tasse et descend pendant qu'elle est éteinte,
+  // puis DÉTONNE en se rallumant (elle dépasse sa taille avant de se poser).
+  // Ce sursaut est le geste qui déclenche l'onde — sans lui, l'onde semble
+  // arriver de nulle part.
   const cardStyle = useAnimatedStyle(() => {
     if (frozen) return {}
-    const k = interpolate(
-      progress.value,
-      [0, T.cardOffStart, 0.42, T.titleOnEnd, 1],
-      [0, 0, 1, 0, 0],
-      Extrapolation.CLAMP,
-    )
+    const stops = [
+      0,
+      T.cardOffStart,
+      T.cardRest,
+      T.shieldOnStart,
+      T.pulseStart + 0.03,
+      T.titleOnEnd,
+      1,
+    ]
     return {
-      transform: [{ translateY: k * height * 0.05 }, { scale: 1 + k * 0.05 }],
+      transform: [
+        {
+          translateY: interpolate(
+            progress.value,
+            stops,
+            [0, 0, height * 0.06, height * 0.06, 0, 0, 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          scale: interpolate(
+            progress.value,
+            stops,
+            [1, 1, 0.93, 0.93, 1.1, 1, 1],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    }
+  })
+
+  // Liseré accent qui claque à l'allumage, par-dessus le liseré neutre de la
+  // carte : la règle s'ARME, puis retombe à son état sobre.
+  const ringStyle = useAnimatedStyle(() => {
+    if (frozen) return { opacity: 0.5 }
+    return {
+      opacity: interpolate(
+        progress.value,
+        [
+          0,
+          T.cardOffStart,
+          T.cardOffEnd,
+          T.shieldOnStart,
+          T.pulseStart + 0.04,
+          T.pulseEnd,
+          1,
+        ],
+        [0.5, 0.5, 0, 0, 1, 0.5, 0.5],
+        Extrapolation.CLAMP,
+      ),
     }
   })
 
@@ -372,6 +551,14 @@ function RuleCard({
         cardStyle,
       ]}
     >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.cardRing,
+          { borderRadius: width * 0.23, borderWidth: width * 0.014 },
+          ringStyle,
+        ]}
+      />
       <View style={styles.cardFlow}>
         <TintPair style={glyphTint}>
           <CalendarGlyph size={glyph} color={OB.ink28} />
@@ -429,29 +616,103 @@ function RuleCard({
   )
 }
 
-/** L'onde : le contour de la carte qui se détache et s'étend vers le haut-gauche. */
-function PulseRing({
+/**
+ * Le halo de la carte : il s'éteint avec la règle et enfle à l'allumage. Rendu
+ * en dégradé radial SVG plutôt qu'en ombre portée — une ombre native ne
+ * s'anime pas de la même façon sur les deux plateformes, et n'accepte pas la
+ * teinte accent sur Android.
+ */
+function CardGlow({
   width,
   progress,
+  frozen,
 }: {
   width: number
   progress: SharedValue<number>
+  frozen: boolean
+}) {
+  const size = width * 2.8
+  const style = useAnimatedStyle(() => {
+    if (frozen) return { opacity: 0.45 }
+    return {
+      opacity: interpolate(
+        progress.value,
+        [
+          0,
+          T.cardOffStart,
+          T.cardOffEnd,
+          T.shieldOnStart,
+          T.pulseStart + 0.05,
+          T.pulseEnd,
+          1,
+        ],
+        [0.45, 0.45, 0.05, 0.05, 1, 0.45, 0.45],
+        Extrapolation.CLAMP,
+      ),
+    }
+  })
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.glow,
+        {
+          width: size,
+          height: size,
+          left: width / 2 - size / 2,
+          top: (width * 1.05) / 2 - size / 2,
+        },
+        style,
+      ]}
+    >
+      <Svg width={size} height={size}>
+        <Defs>
+          <RadialGradient id="tutoCardGlow" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={OB.accent} stopOpacity={0.5} />
+            <Stop offset="0.45" stopColor={OB.accent} stopOpacity={0.16} />
+            <Stop offset="1" stopColor={OB.accent} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width={size} height={size} fill="url(#tutoCardGlow)" />
+      </Svg>
+    </Animated.View>
+  )
+}
+
+/**
+ * L'onde : le contour de la carte qui se détache et BALAIE l'appareil.
+ *
+ * Elle reste concentrique à la carte (une dérive vers le haut-gauche avait
+ * fait décrocher l'anneau au lieu de le faire ceinturer la carte), mais elle
+ * grandit désormais jusqu'à dépasser la rangée d'icônes : c'est ce passage du
+ * front sur les tuiles qui rend le verrouillage lisible comme une conséquence.
+ * Le départ est franc puis décélère — l'œil attrape le premier tiers.
+ */
+function PulseRing({
+  width,
+  progress,
+  delay,
+}: {
+  width: number
+  progress: SharedValue<number>
+  /** Décalage de cette onde dans la boucle (une seule onde se lit mal). */
+  delay: number
 }) {
   const height = width * 1.05
   const style = useAnimatedStyle(() => {
+    const start = T.pulseStart + delay
+    const end = T.pulseEnd + delay
+    if (progress.value < start || progress.value > end) return { opacity: 0 }
+    const span = end - start
     const k = interpolate(
       progress.value,
-      [T.pulseStart, T.pulseEnd],
-      [0, 1],
+      [start, start + span * 0.22, start + span * 0.55, end],
+      [0, 0.42, 0.78, 1],
       Extrapolation.CLAMP,
     )
-    const live = progress.value >= T.pulseStart && progress.value <= T.pulseEnd
     return {
-      opacity: live ? interpolate(k, [0, 0.18, 1], [0, 0.55, 0]) : 0,
-      // Aucune translation : l'onde reste CONCENTRIQUE à la carte. Elle avait
-      // une dérive vers le haut-gauche, et l'anneau se détachait au lieu de
-      // ceinturer la carte. Elle part de son bord exact (échelle 1) et ne
-      // s'en éloigne que du peu qu'il faut pour qu'on la voie respirer.
+      opacity: interpolate(k, [0, 0.12, 0.5, 1], [0, 0.95, 0.45, 0]),
       transform: [{ scale: 1 + k * PULSE_MAX_GROWTH }],
     }
   })
@@ -584,7 +845,17 @@ export function LockAnimation({ width }: { width: number }) {
         pointerEvents="none"
         style={[styles.cardLayer, { right: -width * 0.02, top: height * 0.42 }]}
       >
-        {reduceMotion ? null : <PulseRing width={cardW} progress={progress} />}
+        <CardGlow width={cardW} progress={progress} frozen={reduceMotion} />
+        {reduceMotion ? null : (
+          <>
+            <PulseRing width={cardW} progress={progress} delay={0} />
+            <PulseRing
+              width={cardW}
+              progress={progress}
+              delay={T.pulseStagger}
+            />
+          </>
+        )}
         <RuleCard width={cardW} progress={progress} frozen={reduceMotion} />
       </View>
     </View>
@@ -606,12 +877,29 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   tileShade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6,6,9,0.52)',
+    // Un voile plus dense (et légèrement violacé) que le gris d'origine :
+    // l'icône doit rester reconnaissable, mais visiblement ÉTEINTE.
+    backgroundColor: 'rgba(7,6,16,0.74)',
+  },
+  tileImpact: {
+    ...StyleSheet.absoluteFillObject,
+    borderColor: OB.accent,
   },
   lockCenter: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  lockPlate: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0B0A12',
+    borderColor: OB.accent,
+    shadowColor: '#000000',
+    shadowOpacity: 0.55,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
   systemTile: {
     backgroundColor: '#FFFFFF',
@@ -633,12 +921,17 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.14)',
   },
+  cardRing: {
+    ...StyleSheet.absoluteFillObject,
+    borderColor: OB.accent,
+  },
   cardFlow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardBars: {},
   bar: { borderRadius: 999 },
+  glow: { position: 'absolute' },
   pulse: {
     position: 'absolute',
-    borderWidth: 1.6,
+    borderWidth: 2,
     borderColor: OB.accent,
   },
 })

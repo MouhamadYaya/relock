@@ -11,9 +11,13 @@
       "**",
       "!.claude/**",
       "!.github/skills/**",
+      "!supabase/functions/**",
+      "!src/legal/**",
+      "!docs/home-visual-audit/**",
       "!assets/icons.ts",
       "!**/*.xcassets/**",
-      "!docs/home-visual-audit/**"
+      "!src/i18n/i18n-types.d.ts",
+      "!nativewind-env.d.ts"
     ]
   },
   "formatter": {

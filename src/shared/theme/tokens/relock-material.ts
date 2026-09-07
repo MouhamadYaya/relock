@@ -156,9 +156,56 @@ export const relockMaterial = {
     homeLavenderEdge: 'rgba(200, 184, 255, 0.3)',
     homeLavenderGlow: 'rgba(167, 139, 250, 0.12)',
     homeScoreTile: 'rgba(255, 255, 255, 0.04)',
+    // Pastille d'ecart du score : vert quand il progresse, ambre quand il
+    // recule. Jamais rouge — un score en baisse est une information, pas une
+    // faute, et le rouge est reserve aux alertes de l'app.
+    homeScoreUp: '#82E6C5',
+    homeScoreUpSoft: 'rgba(130, 230, 197, 0.14)',
+    homeScoreDown: '#E0A24E',
+    homeScoreDownSoft: 'rgba(224, 162, 78, 0.14)',
+    homeScoreTrendBar: 'rgba(200, 184, 255, 0.55)',
+    homeScoreTrendToday: '#C8B8FF',
     homeProgressTrack: 'rgba(255, 255, 255, 0.10)',
     homeSkeleton: 'rgba(255, 255, 255, 0.08)',
     homeModalBackdrop: 'rgba(4, 5, 9, 0.78)',
+    // Reglages. La scene reprend le canevas nocturne de l'Accueil, mais sa
+    // lumiere est FROIDE : une aurore violette au lieu du limbe dore. Deux
+    // ecrans, une meme nuit, deux heures differentes — c'est ce qui les
+    // distingue sans les separer.
+    //
+    // ⚠️ Les couleurs posees dans un degrade SVG (`stopColor`) sont TOUJOURS
+    // opaques ici, l'alpha etant porte a part par `stopOpacity`. Une chaine
+    // `rgba()` en `stopColor` n'est pas rendue de facon fiable par
+    // react-native-svg : l'alpha saute, le degrade devient un aplat plein, et
+    // une carte de verre se transforme en rectangle blanc qui avale son
+    // propre texte. Les valeurs `rgba` ci-dessous ne servent donc QUE de
+    // `backgroundColor` ou de `borderColor` sur des `View`, ou l'alpha est sur.
+    settingsAurora: '#A78BFA',
+    settingsAuroraDeep: '#7357DC',
+    settingsAuroraCool: '#68C7F2',
+    // Corps des cartes : OPAQUE, et non un voile clair a 5 % comme sur
+    // l'Accueil. Les Reglages sont une longue liste lue de haut en bas, pas
+    // une scene : chaque carte doit se detacher du fond au premier coup
+    // d'oeil, y compris en plein soleil et sur un ecran a faible contraste.
+    settingsCardTop: '#202234',
+    settingsCardBottom: '#181A2A',
+    settingsCardRaisedTop: '#282A40',
+    settingsCardRaisedBottom: '#1E2032',
+    settingsCardBorder: 'rgba(255, 255, 255, 0.12)',
+    settingsCardBorderStrong: 'rgba(206, 196, 255, 0.22)',
+    settingsDivider: 'rgba(255, 255, 255, 0.09)',
+    settingsPressed: 'rgba(255, 255, 255, 0.06)',
+    // Pastilles d'icone : une teinte par famille de reglages. La couleur
+    // porte le classement, ce qui evite d'ecrire « section » partout.
+    settingsTintViolet: 'rgba(167, 139, 250, 0.16)',
+    settingsTintLavender: 'rgba(200, 184, 255, 0.14)',
+    settingsTintMint: 'rgba(130, 230, 197, 0.14)',
+    settingsTintBlue: 'rgba(104, 199, 242, 0.14)',
+    settingsTintAmber: 'rgba(242, 177, 85, 0.14)',
+    settingsTintDanger: 'rgba(251, 113, 133, 0.14)',
+    // Etat d'une permission : accordee, a demander, refusee.
+    settingsStatusOn: '#82E6C5',
+    settingsStatusOff: '#F2B155',
   },
   radius: {
     hero: 28,
@@ -212,12 +259,32 @@ export const relockMaterial = {
     quickChevronSize: 20,
     bottomNavigationClearance: 49,
     scrollBottom: 28,
-    blockingTypeCardMinHeight: 148,
+    // Les trois types de règle sont la porte d'entrée du produit : ce sont
+    // des rangées pleine largeur, pas des vignettes en grille. 78 pt, c'est
+    // la hauteur où le pictogramme (48 pt de scène) et deux lignes de texte
+    // tiennent sans que la rangée se mette à ressembler à une carte creuse.
+    blockingTypeRowMinHeight: 78,
     blockingTypeGlyphSize: 32,
     blockingTypeChevronSize: 20,
     blockingTemplateCardMinHeight: 224,
     blockingLockedTileSize: 68,
     blockingScrollBottom: 112,
+    // Écrans de blocage (respiration, calcul, recopie).
+    // La vignette est une SILHOUETTE DE TÉLÉPHONE : c'est elle qui dit « voici
+    // l'écran que tu verras », là où une carte large se lisait comme une
+    // simple ligne de réglage. Le rapport reprend celui d'un téléphone
+    // moderne, assez étroit pour que les trois tiennent de front sur un
+    // iPhone SE.
+    pauseRitualTileRatio: 0.52,
+    pauseRitualTileRadius: 22,
+    // Le symbole central : lisible d'un coup d'œil à un mètre, sans détail à
+    // déchiffrer. C'est le seul contenu de la vignette.
+    pauseRitualGlyphSize: 52,
+    // Touche du pavé numérique : 62 pt de haut, au-dessus des 44 pt
+    // recommandés — on y tape vite, parfois de travers, et une faute de
+    // frappe relance un calcul.
+    pauseKeyHeight: 62,
+    pauseKeyGap: 10,
     blockingCardColumnWidth: '48.4%',
     homeHeaderActionSize: 44,
     // Entete d'Accueil : le logotype a gauche, la serie et les reglages a
@@ -277,6 +344,10 @@ export const relockMaterial = {
     homeScoreDialogRingStroke: 7,
     homeScoreDialogRingGap: 5,
     homeScoreDialogGlyphSize: 22,
+    homeScoreDeltaGlyphSize: 12,
+    homeScoreTrendHeight: 64,
+    homeScoreTrendBarWidth: 8,
+    homeScoreTrendBarMin: 6,
     // Keep the native Home report's transparent slot in sync with this height.
     homeBlockedHeight: 280,
     homeMyAppsTileSize: 62,
@@ -299,6 +370,43 @@ export const relockMaterial = {
     homeTabBarBottom: 8,
     homeSheetMaxWidth: 540,
     homeSheetPadding: 20,
+    // Reglages -----------------------------------------------------------
+    settingsHorizontal: 16,
+    settingsHeaderHeight: 44,
+    settingsHeaderFade: 40,
+    settingsTitleTop: 8,
+    settingsTitleBottom: 20,
+    settingsGroupGap: 22,
+    settingsGroupLabelBottom: 9,
+    settingsGroupLabelHorizontal: 6,
+    settingsCardRadius: 22,
+    settingsRowMinHeight: 54,
+    settingsRowHorizontal: 14,
+    settingsRowVertical: 11,
+    settingsRowGap: 13,
+    settingsIconTile: 32,
+    settingsIconTileRadius: 10,
+    settingsIconSize: 17,
+    settingsChevronSize: 18,
+    settingsDividerInset: 59,
+    settingsAvatarSize: 64,
+    settingsAvatarBadge: 24,
+    settingsAvatarBadgeIcon: 13,
+    settingsProfilePadding: 16,
+    settingsProfileGap: 14,
+    settingsAuroraCenterY: 0.06,
+    settingsAuroraRadiusX: 0.95,
+    settingsAuroraRadiusY: 0.34,
+    settingsScrollBottom: 40,
+    settingsSignatureTop: 26,
+    settingsSignatureGap: 7,
+    settingsLogoHeight: 20,
+    // Fiche « Informations personnelles ».
+    settingsFormAvatar: 104,
+    settingsFormAvatarBadge: 34,
+    settingsFormAvatarBadgeIcon: 17,
+    settingsFieldVertical: 13,
+    settingsFieldGap: 3,
   },
   typography: {
     welcomeTitleSize: 16,
@@ -349,8 +457,8 @@ export const relockMaterial = {
     homeScoreLineHeight: 34,
     homeScoreValueSize: 44,
     homeScoreValueLineHeight: 48,
-    homeScoreCaptionSize: 11,
-    homeScoreCaptionLineHeight: 14,
+    homeScoreCaptionSize: 13,
+    homeScoreCaptionLineHeight: 18,
     homeScoreTitleSize: 17,
     homeScoreTitleLineHeight: 22,
     // La carte d'Accueil porte un titre et des lignes plus grands que la
@@ -359,8 +467,8 @@ export const relockMaterial = {
     homeScoreCardTitleLineHeight: 25,
     homeScoreCardRowLabelSize: 15,
     homeScoreCardRowLabelLineHeight: 20,
-    homeScoreRowLabelSize: 13,
-    homeScoreRowLabelLineHeight: 17,
+    homeScoreRowLabelSize: 16,
+    homeScoreRowLabelLineHeight: 21,
     homeScoreRowValueSize: 22,
     homeScoreRowValueLineHeight: 26,
     homeScoreDetailValueSize: 21,
@@ -371,15 +479,43 @@ export const relockMaterial = {
     homeScoreFooterLineHeight: 16,
     homeScoreDialogTitleSize: 22,
     homeScoreDialogTitleLineHeight: 28,
-    homeScoreSectionSize: 14,
-    homeScoreSectionLineHeight: 18,
-    homeScoreBodySize: 13,
-    homeScoreBodyLineHeight: 19,
+    homeScoreSectionSize: 16,
+    homeScoreSectionLineHeight: 21,
+    homeScoreBodySize: 15,
+    homeScoreBodyLineHeight: 21,
     homeMetricSize: 21,
     homeMetricLineHeight: 25,
     homeSheetTitleSize: 24,
     homeSheetTitleLineHeight: 30,
     homeTabLabelSize: 12,
+    // Reglages -----------------------------------------------------------
+    settingsTitleSize: 32,
+    settingsTitleLineHeight: 38,
+    settingsTitleLetterSpacing: -0.9,
+    settingsCompactTitleSize: 17,
+    settingsCompactTitleLineHeight: 22,
+    settingsGroupLabelSize: 12,
+    settingsGroupLabelLineHeight: 15,
+    settingsGroupLabelLetterSpacing: 0.7,
+    settingsRowLabelSize: 15.5,
+    settingsRowLabelLineHeight: 20,
+    settingsRowHintSize: 12.5,
+    settingsRowHintLineHeight: 16,
+    settingsRowValueSize: 14.5,
+    settingsRowValueLineHeight: 19,
+    settingsNameSize: 20,
+    settingsNameLineHeight: 25,
+    settingsNameLetterSpacing: -0.4,
+    settingsMetaSize: 13,
+    settingsMetaLineHeight: 17,
+    settingsBadgeSize: 11,
+    settingsBadgeLineHeight: 14,
+    settingsFooterSize: 12,
+    settingsFooterLineHeight: 16,
+    settingsFieldLabelSize: 12,
+    settingsFieldLabelLineHeight: 15,
+    settingsFieldValueSize: 16,
+    settingsFieldValueLineHeight: 21,
   },
   opacity: {
     // Grain : invisible consciemment, decisif contre le banding des degrades.
@@ -408,6 +544,13 @@ export const relockMaterial = {
     // Ramene au meme niveau que `decorative` — c'est un decor, pas un signal.
     // Miroir de `.opacity(...)` sur `scoreDial` dans les deux fichiers Swift.
     homeScoreDial: 0.22,
+    // « vs hier » accompagne l'ecart, il ne le concurrence pas : meme teinte,
+    // en retrait. C'est ce qui empeche « ↑ 4 vs hier » de se lire comme deux
+    // chiffres distincts.
+    homeScoreDeltaSuffix: 0.72,
+    // Un jour de la tendance sans score mesure reste visible, mais en creux :
+    // l'absence de mesure doit se voir sans se faire passer pour un zero.
+    homeScoreTrendEmpty: 0.28,
     decorative: 0.22,
     decorativeStrong: 0.34,
     disabled: 0.52,

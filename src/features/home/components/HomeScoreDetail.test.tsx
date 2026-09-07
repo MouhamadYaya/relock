@@ -2,6 +2,35 @@ import React from 'react'
 import { Text } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { HomeScoreDetail } from '@/features/home/components/HomeScoreDetail'
+import type { HomeScoreSnapshot } from '@/features/home/types'
+
+const snapshot = (
+  over: Partial<HomeScoreSnapshot> = {},
+): HomeScoreSnapshot => ({
+  status: 'ready',
+  global: 38,
+  focus: 68,
+  rest: 7,
+  delta: -4,
+  weakestAxis: 'rest',
+  historyDays: 7,
+  confidence: 1,
+  components: [
+    {
+      signal: 'pressure',
+      axis: 'focus',
+      score: 40,
+      weight: 0.55,
+      observed: 21,
+      reference: 12,
+      unit: 'count',
+    },
+  ],
+  trend: [{ date: '2026-01-15', score: 38 }],
+  elapsedMinutes: 720,
+  protectedMinutes: 0,
+  ...over,
+})
 
 jest.mock('@/i18n/useT', () => ({
   useT: () => (key: string) => key,
@@ -25,7 +54,7 @@ describe('Home score detail window', () => {
       renderer = create(
         <HomeScoreDetail
           visible={false}
-          scores={{ global: 38, focus: 68, rest: 7, available: true }}
+          snapshot={snapshot()}
           onClose={jest.fn()}
         />,
       )
@@ -36,23 +65,70 @@ describe('Home score detail window', () => {
   it('explains what the score is, how it works and how to improve it', () => {
     act(() => {
       renderer = create(
-        <HomeScoreDetail
-          visible
-          scores={{ global: 38, focus: 68, rest: 7, available: true }}
-          onClose={jest.fn()}
-        />,
+        <HomeScoreDetail visible snapshot={snapshot()} onClose={jest.fn()} />,
       )
     })
     expect(texts()).toEqual(
       expect.arrayContaining([
-        'home.score_what_title',
-        'home.score_how_title',
+        'home.score_trend_title',
+        'home.score_today',
         'home.score_improve_title',
-        'home.score_formula',
+        'home.score_lowers_title',
         'home.score_band_fair',
         38,
       ]),
     )
+  })
+
+  it('keeps every section title on a single line', () => {
+    act(() => {
+      renderer = create(
+        <HomeScoreDetail visible snapshot={snapshot()} onClose={jest.fn()} />,
+      )
+    })
+    // Les titres portent des phrases (« Astuces pour faire monter le score »)
+    // qui frôlent la largeur utile : ils doivent se resserrer, jamais passer
+    // à la ligne ni se faire tronquer par une ellipse.
+    const titles = renderer!.root
+      .findAllByType(Text)
+      .filter(node =>
+        [
+          'home.score_trend_title',
+          'home.score_today',
+          'home.score_improve_title',
+          'home.score_lowers_title',
+        ].includes(node.props.children),
+      )
+    expect(titles).toHaveLength(4)
+    for (const title of titles) {
+      expect(title.props.numberOfLines).toBe(1)
+      expect(title.props.adjustsFontSizeToFit).toBe(true)
+    }
+  })
+
+  it('names the two rings and says one true thing about today', () => {
+    act(() => {
+      renderer = create(
+        <HomeScoreDetail visible snapshot={snapshot()} onClose={jest.fn()} />,
+      )
+    })
+    const rendered = texts()
+    // La rosace porte deux arcs : ils doivent être nommés, sinon ils décorent.
+    expect(rendered).toEqual(
+      expect.arrayContaining(['home.focus_score', 'home.rest_score', 68, 7]),
+    )
+    // Une seule phrase sur la journée, choisie d'après la mesure qui pèse le
+    // plus — le calcul qui la produit ne s'affiche plus.
+    expect(rendered).toContain('home.score_weak_pressure')
+    for (const gone of [
+      'home.score_formula',
+      'home.score_how_title',
+      'home.score_signal_pressure_label',
+      'home.score_signal_pressure_measure',
+      'home.score_confidence_ready',
+    ]) {
+      expect(rendered).not.toContain(gone)
+    }
   })
 
   it('closes from its own control', () => {
@@ -61,7 +137,15 @@ describe('Home score detail window', () => {
       renderer = create(
         <HomeScoreDetail
           visible
-          scores={{ global: null, focus: null, rest: null, available: false }}
+          snapshot={snapshot({
+            status: 'pending',
+            global: null,
+            focus: null,
+            rest: null,
+            delta: null,
+            components: [],
+            trend: [],
+          })}
           onClose={onClose}
         />,
       )

@@ -8,7 +8,7 @@
  * afficherait « suspendue » pendant qu'iOS bloque déjà.
  */
 
-import { armRule } from '@/features/blocking/services/arm'
+import { armRuleIfNeeded } from '@/features/blocking/services/arm'
 import { BlockRulesService } from '@/features/blocking/services/block-rules/block-rules.service'
 import { isFinished, suspendedUntil } from '@/features/blocking/session'
 import type { BlockRuleView } from '@/features/blocking/types'
@@ -28,9 +28,11 @@ export async function resumeExpiredSuspensions(
 
   for (const rule of due) {
     if (ScreenTime.isAvailable) {
-      // Ré-armer d'abord (idempotent, le masque tient encore), puis le lever :
-      // dans l'autre ordre, le bouclier reviendrait avant sa surveillance.
-      await armRule(rule).catch(() => {})
+      // Réparer d'abord la surveillance si elle manque (le masque tient
+      // encore), puis lever le masque : dans l'autre ordre, le bouclier
+      // reviendrait avant sa surveillance. `armRuleIfNeeded` et non `armRule` :
+      // ré-armer une limite lui rendrait le quota déjà consommé du jour.
+      await armRuleIfNeeded(rule).catch(() => {})
       await ScreenTime.resumeRule(rule.id).catch(() => {})
     }
     await BlockRulesService.resume(rule.id)

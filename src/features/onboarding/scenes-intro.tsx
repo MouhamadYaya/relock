@@ -486,6 +486,12 @@ export function SceneName({
   onChange: (v: string) => void
   onNext: () => void
 }) {
+  // Le prénom n'est pas optionnel : tout le reste de l'onboarding s'adresse
+  // à l'utilisateur par son prénom (question d'intention, plan personnalisé,
+  // écran de victoire). Sans lui, ces écrans perdent leur raison d'être — donc
+  // pas de lien « Passer », et le CTA reste éteint tant que le champ est vide.
+  const canContinue = value.trim().length > 0
+
   return (
     <View className="flex-1 px-5">
       <View className="flex-1 pt-3">
@@ -504,13 +510,14 @@ export function SceneName({
             style={styles.nameInput}
             autoCorrect={false}
             returnKeyType="done"
-            onSubmitEditing={onNext}
+            onSubmitEditing={() => {
+              if (canContinue) onNext()
+            }}
           />
         </Reveal>
       </View>
       <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Continuer" onPress={onNext} disabled={false} />
-        <GhostLink label="Passer" onPress={onNext} dim />
+        <Pill label="Continuer" onPress={onNext} disabled={!canContinue} />
       </Reveal>
     </View>
   )
@@ -1082,7 +1089,13 @@ const styles = StyleSheet.create({
     ...fonts.semiBold,
     fontSize: 26,
     color: OB.ink,
-    paddingVertical: 12,
+    // Hauteur explicite plutôt que du padding : à 26 pt, la hauteur
+    // intrinsèque d'un TextInput iOS rogne l'accent et le jambage du
+    // placeholder (« Ton prénom »). Avec une hauteur fixe, la ligne est
+    // centrée dans le champ au lieu d'être découpée.
+    height: 58,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
     borderBottomWidth: 1.5,
     borderBottomColor: OB.accentDim,
   },

@@ -16,6 +16,11 @@ import type {
   RequestConfig,
 } from '@/shared/services/api/http/http.types'
 import { isOffline } from '@/shared/services/api/network/netinfo'
+import {
+  getRefreshToken,
+  setAuthToken,
+  setRefreshToken,
+} from '@/shared/services/storage/credentials'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 type RefreshResponse = { token: string; refreshToken?: string }
@@ -55,7 +60,7 @@ async function doRefresh(
   api: ReturnType<typeof create>,
 ): Promise<string | null> {
   if (isOffline()) return null
-  const refreshToken = kvStorage.getString(constants.REFRESH_TOKEN)
+  const refreshToken = getRefreshToken()
   if (!refreshToken) return null
   const res = await api.post<RefreshResponse>(
     '/auth/refresh',
@@ -65,9 +70,8 @@ async function doRefresh(
   if (!res.ok || !res.data) return null
   const body = res.data as RefreshResponse
   if (!body.token) return null
-  kvStorage.setString(constants.AUTH_TOKEN, body.token)
-  if (body.refreshToken)
-    kvStorage.setString(constants.REFRESH_TOKEN, body.refreshToken)
+  setAuthToken(body.token)
+  if (body.refreshToken) setRefreshToken(body.refreshToken)
   return body.token
 }
 

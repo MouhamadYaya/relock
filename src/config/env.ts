@@ -27,9 +27,23 @@ export const env = {
   GOOGLE_WEB_CLIENT_ID: (Config.GOOGLE_WEB_CLIENT_ID ?? '').trim(),
   /** Google Cloud OAuth "iOS client ID" — passed to `GoogleSignin.configure`; its reversed form is also the native URL scheme (Info.plist). */
   GOOGLE_IOS_CLIENT_ID: (Config.GOOGLE_IOS_CLIENT_ID ?? '').trim(),
-  /** Compte Supabase de dev pour `DEV_SKIP_AUTH` (jamais utilisé en release). */
-  DEV_LOGIN_EMAIL: (Config.DEV_LOGIN_EMAIL ?? '').trim(),
-  DEV_LOGIN_PASSWORD: (Config.DEV_LOGIN_PASSWORD ?? '').trim(),
+  /**
+   * Compte Supabase de dev pour `DEV_SKIP_AUTH`.
+   *
+   * ⚠️ LU UNIQUEMENT EN DEBUG, et ce garde-fou n'est pas cosmétique.
+   * `react-native-config` ne connaît pas `__DEV__` : il recopie TOUTES les
+   * lignes de `.env` dans le binaire (en-tête généré côté iOS, `BuildConfig`
+   * côté Android). Un mot de passe écrit là est donc extractible d'un `.ipa`
+   * de production, quel que soit le code JS qui l'entoure.
+   *
+   * Le `__DEV__` ci-dessous garantit au moins qu'aucun chemin de code de
+   * release ne peut s'en servir — mais il ne l'efface PAS du binaire. La seule
+   * chose qui l'en retire, c'est de ne pas construire la release avec un
+   * `.env` qui contient ces lignes : c'est ce que vérifie
+   * `npm run check:release-env` (voir `scripts/check-release-env.cjs`).
+   */
+  DEV_LOGIN_EMAIL: __DEV__ ? (Config.DEV_LOGIN_EMAIL ?? '').trim() : '',
+  DEV_LOGIN_PASSWORD: __DEV__ ? (Config.DEV_LOGIN_PASSWORD ?? '').trim() : '',
   WS_URL: (Config.WS_URL ?? '').trim(),
   /**
    * Étiquette d'environnement, envoyée à Sentry.
@@ -76,4 +90,16 @@ export const env = {
   REVENUECAT_DISCOUNT_OFFERING_ID: (
     Config.REVENUECAT_DISCOUNT_OFFERING_ID ?? 'discount'
   ).trim(),
+  /**
+   * ImageKit — CDN média + transformations d'images par URL.
+   * Ces deux valeurs ne sont PAS des secrets : l'endpoint apparaît dans chaque
+   * URL d'image servie, et la public key n'autorise qu'un upload DÉJÀ signé.
+   * La Private Key, elle, ne doit jamais entrer dans le binaire : elle vit
+   * uniquement dans la Edge Function Supabase `imagekit-auth`.
+   * Vide = intégration inerte (aucun appel réseau, fallback sur l'UI locale).
+   */
+  IMAGEKIT_URL_ENDPOINT: (Config.IMAGEKIT_URL_ENDPOINT ?? '')
+    .trim()
+    .replace(/\/+$/, ''),
+  IMAGEKIT_PUBLIC_KEY: (Config.IMAGEKIT_PUBLIC_KEY ?? '').trim(),
 } as const

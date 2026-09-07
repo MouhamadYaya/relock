@@ -1,4 +1,5 @@
 import React from 'react'
+import { StyleSheet, View } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import {
   BLOCKED_APP_SLOT_HEIGHT,
@@ -83,6 +84,70 @@ describe('BlockedAppTileView lock state', () => {
         relockMaterial.typography.blockingCompactTitleLineHeight +
         spacing.micro,
     )
+  })
+
+  it('rings a strict app in red and drops the promise of unlocking it', () => {
+    // Sans ce traitement, une app verrouillée par un mode strict était
+    // strictement identique à celle qu'un tap suffit à ouvrir — et sous les
+    // deux, le même mot « Débloquer ». Le refus n'arrivait qu'après coup.
+    act(() => {
+      renderer = create(
+        <BlockedAppTileView
+          tokenKey="strict-app"
+          unlocked={false}
+          strict
+          label="Bloqué"
+          onPress={jest.fn()}
+        />,
+      )
+    })
+
+    const caption = renderer?.root.findByProps({ numberOfLines: 1 })
+    expect(caption?.props.children).toBe('Bloqué')
+    expect(StyleSheet.flatten(caption?.props.style).color).toBe(
+      relockMaterial.colors.blockingDanger,
+    )
+
+    // L'anneau : un trait plein rouge, doublé de son propre halo.
+    const tile = StyleSheet.flatten(
+      renderer?.root.findByProps({ testID: 'blocked-app-lock-overlay' }).props
+        .style,
+    )
+    expect(tile).toBeTruthy()
+    const strictRing = renderer?.root
+      .findAllByType(View)
+      .map(node => StyleSheet.flatten(node.props.style))
+      .find(
+        style => style?.borderColor === relockMaterial.colors.blockingDanger,
+      )
+    expect(strictRing?.shadowColor).toBe(relockMaterial.colors.blockingDanger)
+    expect(strictRing?.borderWidth).toBeGreaterThan(1)
+  })
+
+  it('keeps the ordinary unlock treatment when no strict rule covers the app', () => {
+    act(() => {
+      renderer = create(
+        <BlockedAppTileView
+          tokenKey="soft-app"
+          unlocked={false}
+          label="Débloquer"
+          onPress={jest.fn()}
+        />,
+      )
+    })
+
+    const caption = renderer?.root.findByProps({ numberOfLines: 1 })
+    expect(StyleSheet.flatten(caption?.props.style).color).toBe(
+      relockMaterial.colors.blockingAccentLight,
+    )
+    expect(
+      renderer?.root
+        .findAllByType(View)
+        .map(node => StyleSheet.flatten(node.props.style))
+        .some(
+          style => style?.borderColor === relockMaterial.colors.blockingDanger,
+        ),
+    ).toBe(false)
   })
 
   it('shows the closed lock treatment for a blocked app', () => {

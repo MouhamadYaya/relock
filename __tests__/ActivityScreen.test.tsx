@@ -144,6 +144,51 @@ describe('ActivityScreen', () => {
     await act(async () => renderer!.unmount())
   })
 
+  it('affiche de nouveau le chargement pendant une reconnexion native', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer
+    await act(async () => {
+      renderer = ReactTestRenderer.create(<ActivityScreen />)
+    })
+    const placeholder = () =>
+      renderer!.root.findAllByProps({ testID: 'activity-report-placeholder' })
+
+    await act(async () => {
+      nativeReport(renderer!).props.onCommand({
+        nativeEvent: { command: 'ready' },
+      })
+    })
+    expect(placeholder()).toHaveLength(0)
+
+    await act(async () => {
+      nativeReport(renderer!).props.onCommand({
+        nativeEvent: { command: 'reloading' },
+      })
+    })
+    expect(placeholder()).not.toHaveLength(0)
+    expect(nativeReport(renderer!).props.reloadToken).toBe(0)
+
+    await act(async () => {
+      nativeReport(renderer!).props.onCommand({
+        nativeEvent: { command: 'ready' },
+      })
+    })
+    expect(placeholder()).toHaveLength(0)
+    await act(async () => renderer!.unmount())
+  })
+
+  it('ne reconstruit pas le rapport à la fermeture d’une interruption système', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer
+    await act(async () => {
+      renderer = ReactTestRenderer.create(<ActivityScreen />)
+    })
+    await act(async () => {
+      DeviceEventEmitter.emit('appStateDidChange', { app_state: 'inactive' })
+      DeviceEventEmitter.emit('appStateDidChange', { app_state: 'active' })
+    })
+    expect(nativeReport(renderer!).props.reloadToken).toBe(0)
+    await act(async () => renderer!.unmount())
+  })
+
   it('attend la vérification d’autorisation avant de reconnecter le rapport', async () => {
     let resolveRefresh: (status: string) => void = () => undefined
     mockRefresh.mockReturnValueOnce(

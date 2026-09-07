@@ -23,7 +23,6 @@ import type {
 import { useT } from '@/i18n/useT'
 import { syncEntitlement, unlockAfterPurchase } from '@/session/bootstrap'
 import { useSocialSignIn } from '@/session/useSocialSignIn'
-import { useTrackingPrompt } from '@/shared/native/useTrackingPrompt'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast, showToast } from '@/shared/utils/toast'
@@ -42,9 +41,9 @@ import { showErrorToast, showToast } from '@/shared/utils/toast'
  *   — abonnement EXPIRÉ chez un utilisateur qui avait fini tout le parcours.
  *
  * Ce qui se joue avant lui (le plan personnalisé, le rituel du sceau) ne se
- * rejoue jamais : ces écrans argumentent une première vue, ils deviennent de
- * la friction à la deuxième. À partir de la 2ᵉ présentation, on ouvre
- * directement sur les tarifs.
+ * rejoue jamais. Le pitch, lui, appartient au paywall : c'est son PREMIER
+ * écran, à chaque présentation. Le chemin ne varie pas —
+ * pitch → tarifs → offre unique — et refuser l'offre y ramène.
  */
 
 /**
@@ -68,21 +67,16 @@ export default function PaywallScreen() {
   const [catalog, setCatalog] = useState<PaywallCatalog | null>(null)
   const mounted = useRef(true)
   const run = useRef(0)
-  // Le rang de CETTE présentation, compté une fois au montage. 1 = la
-  // première fois qu'on voit le paywall : le pitch complet. Ensuite, le prix.
-  const [view] = useState(countPaywallView)
+  // Le rang de CETTE présentation, compté une fois au montage. C'est une
+  // mesure (combien de vues pour convertir), pas un aiguillage : l'écran
+  // d'entrée ne varie plus, c'est toujours le pitch.
+  useState(countPaywallView)
 
   const {
     signInWithApple,
     signInWithGoogle,
     pending: authPending,
   } = useSocialSignIn()
-
-  // L'autorisation de suivi (ATT) était demandée sur `welcome`, un écran qu'un
-  // utilisateur qui revient ne reverra plus jamais. Sans cette seconde chance,
-  // une première demande non aboutie coûtait l'attribution à vie. iOS
-  // n'affiche rien si le statut est déjà déterminé.
-  useTrackingPrompt(phase === 'paywall', { delayMs: 1200 })
 
   const load = useCallback(async () => {
     const id = ++run.current
@@ -168,7 +162,32 @@ export default function PaywallScreen() {
     void signIn(signInWithGoogle)
   }, [signIn, signInWithGoogle])
 
-  const openSignIn = useCallback(() => setPhase('auth'), [])
+  // D'où l'on vient quand on ouvre « J'ai déjà un compte » — c'est là qu'on
+  // revient si l'utilisateur referme la feuille Apple/Google. Sans ce retour,
+  // la porte dure enfermait pour de bon : plus de tarif, plus de restauration,
+  // plus rien, jusqu'à tuer l'app.
+  const backPhase = useRef<Exclude<Phase, 'auth'>>('paywall')
+  const openSignIn = useCallback(() => {
+    setPhase(current => {
+      if (current !== 'auth') backPhase.current = current
+      return 'auth'
+    })
+  }, [])
+  const closeSignIn = useCallback(() => setPhase(backPhase.current), [])
+  /**
+   * DEV uniquement : ouvre la porte dure sans passer par le store, pour
+   * travailler l'app sans racheter un abonnement à chaque réinstallation.
+   * `unlockAfterPurchase` écrit l'abonnement en cache et remplace la route —
+   * exactement le chemin d'un achat réel, sans facturation. Un prochain
+   * `syncEntitlement` refermera la porte si RevenueCat dit non : c'est un
+   * raccourci de travail, pas une fraude durable.
+   *
+   * `__DEV__` est une constante remplacée par `false` en release : ni ce
+   * callback ni le bouton qui l'appelle n'existent dans le binaire livré.
+   */
+  const devSkip = useCallback(() => {
+    if (__DEV__) unlockAfterPurchase()
+  }, [])
   const retry = useCallback(() => {
     void load()
   }, [load])
@@ -180,6 +199,7 @@ export default function PaywallScreen() {
           onApple={handleApple}
           onGoogle={handleGoogle}
           busy={authPending}
+          onBack={closeSignIn}
         />
       </View>
     )
@@ -214,7 +234,6 @@ export default function PaywallScreen() {
       <PaywallFlow
         plans={catalog?.plans ?? (__DEV__ ? PREVIEW_PLANS : [])}
         offer={catalog?.offer ?? (__DEV__ ? PREVIEW_OFFER : null)}
-        initialScreen={view > 1 ? 'plans' : 'benefits'}
         purchase={catalog ? paywallPurchaseWithRevenueCat : previewPurchase}
         // Sans catalogue, seul le développement affiche quelque chose : c'est
         // l'adaptateur d'aperçu qui répond, et il ne facture rien. En
@@ -227,6 +246,7 @@ export default function PaywallScreen() {
         // l'offre puis au pitch. Seuls un achat ou une restauration ouvrent.
         escapable={false}
         onSkip={retry}
+        onDevSkip={__DEV__ ? devSkip : undefined}
       />
     </View>
   )

@@ -1,162 +1,62 @@
-// src/features/settings/screens/LanguagePickerModal.tsx
-
-import { IconName } from '@assets/icons'
 import { router } from 'expo-router'
-import React, { memo, useCallback } from 'react'
-import { Pressable, StyleSheet, View } from 'react-native'
+import React, { useCallback } from 'react'
+import { View } from 'react-native'
+import { SettingsRow } from '@/features/settings/components/SettingsRow'
+import { SettingsSection } from '@/features/settings/components/SettingsSection'
+import { SettingsSheet } from '@/features/settings/components/SettingsSheet'
 import i18n from '@/i18n/i18n'
 import { useT } from '@/i18n/useT'
-import HalfSheet from '@/shared/components/ui/HalfSheet'
-import { IconSvg } from '@/shared/components/ui/IconSvg'
-import { Text } from '@/shared/components/ui/Text'
-import { useTheme } from '@/shared/theme/useTheme'
 
-const LANGUAGE_OPTIONS: {
-  code: string
-  labelKey:
-    | 'settings.language.english'
-    | 'settings.language.russian'
-    | 'settings.language.german'
-  abbr: string
-}[] = [
-  { code: 'en', labelKey: 'settings.language.english', abbr: 'EN' },
-  { code: 'ru', labelKey: 'settings.language.russian', abbr: 'RU' },
-  { code: 'de', labelKey: 'settings.language.german', abbr: 'DE' },
-]
-
-// ─── Item ─────────────────────────────────────────────────────────────────────
-
-interface LanguageOptionRowProps {
-  opt: (typeof LANGUAGE_OPTIONS)[number]
-  selected: boolean
-  onSelect: (code: string) => void
-}
-
-const LanguageOptionRow = memo(function LanguageOptionRow({
-  opt,
-  selected,
-  onSelect,
-}: LanguageOptionRowProps) {
-  const t = useT()
-  const { theme } = useTheme()
-  const c = theme.colors
-  const sp = theme.spacing
-  const r = theme.radius
-  const ty = theme.typography
-
-  const handlePress = useCallback(
-    () => onSelect(opt.code),
-    [opt.code, onSelect],
-  )
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityRole="button"
-      accessibilityLabel={t(opt.labelKey)}
-      accessibilityState={{ selected }}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          backgroundColor: selected
-            ? c.primaryAmbient
-            : pressed
-              ? c.surfaceSecondary
-              : c.surface,
-          borderColor: selected ? c.primary : c.border,
-          borderRadius: r.xl,
-          paddingVertical: sp.md,
-          paddingHorizontal: sp.md,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.badge,
-          {
-            backgroundColor: c.surfaceSecondary,
-            borderRadius: r.sm,
-            paddingHorizontal: sp.xs,
-            paddingVertical: sp.xxs,
-          },
-        ]}
-      >
-        <Text style={[ty.labelSmall, { color: c.textSecondary }]}>
-          {opt.abbr}
-        </Text>
-      </View>
-      <Text
-        style={[
-          ty.bodyMedium,
-          {
-            flex: 1,
-            color: selected ? c.primary : c.textPrimary,
-            marginLeft: sp.sm,
-          },
-        ]}
-      >
-        {t(opt.labelKey)}
-      </Text>
-      {selected ? (
-        <IconSvg
-          name={IconName.CHECK}
-          size={18}
-          color={c.primary}
-          style={{ width: 18, height: 18 }}
-        />
-      ) : null}
-    </Pressable>
-  )
-})
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
+/**
+ * Les langues, écrites DANS leur propre langue.
+ *
+ * Un nom de langue est un endonyme : « Deutsch » se dit Deutsch en français
+ * comme en russe. Le traduire (« Allemand », « Немецкий ») oblige quelqu'un
+ * qui a mis l'app dans une langue qu'il ne lit pas à deviner laquelle est la
+ * sienne — exactement la situation où l'on ouvre ce sélecteur. Les codes à
+ * deux lettres affichés seuls avaient le même défaut, en pire.
+ *
+ * Le français ouvre la liste : c'est la langue par défaut de l'app
+ * (`i18n.ts`), et il en était absent — quiconque passait à l'anglais ne
+ * pouvait plus revenir sans réinstaller.
+ */
+const LANGUAGES = [
+  { code: 'fr', name: 'Français' },
+  { code: 'en', name: 'English' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'ru', name: 'Русский' },
+] as const
 
 export default function LanguagePickerModal() {
   const t = useT()
-  const { theme } = useTheme()
-  const c = theme.colors
-  const sp = theme.spacing
-  const ty = theme.typography
+  const current = i18n.language
 
-  const currentLang = i18n.language
+  const close = useCallback(() => router.back(), [])
 
-  const handleClose = useCallback(() => router.back(), [])
-
-  const handleSelect = useCallback((code: string) => {
+  const select = useCallback((code: string) => {
     i18n.changeLanguage(code)
     router.back()
   }, [])
 
   return (
-    <HalfSheet onClose={handleClose}>
-      <Text
-        style={[ty.titleMedium, { color: c.textPrimary, marginBottom: sp.md }]}
-      >
-        {t('settings.language.label')}
-      </Text>
-
-      <View style={{ gap: sp.xs }}>
-        {LANGUAGE_OPTIONS.map(opt => (
-          <LanguageOptionRow
-            key={opt.code}
-            opt={opt}
-            selected={currentLang === opt.code}
-            onSelect={handleSelect}
-          />
-        ))}
+    <SettingsSheet
+      title={t('settings.language.label')}
+      closeLabel={t('common.close')}
+      onClose={close}
+    >
+      <View>
+        <SettingsSection>
+          {LANGUAGES.map(language => (
+            <SettingsRow
+              key={language.code}
+              label={language.name}
+              value={language.code.toUpperCase()}
+              selected={current === language.code}
+              onPress={() => select(language.code)}
+            />
+          ))}
+        </SettingsSection>
       </View>
-    </HalfSheet>
+    </SettingsSheet>
   )
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  badge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-})

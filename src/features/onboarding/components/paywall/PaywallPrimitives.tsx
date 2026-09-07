@@ -1,6 +1,7 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
 import {
+  Linking,
   type StyleProp,
   StyleSheet,
   Text,
@@ -8,13 +9,60 @@ import {
   type ViewStyle,
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
+import { links } from '@/config/app-config'
 import { Moon } from '@/features/onboarding/bits'
 import { PW } from '@/features/onboarding/components/paywall/paywall-theme'
 import { haptic } from '@/features/onboarding/tokens'
+import { i18n } from '@/i18n'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { fonts } from '@/shared/theme/tokens/fonts'
+
+/**
+ * Les deux liens juridiques du bas de paywall.
+ *
+ * Ce n'est PAS un ornement. Les Guidelines de l'App Store (3.1.2) exigent
+ * qu'un écran vendant un abonnement à renouvellement automatique porte un
+ * lien FONCTIONNEL vers les conditions d'utilisation et vers la politique de
+ * confidentialité ; leur absence est un motif de rejet à la revue. D'où leur
+ * présence sur les DEUX écrans qui encaissent — la grille de formules et
+ * l'offre de sortie — et non sur la seule première.
+ *
+ * L'URL suit la langue de l'app. Le site n'existe qu'en anglais et en
+ * français : tout ce qui n'est pas `fr` lit la version anglaise.
+ */
+export function PaywallLegalLinks({
+  tone = 'muted',
+}: {
+  tone?: 'muted' | 'paper'
+}) {
+  const t = useT()
+  const fr = i18n.language.startsWith('fr')
+  const open = (url: string) => {
+    Linking.openURL(url).catch(() => {})
+  }
+
+  return (
+    <View style={styles.legal} testID="paywall-legal">
+      <PaywallTextButton
+        testID="paywall-terms"
+        tone={tone}
+        label={t('paywall.terms')}
+        onPress={() => open(fr ? links.termsFr : links.terms)}
+      />
+      <Text style={[styles.legalDot, tone === 'paper' && styles.legalDotPaper]}>
+        ·
+      </Text>
+      <PaywallTextButton
+        testID="paywall-privacy"
+        tone={tone}
+        label={t('paywall.privacy')}
+        onPress={() => open(fr ? links.privacyFr : links.privacy)}
+      />
+    </View>
+  )
+}
 
 /** Étoile pleine, tracée sur un cercle de rayon 11 dans un cadre de 24. */
 const STAR =
@@ -525,4 +573,16 @@ const styles = StyleSheet.create({
   },
   compactPriceUnit: { fontSize: PW.text.compactUnit },
   priceUnitPaper: { color: PW.color.paperMuted },
+  legal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: PW.space.xs,
+  },
+  legalDot: {
+    ...fonts.regular,
+    fontSize: PW.text.caption,
+    color: PW.color.inkFaint,
+  },
+  legalDotPaper: { color: PW.color.paperMuted },
 })

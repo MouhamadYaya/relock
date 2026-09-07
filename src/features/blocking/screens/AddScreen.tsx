@@ -569,7 +569,13 @@ export default function AddScreen() {
       return `${apps} · bloquée${count > 1 ? 's' : ''} ${fmtDuration(durationMin)}${strict ? ' · mode strict' : ''}`
     if (type === 'schedule')
       return `${apps} · ${daysLabel(days).toLowerCase()} ${hhmm(start)} → ${hhmm(end)}`
-    return `${apps} · limite ${fmtDuration(limitMin)} / jour`
+    const line = `${apps} · limite ${fmtDuration(limitMin)} / jour`
+    // À la création seulement : dire d'où part le compteur. Une limite activée
+    // en fin de journée ignore le temps déjà passé — sans cette phrase, elle
+    // aurait l'air à moitié consommée d'avance, et la bascule de demain (le
+    // décompte repart de minuit) passerait pour une panne.
+    if (editing) return line
+    return `${line}\nTon temps déjà passé aujourd'hui n'est pas compté : la limite démarre maintenant, puis dès minuit les jours suivants.`
   }
 
   const runNative = async (ruleId: string) => {

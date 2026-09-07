@@ -31,6 +31,7 @@
 		8143C8043D2840B199B5CCE6 /* Inter-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E765D1D4EDC64EF9ACA97354 /* Inter-Bold.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		9571C7B669E6791135EE028E /* RelockActivityReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D892459F17F45426D89F11D2 /* RelockActivityReport.swift */; };
+		99A1C6C0CD3CA54BA55BD1A7 /* libPods-RelockWidgets.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2C5F92EED9297CC07FE3DE /* libPods-RelockWidgets.a */; };
 		9AB0C186AECDC6BD4B51936B /* RelockMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8337079EF960E496124E3891 /* RelockMonitor.swift */; };
 		9CF378E789F75EF9714D00A8 /* BlocusScreenTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */; };
 		A1B2C3D40003TRACKING0003 /* RelockTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40001TRACKING0001 /* RelockTracking.swift */; };
@@ -51,15 +52,29 @@
 		C0DE10000000000000000005 /* RelockShieldCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000012 /* RelockShieldCopy.swift */; };
 		C0DE10000000000000000006 /* ShieldAttemptStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */; };
 		C0DE10000000000000000021 /* RelockBridgeDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */; };
+		C0DE20000000000000000011 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000012 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000013 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000014 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000015 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000016 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000017 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000018 /* ExtensionLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000003 /* ExtensionLogTests.swift */; };
+		C0DE20000000000000000021 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
+		C0DE20000000000000000022 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
+		C0DE20000000000000000023 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
+		C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
 		C775DF612177016E41684402 /* Shield.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */; };
+		D19FCA8161CD5BB4AC8F5DC2 /* libPods-RelockMonitor.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FF5036343696B46A0A87B254 /* libPods-RelockMonitor.a */; };
 		D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000001 /* NativeDurationPickerView.swift */; };
 		D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000002 /* NativeDurationPickerViewManager.swift */; };
 		D1A700000000000000000006 /* NativeDurationPickerViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1A700000000000000000003 /* NativeDurationPickerViewManager.mm */; };
 		DBC6CAA416AA6C02FE6CEFCF /* BlockedAppIconsViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 978FB0EDC0916E5AD42437BA /* BlockedAppIconsViewManager.mm */; };
 		E4C21F3F1320BC6FCCD31280 /* RelockShield.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A673B73E1554D473DCDADCDD /* RelockShield.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F3083772854003506E957D81 /* UsageReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2A34559E02757B55C72EA0 /* UsageReportView.swift */; };
+		F8AE5AFE87ED5D91D3622D5F /* libPods-RelockShieldAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9857A9285A4E14D65442AAD5 /* libPods-RelockShieldAction.a */; };
 		FE082EB568BC4C66870D3470 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -139,6 +154,7 @@
 /* Begin PBXFileReference section */
 		09245AC1DD1546958697DF20 /* Inter-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.ttf"; path = "../assets/fonts/Inter-Medium.ttf"; sourceTree = "<group>"; };
 		0E239EECBD552FA87471FE5E /* ScreenTimeReportViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ScreenTimeReportViewManager.swift; path = Relock/ScreenTimeReportViewManager.swift; sourceTree = "<group>"; };
+		0F8FD8E33490F1ACF6A47846 /* Pods-RelockWidgets.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RelockWidgets.release.xcconfig"; path = "Target Support Files/Pods-RelockWidgets/Pods-RelockWidgets.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Relock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Relock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Relock/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Relock/Info.plist; sourceTree = "<group>"; };
@@ -152,27 +168,34 @@
 		54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Shield.xcassets; path = RelockShield/Shield.xcassets; sourceTree = "<group>"; };
 		55276F1AD513ADCDA696FED4 /* ScreenTimeReportView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ScreenTimeReportView.swift; path = Relock/ScreenTimeReportView.swift; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-Relock.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Relock.release.xcconfig"; path = "Target Support Files/Pods-Relock/Pods-Relock.release.xcconfig"; sourceTree = "<group>"; };
+		59B7F73E1E46FEBEC1186AD2 /* Pods-RelockMonitor.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RelockMonitor.release.xcconfig"; path = "Target Support Files/Pods-RelockMonitor/Pods-RelockMonitor.release.xcconfig"; sourceTree = "<group>"; };
+		5A13D6E4C3DC3C80D2B45718 /* Pods-RelockWidgets.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RelockWidgets.debug.xcconfig"; path = "Target Support Files/Pods-RelockWidgets/Pods-RelockWidgets.debug.xcconfig"; sourceTree = "<group>"; };
 		5B1181BB56454D09A355328F /* JetBrainsMono-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "JetBrainsMono-Regular.ttf"; path = "../assets/fonts/JetBrainsMono-Regular.ttf"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-Relock.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Relock.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		698BA7E0B1EA1200C1188FC8 /* RelockMonitor.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockMonitor.entitlements; path = RelockMonitor/RelockMonitor.entitlements; sourceTree = "<group>"; };
 		69F9094F8A1A3A5DC82EA284 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockActivityReport/Info.plist; sourceTree = "<group>"; };
+		6DB20204C79AF3F32A565461 /* Pods-RelockMonitor.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RelockMonitor.debug.xcconfig"; path = "Target Support Files/Pods-RelockMonitor/Pods-RelockMonitor.debug.xcconfig"; sourceTree = "<group>"; };
 		7093EAA5BB8948B6B8A674D7 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = Relock/Colors.xcassets; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Relock/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Relock/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8337079EF960E496124E3891 /* RelockMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockMonitor.swift; path = RelockMonitor/RelockMonitor.swift; sourceTree = "<group>"; };
 		833FBC2BC7CE65761F10F55D /* BlockedAppIconsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlockedAppIconsView.swift; path = Relock/BlockedAppIconsView.swift; sourceTree = "<group>"; };
+		8D2C5F92EED9297CC07FE3DE /* libPods-RelockWidgets.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RelockWidgets.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8DB7C56395D472046F777B09 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockShield/Info.plist; sourceTree = "<group>"; };
 		8E83780A43318F4A8DB717DC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockShieldAction/Info.plist; sourceTree = "<group>"; };
+		8ED030C3F4D7FFFF74DA6ECD /* Pods-RelockShieldAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RelockShieldAction.debug.xcconfig"; path = "Target Support Files/Pods-RelockShieldAction/Pods-RelockShieldAction.debug.xcconfig"; sourceTree = "<group>"; };
 		9275E3DCA17F1B2CFB757E9D /* RelockShield.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShield.entitlements; path = RelockShield/RelockShield.entitlements; sourceTree = "<group>"; };
 		9386503D5AF5B4C64253FEC5 /* BlockedAppIconsViewManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlockedAppIconsViewManager.swift; path = Relock/BlockedAppIconsViewManager.swift; sourceTree = "<group>"; };
 		978FB0EDC0916E5AD42437BA /* BlockedAppIconsViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = BlockedAppIconsViewManager.mm; path = Relock/BlockedAppIconsViewManager.mm; sourceTree = "<group>"; };
 		98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = ScreenTimeReportViewManager.mm; path = Relock/ScreenTimeReportViewManager.mm; sourceTree = "<group>"; };
+		9857A9285A4E14D65442AAD5 /* libPods-RelockShieldAction.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RelockShieldAction.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		99267AE42A73E61E98DE0728 /* RelockShield.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockShield.swift; path = RelockShield/RelockShield.swift; sourceTree = "<group>"; };
 		A1B2C3D40001TRACKING0001 /* RelockTracking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockTracking.swift; path = Relock/RelockTracking.swift; sourceTree = "<group>"; };
 		A1B2C3D40002TRACKING0002 /* RelockTracking.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = RelockTracking.m; path = Relock/RelockTracking.m; sourceTree = "<group>"; };
 		A5105764AAD7F928DECAA495 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Relock/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		A673B73E1554D473DCDADCDD /* RelockShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A71C00000000000000000001 /* ReportAssets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = ReportAssets.xcassets; path = RelockActivityReport/ReportAssets.xcassets; sourceTree = "<group>"; };
+		A96BF48F3C9279A39F97B97A /* Pods-RelockShieldAction.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RelockShieldAction.release.xcconfig"; path = "Target Support Files/Pods-RelockShieldAction/Pods-RelockShieldAction.release.xcconfig"; sourceTree = "<group>"; };
 		AB1CE0000000000000000001 /* RelockWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockWidgets.swift; path = RelockWidgets/RelockWidgets.swift; sourceTree = "<group>"; };
 		AB1CE0000000000000000002 /* RelockBlockAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockBlockAttributes.swift; path = RelockWidgets/RelockBlockAttributes.swift; sourceTree = "<group>"; };
 		AB1CE0000000000000000003 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = RelockWidgets/Info.plist; sourceTree = "<group>"; };
@@ -186,6 +209,10 @@
 		C0DE10000000000000000012 /* RelockShieldCopy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RelockShieldCopy.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldAttemptStoreTests.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelockBridgeDiagnosticsTests.swift; sourceTree = "<group>"; };
+		C0DE20000000000000000001 /* ExtensionLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionLog.swift; sourceTree = "<group>"; };
+		C0DE20000000000000000002 /* ExtensionSentry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionSentry.swift; sourceTree = "<group>"; };
+		C0DE20000000000000000003 /* ExtensionLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLogTests.swift; sourceTree = "<group>"; };
+		C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeReportSurvivalTests.swift; sourceTree = "<group>"; };
 		C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlocusScreenTime.swift; path = Relock/BlocusScreenTime.swift; sourceTree = "<group>"; };
 		C504AB07807F4A598A8D411D /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = Relock/BootSplash.storyboard; sourceTree = "<group>"; };
 		D1A700000000000000000001 /* NativeDurationPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeDurationPickerView.swift; path = Relock/NativeDurationPickerView.swift; sourceTree = "<group>"; };
@@ -200,6 +227,7 @@
 		EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = BlocusScreenTime.m; path = Relock/BlocusScreenTime.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		EF42131922094AC1BC44EDBB /* Inter-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-SemiBold.ttf"; path = "../assets/fonts/Inter-SemiBold.ttf"; sourceTree = "<group>"; };
+		FF5036343696B46A0A87B254 /* libPods-RelockMonitor.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RelockMonitor.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,6 +244,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				75A0FC4477D368589469663B /* Foundation.framework in Frameworks */,
+				D19FCA8161CD5BB4AC8F5DC2 /* libPods-RelockMonitor.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,6 +260,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				99A1C6C0CD3CA54BA55BD1A7 /* libPods-RelockWidgets.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,6 +276,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0F93CDEB60924E9E2E9449ED /* Foundation.framework in Frameworks */,
+				F8AE5AFE87ED5D91D3622D5F /* libPods-RelockShieldAction.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,6 +325,9 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				5DCACB8F33CDC322A6C60F78 /* libPods-Relock.a */,
 				6873D83C4F101C214A8EAF46 /* iOS */,
+				FF5036343696B46A0A87B254 /* libPods-RelockMonitor.a */,
+				9857A9285A4E14D65442AAD5 /* libPods-RelockShieldAction.a */,
+				8D2C5F92EED9297CC07FE3DE /* libPods-RelockWidgets.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -427,6 +461,12 @@
 			children = (
 				3B4392A12AC88292D35C810B /* Pods-Relock.debug.xcconfig */,
 				5709B34CF0A7D63546082F79 /* Pods-Relock.release.xcconfig */,
+				59B7F73E1E46FEBEC1186AD2 /* Pods-RelockMonitor.release.xcconfig */,
+				6DB20204C79AF3F32A565461 /* Pods-RelockMonitor.debug.xcconfig */,
+				A96BF48F3C9279A39F97B97A /* Pods-RelockShieldAction.release.xcconfig */,
+				8ED030C3F4D7FFFF74DA6ECD /* Pods-RelockShieldAction.debug.xcconfig */,
+				5A13D6E4C3DC3C80D2B45718 /* Pods-RelockWidgets.debug.xcconfig */,
+				0F8FD8E33490F1ACF6A47846 /* Pods-RelockWidgets.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -435,8 +475,10 @@
 			isa = PBXGroup;
 			children = (
 				C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */,
+				C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */,
 				C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */,
 				C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */,
+				C0DE20000000000000000003 /* ExtensionLogTests.swift */,
 			);
 			path = RelockUITests;
 			sourceTree = "<group>";
@@ -444,6 +486,8 @@
 		C0DE10000000000000000014 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				C0DE20000000000000000002 /* ExtensionSentry.swift */,
+				C0DE20000000000000000001 /* ExtensionLog.swift */,
 				C0DE10000000000000000011 /* ShieldAttemptStore.swift */,
 				C0DE10000000000000000012 /* RelockShieldCopy.swift */,
 			);
@@ -532,9 +576,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B2A5F7F90C0F12D0E947FAEA /* Build configuration list for PBXNativeTarget "RelockMonitor" */;
 			buildPhases = (
+				0F16B27F69D12D11F46F3731 /* [CP] Check Pods Manifest.lock */,
 				E5AA2BF884BC681D8CB6FA0B /* Sources */,
 				2D8D0FD59F67630F4BF4C9C0 /* Frameworks */,
 				446FA19089CE3987CBD24D63 /* Resources */,
+				DBDA2B009D9830D36ED17B1D /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -549,9 +595,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AB1CE000000000000000000E /* Build configuration list for PBXNativeTarget "RelockWidgets" */;
 			buildPhases = (
+				6F49FDEFAB16092BBEC903BA /* [CP] Check Pods Manifest.lock */,
 				AB1CE000000000000000000A /* Sources */,
 				AB1CE000000000000000000B /* Frameworks */,
 				AB1CE000000000000000000C /* Resources */,
+				A7936CE0FDA6E718EA8C6543 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -584,9 +632,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DB165CAE6EB07DD593479FD4 /* Build configuration list for PBXNativeTarget "RelockShieldAction" */;
 			buildPhases = (
+				26900F023BAB7737BA386F8E /* [CP] Check Pods Manifest.lock */,
 				C477FD3C8AA1E55396F46380 /* Sources */,
 				E5884CDD8EDDD8B8306B41BB /* Frameworks */,
 				D6828B6311F7EB9D0AF0E41B /* Resources */,
+				48D81D3F40E545A7D94F4F11 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -738,6 +788,50 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Relock/Pods-Relock-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		0F16B27F69D12D11F46F3731 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RelockMonitor-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		26900F023BAB7737BA386F8E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RelockShieldAction-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 		3801AF0B456E3DA4AE10801C /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -762,6 +856,62 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Relock/expo-configure-project.sh\"\n";
 		};
+		48D81D3F40E545A7D94F4F11 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RelockShieldAction/Pods-RelockShieldAction-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RelockShieldAction/Pods-RelockShieldAction-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RelockShieldAction/Pods-RelockShieldAction-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		6F49FDEFAB16092BBEC903BA /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RelockWidgets-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A7936CE0FDA6E718EA8C6543 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RelockWidgets/Pods-RelockWidgets-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RelockWidgets/Pods-RelockWidgets-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RelockWidgets/Pods-RelockWidgets-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		C0DE00000000000000000200 /* Copy Hermes dSYM into the archive */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -776,6 +926,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Hermes ships to us as a prebuilt xcframework that carries no debug symbols, so\n# App Store Connect answers every upload with \"The archive did not include a dSYM\n# for the hermes.framework\". The matching dSYM is published on Maven next to the\n# framework itself: fetch it once, cache it inside Pods/ (gitignored), and drop it\n# where Xcode harvests dSYMs for the archive.\n#\n# Release device builds only, and never fatal: a failed download must not break an\n# archive, it only brings the warning back.\n[ \"$CONFIGURATION\" = \"Release\" ] || exit 0\n[ \"$PLATFORM_NAME\" = \"iphoneos\" ] || exit 0\n[ -n \"$DWARF_DSYM_FOLDER_PATH\" ] || exit 0\n\nHERMES_VERSION=$(sed -n 's/^  - hermes-engine (\\([^)]*\\)).*/\\1/p' \"$SRCROOT/Podfile.lock\" | head -1)\nif [ -z \"$HERMES_VERSION\" ]; then\n  echo \"warning: could not read the hermes-engine version from Podfile.lock; skipping the Hermes dSYM\"\n  exit 0\nfi\n\nCACHED_DSYM=\"$PODS_ROOT/hermes-engine/destroot/Library/Frameworks/iphoneos/hermes.framework.dSYM\"\nif [ ! -d \"$CACHED_DSYM\" ]; then\n  URL=\"https://repo1.maven.org/maven2/com/facebook/react/react-native-artifacts/$HERMES_VERSION/react-native-artifacts-$HERMES_VERSION-hermes-framework-dSYM-release.tar.gz\"\n  TMP=$(mktemp -d)\n  if curl -fsSL \"$URL\" -o \"$TMP/hermes-dSYM.tar.gz\" && tar xzf \"$TMP/hermes-dSYM.tar.gz\" -C \"$TMP\" ./iphoneos; then\n    mkdir -p \"$(dirname \"$CACHED_DSYM\")\"\n    rm -rf \"$CACHED_DSYM\"\n    mv \"$TMP/iphoneos/hermes.framework.dSYM\" \"$CACHED_DSYM\"\n  else\n    echo \"warning: could not fetch the Hermes dSYM from $URL; the archive will be uploaded without Hermes symbols\"\n  fi\n  rm -rf \"$TMP\"\nfi\n\nif [ -d \"$CACHED_DSYM\" ]; then\n  mkdir -p \"$DWARF_DSYM_FOLDER_PATH\"\n  cp -Rp \"$CACHED_DSYM\" \"$DWARF_DSYM_FOLDER_PATH/\"\nfi\nexit 0\n";
+		};
+		C0DE00000000000000000300 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\n# --- Sentry ---------------------------------------------------------------\n# On ne téléverse QUE si les identifiants sont réellement renseignés. Sans ce\n# garde, un clone frais du dépôt (ou un collègue sans jeton) verrait ses\n# builds Release échouer sur une erreur sentry-cli sans rapport avec son code.\n# Une fois ios/sentry.properties rempli, un échec d'upload redevient FATAL :\n# c'est le seul moyen de ne jamais publier une version non symbolisée.\nexport SENTRY_PROPERTIES=\"$PROJECT_DIR/sentry.properties\"\nif [ ! -f \"$SENTRY_PROPERTIES\" ] || grep -q \"REMPLACER\" \"$SENTRY_PROPERTIES\"; then\n  echo \"warning: [Sentry] ios/sentry.properties absent ou non rempli - upload desactive. Les stacks de production ne seront PAS symbolisees.\"\n  export SENTRY_DISABLE_AUTO_UPLOAD=true\nfi\n\nif [ -f \"$PODS_ROOT/../.xcode.env\" ]; then . \"$PODS_ROOT/../.xcode.env\"; fi\nif [ -f \"$PODS_ROOT/../.xcode.env.local\" ]; then . \"$PODS_ROOT/../.xcode.env.local\"; fi\n\nSENTRY_DEBUG_FILES=\"$(\"${NODE_BINARY:-node}\" --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\")\"\n/bin/sh \"$SENTRY_DEBUG_FILES\"\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -799,6 +964,23 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		DBDA2B009D9830D36ED17B1D /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RelockMonitor/Pods-RelockMonitor-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RelockMonitor/Pods-RelockMonitor-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RelockMonitor/Pods-RelockMonitor-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -816,21 +998,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Relock/Pods-Relock-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C0DE00000000000000000300 /* Upload Debug Symbols to Sentry */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Upload Debug Symbols to Sentry";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\n# --- Sentry ---------------------------------------------------------------\n# On ne téléverse QUE si les identifiants sont réellement renseignés. Sans ce\n# garde, un clone frais du dépôt (ou un collègue sans jeton) verrait ses\n# builds Release échouer sur une erreur sentry-cli sans rapport avec son code.\n# Une fois ios/sentry.properties rempli, un échec d'upload redevient FATAL :\n# c'est le seul moyen de ne jamais publier une version non symbolisée.\nexport SENTRY_PROPERTIES=\"$PROJECT_DIR/sentry.properties\"\nif [ ! -f \"$SENTRY_PROPERTIES\" ] || grep -q \"REMPLACER\" \"$SENTRY_PROPERTIES\"; then\n  echo \"warning: [Sentry] ios/sentry.properties absent ou non rempli - upload desactive. Les stacks de production ne seront PAS symbolisees.\"\n  export SENTRY_DISABLE_AUTO_UPLOAD=true\nfi\n\nif [ -f \"$PODS_ROOT/../.xcode.env\" ]; then . \"$PODS_ROOT/../.xcode.env\"; fi\nif [ -f \"$PODS_ROOT/../.xcode.env.local\" ]; then . \"$PODS_ROOT/../.xcode.env.local\"; fi\n\nSENTRY_DEBUG_FILES=\"$(\"${NODE_BINARY:-node}\" --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\")\"\n/bin/sh \"$SENTRY_DEBUG_FILES\"\n";
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -838,6 +1005,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE20000000000000000011 /* ExtensionLog.swift in Sources */,
 				D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */,
 				D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */,
 				D1A700000000000000000006 /* NativeDurationPickerViewManager.mm in Sources */,
@@ -862,6 +1030,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE20000000000000000023 /* ExtensionSentry.swift in Sources */,
+				C0DE20000000000000000015 /* ExtensionLog.swift in Sources */,
 				AB1CE0000000000000000005 /* RelockWidgets.swift in Sources */,
 				AB1CE0000000000000000006 /* RelockBlockAttributes.swift in Sources */,
 			);
@@ -871,6 +1041,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE20000000000000000012 /* ExtensionLog.swift in Sources */,
 				9571C7B669E6791135EE028E /* RelockActivityReport.swift in Sources */,
 				F3083772854003506E957D81 /* UsageReportView.swift in Sources */,
 			);
@@ -881,9 +1052,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */,
+				C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */,
 				C0DE10000000000000000004 /* ShieldAttemptStore.swift in Sources */,
 				C0DE10000000000000000006 /* ShieldAttemptStoreTests.swift in Sources */,
 				C0DE10000000000000000021 /* RelockBridgeDiagnosticsTests.swift in Sources */,
+				C0DE20000000000000000017 /* ExtensionLog.swift in Sources */,
+				C0DE20000000000000000018 /* ExtensionLogTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -891,6 +1065,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE20000000000000000022 /* ExtensionSentry.swift in Sources */,
+				C0DE20000000000000000016 /* ExtensionLog.swift in Sources */,
 				4D1BA0600FD737B1D5856585 /* RelockShieldAction.swift in Sources */,
 				C0DE10000000000000000003 /* ShieldAttemptStore.swift in Sources */,
 			);
@@ -900,6 +1076,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE20000000000000000021 /* ExtensionSentry.swift in Sources */,
+				C0DE20000000000000000014 /* ExtensionLog.swift in Sources */,
 				9AB0C186AECDC6BD4B51936B /* RelockMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -908,6 +1086,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE20000000000000000013 /* ExtensionLog.swift in Sources */,
 				A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */,
 				C0DE10000000000000000002 /* ShieldAttemptStore.swift in Sources */,
 				C0DE10000000000000000005 /* RelockShieldCopy.swift in Sources */,
@@ -1017,6 +1196,7 @@
 		};
 		257A2E7D54FC0B7C29044AC2 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A96BF48F3C9279A39F97B97A /* Pods-RelockShieldAction.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = RelockShieldAction/RelockShieldAction.entitlements;
@@ -1072,6 +1252,7 @@
 		};
 		52E9E031ABA383D5CC35A9EB /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8ED030C3F4D7FFFF74DA6ECD /* Pods-RelockShieldAction.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = RelockShieldAction/RelockShieldAction.entitlements;
@@ -1127,6 +1308,7 @@
 		};
 		660BE590DEDF1F7C999176BB /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 59B7F73E1E46FEBEC1186AD2 /* Pods-RelockMonitor.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = RelockMonitor/RelockMonitor.entitlements;
@@ -1328,6 +1510,7 @@
 		};
 		9B77CBA2AB0EA2DBA729D782 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6DB20204C79AF3F32A565461 /* Pods-RelockMonitor.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = RelockMonitor/RelockMonitor.entitlements;
@@ -1355,6 +1538,7 @@
 		};
 		AB1CE000000000000000000F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5A13D6E4C3DC3C80D2B45718 /* Pods-RelockWidgets.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
@@ -1381,6 +1565,7 @@
 		};
 		AB1CE0000000000000000010 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0F8FD8E33490F1ACF6A47846 /* Pods-RelockWidgets.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;

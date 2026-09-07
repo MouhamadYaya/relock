@@ -10,11 +10,12 @@ import os
 ///   du tableau de bord dans un rapport unique).
 /// - `offset` : recule de 0 à 6 jours dans le temps.
 ///
-/// Le rapport est rendu dans un autre processus. Son contrôleur doit rester
-/// enfant du contrôleur RN pour recevoir le cycle de vie UIKit. La Home le
-/// conserve lors des transitions et retours d'arrière-plan; seule une
-/// configuration modifiée demande sa reconstruction. Les props RN sont
-/// regroupées pour ne pas interrompre une agrégation encore en cours.
+/// Le rapport est rendu dans un autre processus. Son contrôleur reste enfant
+/// du contrôleur RN et sa vue reste attachée à la même UIWindow, même quand un
+/// onglet natif détache temporairement l'Accueil. Recréer cette surface à
+/// chaque retour rendrait le délai de reconnexion Apple visible.
+/// Les props RN sont regroupées pour ne pas interrompre une agrégation encore
+/// en cours.
 @available(iOS 16.0, *)
 private struct ReportContainer: View {
   let offset: Int
@@ -23,7 +24,8 @@ private struct ReportContainer: View {
   /// Change à chaque reconstruction : force SwiftUI à créer un NOUVEAU
   /// DeviceActivityReport (nouvelle connexion à l'extension), au lieu de
   /// « mettre à jour » une surface distante peut-être morte.
-  let epoch: Int
+  let identity: UUID
+  let queryDate: Date
 
   /// Intervalle du jour demandé.
   private func interval(_ cal: Calendar, _ now: Date) -> DateInterval {
@@ -36,7 +38,7 @@ private struct ReportContainer: View {
   @ViewBuilder
   private var report: some View {
     let cal = Calendar.current
-    let now = Date()
+    let now = queryDate
     // iPhone uniquement : `.all` additionnerait Mac/iPad → total > 24 h/jour.
     let devices = DeviceActivityFilter.Devices(.init([.iPhone]))
 
@@ -55,7 +57,7 @@ private struct ReportContainer: View {
         DeviceActivityReport.Context(
           showsBlockedCard ? "TodayHomeWithBlocks" : "TodayHomeWithoutBlocks"),
         filter: DeviceActivityFilter(
-          segment: .daily(during: DateInterval(start: start, end: today.end)),
+          segment: .daily(during: DateInterval(start: start, end: now)),
           users: .all, devices: devices))
 
     default:
@@ -72,7 +74,26 @@ private struct ReportContainer: View {
 
   var body: some View {
     report
-      .id(epoch)
+      .id(identity)
+  }
+}
+
+/// A window attachment happens before a native tab transition has completed.
+/// Mount the remote SwiftUI report only after UIKit has finished presenting
+/// this child, including when its React Native ScrollView is already scrolled.
+private final class ReportHostingController: UIHostingController<AnyView> {
+  var onVisible: (() -> Void)?
+  private(set) var isVisible = false
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    isVisible = true
+    onVisible?()
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    isVisible = false
+    super.viewWillDisappear(animated)
   }
 }
 
@@ -251,13 +272,11 @@ private final class HomeReportControls: UIControl {
   var onCommand: ((String) -> Void)?
   var showsBlockedCard = false { didSet { setNeedsLayout() } }
   private let hero = UIButton(type: .custom)
-  private let score = UIButton(type: .custom)
   private let apps = UIButton(type: .custom)
 
   override init(frame: CGRect) {
     super.init(frame: frame)
     configure(hero, command: "home.hero", label: "Ouvrir le détail du temps d’écran")
-    configure(score, command: "home.score", label: "Comprendre le score global")
     configure(apps, command: "home.apps", label: "Voir les applications dans Activité")
   }
 
@@ -275,7 +294,10 @@ private final class HomeReportControls: UIControl {
     // Miroir des tokens `homeHeroHeight` / `homeScoreHeight` / `homeBlockedHeight`
     // (relock-material.ts) : hero 360, score 270, carte « Mes apps » 280, gouttières 24.
     hero.frame = CGRect(x: 0, y: 140, width: bounds.width, height: 220)
-    score.frame = CGRect(x: 16, y: 360, width: bounds.width - 32, height: 290)
+    // Pas de zone « score » ici : la carte du score est une vraie vue React
+    // Native posée par-dessus ce rapport, elle capte son tap elle-meme. Un
+    // bouton natif au meme endroit ne ferait que doubler l'element pour
+    // VoiceOver.
     apps.frame = CGRect(
       x: 16, y: showsBlockedCard ? 978 : 674, width: bounds.width - 32, height: 232)
   }
@@ -334,25 +356,112 @@ final class ScreenTimeReportView: UIView {
   @objc var onCommand: RCTDirectEventBlock?
   var onNavigateToSettings: (() -> Void)?
 
-  private var hosting: UIViewController?
+  private var hosting: ReportHostingController?
+  private var reportMounted = false
   private var rebuildWorkItem: DispatchWorkItem?
+  private var readyWorkItem: DispatchWorkItem?
+  private var queryRefreshWorkItems: [DispatchWorkItem] = []
+  private var rebuildRevision = 0
+  // Monotonic across wrapper lifetimes, so diagnostics can distinguish a
+  // new React Native view from a reconnect of an existing one.
+  private static var nextEpoch = 0
   private var epoch = 0
   private var reportNeedsRebuild = true
+  private var wasBackgrounded = false
+  // Native tabs remove an inactive screen from the window. Moving only the
+  // remote report into a covered sibling keeps its XPC surface alive without
+  // exposing or copying Screen Time data into the host application.
+  private let homeParkingContainer = UIView()
+  #if DEBUG
+    // Instrumentation du cycle de vie de la surface distante.
+    //
+    // Les logs `os_log` d'un iPhone appairé en Wi-Fi ne sont plus lisibles
+    // depuis le Mac (`log stream --device` a disparu de macOS 26), et le
+    // contenu d'une extension DeviceActivityReport n'entre pas dans l'arbre
+    // d'accessibilité de l'app hôte. Sans ce relais, un rapport vide et un
+    // rapport jamais reconstruit sont indiscernables depuis un test.
+    private var detachCount = 0
+    private var attachCount = 0
+    private var requestCount = 0
+    private var skipCount = 0
+    private var foregroundCount = 0
+    private var lastRebuildAt: CFTimeInterval = 0
+    private let diagnostics = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+  #endif
   private let activityControls = ActivityControlsOverlay()
   // A local UIKit surface receives touches instead of the out-of-process
   // DeviceActivity surface. Its ancestor RN ScrollView owns the vertical pan.
   private let homeTouchSurface = HomeReportControls()
 
   deinit {
+    NotificationCenter.default.removeObserver(self)
+    rebuildWorkItem?.cancel()
+    readyWorkItem?.cancel()
+    queryRefreshWorkItems.forEach { $0.cancel() }
     let controller = hosting
+    let parkingContainer = homeParkingContainer
     DispatchQueue.main.async {
       controller?.willMove(toParent: nil)
       controller?.view.removeFromSuperview()
       controller?.removeFromParent()
+      parkingContainer.removeFromSuperview()
     }
   }
 
+  /// Retour d'arrière-plan : mesuré sur iPhone, ce chemin ne produit AUCUN
+  /// détachement de fenêtre (`didMoveToWindow` reste muet). L'observateur
+  /// distingue donc une vraie reprise pour reconstruire Activity, tandis que
+  /// Home conserve volontairement sa surface et ses derniers pixels.
+  ///
+  /// `willEnterForeground` et NON `didBecomeActive` : ce dernier se déclenche
+  /// aussi à la fermeture du centre de contrôle ou d'une alerte système —
+  /// mesuré ici, il reconstruisait le rapport alors que l'app n'avait jamais
+  /// quitté l'écran, ce qui rend le squelette clignotant sans aucun gain.
+  private func observeForeground() {
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(applicationDidEnterBackground),
+      name: UIApplication.didEnterBackgroundNotification, object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(applicationWillEnterForeground),
+      name: UIApplication.willEnterForegroundNotification, object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(applicationDidBecomeActive),
+      name: UIApplication.didBecomeActiveNotification, object: nil)
+  }
+
+  @objc private func applicationDidEnterBackground() {
+    wasBackgrounded = true
+    // Preserve Home's last rendered surface. Rebuilding it on every foreground
+    // guarantees a user-visible empty interval while Apple's service reconnects.
+    // Activity remains explicitly refreshable and keeps its previous policy.
+    if mode != "home" {
+      invalidateReport()
+    }
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  @objc private func applicationWillEnterForeground() {
+    // Une reprise sans passage effectif en arrière-plan ne peut pas avoir tué
+    // l'extension : reconstruire là ne ferait que clignoter pour rien.
+    guard wasBackgrounded else { return }
+    wasBackgrounded = false
+    #if DEBUG
+      foregroundCount += 1
+    #endif
+    scheduleRebuildIfNeeded()
+  }
+
+  @objc private func applicationDidBecomeActive() {
+    // Drain a pending rebuild only. Closing Control Center or a permission
+    // alert does not invalidate an already mounted report.
+    scheduleRebuildIfNeeded()
+    mountVisibleReport()
+  }
+
   private func configureActivityControls() {
+    observeForeground()
     activityControls.onSelect = { [weak self] offset in
       guard let self else { return }
       self.offset = NSNumber(value: offset)
@@ -360,13 +469,10 @@ final class ScreenTimeReportView: UIView {
     }
     activityControls.onRefresh = { [weak self] in
       guard let self else { return }
-      // Ne jamais détruire ici le rapport visible : iOS peut refuser de
-      // repeindre une DeviceActivityReport recréée immédiatement et laisser
-      // l'écran vide. La surface courante reste alimentée par Temps d'écran;
-      // on invalide uniquement sa présentation locale.
       self.activityControls.acknowledgeRefresh()
-      self.hosting?.view.setNeedsLayout()
-      self.hosting?.view.setNeedsDisplay()
+      // JS checks authorization, then changes reloadToken. All reconnects
+      // share the same deferred native mount, including a manual recovery.
+      self.onCommand?(["command": "refresh"])
     }
     activityControls.onSettings = { [weak self] in
       self?.onNavigateToSettings?()
@@ -379,8 +485,30 @@ final class ScreenTimeReportView: UIView {
     }
     homeTouchSurface.accessibilityIdentifier = "home-native-touch-surface"
     addSubview(homeTouchSurface)
+    #if DEBUG
+      diagnostics.isAccessibilityElement = true
+      diagnostics.accessibilityIdentifier = "screen-time-report-diagnostics"
+      diagnostics.accessibilityLabel = "diagnostic du rapport"
+      diagnostics.isUserInteractionEnabled = false
+      addSubview(diagnostics)
+      publishDiagnostics()
+    #endif
     updateActivityControls()
   }
+
+  #if DEBUG
+    /// Etat du cycle de vie, lisible par XCUITest via `element.value`.
+    private func publishDiagnostics() {
+      let age = lastRebuildAt == 0 ? -1 : Int((CACurrentMediaTime() - lastRebuildAt) * 1000)
+      diagnostics.accessibilityValue =
+        "mode=\(mode) win=\(window == nil ? 0 : 1) host=\(hosting == nil ? 0 : 1)"
+        + " visible=\(hosting?.isVisible == true ? 1 : 0) mounted=\(reportMounted ? 1 : 0)"
+        + " parked=\(hosting?.view.superview === homeParkingContainer ? 1 : 0)"
+        + " epoch=\(epoch) req=\(requestCount) skip=\(skipCount)"
+        + " det=\(detachCount) att=\(attachCount) fg=\(foregroundCount)"
+        + " tok=\(reloadToken.intValue) age=\(age)"
+    }
+  #endif
 
   private func updateActivityControls() {
     activityControls.isHidden = mode != "usage"
@@ -391,26 +519,97 @@ final class ScreenTimeReportView: UIView {
     activityControls.update(offset: offset.intValue)
   }
 
+  private func parkHomeReport(in sourceWindow: UIWindow) {
+    guard mode == "home", let reportView = hosting?.view,
+      reportView.superview === self
+    else { return }
+
+    homeParkingContainer.isUserInteractionEnabled = false
+    homeParkingContainer.clipsToBounds = true
+    homeParkingContainer.backgroundColor = .clear
+    homeParkingContainer.frame = CGRect(origin: .zero, size: reportView.bounds.size)
+    homeParkingContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    if homeParkingContainer.superview !== sourceWindow {
+      homeParkingContainer.removeFromSuperview()
+      if let rootView = sourceWindow.rootViewController?.view,
+        rootView.superview === sourceWindow
+      {
+        sourceWindow.insertSubview(homeParkingContainer, belowSubview: rootView)
+      } else {
+        sourceWindow.insertSubview(homeParkingContainer, at: 0)
+      }
+    }
+    homeParkingContainer.addSubview(reportView)
+    reportView.frame = homeParkingContainer.bounds
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  private func restoreHomeReport() {
+    guard mode == "home", let reportView = hosting?.view,
+      reportView.superview === homeParkingContainer
+    else { return }
+    insertSubview(reportView, at: 0)
+    reportView.frame = bounds
+    homeParkingContainer.removeFromSuperview()
+    bringSubviewToFront(homeTouchSurface)
+    bringSubviewToFront(activityControls)
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  override func willMove(toWindow newWindow: UIWindow?) {
+    // Move between two views of the SAME UIWindow before UIKit detaches the
+    // inactive native tab. The report therefore never observes window=nil.
+    if newWindow == nil, let sourceWindow = window {
+      parkHomeReport(in: sourceWindow)
+    }
+    super.willMove(toWindow: newWindow)
+  }
+
   override func didMoveToWindow() {
     super.didMoveToWindow()
+    #if DEBUG
+      if window == nil { detachCount += 1 } else { attachCount += 1 }
+      publishDiagnostics()
+    #endif
     if window == nil {
-      rebuildWorkItem?.cancel()
-      rebuildWorkItem = nil
-      // Home has proper controller containment now. Preserve it across tab
-      // transitions and scroll clipping; UIKit forwards disappearance and
-      // reappearance to the remote report. Destroying it on every transient
-      // detach loses the rendered surface and starts a new slow aggregation.
-      if mode != "home" { removeHostingController() }
-    } else if hosting == nil || reportNeedsRebuild {
-      setNeedsRebuild()
+      if mode != "home" {
+        invalidateReport()
+      }
+    } else {
+      restoreHomeReport()
+      if hosting == nil || reportNeedsRebuild {
+        setNeedsRebuild()
+      }
     }
   }
 
   private func removeHostingController() {
+    reportMounted = false
+    hosting?.onVisible = nil
     hosting?.willMove(toParent: nil)
     hosting?.view.removeFromSuperview()
     hosting?.removeFromParent()
     hosting = nil
+    homeParkingContainer.removeFromSuperview()
+  }
+
+  private func invalidateReport() {
+    reportNeedsRebuild = true
+    rebuildRevision += 1
+    rebuildWorkItem?.cancel()
+    rebuildWorkItem = nil
+    readyWorkItem?.cancel()
+    readyWorkItem = nil
+    queryRefreshWorkItems.forEach { $0.cancel() }
+    queryRefreshWorkItems.removeAll()
+    removeHostingController()
+    #if DEBUG
+      publishDiagnostics()
+    #endif
   }
 
   private var parentController: UIViewController? {
@@ -426,42 +625,58 @@ final class ScreenTimeReportView: UIView {
   /// configuration complète avant de créer le rapport : aucune connexion
   /// Apple intermédiaire n'est lancée puis détruite en plein calcul.
   private func setNeedsRebuild() {
-    reportNeedsRebuild = true
-    rebuildWorkItem?.cancel()
+    // Tear down BEFORE the debounce, never in the same turn as the new mount.
+    // Prop batches and rapid tab changes invalidate all older scheduled work.
+    invalidateReport()
+    #if DEBUG
+      requestCount += 1
+      publishDiagnostics()
+    #endif
+    scheduleRebuildIfNeeded()
+  }
+
+  private func scheduleRebuildIfNeeded() {
+    guard reportNeedsRebuild, rebuildWorkItem == nil, window != nil,
+      !wasBackgrounded, UIApplication.shared.applicationState == .active,
+      bounds.width > 0, bounds.height > 0, parentController != nil
+    else { return }
+    let revision = rebuildRevision
     let work = DispatchWorkItem { [weak self] in
-      self?.rebuildWorkItem = nil
-      self?.rebuild()
+      guard let self, self.rebuildRevision == revision else { return }
+      self.rebuildWorkItem = nil
+      self.rebuild()
     }
     rebuildWorkItem = work
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: work)
   }
 
   private func rebuild() {
-    guard window != nil, bounds.width > 0, bounds.height > 0,
-      let parent = parentController, #available(iOS 16.0, *) else { return }
+    guard reportNeedsRebuild, window != nil, !wasBackgrounded,
+      UIApplication.shared.applicationState == .active,
+      bounds.width > 0, bounds.height > 0,
+      let parent = parentController, #available(iOS 16.0, *)
+    else {
+      #if DEBUG
+        skipCount += 1
+        publishDiagnostics()
+      #endif
+      return
+    }
     reportNeedsRebuild = false
-    epoch += 1
+    ScreenTimeReportView.nextEpoch += 1
+    epoch = ScreenTimeReportView.nextEpoch
+    #if DEBUG
+      lastRebuildAt = CACurrentMediaTime()
+      publishDiagnostics()
+    #endif
     ScreenTimeReportView.log.info(
       "rebuild #\(self.epoch, privacy: .public) mode=\(self.mode, privacy: .public) offset=\(self.offset.intValue, privacy: .public)"
     )
-    // Toujours un contrôleur NEUF : c'est ce qui force une nouvelle connexion
-    // à l'extension de rapport. L'ancien contenu (peut-être mort) part avec.
-    removeHostingController()
+    // The previous controller was released before scheduling this mount.
+    onCommand?(["command": "reloading"])
 
-    #if targetEnvironment(simulator)
-      let vc = UIHostingController(
-        rootView: MockReport(
-          mode: mode as String,
-          showsBlockedCard: showsBlockedCard,
-          homeReferenceFixture: UserDefaults.standard.bool(
-            forKey: "HomeReferenceFixture")).ignoresSafeArea())
-    #else
-      let root = ReportContainer(
-        offset: offset.intValue, mode: mode as String,
-        showsBlockedCard: showsBlockedCard, epoch: epoch
-      ).ignoresSafeArea()
-      let vc = UIHostingController(rootView: root)
-    #endif
+    let vc = ReportHostingController(rootView: AnyView(Color.clear))
+    vc.onVisible = { [weak self] in self?.mountVisibleReport() }
     // Home already lays out its status bar/header and bottom tab clearance.
     // SwiftUI otherwise inserts the phone's 59pt top inset inside the fixed
     // report, silently clipping the last application row.
@@ -472,27 +687,92 @@ final class ScreenTimeReportView: UIView {
     vc.view.isOpaque = false
     vc.view.frame = bounds
     vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    hosting = vc
     parent.addChild(vc)
     addSubview(vc.view)
     vc.didMove(toParent: parent)
-    hosting = vc
     bringSubviewToFront(homeTouchSurface)
     bringSubviewToFront(activityControls)
-    // Le JS attend CE signal pour retirer son écran d'attente : sans lui, le
-    // rapport se dessine derrière un placeholder qui ne part jamais.
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  private func mountVisibleReport() {
+    guard let vc = hosting, vc.isVisible, !reportMounted,
+      !reportNeedsRebuild, window != nil, !wasBackgrounded,
+      UIApplication.shared.applicationState == .active, #available(iOS 16.0, *)
+    else { return }
+    reportMounted = true
+    #if targetEnvironment(simulator)
+      vc.rootView = AnyView(MockReport(
+        mode: mode as String, showsBlockedCard: showsBlockedCard,
+        homeReferenceFixture: UserDefaults.standard.bool(forKey: "HomeReferenceFixture")
+      ).ignoresSafeArea())
+    #else
+      let reportIdentity = UUID()
+      vc.rootView = AnyView(ReportContainer(
+        offset: offset.intValue, mode: mode as String,
+        showsBlockedCard: showsBlockedCard, identity: reportIdentity, queryDate: Date()
+      ).ignoresSafeArea())
+      if mode == "home" {
+        // The device service can miss its first refresh while the extension
+        // proxy is connecting, then wait for a 60-second timer. Update the
+        // real end date on the SAME connection; never recreate its ID.
+        // UIKit schedules this because SwiftUI's .task is not reliably entered
+        // when a remote report replaces Activity in an already scrolled Home.
+        // A navigation-stack return can take over two seconds to attach the
+        // service. Two bounded attempts cover warm and slower connections;
+        // both are cancelled only on a real configuration replacement.
+        for delay in [1.0, 3.0] {
+          let refresh = DispatchWorkItem { [weak self, weak vc] in
+            guard let self, let vc, self.hosting === vc, self.reportMounted,
+              !self.reportNeedsRebuild, vc.view.window != nil
+            else { return }
+            ScreenTimeReportView.log.info(
+              "refresh query #\(self.epoch, privacy: .public) after=\(delay, privacy: .public)s")
+            vc.rootView = AnyView(ReportContainer(
+              offset: self.offset.intValue, mode: self.mode as String,
+              showsBlockedCard: self.showsBlockedCard,
+              identity: reportIdentity, queryDate: Date()
+            ).ignoresSafeArea())
+          }
+          queryRefreshWorkItems.append(refresh)
+          DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: refresh)
+        }
+      }
+    #endif
+    // This acknowledges the LOCAL mount, not completion of Apple's remote
+    // aggregation (DeviceActivityReport exposes no completion callback).
+    // Never let an old controller dismiss a newer report's placeholder.
     let readyEpoch = epoch
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
-      guard let self, self.epoch == readyEpoch, self.window != nil else { return }
+    let ready = DispatchWorkItem { [weak self, weak vc] in
+      guard let self, let vc, self.hosting === vc, self.epoch == readyEpoch,
+        !self.reportNeedsRebuild, vc.view.window != nil
+      else { return }
+      self.readyWorkItem = nil
       self.onCommand?(["command": "ready"])
     }
+    readyWorkItem = ready
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: ready)
+    #if DEBUG
+      publishDiagnostics()
+    #endif
   }
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    hosting?.view.frame = bounds
+    if hosting?.view.superview === self {
+      hosting?.view.frame = bounds
+    }
     homeTouchSurface.frame = bounds
+    #if DEBUG
+      diagnostics.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+      bringSubviewToFront(diagnostics)
+      publishDiagnostics()
+    #endif
     activityControls.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 134)
-    if window != nil, hosting == nil, rebuildWorkItem == nil { setNeedsRebuild() }
+    scheduleRebuildIfNeeded()
   }
 }
 
@@ -634,8 +914,10 @@ final class ScreenTimeReportView: UIView {
         }
         .frame(width: geometry.size.width, height: 360, alignment: .top)
 
-        mockScoreCard
-          .padding(.horizontal, 16)
+        // Emplacement de la carte « Score global » : elle est rendue par React
+        // Native par-dessus cette simulation, comme par-dessus le vrai
+        // rapport. La dessiner ici afficherait deux cartes superposees.
+        Color.clear.frame(height: 290)
         Color.clear.frame(height: showsBlockedCard ? 328 : 24)
 
         VStack(alignment: .leading, spacing: 16) {
@@ -722,180 +1004,6 @@ final class ScreenTimeReportView: UIView {
         .background(Color.clear)
         .environment(\.colorScheme, .dark)
       }
-    }
-
-    private var fixtureGlobal: Int { referenceFixture ? 72 : 86 }
-    private var fixtureFocus: Int { referenceFixture ? 78 : 88 }
-    private var fixtureRest: Int { referenceFixture ? 66 : 84 }
-    private var fixtureDelta: Int { referenceFixture ? 6 : -3 }
-
-    // Miroir des accents violet Relock et lavande côté React Native.
-      private let violet = Color(red: 0.655, green: 0.545, blue: 0.980)
-    private let lavender = Color(red: 0.784, green: 0.722, blue: 1.0)
-    private let amber = Color(red: 0.878, green: 0.635, blue: 0.306)
-    private let ink3 = Color(red: 0.522, green: 0.525, blue: 0.604)
-
-    private func band(_ value: Int) -> String {
-      if value >= 80 { return "Excellent équilibre" }
-      if value >= 60 { return "Bon équilibre" }
-      if value >= 35 { return "Équilibre moyen" }
-      return "Équilibre fragile"
-    }
-
-    /// Miroir de `scoreFooter` dans RelockActivityReport.swift : la phrase nomme
-    /// l'axe qui décroche. Le fixture prend Focus comme axe faible.
-    private var scoreFooter: String {
-      let value = fixtureGlobal
-      if value >= 80 { return "Journée maîtrisée : ton attention tient bon." }
-      if value >= 60 {
-        return "Bon rythme. Tu ouvres ton téléphone un peu plus que d’habitude."
-      }
-      if value >= 35 {
-        return "Ton attention se fragmente : beaucoup d’allers-retours aujourd’hui."
-      }
-      return "Tu décroches souvent aujourd’hui. Un blocage t’aiderait à tenir."
-    }
-
-    /// Carte « Score global » : anneau lumineux à gauche, les deux sous-scores à
-    /// droite, encouragement en pied. Hauteur miroir de `homeScoreHeight`
-    /// (relock-material.ts) et de la zone tactile de ScreenTimeReportView.
-    private var mockScoreCard: some View {
-      VStack(spacing: 0) {
-        HStack(alignment: .top, spacing: 12) {
-          VStack(alignment: .leading, spacing: 2) {
-            Text("Score global")
-              .font(.system(size: 20, weight: .bold))
-              .foregroundColor(ink)
-              .lineLimit(1)
-            Text("Aujourd’hui")
-              .font(.system(size: 14))
-              .foregroundColor(ink3)
-              .lineLimit(1)
-          }
-          Spacer(minLength: 8)
-          scoreDeltaPill(fixtureDelta)
-        }
-        .frame(height: 46)
-
-        Spacer(minLength: 0)
-
-        HStack(spacing: 0) {
-          scoreDial
-            .frame(width: 152, height: 152)
-          scoreSeparator
-          VStack(spacing: 0) {
-            scoreRow(
-              symbol: "circle.circle.fill", label: "Focus", value: fixtureFocus,
-              tint: violet)
-            Rectangle()
-              .fill(Color.white.opacity(0.09))
-              .frame(height: 1)
-            scoreRow(
-              symbol: "moon.fill", label: "Repos", value: fixtureRest,
-              tint: lavender)
-          }
-          .frame(height: 152)
-        }
-
-        Spacer(minLength: 0)
-
-        HStack(spacing: 8) {
-          Image(systemName: "heart")
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(lavender)
-          Text(scoreFooter)
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(ink2)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-        }
-        .frame(height: 20)
-      }
-      .padding(20)
-      .frame(maxWidth: .infinity, minHeight: 290, maxHeight: 290)
-      .modifier(HomeGlassCard(fill: 0.055, edge: 0.12))
-      .accessibilityElement(children: .combine)
-      .accessibilityLabel(
-        "Score global \(fixtureGlobal), \(band(fixtureGlobal)), Focus \(fixtureFocus), Repos \(fixtureRest)")
-    }
-
-    private func scoreDeltaPill(_ delta: Int) -> some View {
-      let rising = delta > 0
-      let tint = rising ? green : amber
-      return HStack(spacing: 4) {
-        Image(systemName: rising ? "arrow.up" : "arrow.down")
-          .font(.system(size: 12, weight: .bold))
-        Text(String(abs(delta)))
-          .font(.system(size: 15, weight: .semibold))
-          .monospacedDigit()
-        Text("vs hier")
-          .font(.system(size: 12, weight: .medium))
-          .opacity(0.72)
-          .lineLimit(1)
-      }
-      .foregroundColor(tint)
-      .padding(.horizontal, 12)
-      .padding(.vertical, 7)
-      .background(Capsule().fill(tint.opacity(0.14)))
-    }
-
-    /// Miroir de `scoreDial` dans RelockActivityReport.swift.
-    private var scoreDial: some View {
-      ZStack {
-        Image("home-score-dial")
-          .resizable()
-          .scaledToFit()
-          .opacity(0.22)
-          .accessibilityHidden(true)
-
-        VStack(spacing: 1) {
-          Text(String(fixtureGlobal))
-            .font(.system(size: 44, weight: .bold))
-            .monospacedDigit()
-            .foregroundColor(ink)
-          Text(band(fixtureGlobal))
-            .font(.system(size: 13, weight: .medium))
-            .foregroundColor(lavender)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-        }
-      }
-    }
-
-    private var scoreSeparator: some View {
-      Rectangle()
-        .fill(Color.white.opacity(0.09))
-        .frame(width: 1, height: 152)
-        .overlay(
-          Image(systemName: "arrowtriangle.right.fill")
-            .font(.system(size: 7))
-            .foregroundColor(Color.white.opacity(0.18))
-        )
-        .padding(.horizontal, 14)
-    }
-
-    private func scoreRow(
-      symbol: String,
-      label: String,
-      value: Int,
-      tint: Color
-    ) -> some View {
-      HStack(spacing: 10) {
-        Image(systemName: symbol)
-          .font(.system(size: 17, weight: .medium))
-          .foregroundColor(tint)
-          .frame(width: 24)
-        Text(label)
-          .font(.system(size: 15, weight: .medium))
-          .foregroundColor(ink)
-          .lineLimit(1)
-        Spacer(minLength: 8)
-        Text(String(value))
-          .font(.system(size: 22, weight: .bold))
-          .monospacedDigit()
-          .foregroundColor(ink)
-      }
-      .frame(maxHeight: .infinity)
     }
 
     private var referenceApps: [MockApp] {

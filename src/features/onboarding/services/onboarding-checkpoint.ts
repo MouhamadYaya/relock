@@ -21,15 +21,34 @@ import { kvStorage } from '@/shared/services/storage/mmkv'
  * revoit plus jamais l'onboarding.
  */
 
+/**
+ * ⚠️ Tout champ AJOUTÉ ici doit rester tolérant à son absence (`.catch([])`).
+ * Une sauvegarde écrite par une version antérieure ne connaît pas les
+ * nouvelles questions : sans ce filet, le `safeParse` échouerait et tous les
+ * onboardings en cours repartiraient de zéro à la mise à jour.
+ */
+/**
+ * Une réponse à choix multiple, tolérante aux sauvegardes d'AVANT le passage
+ * au choix multiple : `trigger` et `moment` y valaient une chaîne (ou `null`)
+ * plutôt qu'une liste. Sans cette conversion, tout onboarding en cours au
+ * moment de la mise à jour repartirait de zéro.
+ */
+const multiPick = z
+  .union([z.array(z.string()), z.string(), z.null()])
+  .transform(value => (Array.isArray(value) ? value : value ? [value] : []))
+  .catch([])
+
 const answersSchema = z.object({
   name: z.string(),
-  trigger: z.string().nullable(),
+  trigger: multiPick,
   apps: z.array(z.string()),
-  moment: z.string().nullable(),
+  moment: multiPick,
   feelings: z.array(z.string()),
+  stolen: z.array(z.string()).catch([]),
+  attempts: z.array(z.string()).catch([]),
+  aspirations: z.array(z.string()).catch([]),
   screenTime: z.string().nullable(),
   hours: z.number(),
-  hardMode: z.boolean(),
   appCount: z.number(),
   rulePresetIds: z.array(z.string()),
 })

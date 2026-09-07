@@ -13,6 +13,13 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 
 const { colors, layout, radius, shadow, typography } = relockMaterial
 
+/**
+ * Anneau du mode strict. Hors échelle : c'est une ÉPAISSEUR de trait, pas un
+ * espacement — 2 pt se lisent à travers l'icône de l'app, un cheveu non.
+ */
+const STRICT_RING_WIDTH = 2
+const STRICT_RING_GLOW_OPACITY = 0.55
+
 /** Hauteur complète d'une tuile, légende comprise — partagée avec sa rangée. */
 export const BLOCKED_APP_SLOT_HEIGHT =
   layout.blockingLockedTileSize +
@@ -127,6 +134,7 @@ export function BlockedAppTileView({
   unlocked,
   label,
   reprievedUntil,
+  strict = false,
   showLabel = true,
   onPress,
   disabled = false,
@@ -137,6 +145,13 @@ export function BlockedAppTileView({
   label: string
   /** Fin du sursis (epoch en secondes) — pilote le décompte sous la tuile. */
   reprievedUntil?: number
+  /**
+   * Une règle STRICTE couvre cette app : elle ne s'ouvrira pas avant la fin de
+   * la session. L'anneau rouge le dit avant même qu'on touche — sans lui, une
+   * app verrouillée était indiscernable d'une app qu'un tap suffit à ouvrir,
+   * et le refus n'arrivait qu'après coup.
+   */
+  strict?: boolean
   /**
    * Masque le mot d'action sous la tuile (« Débloquer »). Un décompte de
    * sursis, lui, reste TOUJOURS affiché : ce n'est pas un bouton, c'est
@@ -176,7 +191,13 @@ export function BlockedAppTileView({
       onPress={onPress}
       style={styles.slot}
     >
-      <View style={[styles.tile, unlocked && styles.tileOpen]}>
+      <View
+        style={[
+          styles.tile,
+          unlocked && styles.tileOpen,
+          strict && styles.tileStrict,
+        ]}
+      >
         {/* L'icône réelle occupe TOUTE la tuile ; le voile puis le cadenas se
             posent par-dessus. On reconnaît donc l'app d'un coup d'œil tout en
             lisant son état — l'icône seule ne dirait pas « bloquée », le
@@ -196,7 +217,11 @@ export function BlockedAppTileView({
         <Text
           pointerEvents="none"
           numberOfLines={1}
-          style={[styles.label, unlocked && styles.labelOpen]}
+          style={[
+            styles.label,
+            unlocked && styles.labelOpen,
+            strict && styles.labelStrict,
+          ]}
         >
           {caption}
         </Text>
@@ -229,6 +254,17 @@ const styles = StyleSheet.create({
   tileOpen: {
     borderColor: colors.surfaceHighlight,
   },
+  // Anneau rouge légèrement lumineux : un trait plein (pas un cheveu) doublé
+  // du halo de la couleur des actions sans retour. C'est le seul endroit de la
+  // rangée où le rouge apparaît — il ne peut donc désigner que ça.
+  tileStrict: {
+    borderWidth: STRICT_RING_WIDTH,
+    borderColor: colors.blockingDanger,
+    shadowColor: colors.blockingDanger,
+    shadowOpacity: STRICT_RING_GLOW_OPACITY,
+    shadowRadius: spacing.xs,
+    shadowOffset: { width: 0, height: 0 },
+  },
   realIcon: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -260,5 +296,10 @@ const styles = StyleSheet.create({
   },
   labelOpen: {
     color: colors.textPrimary,
+  },
+  // « Bloqué » n'est pas une action : il ne porte donc pas le violet des mots
+  // sur lesquels on tape, mais le rouge de l'anneau qui l'entoure.
+  labelStrict: {
+    color: colors.blockingDanger,
   },
 })

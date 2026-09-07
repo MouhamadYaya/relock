@@ -46,6 +46,7 @@
     "test": "jest",
     "gen:icons": "node scripts/generate-icons.js",
     "gen:app-icon": "node scripts/generate-app-icon.cjs",
+    "assets:optimize": "node scripts/optimize-assets.cjs",
     "cache:clean": "npm cache clean --force",
     "clean:auto": "react-native clean-project-auto",
     "clean": "react-native clean-project",
@@ -79,8 +80,12 @@
     "prepare": "husky",
     "check:icons": "node scripts/check-icons-stale.js",
     "check:imports": "node scripts/check-import-paths.js",
+    "check:release-env": "node scripts/check-release-env.cjs",
     "android:rebuild": "node scripts/ensure-env.cjs && rm -rf android/app/build android/app/.cxx android/build android/.gradle && cd android && ./gradlew :app:assembleDebug && cd .. && node scripts/wait-for-android-device.cjs && npx react-native run-android",
-    "bootsplash:generate": "node scripts/bootsplash-generate.cjs"
+    "bootsplash:generate": "node scripts/bootsplash-generate.cjs",
+    "legal:dev": "wrangler dev",
+    "legal:deploy": "wrangler deploy",
+    "legal:versions": "wrangler deployments list"
   },
   "dependencies": {
     "@react-native-clipboard/clipboard": "^1.14.1",
@@ -103,8 +108,10 @@
     "expo-apple-authentication": "~8.0.8",
     "expo-constants": "~18.0.14",
     "expo-dev-client": "~6.0.21",
+    "expo-image-picker": "~17.0.11",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.24",
+    "expo-secure-store": "~15.0.8",
     "expo-status-bar": "~3.0.9",
     "expo-video": "~3.0.16",
     "i18next": "^25.7.1",
@@ -163,11 +170,13 @@
     "react-test-renderer": "19.1.4",
     "sharp": "0.34.2",
     "standard-version": "^9.5.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "wrangler": "^4.129.0"
   },
   "overrides": {
     "react-dom": "19.1.4",
-    "react-native-nitro-modules": "0.35.0"
+    "react-native-nitro-modules": "0.35.0",
+    "joi": "^17.13.4"
   },
   "engines": {
     "node": ">=20"

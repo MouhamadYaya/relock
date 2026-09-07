@@ -339,20 +339,26 @@ export async function unlinkRevenueCatUser(): Promise<void> {
  * personnelle : ni prénom, ni identifiant, ni e-mail.
  */
 export async function setOnboardingAttributes(attributes: {
-  trigger: string | null
-  moment: string | null
+  trigger: string[]
+  moment: string[]
   hours: number
   apps: string[]
   feelings: string[]
+  stolen: string[]
+  attempts: string[]
+  aspirations: string[]
 }): Promise<void> {
   if (!(await initializeRevenueCat())) return
   try {
     Purchases.setAttributes({
-      ob_trigger: attributes.trigger ?? '',
-      ob_moment: attributes.moment ?? '',
+      ob_trigger: attributes.trigger.join(','),
+      ob_moment: attributes.moment.join(','),
       ob_hours: String(attributes.hours),
       ob_apps: attributes.apps.join(','),
       ob_feelings: attributes.feelings.join(','),
+      ob_stolen: attributes.stolen.join(','),
+      ob_attempts: attributes.attempts.join(','),
+      ob_aspirations: attributes.aspirations.join(','),
     })
   } catch {
     // Analytique : jamais bloquant.

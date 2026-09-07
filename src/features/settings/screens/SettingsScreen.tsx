@@ -1,16 +1,29 @@
 import { IconName } from '@assets/icons'
-import { router } from 'expo-router'
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker'
+import { router, useFocusEffect } from 'expo-router'
 import React from 'react'
 import {
   Alert,
-  Pressable,
+  AppState,
+  Linking,
   ScrollView,
+  Share,
   StyleSheet,
-  Switch,
   Text,
-  View,
 } from 'react-native'
-import { appConfig } from '@/config/app-config'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { appBuild, appConfig, appVersion, links } from '@/config/app-config'
+import { AuthService } from '@/features/auth/services/auth/auth.service'
+import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
+import {
+  emergencyAvailability,
+  formatNextEmergency,
+  markEmergencyUnlockUsed,
+} from '@/features/blocking/services/emergency-quota'
+import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
+import { RITUAL_COPY } from '@/features/blocking/services/pause-ritual/ritual-copy'
 import { NotificationService } from '@/features/notifications/notification.service'
 import {
   getNotifPrefs,
@@ -20,200 +33,86 @@ import {
 import {
   isRevenueCatEnabled,
   openRevenueCatCustomerCenter,
+  restoreRevenueCatPurchases,
 } from '@/features/onboarding/services/revenuecat'
-import { useProfile, useUpdateName } from '@/features/user/hooks/useProfile'
+import { ProfileCard } from '@/features/settings/components/ProfileCard'
+import { SettingsHeader } from '@/features/settings/components/SettingsHeader'
+import { SettingsRow } from '@/features/settings/components/SettingsRow'
+import { SettingsSection } from '@/features/settings/components/SettingsSection'
+import {
+  buildDataExport,
+  serializeDataExport,
+} from '@/features/settings/services/data-export'
+import { useProfile } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
-import { IconSvg } from '@/shared/components/ui/IconSvg'
-import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
+import { useT } from '@/i18n/useT'
+import { syncEntitlement } from '@/session/bootstrap'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
+import { Notif, type NotifPermission } from '@/shared/native/notifications'
 import { ScreenTime } from '@/shared/native/screen-time'
 import {
+  applyCrashReportsPreference,
   captureError,
   isSentryEnabled,
+  setSentryTags,
 } from '@/shared/services/monitoring/sentry'
-import { useTheme } from '@/shared/theme'
-import { fonts } from '@/shared/theme/tokens/fonts'
+import {
+  getReminderMinutes,
+  setReminderMinutes,
+} from '@/shared/services/storage/app-preferences'
+import { useAppGateStore } from '@/shared/stores/app-gate.store'
+import { usePreferences } from '@/shared/stores/preferences.store'
+import { settingsTheme } from '@/shared/theme'
 import { showErrorToast, showToast } from '@/shared/utils/toast'
 
-const THEME_LABEL: Record<string, string> = {
-  dark: 'Sombre',
-  light: 'Clair',
-  system: 'Système',
-}
+const { colors, spacing, type } = settingsTheme
 
-const LANGUAGE_LABEL: Record<string, string> = {
+/**
+ * Les langues, écrites dans leur propre langue — même convention que le
+ * sélecteur (`LanguagePickerModal`). `i18n.language` peut valoir n'importe
+ * quoi (locale régionale héritée, langue retirée depuis) : le repli évite
+ * d'afficher un code brut dans la colonne de droite.
+ */
+const LANGUAGE_NAME: Record<string, string> = {
   fr: 'Français',
   en: 'English',
   de: 'Deutsch',
   ru: 'Русский',
 }
 
-/** Dev : bilan de santé natif (build, journal, vie des extensions). */
-/**
- * Envoie une erreur de TEST à Sentry, et dit franchement quand rien ne part.
- *
- * Le silence est le pire mode de défaillance d'un outil de monitoring : sans
- * ce retour, un DSN absent ressemble exactement à un DSN qui marche.
- */
-function sendSentryTestEvent() {
-  if (!isSentryEnabled()) {
-    Alert.alert(
-      'Sentry inactif',
-      'Aucun événement ne part. Vérifier SENTRY_DSN dans .env (et SENTRY_ENABLE_IN_DEV=1 pour un build de développement), puis reconstruire — react-native-config lit .env AU BUILD.',
-    )
-    return
-  }
-  captureError(new Error('[TEST] événement déclenché depuis les Réglages'), {
-    tags: { test: 'settings-longpress' },
-    level: 'warning',
-  })
-  showToast('Événement de test envoyé à Sentry')
-}
-
-function showNativeDiagnostics() {
-  if (!ScreenTime.isAvailable) {
-    Alert.alert('Diagnostic natif', 'Module natif indisponible (simulateur ?).')
-    return
-  }
-  ScreenTime.getDiagnostics()
-    .then(d => {
-      const lines = [
-        `Build natif : ${d.nativeBuiltAt}`,
-        `Autorisation : ${d.authorized ? 'accordée' : 'ABSENTE'}`,
-        `App Group : ${d.appGroupOK ? 'OK' : 'INACCESSIBLE'}`,
-        `Transport Shield : ${d.shieldStateTransport}`,
-        `Journal : ${d.eventLogCount} événement(s)`,
-        `Résistances (total) : ${d.totalResisted}`,
-        `Fenêtres actives : ${d.activeWindows.join(', ') || 'aucune'}`,
-        // La vérité d'iOS, pas la nôtre : une règle absente d'ici ne
-        // bloquera jamais rien, quoi qu'en dise la DB.
-        `Armées côté iOS : ${d.armedActivities?.join(', ') || 'AUCUNE'}`,
-        `Moniteur réveillé : ${d.monitorLastWakeAt}`,
-        `  → ${d.monitorLastWakeWhat}`,
-        `Bouclier affiché : ${d.shieldShownTotal ?? 0}× (dernier : ${d.shieldLastShownAt ?? 'jamais'})`,
-        `Bouclier tapé : ${d.shieldLastActionAt}`,
-        `  → ${d.shieldLastOpenRequestStatus} / ${d.shieldLastActionResponse}`,
-        `Contexte en attente : ${d.pendingShieldRequest?.applicationName ?? 'aucun'}`,
-        `Quotas du jour : ${
-          Object.entries(d.limitProgress ?? {})
-            .map(([k, v]) => `${k.slice(14, 22)}…=${v}`)
-            .join(', ') || 'aucun palier franchi'
-        }`,
-        '',
-        ...d.eventLogTail.map(e => `· ${e.kind} (${e.at})`),
-      ]
-      Alert.alert('Diagnostic natif', lines.join('\n'))
-    })
-    .catch(e => showErrorToast(e))
-}
-
-function initialsFrom(s: string | null): string {
-  if (!s) return '?'
-  const parts = s.trim().split(/\s+/).filter(Boolean)
-  const letters = parts
-    .slice(0, 2)
-    .map(w => w[0])
-    .join('')
-  return (letters || '?').toUpperCase()
-}
-
-const FW = {
-  400: fonts.regular,
-  500: fonts.medium,
-  600: fonts.semiBold,
-  700: fonts.bold,
-  800: fonts.bold,
-} as const
-const f = (w: keyof typeof FW) => FW[w]
-
-const C = {
-  bg: '#0B0C10',
-  surface: '#1C1C1E',
-  surface2: '#1C1F2B',
-  ink: '#F0F0F4',
-  ink2: '#A8ABBE',
-  ink3: '#6B6F82',
-  accent: '#A49AFE',
-  green: '#4ADE80',
-  border: 'rgba(148,152,178,0.16)',
-  divider: 'rgba(148,152,178,0.12)',
-  ambient: 'rgba(164,154,254,0.14)',
-}
-
-type RowProps = {
-  icon: IconName
-  label: string
-  value?: string
-  onPress?: () => void
-  right?: React.ReactNode
-  last?: boolean
-}
-
-function Row({ icon, label, value, onPress, right, last }: RowProps) {
-  return (
-    <View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        onPress={onPress}
-        style={styles.row}
-      >
-        <View style={styles.rowIcon}>
-          <IconSvg name={icon} size={16} color={C.accent} />
-        </View>
-        <Text style={[f(500), { flex: 1, fontSize: 15, color: C.ink }]}>
-          {label}
-        </Text>
-        {value ? (
-          <Text style={[f(400), { fontSize: 14, color: C.ink2 }]}>{value}</Text>
-        ) : null}
-        {right}
-        <IconSvg name={IconName.FORWARD} size={18} color={C.ink3} />
-      </Pressable>
-      {last ? null : <View style={styles.rowDivider} />}
-    </View>
-  )
-}
-
-function SwitchRow({
-  icon,
-  label,
-  value,
-  onValueChange,
-  last,
-}: {
-  icon: IconName
-  label: string
-  value: boolean
-  onValueChange: (v: boolean) => void
-  last?: boolean
-}) {
-  return (
-    <View>
-      <View style={styles.row}>
-        <View style={styles.rowIcon}>
-          <IconSvg name={icon} size={16} color={C.accent} />
-        </View>
-        <Text style={[f(500), { flex: 1, fontSize: 15, color: C.ink }]}>
-          {label}
-        </Text>
-        <Switch
-          value={value}
-          onValueChange={onValueChange}
-          trackColor={{ true: C.accent, false: C.surface2 }}
-          ios_backgroundColor={C.surface2}
-        />
-      </View>
-      {last ? null : <View style={styles.rowDivider} />}
-    </View>
-  )
+/** Minutes depuis minuit → `Date` d'aujourd'hui, pour le sélecteur natif. */
+function minutesToDate(minutes: number): Date {
+  const date = new Date()
+  date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0)
+  return date
 }
 
 export default function SettingsScreen() {
-  const { name, displayName, email } = useProfile()
-  const updateName = useUpdateName()
-  const { mode } = useTheme()
+  const t = useT()
+  const insets = useSafeAreaInsets()
+  const { displayName, email, avatar } = useProfile()
+  const entitled = useAppGateStore(s => s.entitled)
   const revenueCatEnabled = isRevenueCatEnabled()
+  const { rules, refetch: refetchRules } = useBlockRulesQuery()
+  const crashReports = usePreferences(state => state.crashReports)
+  const pauseRitual = usePreferences(state => state.pauseRitual)
+  const setPreference = usePreferences(state => state.setPreference)
+
+  // Rapports d'anomalie. La politique de confidentialité PUBLIÉE
+  // (`src/legal/privacy/`) promet « disable or enable crash reporting in
+  // Settings », et la ligne « Politique de confidentialité » de cet écran y
+  // renvoie. Cet interrupteur est donc un engagement, pas un confort : le
+  // retirer sans changer la politique fait mentir l'app.
+  // Verrouillé par `privacy-commitments.test.tsx`.
+
+  // Rapports d'anomalie : la politique de confidentialité publiée promet
+  // « disable or enable crash reporting in Settings ». L'interrupteur est donc
+  // un engagement, pas un confort — il ne peut pas disparaître de l'écran.
+
+  const [restoring, setRestoring] = React.useState(false)
+  const [unlocking, setUnlocking] = React.useState(false)
+  const [exporting, setExporting] = React.useState(false)
+  const [reminder, setReminder] = React.useState(getReminderMinutes)
 
   // Notifications : préférences persistées, appliquées IMMÉDIATEMENT.
   const [notif, setNotif] = React.useState<NotifPrefs>(getNotifPrefs)
@@ -223,26 +122,75 @@ export default function SettingsScreen() {
     setNotifPrefs(next)
     const turningOn = next.master && Object.values(patch).some(v => v === true)
     ;(async () => {
-      if (turningOn) await NotificationService.ensurePermission()
+      if (turningOn) {
+        await NotificationService.ensurePermission()
+        setNotifPermission(await Notif.permissionStatus())
+      }
       await NotificationService.reconcileFromLast()
     })().catch(() => {})
   }
 
-  // Statut réel de l'autorisation Temps d'écran (jamais codé en dur).
+  // Statuts RÉELS des permissions et de la protection, jamais codés en dur :
+  // ce que l'écran affiche doit venir du système, sinon il ment dès qu'on
+  // change un réglage depuis iOS.
   const [authorized, setAuthorized] = React.useState(false)
-  React.useEffect(() => {
-    if (!ScreenTime.isAvailable) return
-    ScreenTime.authorizationStatus()
-      .then(s => setAuthorized(s === 'approved'))
+  const [notifPermission, setNotifPermission] =
+    React.useState<NotifPermission>('notDetermined')
+  const [uninstallGuard, setUninstallGuard] = React.useState({
+    enabled: false,
+    active: false,
+  })
+
+  /**
+   * Relit les trois états auprès du système.
+   *
+   * Trois lectures indépendantes : une plateforme sans Family Controls a
+   * quand même des notifications.
+   */
+  const refreshPermissions = React.useCallback(() => {
+    if (ScreenTime.isAvailable) {
+      ScreenTime.authorizationStatus()
+        .then(s => setAuthorized(s === 'approved'))
+        .catch(() => {})
+      ScreenTime.uninstallProtection()
+        .then(setUninstallGuard)
+        .catch(() => {})
+    }
+    Notif.permissionStatus()
+      .then(setNotifPermission)
       .catch(() => {})
   }, [])
+
+  // Ces permissions se révoquent DEPUIS iOS, pas seulement depuis ici. Une
+  // lecture au seul montage laisse donc l'écran affirmer « accordée » alors
+  // que la protection est tombée, et proposer des actions qui échoueront.
+  //
+  // Deux réveils complémentaires : le focus couvre le retour depuis un autre
+  // écran (montage inclus), l'`AppState` couvre l'aller-retour par Réglages
+  // iOS — celui qui change vraiment les permissions, et pendant lequel
+  // l'écran n'a jamais perdu le focus.
+  useFocusEffect(refreshPermissions)
+
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') refreshPermissions()
+    })
+    return () => subscription.remove()
+  }, [refreshPermissions])
 
   const requestScreenTime = () => {
     if (!ScreenTime.isAvailable) {
       Alert.alert(
-        "Temps d'écran",
-        'Disponible uniquement sur iPhone (Family Controls).',
+        t('settings.screen_time_unavailable_title'),
+        t('settings.screen_time_unavailable_body'),
       )
+      return
+    }
+    if (authorized) {
+      // Déjà accordée : la seule chose à faire ici est d'emmener l'utilisateur
+      // là où il peut la RETIRER — iOS ne permet pas de la révoquer depuis
+      // l'app, et redemander une autorisation acquise ne fait rien du tout.
+      Linking.openSettings().catch(() => {})
       return
     }
     ScreenTime.requestAuthorization()
@@ -250,309 +198,619 @@ export default function SettingsScreen() {
       .catch(e => showErrorToast(e))
   }
 
-  const showCustomerCenter = revenueCatEnabled
+  const applyUninstallProtection = (enabled: boolean) => {
+    ScreenTime.setUninstallProtection(enabled)
+      .then(() => ScreenTime.uninstallProtection())
+      .then(setUninstallGuard)
+      .catch(e => showErrorToast(e))
+  }
 
-  const openCustomerCenter = () => {
-    if (!revenueCatEnabled) {
+  /**
+   * L'explication précède l'activation, jamais l'inverse.
+   *
+   * La restriction iOS est GLOBALE : pendant un blocage, plus aucune app ne
+   * peut être supprimée de l'appareil. Quelqu'un qui découvrirait ça en
+   * essayant de désinstaller autre chose penserait, à raison, que son
+   * téléphone est cassé. Couper, en revanche, ne demande rien : on ne met pas
+   * d'obstacle devant la sortie.
+   */
+  const toggleUninstallProtection = (enabled: boolean) => {
+    if (!ScreenTime.isAvailable) {
       Alert.alert(
-        'Gestion abonnement',
-        'RevenueCat n’est pas activé pour cette build.',
+        t('settings.uninstall_protection'),
+        t('settings.uninstall_unavailable'),
       )
       return
     }
+    if (!enabled) {
+      applyUninstallProtection(false)
+      return
+    }
+    Alert.alert(
+      t('settings.uninstall_explain_title'),
+      t('settings.uninstall_explain_body'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.uninstall_explain_cta'),
+          onPress: () => applyUninstallProtection(true),
+        },
+      ],
+    )
+  }
 
+  const openCustomerCenter = () => {
+    if (!revenueCatEnabled) {
+      Alert.alert(t('settings.pro.title'), t('settings.pro.unavailable'))
+      return
+    }
     void (async () => {
       try {
         await openRevenueCatCustomerCenter()
       } catch {
-        showErrorToast('Impossible d’ouvrir le Customer Center.')
+        showErrorToast(t('settings.pro.manage_error'))
       }
     })()
   }
 
-  const onEditName = () => {
-    Alert.prompt(
-      'Ton prénom',
-      "Comment veux-tu qu'on t'appelle ?",
+  const restorePurchases = () => {
+    if (!revenueCatEnabled) {
+      Alert.alert(t('settings.pro.title'), t('settings.pro.unavailable'))
+      return
+    }
+    setRestoring(true)
+    void (async () => {
+      try {
+        const restored = await restoreRevenueCatPurchases()
+        // La restauration RevenueCat rend un booléen ; la porte, elle, se
+        // rouvre par la vérité serveur — d'où la synchronisation qui suit.
+        await syncEntitlement()
+        showToast(
+          restored
+            ? t('settings.pro.restore_done')
+            : t('settings.pro.restore_none'),
+        )
+      } catch (e) {
+        showErrorToast(e)
+      } finally {
+        setRestoring(false)
+      }
+    })()
+  }
+
+  const openLink = (url: string) => {
+    Linking.openURL(url).catch(() => showErrorToast(t('settings.link_error')))
+  }
+
+  const mailTo = (subject: string, body?: string) =>
+    openLink(
+      `mailto:${links.supportEmail}?subject=${encodeURIComponent(subject)}` +
+        (body ? `&body=${encodeURIComponent(body)}` : ''),
+    )
+
+  const shareApp = () => {
+    Share.share({
+      message: `${t('settings.share_message')} ${links.share}`,
+    }).catch(() => {})
+  }
+
+  // ─── Déblocage d'urgence ────────────────────────────────────────────────
+  const activeRules = rules.filter(r => r.isActive)
+
+  const confirmEmergencyUnlock = () => {
+    if (activeRules.length === 0) {
+      showToast(t('settings.emergency_none'))
+      return
+    }
+
+    // Le quota se vérifie AVANT de proposer quoi que ce soit : demander
+    // « tu es sûr ? » pour ensuite répondre « en fait non » serait une porte
+    // qui s'ouvre sur un mur.
+    const availability = emergencyAvailability()
+    if (!availability.allowed) {
+      Alert.alert(
+        t('settings.emergency_locked_title'),
+        t('settings.emergency_locked_body', {
+          date: formatNextEmergency(availability.nextAt, i18n.language),
+        }),
+      )
+      return
+    }
+
+    Alert.alert(
+      t('settings.emergency_title'),
+      `${t('settings.emergency_body', { count: activeRules.length })}\n\n${t(
+        'settings.emergency_quota',
+      )}`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Enregistrer',
-          onPress: (text?: string) => {
-            if (text != null) {
-              updateName.mutate(text, { onError: e => showErrorToast(e) })
-            }
+          text: t('settings.emergency_cta'),
+          style: 'destructive',
+          onPress: () => {
+            setUnlocking(true)
+            void (async () => {
+              try {
+                // On passe TOUTES les règles, pas seulement les actives : une
+                // règle inactive peut avoir laissé une activité armée côté
+                // iOS (arrêt hors ligne, plantage). La sortie de secours doit
+                // ne rien laisser derrière elle.
+                const result = await emergencyUnlock(rules)
+                // Le quota se consomme ici, et pas plus tôt : la libération
+                // a EU LIEU côté iPhone, même si l'effacement des règles
+                // côté compte a partiellement échoué. Le débiter avant
+                // l'appel ferait perdre sa semaine à quelqu'un dont le
+                // déblocage n'a pas abouti.
+                markEmergencyUnlockUsed()
+                await refetchRules()
+                await ScreenTime.uninstallProtection()
+                  .then(setUninstallGuard)
+                  .catch(() => {})
+                showToast(
+                  result.failed > 0
+                    ? t('settings.emergency_partial', { count: result.failed })
+                    : t('settings.emergency_done'),
+                )
+              } catch (e) {
+                captureError(e, {
+                  tags: { feature: 'settings', op: 'emergency-unlock' },
+                })
+                showErrorToast(e)
+              } finally {
+                setUnlocking(false)
+              }
+            })()
           },
         },
       ],
-      'plain-text',
-      name ?? '',
     )
   }
 
+  // ─── Heure des rappels ──────────────────────────────────────────────────
+  const onChangeReminder = (_event: DateTimePickerEvent, date?: Date) => {
+    if (!date) return
+    const minutes = date.getHours() * 60 + date.getMinutes()
+    setReminder(minutes)
+    setReminderMinutes(minutes)
+    // Replanifie tout de suite : le reconciler est idempotent, et le rappel de
+    // ce soir doit déjà tomber à la nouvelle heure.
+    NotificationService.reconcileFromLast().catch(() => {})
+  }
+
+  // ─── Export ─────────────────────────────────────────────────────────────
+  const exportData = () => {
+    setExporting(true)
+    void (async () => {
+      try {
+        const payload = await buildDataExport()
+        await Share.share({
+          title: t('settings.export_subject'),
+          message: serializeDataExport(payload),
+        })
+      } catch (e) {
+        captureError(e, { tags: { feature: 'settings', op: 'export' } })
+        showErrorToast(t('settings.export_error'))
+      } finally {
+        setExporting(false)
+      }
+    })()
+  }
+
+  const confirmLogout = () => {
+    Alert.alert(t('settings.logout_title'), t('settings.logout_body'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.logout'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            try {
+              await AuthService.logout()
+              // Importé à la demande : `signOutToAuth` navigue, et le charger
+              // au montage de l'écran ferait remonter tout le module de
+              // parcours dans le graphe des Réglages.
+              const { signOutToAuth } = await import('@/session/bootstrap')
+              signOutToAuth()
+            } catch (e) {
+              captureError(e, { tags: { feature: 'settings', op: 'logout' } })
+              showErrorToast(t('settings.logout_error'))
+            }
+          })()
+        },
+      },
+    ])
+  }
+
+  const version = appVersion()
+  const build = appBuild()
+
+  /**
+   * Appui long discret sur le numéro de version : envoie une erreur de TEST
+   * à Sentry, et dit franchement quand rien ne part.
+   *
+   * Le silence est le pire mode de défaillance d'un outil de monitoring :
+   * sans ce retour, un DSN absent ressemble exactement à un DSN qui marche.
+   */
+  const sendSentryTestEvent = () => {
+    if (!isSentryEnabled()) {
+      Alert.alert(t('settings.sentry_off_title'), t('settings.sentry_off_body'))
+      return
+    }
+    captureError(new Error('[TEST] événement déclenché depuis les Réglages'), {
+      tags: { test: 'settings-longpress' },
+      level: 'warning',
+    })
+    showToast(t('settings.sentry_test_sent'))
+  }
+
   return (
-    <ScreenWrapper>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={{ paddingTop: 8 }}>
-          {/* Header : retour + titre */}
-          <View style={styles.header}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Retour à l'accueil"
-              onPress={() => router.back()}
-              hitSlop={8}
-              style={styles.backBtn}
-            >
-              <IconSvg name={IconName.BACK} size={18} color={C.ink} />
-            </Pressable>
-            <Text style={[f(800), styles.title]}>Réglages</Text>
-          </View>
+    <ScreenWrapper
+      disableBottomInset
+      backgroundColor={colors.bg}
+      statusBarProps={{ backgroundColor: colors.bg }}
+    >
+      <SettingsHeader
+        title={t('settings.title')}
+        backLabel={t('settings.back')}
+        onBack={() => router.back()}
+      />
 
-          {/* Profil */}
-          <Pressable style={styles.profile} onPress={onEditName}>
-            <View style={styles.avatar}>
-              <Text style={[f(700), { fontSize: 20, color: C.bg }]}>
-                {initialsFrom(displayName)}
-              </Text>
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[f(700), { fontSize: 17, color: C.ink }]}>
-                {displayName ?? 'Ajoute ton prénom'}
-              </Text>
-              <Text
-                style={[
-                  f(400),
-                  { fontSize: 13.5, color: C.ink2, marginTop: 2 },
-                ]}
-              >
-                {email ?? ''}
-              </Text>
-            </View>
-            <IconSvg name={IconName.FORWARD} size={20} color={C.ink3} />
-          </Pressable>
+      <ScrollView
+        testID="settings-scroll"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          // Marge basse généreuse : la dernière ligne ne doit jamais finir
+          // collée au bord, ni sous l'encoche basse.
+          { paddingBottom: insets.bottom + spacing.sectionGap * 2 },
+        ]}
+      >
+        <SettingsSection
+          title={t('settings.sections.account')}
+          caption={t('settings.pro.footnote')}
+        >
+          <ProfileCard
+            displayName={displayName}
+            email={email}
+            avatar={avatar}
+            pro={entitled}
+            proLabel={t('settings.pro.badge')}
+            subtitle={t('settings.profile.card_hint')}
+            accessibilityLabel={t('settings.profile.open')}
+            onPress={() => router.push('/profile')}
+          />
+          <SettingsRow
+            icon={IconName.CROWN}
+            label={t('settings.pro.manage')}
+            hint={t('settings.pro.manage_hint')}
+            status={{
+              label: entitled
+                ? t('settings.pro.status_active')
+                : t('settings.pro.status_inactive'),
+              granted: entitled,
+            }}
+            onPress={openCustomerCenter}
+          />
+          <SettingsRow
+            icon={IconName.CHECK}
+            label={t('settings.pro.restore')}
+            busy={restoring}
+            onPress={restorePurchases}
+          />
+        </SettingsSection>
 
-          {/* Préférences */}
-          <Text style={[f(600), styles.groupLabel]}>Préférences</Text>
-          <View style={styles.card}>
-            <Row
-              icon={IconName.MOON}
-              label="Apparence"
-              value={THEME_LABEL[mode] ?? 'Sombre'}
-              onPress={() => router.push('/theme-picker')}
-            />
-            <Row
-              icon={IconName.GLOBE}
-              label="Langue"
-              value={LANGUAGE_LABEL[i18n.language] ?? i18n.language}
-              onPress={() => router.push('/language-picker')}
-              last
-            />
-          </View>
+        <SettingsSection
+          title={t('settings.sections.personalization')}
+          caption={t('settings.pause_ritual.footnote')}
+        >
+          <SettingsRow
+            icon={IconName.GLOBE}
+            label={t('settings.language.label')}
+            value={LANGUAGE_NAME[i18n.language] ?? i18n.language.toUpperCase()}
+            onPress={() => router.push('/language-picker')}
+          />
+          {/*
+            Le rituel de pause : ce que Relock demande avant d'ouvrir une app
+            bloquée. Il a sa place ici, et non dans « Protection » — il ne
+            change RIEN à ce qui est bloqué ni à la solidité du blocage, il
+            change la façon dont on le franchit. C'est un réglage de forme.
+          */}
+          <SettingsRow
+            icon={IconName.BREATHE}
+            label={t('settings.pause_ritual.label')}
+            hint={t('settings.pause_ritual.hint')}
+            value={t(RITUAL_COPY[pauseRitual].title)}
+            onPress={() => router.push('/pause-ritual-picker')}
+          />
+        </SettingsSection>
 
-          {/* Notifications — peu, mais utiles ; jamais de spam */}
-          <Text style={[f(600), styles.groupLabel]}>Notifications</Text>
-          <View style={styles.card}>
-            <SwitchRow
-              icon={IconName.BELL}
-              label="Notifications"
-              value={notif.master}
-              onValueChange={v => updateNotif({ master: v })}
-              last={!notif.master}
-            />
-            {notif.master ? (
-              <>
-                <SwitchRow
-                  icon={IconName.CLOCK}
-                  label="Rappels (série, retour)"
-                  value={notif.reminders}
-                  onValueChange={v => updateNotif({ reminders: v })}
-                />
-                <SwitchRow
-                  icon={IconName.STAR}
-                  label="Progression (bilan, jalons)"
-                  value={notif.progression}
-                  onValueChange={v => updateNotif({ progression: v })}
-                  last
-                />
-              </>
-            ) : null}
-          </View>
+        {/* Peu de notifications, mais utiles ; jamais de promotion. */}
+        <SettingsSection
+          title={t('settings.sections.notifications')}
+          caption={t('settings.notifications_footnote')}
+        >
+          {/*
+            La permission iOS passe AVANT les préférences, et non après.
+            Tant qu'elle manque, aucun interrupteur de cette section ne fera
+            apparaître quoi que ce soit : un « Autoriser les notifications »
+            en tête, allumé, au-dessus d'une autorisation « À demander »,
+            laisse croire que tout fonctionne déjà. L'ordre dit la
+            dépendance.
 
-          {/* Système */}
-          <Text style={[f(600), styles.groupLabel]}>Système</Text>
-          <View style={styles.card}>
-            <Row
+            Aucune demande n'est déclenchée à l'ouverture de l'écran : la
+            ligne ne fait qu'ouvrir les réglages du système, où le choix
+            appartient à l'utilisateur.
+          */}
+          {notifPermission !== 'granted' ? (
+            <SettingsRow
               icon={IconName.MONITOR}
-              label="Permissions · Temps d'écran"
-              onPress={requestScreenTime}
-              right={
-                <View style={styles.statusOn}>
-                  <View
-                    style={[
-                      styles.dot,
-                      { backgroundColor: authorized ? C.green : C.ink3 },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      f(600),
-                      { fontSize: 13, color: authorized ? C.green : C.ink3 },
-                    ]}
-                  >
-                    {authorized ? 'Activé' : 'À activer'}
-                  </Text>
-                </View>
-              }
-              last={__DEV__ || !showCustomerCenter}
+              label={t('settings.notifications_permission')}
+              status={{
+                label:
+                  notifPermission === 'denied'
+                    ? t('settings.notifications_denied')
+                    : t('settings.notifications_pending'),
+                granted: false,
+              }}
+              onPress={() => Linking.openSettings().catch(() => {})}
             />
-            {showCustomerCenter ? (
-              <Row
-                icon={IconName.SETTINGS}
-                label="Centre de gestion des abonnements"
-                onPress={openCustomerCenter}
-                last={!__DEV__}
-              />
-            ) : null}
-            {__DEV__ ? (
-              <Row
-                icon={IconName.MONITOR}
-                label="Diagnostic natif (dev)"
-                onPress={showNativeDiagnostics}
-                last
-              />
-            ) : null}
-          </View>
+          ) : null}
+          <SettingsRow
+            icon={IconName.BELL}
+            label={t('settings.notifications_master')}
+            switchValue={notif.master}
+            onSwitchChange={v => updateNotif({ master: v })}
+          />
+          {/*
+            Les catégories restent VISIBLES quand l'interrupteur maître est
+            coupé, simplement désactivées. Les masquer effaçait la dépendance
+            au lieu de l'expliquer — et donnait l'impression que le réglage
+            avait été perdu, alors que la préférence est bien conservée et
+            retrouvée telle quelle à la réactivation.
+          */}
+          <SettingsRow
+            icon={IconName.CLOCK}
+            label={t('settings.notifications_reminders')}
+            hint={t('settings.notifications_reminders_hint')}
+            switchValue={notif.reminders}
+            onSwitchChange={v => updateNotif({ reminders: v })}
+            disabled={!notif.master}
+          />
+          {notif.reminders ? (
+            <SettingsRow
+              icon={IconName.SUNRISE}
+              label={t('settings.reminder_time')}
+              disabled={!notif.master}
+              accessory={
+                <DateTimePicker
+                  mode="time"
+                  display="compact"
+                  themeVariant="dark"
+                  value={minutesToDate(reminder)}
+                  onChange={onChangeReminder}
+                  accessibilityLabel={t('settings.reminder_time')}
+                />
+              }
+            />
+          ) : null}
+          <SettingsRow
+            icon={IconName.STAR}
+            label={t('settings.notifications_progression')}
+            hint={t('settings.notifications_progression_hint')}
+            switchValue={notif.progression}
+            onSwitchChange={v => updateNotif({ progression: v })}
+            disabled={!notif.master}
+          />
+        </SettingsSection>
 
-          <View style={styles.signature}>
-            <RelockWordmark height={22} />
-            {/*
-              Appui long discret sur le numéro de version : envoie une erreur
-              de TEST à Sentry.
+        <SettingsSection
+          title={t('settings.sections.protection')}
+          caption={t('settings.protection_footnote')}
+        >
+          <SettingsRow
+            icon={IconName.MONITOR}
+            label={t('settings.screen_time')}
+            hint={t('settings.screen_time_hint')}
+            status={{
+              label: authorized
+                ? t('settings.screen_time_granted')
+                : t('settings.screen_time_missing'),
+              granted: authorized,
+            }}
+            onPress={requestScreenTime}
+          />
+          <SettingsRow
+            icon={IconName.SHIELD}
+            label={t('settings.blocks')}
+            hint={t('settings.blocks_hint')}
+            onPress={() => router.navigate('/(tabs)/blocks')}
+          />
+          <SettingsRow
+            icon={IconName.LOCK}
+            label={t('settings.uninstall_protection')}
+            hint={t('settings.uninstall_protection_hint')}
+            switchValue={uninstallGuard.enabled}
+            onSwitchChange={toggleUninstallProtection}
+          />
+        </SettingsSection>
 
-              Pourquoi ici et pas seulement dans le pont de dev ? Parce que le
-              pont ne tourne qu'en __DEV__, alors que la seule vérification
-              qui compte vraiment — « ma stack de PRODUCTION est-elle
-              lisible ? » — exige un build release. C'est le seul déclencheur
-              qui traverse cette frontière.
+        <SettingsSection
+          title={t('settings.sections.privacy')}
+          caption={t('settings.privacy_footnote')}
+        >
+          {/*
+            ⚠️ NE PAS SUPPRIMER sans retirer d'abord la promesse
+            correspondante de `src/legal/privacy/index.html` (§9, « Crash
+            reports: disable or enable crash reporting in Settings ») et
+            redéployer le site. Voir `privacy-commitments.test.ts`.
+          */}
+          <SettingsRow
+            icon={IconName.PULSE}
+            label={t('settings.crash_reports')}
+            hint={t('settings.crash_reports_hint')}
+            switchValue={crashReports}
+            onSwitchChange={value => {
+              setPreference('crashReports', value)
+              // La préférence d'abord (elle survit à tout), le SDK ensuite.
+              // Sans cette seconde ligne, couper l'interrupteur ne ferait
+              // taire que les appels de NOTRE code : crashs natifs, sessions,
+              // traces et replay continueraient de partir seuls.
+              applyCrashReportsPreference(value)
+              // Les étiquettes de session ont été posées au démarrage, quand
+              // l'envoi pouvait être coupé : on les repose, sinon les
+              // événements repris seraient orphelins de leur contexte.
+              if (value) setSentryTags({ crash_reports: 'opt-in' })
+            }}
+          />
+          <SettingsRow
+            icon={IconName.SHARE}
+            label={t('settings.export')}
+            hint={t('settings.export_hint')}
+            busy={exporting}
+            onPress={exportData}
+          />
+        </SettingsSection>
 
-              Sans risque pour un utilisateur qui tomberait dessus : un
-              événement non fatal, aucun crash, aucune donnée.
-            */}
-            <Pressable
-              onLongPress={sendSentryTestEvent}
-              delayLongPress={1200}
-              accessibilityRole="text"
-            >
-              <Text style={[f(400), styles.footer]}>
-                version {appConfig.version}
-              </Text>
-            </Pressable>
-          </View>
+        <SettingsSection title={t('settings.sections.support')}>
+          <SettingsRow
+            icon={IconName.INFO}
+            label={t('settings.help')}
+            onPress={() =>
+              openLink(
+                i18n.language.startsWith('fr') ? links.helpFr : links.help,
+              )
+            }
+          />
+          {/* Un stylo, pas un graphique à barres : on propose une idée, on
+              ne consulte pas des statistiques. */}
+          <SettingsRow
+            icon={IconName.PEN}
+            label={t('settings.feedback_feature')}
+            onPress={() => mailTo(t('settings.feedback_feature_subject'))}
+          />
+          {/* Le contexte technique est pré-rempli : un rapport de bug sans
+              version ni appareil coûte un aller-retour à tout le monde. */}
+          <SettingsRow
+            icon={IconName.BLOCK}
+            label={t('settings.feedback_bug')}
+            onPress={() =>
+              mailTo(
+                t('settings.feedback_bug_subject'),
+                `\n\n---\n${t('settings.feedback_bug_body')}\n${appConfig.appName} ${version}${build ? ` (${build})` : ''}\n${i18n.language}\n`,
+              )
+            }
+          />
+          <SettingsRow
+            icon={IconName.MAIL}
+            label={t('settings.contact')}
+            onPress={() => mailTo(t('settings.contact_subject'))}
+          />
+          {/* Retirée tant qu'aucune fiche App Store n'existe : proposer
+              « Noter l'app » pour ouvrir une page introuvable est pire que
+              de ne rien proposer. */}
+          {links.review ? (
+            <SettingsRow
+              icon={IconName.STAR}
+              label={t('settings.rate')}
+              onPress={() => {
+                if (links.review) openLink(links.review)
+              }}
+            />
+          ) : null}
+          <SettingsRow
+            icon={IconName.SHARE}
+            label={t('settings.share')}
+            onPress={shareApp}
+          />
+        </SettingsSection>
 
-          <View style={{ height: 32 }} />
-        </View>
+        <SettingsSection title={t('settings.sections.about')}>
+          <SettingsRow
+            icon={IconName.LOCK}
+            label={t('settings.privacy_policy')}
+            onPress={() =>
+              openLink(
+                i18n.language.startsWith('fr')
+                  ? links.privacyFr
+                  : links.privacy,
+              )
+            }
+          />
+          <SettingsRow
+            icon={IconName.BOOK}
+            label={t('settings.terms')}
+            onPress={() =>
+              openLink(
+                i18n.language.startsWith('fr') ? links.termsFr : links.terms,
+              )
+            }
+          />
+        </SettingsSection>
+
+        {/*
+          La zone sensible ferme l'écran, dans l'ordre de gravité croissante :
+          se déconnecter (on revient quand on veut), lever tous les blocages,
+          remettre les compteurs à zéro, supprimer le compte. Du plus
+          réversible au moins réversible — on ne tombe pas par mégarde sur la
+          dernière marche en cherchant la première.
+        */}
+        <SettingsSection
+          title={t('settings.sections.danger')}
+          caption={t('settings.emergency_footnote')}
+        >
+          <SettingsRow
+            icon={IconName.LOGOUT}
+            danger
+            label={t('settings.logout')}
+            onPress={confirmLogout}
+          />
+          <SettingsRow
+            icon={IconName.BLOCK}
+            danger
+            label={t('settings.emergency')}
+            hint={t('settings.emergency_hint')}
+            busy={unlocking}
+            onPress={confirmEmergencyUnlock}
+          />
+          <SettingsRow
+            icon={IconName.LAYERS}
+            danger
+            label={t('settings.reset')}
+            hint={t('settings.reset_hint')}
+            onPress={() => router.push('/reset-app')}
+          />
+          <SettingsRow
+            icon={IconName.TRASH}
+            danger
+            label={t('settings.delete_account')}
+            onPress={() => router.push('/delete-account')}
+          />
+        </SettingsSection>
+
+        <Text
+          accessibilityRole="text"
+          onLongPress={sendSentryTestEvent}
+          suppressHighlighting
+          style={styles.version}
+        >
+          {build
+            ? t('settings.version_build', { version, build })
+            : t('settings.version', { version })}
+        </Text>
       </ScrollView>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    color: C.ink,
-    letterSpacing: -0.7,
-  },
-  profile: {
-    marginTop: 18,
-    marginHorizontal: 20,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 18,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: C.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  groupLabel: {
-    fontSize: 12.5,
-    color: C.ink3,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-    paddingTop: 22,
-    paddingLeft: 24,
-    paddingBottom: 8,
-  },
-  card: {
-    marginHorizontal: 20,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    paddingVertical: 13,
-    paddingHorizontal: 15,
-  },
-  rowIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: C.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowDivider: {
-    height: 1,
-    backgroundColor: C.divider,
-    marginLeft: 58,
-  },
-  statusOn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.green },
-  badge: {
-    backgroundColor: C.ambient,
-    borderRadius: 99,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-  },
-  // Signature de bas de page : le logotype porte la marque, la ligne en
-  // dessous ne dit plus que le numero de version.
-  signature: {
-    alignItems: 'center',
-    paddingTop: 22,
-    gap: 6,
-  },
-  footer: {
+  content: { paddingHorizontal: spacing.screenH },
+  version: {
     textAlign: 'center',
-    fontSize: 12,
-    color: C.ink3,
+    color: colors.textTertiary,
+    fontSize: type.caption.size,
+    fontWeight: type.caption.weight,
+    marginTop: spacing.sectionGap,
+    // Cible tactile de l'appui long : le texte seul est trop fin au doigt.
+    paddingVertical: 8,
   },
 })

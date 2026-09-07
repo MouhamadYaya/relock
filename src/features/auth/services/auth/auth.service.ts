@@ -14,6 +14,11 @@ import { constants } from '@/config/constants'
 import { env } from '@/config/env'
 import type { AuthSession } from '@/features/auth/types'
 import { performLogout } from '@/session/logout'
+import {
+  clearCredentials,
+  setAuthToken,
+  setRefreshToken,
+} from '@/shared/services/storage/credentials'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 import { supabase } from '@/shared/services/supabase/client'
 import {
@@ -40,8 +45,8 @@ function persist(session: {
   access_token: string
   refresh_token: string
 }): void {
-  kvStorage.setString(constants.AUTH_TOKEN, session.access_token)
-  kvStorage.setString(constants.REFRESH_TOKEN, session.refresh_token)
+  setAuthToken(session.access_token)
+  setRefreshToken(session.refresh_token)
 }
 
 let googleConfigured = false
@@ -125,8 +130,7 @@ export const AuthService = {
 
   async logout() {
     await supabase.auth.signOut()
-    kvStorage.delete(constants.AUTH_TOKEN)
-    kvStorage.delete(constants.REFRESH_TOKEN)
+    clearCredentials()
     try {
       configureGoogleSignIn()
       if (GoogleSignin.hasPreviousSignIn()) {

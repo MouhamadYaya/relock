@@ -160,6 +160,7 @@ export function HoldToConfirmButton({
   holdMs = HOLD_MS,
   disabled = false,
   pending = false,
+  leadingGlyph,
   testID,
   accessibilityHint,
   onConfirm,
@@ -171,6 +172,12 @@ export function HoldToConfirmButton({
   holdMs?: number
   disabled?: boolean
   pending?: boolean
+  /**
+   * Symbole posé AVANT le libellé, quand le mot seul ne dit pas le sens du
+   * geste (une flèche de retour pour « on rétablit ce qui existait »). Absent
+   * par défaut : la plupart des maintiens n'ont rien à ajouter au verbe.
+   */
+  leadingGlyph?: React.ReactNode
   testID?: string
   accessibilityHint?: string
   onConfirm: () => void
@@ -274,14 +281,17 @@ export function HoldToConfirmButton({
           {pending ? (
             <ActivityIndicator color={palette.spinner} />
           ) : (
-            <Text
-              style={[
-                styles.label,
-                { color: flooded ? palette.labelFlooded : palette.label },
-              ]}
-            >
-              {holding ? holdingLabel : idleLabel}
-            </Text>
+            <View style={styles.content}>
+              {leadingGlyph}
+              <Text
+                style={[
+                  styles.label,
+                  { color: flooded ? palette.labelFlooded : palette.label },
+                ]}
+              >
+                {holding ? holdingLabel : idleLabel}
+              </Text>
+            </View>
           )}
         </Pressable>
       </Animated.View>
@@ -319,6 +329,13 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
   label: {
     ...fonts.semiBold,

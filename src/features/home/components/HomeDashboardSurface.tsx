@@ -42,7 +42,6 @@ interface Props {
   emptyUsageLabel: string
   activityLabel: string
   onPressHero: () => void
-  onPressScore?: () => void
   onRequestPermission: () => void
   scoreCard: React.ReactNode
   blockedAppsCard?: React.ReactNode
@@ -58,7 +57,6 @@ export function HomeDashboardSurface({
   emptyUsageLabel,
   activityLabel,
   onPressHero,
-  onPressScore,
   onRequestPermission,
   scoreCard,
   blockedAppsCard,
@@ -96,11 +94,13 @@ export function HomeDashboardSurface({
   }
 
   return (
-    <View style={[styles.surface, { height: metrics.surfaceHeight }]}>
+    <View
+      collapsable={false}
+      style={[styles.surface, { height: metrics.surfaceHeight }]}
+    >
       {canRenderReport && (
         <ScreenTimeReport
           mode="home"
-          reloadToken={0}
           showsBlockedCard={showsBlockedCard}
           pointerEvents="auto"
           onCommand={event => {
@@ -108,14 +108,17 @@ export function HomeDashboardSurface({
               case 'ready':
                 setReportReady(true)
                 break
+              // UIKit preserves the Home surface through tab and stack
+              // transitions. Only a real native configuration replacement
+              // announces reloading; navigation must never reset this state.
+              case 'reloading':
+                setReportReady(false)
+                break
               case 'home.hero':
                 pressHero()
                 break
               case 'home.apps':
                 open(onPressHero)
-                break
-              case 'home.score':
-                if (onPressScore) open(onPressScore)
                 break
             }
           }}
@@ -124,13 +127,16 @@ export function HomeDashboardSurface({
       )}
 
       {((canRenderReport && !reportReady) || authorizationChecking) && (
-        <View pointerEvents="none" style={styles.skeletonLayer}>
+        <View
+          testID="home-report-skeleton"
+          pointerEvents="none"
+          style={styles.skeletonLayer}
+        >
           <View style={styles.heroSkeleton}>
             <View style={styles.skeletonLabel} />
             <View style={styles.skeletonValue} />
             <View style={styles.skeletonDelta} />
           </View>
-          <View style={[styles.scoreSkeleton, { top: scoreTop }]} />
           <View style={[styles.appsSkeleton, { top: metrics.reportTop }]}>
             <View style={styles.skeletonTitle} />
             <View style={styles.skeletonRows}>
@@ -188,9 +194,15 @@ export function HomeDashboardSurface({
         </>
       )}
 
-      {!canRenderReport && (
-        <View style={[styles.scoreCard, { top: scoreTop }]}>{scoreCard}</View>
-      )}
+      {/*
+        La carte de score est TOUJOURS celle de React Native, y compris
+        par-dessus le rapport natif. Le rapport ne peut pas publier son score
+        vers le JS (l'extension n'a pas le droit d'écrire dans l'App Group),
+        donc sa version affichait un chiffre que la feuille de détail était
+        incapable d'expliquer. Une seule carte, une seule source, un tap qui
+        ouvre l'explication de CE chiffre-là.
+      */}
+      <View style={[styles.scoreCard, { top: scoreTop }]}>{scoreCard}</View>
       {showsBlockedCard && (
         <View style={[styles.blockedCard, { top: metrics.blockedTop }]}>
           {blockedAppsCard}
@@ -260,16 +272,6 @@ const styles = StyleSheet.create({
     height: layout.homeReportRowHeight,
     borderRadius: radius.functional,
     backgroundColor: colors.homeSkeleton,
-  },
-  scoreSkeleton: {
-    position: 'absolute',
-    left: layout.screenHorizontal,
-    right: layout.screenHorizontal,
-    height: layout.homeScoreHeight,
-    borderRadius: radius.homeCard,
-    backgroundColor: colors.homeGlass1,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.homeGlassBorder,
   },
   heroDetail: {
     position: 'absolute',

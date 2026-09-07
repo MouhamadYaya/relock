@@ -49,12 +49,18 @@ TEST_RUNNER_RELOCK_ATTACH=1 TEST_RUNNER_RELOCK_DEV_HOST="$HOST" \
 TEST_RUNNER_RELOCK_HOLD_SECONDS=900 \
 xcodebuild test -workspace ios/Relock.xcworkspace \
   -scheme Relock -destination "platform=iOS,id=<UDID>" \
+  -derivedDataPath ios/build/DerivedData-uitests \
   -only-testing:RelockUITests/RelockBridgeDiagnosticsTests/testHoldForegroundForBridgeCommands
 ```
 
 > `TEST_RUNNER_…` doit être une variable d'environnement **du processus
 > `xcodebuild`**, pas un argument de build : xcodebuild retire le préfixe et
 > transmet le reste au runner.
+
+> `-derivedDataPath` n'est pas optionnel : il donne au harnais sa propre base
+> de build, seule façon de le laisser tourner pendant qu'on continue à
+> compiler dans Xcode (cf. piège n°6). Le premier build dans ce dossier est
+> complet ; les suivants sont incrémentaux comme ailleurs.
 
 ---
 
@@ -88,6 +94,24 @@ xcodebuild test -workspace ios/Relock.xcworkspace \
    blocage », ces touches ont fini par créer une vraie règle dans le compte.
    La session XCUITest suffit à garder l'appareil éveillé.
 
+
+6. **Deux builds, une seule base.** `xcodebuild` et Xcode (ou `npm run ios`)
+   partagent par défaut le même `DerivedData`, donc le même `build.db`, pris
+   en exclusif le temps d'un build. Le second à démarrer échoue sur
+   `unable to attach DB: … database is locked. Possibly there are two
+   concurrent builds running in the same filesystem location.` — et la session
+   Xcode reste ensuite empoisonnée : llbuild garde en cache le système de
+   build dont l'initialisation a raté et répond `error: invalid reuse after
+   initialization failure` à **tous** les builds suivants, sans plus jamais
+   nommer la cause. D'où le `-derivedDataPath` du §1.
+
+   Pour s'en sortir : arrêter l'autre build, puis **Product ▸ Clean Build
+   Folder** (⇧⌘K) ou `killall XCBBuildService`. C'est l'instance en cache
+   qu'il faut jeter, pas le dossier — inutile de supprimer `DerivedData` : la
+   base elle-même survit presque toujours, et un `PRAGMA quick_check;` sur
+   `Build/Intermediates.noindex/XCBuildData/build.db` le confirme en une
+   seconde (`ok`). `npm run ios` refuse désormais de démarrer quand un
+   `xcodebuild` tourne déjà sur ce projet (`scripts/dev-run.cjs`).
 ---
 
 ## 3. Commandes du pont

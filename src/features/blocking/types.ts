@@ -100,6 +100,30 @@ export function blockEndDate(rule: BlockRuleView): Date | null {
   return new Date(new Date(rule.createdAt).getTime() + durationMin * 60_000)
 }
 
+/**
+ * Une limite de temps en est-elle à son PREMIER jour ?
+ *
+ * Le jour de sa création, une limite compte à partir de son activation : le
+ * temps déjà passé avant qu'elle existe ne lui est pas imputé. Dès le
+ * lendemain elle compte depuis minuit, comme une limite par jour le promet.
+ * Cette bascule est invisible dans la mécanique iOS — c'est donc l'affichage
+ * qui doit la rendre lisible, sans quoi le quota semblerait avoir changé de
+ * sens pendant la nuit.
+ */
+export function limitStartsFromActivation(
+  rule: BlockRuleView,
+  now = new Date(),
+): boolean {
+  if (rule.type !== 'daily_limit' || !rule.createdAt) return false
+  const created = new Date(rule.createdAt)
+  if (Number.isNaN(created.getTime())) return false
+  return (
+    created.getFullYear() === now.getFullYear() &&
+    created.getMonth() === now.getMonth() &&
+    created.getDate() === now.getDate()
+  )
+}
+
 /** Un blocage strict encore en cours ne peut pas être arrêté. */
 export function isLocked(rule: BlockRuleView): boolean {
   if (!isStrict(rule)) return false
@@ -115,7 +139,7 @@ export function unlockTimeLabel(rule: BlockRuleView): string {
 }
 
 /** Ligne de statut affichée sur la carte (temps restant / plage / limite). */
-export function blockStatusLine(rule: BlockRuleView): string {
+export function blockStatusLine(rule: BlockRuleView, now = new Date()): string {
   const apps = appsSubtitle(rule.appIds, rule.count)
   if (rule.type === 'schedule') {
     const s = timeToLabel(
@@ -129,7 +153,14 @@ export function blockStatusLine(rule: BlockRuleView): string {
     return `${apps} · chaque jour ${s} → ${e}`
   }
   if (rule.type === 'daily_limit') {
-    return `${apps} · limite ${durationLabel(num(rule.config?.limit_min, 60))} / jour`
+    const limit = durationLabel(num(rule.config?.limit_min, 60))
+    // Premier jour : dire d'où part le compteur. « limite 2 h / jour » sur une
+    // règle activée à 18h laisserait croire que les heures du matin comptent.
+    if (limitStartsFromActivation(rule, now) && rule.createdAt) {
+      const from = new Date(rule.createdAt)
+      return `${apps} · limite ${limit} · démarrée à ${timeToLabel(from.getHours(), from.getMinutes())}`
+    }
+    return `${apps} · limite ${limit} / jour`
   }
   // Bloquer maintenant
   const end = blockEndDate(rule)

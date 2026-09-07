@@ -46,9 +46,9 @@ export function PaywallFlow({
   onPurchaseSuccess,
   allowPurchases,
   onRestore,
-  initialScreen = 'benefits',
   escapable = true,
   onSignIn,
+  onDevSkip,
 }: {
   /** Les formules du store, prix compris. Rien ne s'affiche sans elles. */
   plans: readonly PaywallPlan[]
@@ -63,12 +63,6 @@ export function PaywallFlow({
   onPurchaseSuccess?: () => void
   allowPurchases?: boolean
   /**
-   * Écran d'entrée. `benefits` argumente avant d'annoncer un prix : c'est la
-   * bonne première vue, et une friction à la deuxième. Les présentations
-   * suivantes ouvrent donc sur `plans` (voir `PaywallScreen`).
-   */
-  initialScreen?: 'benefits' | 'plans'
-  /**
    * Porte dure. À `false`, aucun geste de l'utilisateur ne sort de cet
    * écran : « Passer » et la croix mènent à l'offre de rattrapage, puis
    * ramènent au pitch. Seuls un achat, une restauration ou une connexion à un
@@ -78,6 +72,12 @@ export function PaywallFlow({
   escapable?: boolean
   /** « J'ai déjà un compte » : la seule issue d'un abonné qui a réinstallé. */
   onSignIn?: () => void
+  /**
+   * DEV uniquement : franchit la porte dure sans rien facturer. Le bouton
+   * qui l'appelle vit sous `__DEV__` dans `PaywallPlans` — il n'existe pas
+   * dans le bundle de production.
+   */
+  onDevSkip?: () => void
   /**
    * Sépare les trois issues d'une restauration — `restored`, `none`,
    * `failed`. Un booléen ne le pouvait pas : « ce compte n'a aucun
@@ -90,8 +90,14 @@ export function PaywallFlow({
   const t = useT()
   const insets = useSafeAreaInsets()
   const reduceMotion = useReducedMotion()
+  /**
+   * Le parcours est toujours le même, présentation après présentation :
+   * pitch → tarifs → offre unique → pitch. Il n'y a pas d'entrée abrégée
+   * « il l'a déjà vu » : c'est le pitch qui rend le prix acceptable, et
+   * l'escamoter aux tours suivants revenait à ne montrer qu'un tarif nu.
+   */
   const [screen, setScreen] = useState<'benefits' | 'plans' | 'exit-offer'>(
-    initialScreen,
+    'benefits',
   )
   const [selected, setSelected] = useState<PaywallPlan | null>(plans[0] ?? null)
   useEffect(() => {
@@ -138,23 +144,32 @@ export function PaywallFlow({
       return
     }
     // « Passer » ou la croix depuis l'écran des formules : on tente l'offre
-    // unique, une seule fois, et seulement si un produit remisé existe
-    // vraiment côté store. Sinon on laisse partir — pas d'écran vide.
+    // unique, une seule fois par tour, et seulement si un produit remisé
+    // existe vraiment côté store. Sinon on laisse partir — pas d'écran vide.
     if (screen === 'plans' && offer && !exitOfferShown.current) {
       exitOfferShown.current = true
       setScreen('exit-offer')
       return
     }
-    // Refuser l'offre unique ferme l'offre, pas le paywall : on revient aux
-    // formules. C'est le « Passer » suivant — l'offre ayant déjà été jouée,
-    // elle ne se rejoue pas — qui laisse enfin sortir.
+    // Refuser l'offre unique ferme l'offre, pas le paywall. Derrière la porte
+    // dure, on repart du PITCH : le parcours se rejoue en entier
+    // (pitch → tarifs → offre), et l'offre se réarme pour ce tour suivant.
+    // Retomber sur les tarifs nus laissait l'utilisateur devant un prix qu'on
+    // n'argumentait plus.
     if (screen === 'exit-offer') {
+      if (!escapable) {
+        exitOfferShown.current = false
+        setScreen('benefits')
+        return
+      }
+      // Sans porte dure, l'offre était la dernière carte : on revient aux
+      // formules, et le « Passer » suivant laisse enfin sortir.
       setScreen('plans')
       return
     }
-    // Porte dure : il n'y a pas de sortie. On repart du pitch, et l'offre de
-    // rattrapage redevient disponible au tour suivant — « Passer » mène
-    // toujours quelque part, jamais dehors.
+    // Porte dure sans produit remisé : il n'y a pas d'offre à jouer, mais pas
+    // de sortie non plus. On repart du pitch — « Passer » mène toujours
+    // quelque part, jamais dehors.
     if (!escapable) {
       exitOfferShown.current = false
       setScreen('benefits')
@@ -418,6 +433,7 @@ export function PaywallFlow({
                   }
                 : undefined
             }
+            onDevSkip={onDevSkip}
           />
         )}
       </View>

@@ -17,7 +17,9 @@ const { withNativeWind } = require('nativewind/metro')
 
 // `annotateReactComponents` reste désactivé : cette option installe SON PROPRE
 // transformer Babel, qui écraserait `react-native-svg-transformer` ci-dessous.
-const config = getSentryExpoConfig(__dirname, { annotateReactComponents: false })
+const config = getSentryExpoConfig(__dirname, {
+  annotateReactComponents: false,
+})
 
 // SVG en composant React (react-native-svg-transformer), repris de l'ancienne
 // config RN CLI : on sort `svg` des assets et on l'ajoute aux sources.

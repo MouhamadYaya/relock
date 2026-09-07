@@ -1,4 +1,5 @@
 import { trigger } from 'react-native-haptic-feedback'
+import { getPreference } from '@/shared/services/storage/app-preferences'
 
 type HapticKind =
   | 'impactLight'
@@ -23,6 +24,9 @@ const forceful = {
 } as const
 
 function safelyTrigger(type: HapticKind, opts: object = options) {
+  // Réglages → « Retours haptiques ». Lu à CHAQUE frappe, jamais mis en
+  // cache : la bascule doit se sentir immédiatement, sans redémarrage.
+  if (!getPreference('haptics')) return
   try {
     trigger(type, opts)
   } catch {

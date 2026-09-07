@@ -12,6 +12,29 @@
  */
 import { NativeModules, Platform } from 'react-native'
 
+/**
+ * Une ligne du journal partagé des extensions.
+ *
+ * Les extensions Family Controls sont des processus séparés : leurs erreurs
+ * n'apparaissent PAS dans le rapport de crash de l'app. Deux d'entre elles ne
+ * peuvent même pas héberger de SDK — `RelockActivityReport` n'a aucun accès
+ * réseau (Apple), et `RelockShield` est trop sensible à la latence. Elles
+ * écrivent donc ici, et l'app draine au démarrage suivant.
+ */
+export type ExtensionLogEntry = {
+  /** Secondes depuis epoch. */
+  ts: number
+  /** Cible émettrice : `shield`, `monitor`, `report`, `widgets`, `action`. */
+  source: string
+  /** `error` ou `info`. */
+  kind: string
+  /** Message stable, sans identifiant — sert d'empreinte de regroupement. */
+  message: string
+  data?: Record<string, string>
+  /** Présent sur la 1re entrée quand le tampon a débordé. */
+  droppedBefore?: number
+}
+
 export type AuthStatus = 'approved' | 'denied' | 'notDetermined' | 'unsupported'
 
 /**
@@ -59,6 +82,20 @@ export interface PendingShieldRequest {
   applicationName: string | null
   /** Timestamp Unix en secondes. */
   requestedAt: number
+}
+
+/**
+ * Le choix de l'utilisateur, et ce qu'iOS applique réellement.
+ *
+ * Les deux divergent normalement : la protection n'est ARMÉE que pendant
+ * qu'un blocage protège. Case cochée + aucun blocage en cours = `enabled`
+ * vrai, `active` faux, et l'iPhone se comporte normalement.
+ */
+export interface UninstallProtection {
+  /** La case est cochée dans les Réglages. */
+  enabled: boolean
+  /** La restriction iOS est posée en ce moment même. */
+  active: boolean
 }
 
 export interface SelectionInfo {
@@ -110,6 +147,12 @@ interface BlocusScreenTimeNative {
    */
   appKeys(ruleId: string): Promise<string[]>
   /**
+   * Clés des apps du BROUILLON du sélecteur, avant qu'une règle ne les porte.
+   * L'onboarding s'en sert pour montrer les icônes choisies deux écrans plus
+   * tôt. Optionnelle : absente des binaires antérieurs (repli sur `[]`).
+   */
+  draftAppKeys?(): Promise<string[]>
+  /**
    * Apps couvertes par une protection en cours, DÉDUPLIQUÉES. Inclut celles
    * en sursis : un déblocage temporaire n'exclut pas l'app de la protection.
    */
@@ -141,15 +184,31 @@ interface BlocusScreenTimeNative {
     endMinute: number,
     days: number[],
   ): Promise<boolean>
-  /** Blocage quand l'usage quotidien des apps de la règle atteint `minutes`. */
+  /**
+   * Blocage quand l'usage quotidien des apps de la règle atteint `minutes`.
+   *
+   * Le JOUR DE CRÉATION, le compteur part de l'activation : activer « 2 h de
+   * TikTok » après quatre heures de scroll donne bien deux heures. Les jours
+   * suivants il part de minuit — la sémantique d'une limite par jour.
+   *
+   * Corollaire : ré-armer une limite le jour de sa création lui rendrait son
+   * quota. Le natif rattrape ce qu'il sait déjà consommé, mais l'appelant doit
+   * préférer `armRuleIfNeeded` à `armRule` sur les chemins de simple reprise.
+   */
   startDailyLimit(ruleId: string, minutes: number): Promise<boolean>
   /**
    * Avancement du quota du jour par règle (id → 0…1). Granularité : les paliers
-   * 25/50/75/100 % — iOS ne notifie qu'un seuil franchi, jamais un compteur.
+   * de 10 en 10 % — iOS ne notifie qu'un seuil franchi, jamais un compteur.
    */
   limitSteps(): Promise<Record<string, number>>
   /** Activités DeviceActivity réellement armées côté iOS (vérité système). */
   armedActivities(): Promise<string[]>
+  /**
+   * Referme les blocages « limite » restés ouverts d'un jour passé et renvoie
+   * les fenêtres nettoyées. À appeler au lancement : ce ménage se faisait au
+   * passage lors d'un ré-armement, que l'app évite désormais.
+   */
+  purgeStaleLimitWindows(): Promise<string[]>
   /** Consomme le contexte du dernier bouton « Ouvrir Relock ». */
   consumePendingShieldRequest(): Promise<PendingShieldRequest | null>
   /** Arrête UNE règle (pause) sans toucher aux autres blocages. */
@@ -174,7 +233,17 @@ interface BlocusScreenTimeNative {
   /** Purge les `count` premiers événements une fois la synchro réussie. */
   ackEvents(count: number): Promise<boolean>
   /** 1er lancement après (ré)install : purge le blocage système. true si frais. */
+  /**
+   * Protection contre la désinstallation. Rend `true` si la restriction a pu
+   * être appliquée (iOS 16+), `false` sinon — le choix reste enregistré.
+   */
+  setUninstallProtection(enabled: boolean): Promise<boolean>
+  uninstallProtection(): Promise<UninstallProtection>
   resetIfFreshInstall(): Promise<boolean>
+  /** Vide le journal partagé écrit par les 5 extensions (voir ExtensionLog.swift). */
+  drainExtensionLog?(): Promise<ExtensionLogEntry[]>
+  /** Dépose le DSN Sentry dans le groupe d'app, pour les extensions. */
+  publishSentryDSN?(dsn: string): Promise<boolean>
   /** Bilan de santé natif : build, autorisation, journal, vie des extensions. */
   getDiagnostics(): Promise<ScreenTimeDiagnostics>
   /** DEBUG uniquement, et uniquement après `-HomeReferenceFixture YES`. */
@@ -275,6 +344,8 @@ export const ScreenTime = {
     ensure().unblockApp(ruleId, index, minutes),
   reprievedApps: (ruleId: string) => ensure().reprievedApps(ruleId),
   appKeys: (ruleId: string) => ensure().appKeys(ruleId),
+  draftAppKeys: (): Promise<string[]> =>
+    native?.draftAppKeys ? native.draftAppKeys() : Promise.resolve([]),
   blockedAppKeys: () => ensure().blockedAppKeys(),
   reprievedKeys: () => ensure().reprievedKeys(),
   unblockAppKey: (key: string, minutes: number) =>
@@ -308,6 +379,10 @@ export const ScreenTime = {
     native?.limitSteps ? native.limitSteps() : Promise.resolve({}),
   armedActivities: () =>
     native?.armedActivities ? native.armedActivities() : Promise.resolve([]),
+  purgeStaleLimitWindows: () =>
+    native?.purgeStaleLimitWindows
+      ? native.purgeStaleLimitWindows()
+      : Promise.resolve([]),
   consumePendingShieldRequest: () =>
     native?.consumePendingShieldRequest
       ? native.consumePendingShieldRequest()
@@ -327,11 +402,36 @@ export const ScreenTime = {
       : Promise.resolve({ status: 'pending', historyDays: 0 }),
   pullEvents: () => ensure().pullEvents(),
   ackEvents: (count: number) => ensure().ackEvents(count),
+  setUninstallProtection: (enabled: boolean) =>
+    native?.setUninstallProtection
+      ? native.setUninstallProtection(enabled)
+      : Promise.resolve(false),
+  /**
+   * Sans module natif (simulateur, Android), la protection n'existe pas : on
+   * répond « ni demandée, ni active » plutôt que de laisser l'écran afficher
+   * un interrupteur qui ne commande rien.
+   */
+  uninstallProtection: (): Promise<UninstallProtection> =>
+    native?.uninstallProtection
+      ? native.uninstallProtection()
+      : Promise.resolve({ enabled: false, active: false }),
   resetIfFreshInstall: () =>
     native?.resetIfFreshInstall
       ? native.resetIfFreshInstall()
       : Promise.resolve(false),
   getDiagnostics: () => ensure().getDiagnostics(),
+  /**
+   * Résout `[]` quand le module natif est absent (simulateur sans le module,
+   * Android) : la télémétrie ne doit jamais faire échouer un démarrage.
+   */
+  drainExtensionLog: (): Promise<ExtensionLogEntry[]> =>
+    native?.drainExtensionLog
+      ? native.drainExtensionLog()
+      : Promise.resolve([]),
+  publishSentryDSN: (dsn: string): Promise<boolean> =>
+    native?.publishSentryDSN
+      ? native.publishSentryDSN(dsn)
+      : Promise.resolve(false),
   homeReferenceFixture: () =>
     __DEV__ && native?.homeReferenceFixture
       ? native.homeReferenceFixture()

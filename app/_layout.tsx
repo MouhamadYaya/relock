@@ -35,6 +35,10 @@ import { mockAdapter } from '@/shared/services/api/transport/adapters/mock.adapt
 import { restAdapter } from '@/shared/services/api/transport/adapters/rest.adapter'
 import { setTransport } from '@/shared/services/api/transport/transport'
 import {
+  drainExtensionTelemetry,
+  publishSentryDsnToExtensions,
+} from '@/shared/services/monitoring/extension-telemetry'
+import {
   addAppBreadcrumb,
   attachSupabaseTelemetry,
   captureBoundaryError,
@@ -88,6 +92,18 @@ function AppShell() {
     // Chaque requête Supabase devient une miette du fil d'Ariane : on voit la
     // dernière table interrogée avant un crash.
     attachSupabaseTelemetry(supabase)
+    // Les 5 extensions Family Controls sont des processus séparés : leurs
+    // erreurs n'apparaissent jamais dans le rapport de l'app. On publie le
+    // DSN pour celles qui portent un SDK, et on relève le journal partagé de
+    // toutes les autres — c'est le seul canal de RelockActivityReport, à qui
+    // Apple refuse tout accès réseau.
+    publishSentryDsnToExtensions()
+    drainExtensionTelemetry().catch(error =>
+      captureError(error, {
+        tags: { boot: 'extension-telemetry' },
+        level: 'warning',
+      }),
+    )
     // Dev : session Supabase automatique quand le login est désactivé.
     ensureDevSession().catch(error =>
       captureError(error, { tags: { boot: 'dev-session' }, level: 'warning' }),
@@ -187,7 +203,14 @@ function AppShell() {
           <Stack.Screen name="preset-recap" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="theme-picker" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="language-picker" options={HALF_SHEET_OPTIONS} />
+          <Stack.Screen
+            name="pause-ritual-picker"
+            options={HALF_SHEET_OPTIONS}
+          />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="delete-account" />
+          <Stack.Screen name="reset-app" />
         </Stack.Protected>
       </Stack>
     </NavThemeProvider>

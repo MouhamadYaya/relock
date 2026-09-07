@@ -37,6 +37,31 @@ export const constants = {
   ACCOUNTS_KEY: 'user.accounts',
   CONTACTS_KEY: 'user.contacts',
 
+  /**
+   * Préférences réglables depuis l'écran Réglages. Une clé par préférence
+   * (et non un blob JSON) : chacune se lit isolément, tôt, sans parser quoi
+   * que ce soit — `haptics` et Sentry les consultent hors de React.
+   */
+  PREF_HAPTICS: 'pref.haptics.v1',
+  PREF_PAUSE_SOUND: 'pref.pauseSound.v1',
+  PREF_CRASH_REPORTS: 'pref.crashReports.v1',
+  /**
+   * Rituel de pause exigé avant un déblocage (`respiration`, `calcul`,
+   * `transcription`). Une clé à part entière, et non un booléen : le jeu de
+   * rituels est destiné à s'agrandir, et une valeur inconnue doit pouvoir
+   * retomber sur la respiration sans migration.
+   */
+  PREF_PAUSE_RITUAL: 'pref.pauseRitual.v1',
+  /**
+   * Dernier déblocage d'urgence (timestamp ms). Le quota hebdomadaire s'en
+   * déduit — on ne stocke pas un compteur, qui se désynchroniserait du temps
+   * qui passe.
+   */
+  EMERGENCY_UNLOCK_AT: 'emergency.unlockAt.v1',
+
+  /** Heure des rappels du soir, en minutes depuis minuit. */
+  PREF_REMINDER_MINUTES: 'pref.reminderMinutes.v1',
+
   /** MMKV key (`navigationStorage`) for persisted React Navigation root state. */
   NAVIGATION_STATE_V1: 'navigation.state.v1',
 }

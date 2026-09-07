@@ -59,7 +59,7 @@ enum RelockShieldCopy {
     // suivante. Une ligne vide est le seul moyen d'aérer ce joint.
     return "\n\(mission)\n\n\(blocked)\n\n\(management)\n\n\(counterMark)  \(counter)"
   }
-
+  
   private static func localized(_ key: String, defaultValue: String) -> String {
     NSLocalizedString(key, bundle: .main, value: defaultValue, comment: "")
   }

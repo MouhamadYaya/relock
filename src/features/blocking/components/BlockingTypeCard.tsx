@@ -22,6 +22,16 @@ interface Props {
   style?: ViewStyle
 }
 
+/**
+ * Un des trois types de règle — le choix le plus important de l'app.
+ *
+ * ⚠️ RANGÉE pleine largeur, pas une vignette de grille. En trois colonnes, la
+ * description ne tenait qu'en deux mots (« p. ex. 30 min ») : il fallait déjà
+ * savoir ce qu'était une « Session » pour la choisir. Pleine largeur, le titre
+ * dit l'action et la ligne dessous dit exactement ce qui va se passer — et les
+ * trois rangées remplissent la feuille au repos au lieu d'être avalées par les
+ * modèles illustrés qui défilent en dessous.
+ */
 export function BlockingTypeCard({
   kind,
   title,
@@ -38,37 +48,38 @@ export function BlockingTypeCard({
       style={[styles.card, style]}
     >
       <BlockingCardSurface cornerRadius={radius.functional} />
-      <View style={styles.head}>
-        <View testID="blocking-type-icon-stage" style={styles.iconStage}>
-          <RuleTypeGlyph kind={kind} />
-        </View>
-        <View style={styles.chevron}>
-          <IconSvg
-            name={IconName.FORWARD}
-            size={spacing.sm}
-            color={colors.textTertiary}
-          />
-        </View>
+      {/* Ni pastille ni cadre : on ne garde que le placement et la taille. */}
+      <View testID="blocking-type-icon-stage" style={styles.iconStage}>
+        <RuleTypeGlyph kind={kind} />
       </View>
-      <View style={styles.titleSlot}>
-        <Text style={styles.title} numberOfLines={2}>
+      <View style={styles.text}>
+        <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
+        <Text style={styles.description} numberOfLines={2}>
+          {description}
+        </Text>
       </View>
-      <Text style={styles.description} numberOfLines={3}>
-        {description}
-      </Text>
+      <View style={styles.chevron}>
+        <IconSvg
+          name={IconName.FORWARD}
+          size={spacing.sm}
+          color={colors.textTertiary}
+        />
+      </View>
     </PressableScale>
   )
 }
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: layout.blockingTypeCardMinHeight,
+    minHeight: layout.blockingTypeRowMinHeight,
     overflow: 'hidden',
-    padding: spacing.sm,
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
     borderRadius: radius.functional,
     backgroundColor: colors.blockingSurface,
     shadowColor: shadow.action.shadowColor,
@@ -76,41 +87,35 @@ const styles = StyleSheet.create({
     shadowRadius: shadow.action.shadowRadius,
     shadowOffset: shadow.action.shadowOffset,
   },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  // Ni pastille ni cadre : on ne garde que le placement et la taille.
-  chevron: {
-    width: spacing.xl,
-    height: spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   iconStage: {
     width: spacing.xxxxl,
     height: spacing.xxxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  titleSlot: {
-    minHeight: typography.blockingTypeTitleLineHeight * 2,
-    justifyContent: 'flex-end',
-    marginTop: spacing.xs,
+  // `minWidth: 0` : sans lui la colonne de texte refuse de se comprimer et
+  // pousse le chevron hors de la rangée sur les titres longs.
+  text: {
+    flex: 1,
+    minWidth: 0,
   },
   title: {
     ...fonts.semiBold,
     color: colors.textPrimary,
-    fontSize: typography.blockingTypeTitleSize,
-    lineHeight: typography.blockingTypeTitleLineHeight,
+    fontSize: typography.blockingCardTitleSize,
+    lineHeight: typography.blockingCardTitleLineHeight,
     letterSpacing: typography.blockingSectionLetterSpacing,
   },
   description: {
     ...fonts.regular,
     color: colors.textSecondary,
-    fontSize: typography.blockingMetaSize,
-    lineHeight: typography.blockingMetaLineHeight,
-    marginTop: spacing.xxs,
+    fontSize: typography.blockingCardBodySize,
+    lineHeight: typography.blockingCardBodyLineHeight,
+    marginTop: spacing.micro,
+  },
+  chevron: {
+    width: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })
