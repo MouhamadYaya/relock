@@ -16,9 +16,17 @@
  *   Sans `SENTRY_DSN`, tout ce module est inerte — aucun réseau, aucun coût.
  *   En __DEV__ il faut en plus `SENTRY_ENABLE_IN_DEV=1`, sinon on polluerait
  *   le projet Sentry avec les erreurs de la boucle de développement.
+ *
+ *   La préférence « rapports d'anomalie » agit sur le SDK LUI-MÊME, à trois
+ *   niveaux : refus d'initialiser au lancement (`initSentry`), fermeture du
+ *   client à la bascule (`applyCrashReportsPreference`), et rejet à
+ *   l'émission (`gateAndScrub`). Ne filtrer que les appels de ce fichier
+ *   laisserait partir tout seuls crashs natifs, sessions, traces et replay —
+ *   c'est-à-dire l'essentiel du trafic.
  * ---------------------------------------------------------------------
  */
 
+import type { ErrorEvent } from '@sentry/react-native'
 import * as Sentry from '@sentry/react-native'
 import type { ErrorInfo } from 'react'
 
@@ -48,7 +56,21 @@ const IGNORED_ERRORS: readonly (string | RegExp)[] = [
 ]
 
 let didInit = false
+/** Le client SDK tourne-t-il en ce moment ? */
 let active = false
+
+/**
+ * Le contexte de session VOULU, tenu indépendamment de l'état du SDK.
+ *
+ * Il est mis à jour même quand l'envoi est coupé, parce qu'un opt-in en cours
+ * de session redémarre un client VIERGE : sans cette mémoire, les événements
+ * suivants seraient orphelins de leur utilisateur, de leurs étiquettes et de
+ * l'instrumentation Supabase, et il faudrait relancer l'app pour les retrouver.
+ */
+let desiredUserId: string | null = null
+const desiredTags: Record<string, string> = {}
+const desiredContexts: Record<string, Record<string, unknown> | null> = {}
+let supabaseClientRef: unknown = null
 
 /**
  * Vrai quand les événements partent réellement : le DSN est configuré ET
@@ -67,11 +89,47 @@ function shouldEnable(): boolean {
   return true
 }
 
-export function initSentry(): void {
-  if (didInit) return
-  didInit = true
-  if (!shouldEnable()) return
+/**
+ * Dernier filet avant le réseau, en plus du nettoyage.
+ *
+ * `Sentry.close()` VIDE la file d'attente avant de fermer : un événement mis
+ * en file juste avant l'opt-out partirait donc au moment précis où
+ * l'utilisateur coupe l'envoi. La préférence est donc relue ICI, à l'instant
+ * de l'émission — le seul endroit que rien ne contourne, pas même les
+ * intégrations automatiques.
+ */
+function gateAndScrub(event: ErrorEvent): ErrorEvent | null {
+  if (!getPreference('crashReports')) return null
+  return scrubEvent(event)
+}
 
+/**
+ * Réapplique le contexte voulu à un client fraîchement démarré. Sans cela, un
+ * opt-in en cours de session produirait des événements anonymes.
+ */
+function restoreDesiredContext(): void {
+  if (Object.keys(desiredTags).length > 0) {
+    Sentry.setTags(desiredTags)
+  }
+  if (desiredUserId !== null) {
+    Sentry.setUser({ id: desiredUserId })
+  }
+  for (const [key, context] of Object.entries(desiredContexts)) {
+    Sentry.setContext(key, context)
+  }
+  if (supabaseClientRef) {
+    Sentry.addIntegration(
+      Sentry.supabaseIntegration({ supabaseClient: supabaseClientRef }),
+    )
+  }
+}
+
+/**
+ * Démarre le SDK. Appelée au lancement ET à chaque réactivation depuis les
+ * Réglages — d'où la séparation d'avec `initSentry`, qui ne s'exécute qu'une
+ * fois et décide SI l'on démarre.
+ */
+function startSentry(): void {
   const replayEnabled =
     env.SENTRY_REPLAYS_SESSION_SAMPLE_RATE > 0 ||
     env.SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE > 0
@@ -85,7 +143,7 @@ export function initSentry(): void {
     // Le SDK n'ajoute de lui-même ni IP, ni e-mail, ni corps de requête.
     sendDefaultPii: false,
     // Deux filets successifs : l'événement entier, puis chaque miette.
-    beforeSend: scrubEvent,
+    beforeSend: gateAndScrub,
     beforeBreadcrumb: scrubBreadcrumb,
 
     // ---- Fiabilité ------------------------------------------------------
@@ -145,6 +203,55 @@ export function initSentry(): void {
   })
 
   active = true
+  restoreDesiredContext()
+}
+
+/**
+ * Décide, UNE FOIS au lancement, si le SDK démarre.
+ *
+ * L'opt-out coupe le SDK lui-même, pas seulement les fonctions de ce fichier :
+ * `enableNativeCrashHandling`, `enableAutoSessionTracking`, les traces, les
+ * profils et le replay émettent SANS jamais passer par nos wrappers. Ne pas
+ * initialiser est donc la seule façon de tenir la promesse de l'interrupteur.
+ */
+export function initSentry(): void {
+  if (didInit) return
+  didInit = true
+  if (!shouldEnable()) return
+  if (!getPreference('crashReports')) return
+  startSentry()
+}
+
+/**
+ * Applique au SDK le choix « rapports d'anomalie » des Réglages.
+ *
+ * La trace durable de la préférence appartient à l'appelant (le store, qui
+ * l'écrit avant d'appeler ici) : cette fonction ne fait que démarrer ou
+ * fermer le client.
+ *
+ * Sans DSN utilisable, elle ne fait rien : il n'y a aucun client à piloter.
+ */
+export function applyCrashReportsPreference(enabled: boolean): void {
+  if (!shouldEnable()) return
+
+  if (enabled) {
+    if (active) return
+    startSentry()
+    return
+  }
+
+  if (!active) return
+  // L'ordre compte : basculer `active` AVANT la fermeture rend
+  // `isSentryEnabled()` faux immédiatement, donc plus aucun appel ne produit
+  // d'événement pendant `close()`, qui est asynchrone.
+  active = false
+  // Ferme le client : arrête les crashs natifs, le suivi de session, les
+  // traces et le replay. Les événements encore en file sont interceptés par
+  // `gateAndScrub`, qui les jette.
+  //
+  // Au mieux : un échec de fermeture ne doit pas remonter, `active` est déjà
+  // faux et la garde d'envoi tient la promesse toute seule.
+  Sentry.close().catch(() => undefined)
 }
 
 /**
@@ -154,6 +261,9 @@ export function initSentry(): void {
  * fil d'Ariane : on voit la dernière table interrogée avant un crash.
  */
 export function attachSupabaseTelemetry(supabaseClient: unknown): void {
+  // Mémorisé même envoi coupé : un opt-in ultérieur doit retrouver
+  // l'instrumentation sans exiger un redémarrage de l'app.
+  supabaseClientRef = supabaseClient
   if (!isSentryEnabled()) return
   Sentry.addIntegration(Sentry.supabaseIntegration({ supabaseClient }))
 }
@@ -237,12 +347,14 @@ export function addAppBreadcrumb(breadcrumb: {
  * au précédent).
  */
 export function setSentryUser(userId: string | null): void {
+  desiredUserId = userId
   if (!isSentryEnabled()) return
   Sentry.setUser(userId ? { id: userId } : null)
 }
 
 /** Étiquettes filtrables dans le dashboard (env, abonnement, langue…). */
 export function setSentryTags(tags: Record<string, string>): void {
+  Object.assign(desiredTags, tags)
   if (!isSentryEnabled()) return
   Sentry.setTags(tags)
 }
@@ -252,6 +364,7 @@ export function setSentryContext(
   key: string,
   context: Record<string, unknown> | null,
 ): void {
+  desiredContexts[key] = context
   if (!isSentryEnabled()) return
   Sentry.setContext(key, context)
 }

@@ -58,6 +58,8 @@
 		C0DE20000000000000000014 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
 		C0DE20000000000000000015 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
 		C0DE20000000000000000016 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000017 /* ExtensionLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000001 /* ExtensionLog.swift */; };
+		C0DE20000000000000000018 /* ExtensionLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000003 /* ExtensionLogTests.swift */; };
 		C0DE20000000000000000021 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
 		C0DE20000000000000000022 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
 		C0DE20000000000000000023 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
@@ -206,6 +208,7 @@
 		C0DE10000000000000000012 /* RelockShieldCopy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RelockShieldCopy.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldAttemptStoreTests.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelockBridgeDiagnosticsTests.swift; sourceTree = "<group>"; };
+		C0DE20000000000000000003 /* ExtensionLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLogTests.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000001 /* ExtensionLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionLog.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000002 /* ExtensionSentry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionSentry.swift; sourceTree = "<group>"; };
 		C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlocusScreenTime.swift; path = Relock/BlocusScreenTime.swift; sourceTree = "<group>"; };
@@ -472,6 +475,7 @@
 				C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */,
 				C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */,
 				C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */,
+				C0DE20000000000000000003 /* ExtensionLogTests.swift */,
 			);
 			path = RelockUITests;
 			sourceTree = "<group>";
@@ -1048,6 +1052,8 @@
 				C0DE10000000000000000004 /* ShieldAttemptStore.swift in Sources */,
 				C0DE10000000000000000006 /* ShieldAttemptStoreTests.swift in Sources */,
 				C0DE10000000000000000021 /* RelockBridgeDiagnosticsTests.swift in Sources */,
+				C0DE20000000000000000017 /* ExtensionLog.swift in Sources */,
+				C0DE20000000000000000018 /* ExtensionLogTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

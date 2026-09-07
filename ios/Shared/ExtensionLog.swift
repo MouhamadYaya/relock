@@ -72,14 +72,34 @@ enum ExtensionLog {
       "data": data,
     ])
 
-    // On garde la QUEUE (les plus récentes) et on dit combien on a jeté.
-    if entries.count > maxEntries {
-      let dropped = entries.count - maxEntries
-      entries = Array(entries.suffix(maxEntries))
-      entries[0]["droppedBefore"] = dropped
-    }
+    defaults.set(trimmed(entries), forKey: storageKey)
+  }
 
-    defaults.set(entries, forKey: storageKey)
+  /// Applique la borne au journal et tient le compteur d'entrées perdues.
+  ///
+  /// On garde la QUEUE (les plus récentes) et on dit combien on a jeté.
+  ///
+  /// Le compteur est CUMULATIF. Seule la première entrée conservée porte le
+  /// marqueur, et chaque nouveau débordement emporte justement cette entrée —
+  /// donc le marqueur précédent avec elle. L'écraser ferait rapporter « 1
+  /// entrée perdue » après en avoir perdu des centaines, ce qui est pire que
+  /// pas de chiffre du tout : ça dit que tout va bien. On additionne donc ce
+  /// que portaient les entrées jetées.
+  ///
+  /// Fonction PURE, et publique pour cette seule raison : c'est l'invariant
+  /// qui se teste, et il se teste sans groupe d'app ni `UserDefaults`.
+  static func trimmed(_ entries: [[String: Any]]) -> [[String: Any]] {
+    guard entries.count > maxEntries else { return entries }
+
+    let removed = entries.count - maxEntries
+    let carriedOver = entries
+      .prefix(removed)
+      .compactMap { $0["droppedBefore"] as? Int }
+      .reduce(0, +)
+
+    var kept = Array(entries.suffix(maxEntries))
+    kept[0]["droppedBefore"] = carriedOver + removed
+    return kept
   }
 
   /// Raccourci pour une erreur attrapée.

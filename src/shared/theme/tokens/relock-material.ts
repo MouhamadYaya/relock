@@ -156,6 +156,15 @@ export const relockMaterial = {
     homeLavenderEdge: 'rgba(200, 184, 255, 0.3)',
     homeLavenderGlow: 'rgba(167, 139, 250, 0.12)',
     homeScoreTile: 'rgba(255, 255, 255, 0.04)',
+    // Pastille d'ecart du score : vert quand il progresse, ambre quand il
+    // recule. Jamais rouge — un score en baisse est une information, pas une
+    // faute, et le rouge est reserve aux alertes de l'app.
+    homeScoreUp: '#82E6C5',
+    homeScoreUpSoft: 'rgba(130, 230, 197, 0.14)',
+    homeScoreDown: '#E0A24E',
+    homeScoreDownSoft: 'rgba(224, 162, 78, 0.14)',
+    homeScoreTrendBar: 'rgba(200, 184, 255, 0.55)',
+    homeScoreTrendToday: '#C8B8FF',
     homeProgressTrack: 'rgba(255, 255, 255, 0.10)',
     homeSkeleton: 'rgba(255, 255, 255, 0.08)',
     homeModalBackdrop: 'rgba(4, 5, 9, 0.78)',
@@ -163,9 +172,29 @@ export const relockMaterial = {
     // lumiere est FROIDE : une aurore violette au lieu du limbe dore. Deux
     // ecrans, une meme nuit, deux heures differentes — c'est ce qui les
     // distingue sans les separer.
-    settingsAurora: 'rgba(167, 139, 250, 0.22)',
-    settingsAuroraDeep: 'rgba(115, 87, 220, 0.16)',
-    settingsAuroraCool: 'rgba(104, 199, 242, 0.07)',
+    //
+    // ⚠️ Les couleurs posees dans un degrade SVG (`stopColor`) sont TOUJOURS
+    // opaques ici, l'alpha etant porte a part par `stopOpacity`. Une chaine
+    // `rgba()` en `stopColor` n'est pas rendue de facon fiable par
+    // react-native-svg : l'alpha saute, le degrade devient un aplat plein, et
+    // une carte de verre se transforme en rectangle blanc qui avale son
+    // propre texte. Les valeurs `rgba` ci-dessous ne servent donc QUE de
+    // `backgroundColor` ou de `borderColor` sur des `View`, ou l'alpha est sur.
+    settingsAurora: '#A78BFA',
+    settingsAuroraDeep: '#7357DC',
+    settingsAuroraCool: '#68C7F2',
+    // Corps des cartes : OPAQUE, et non un voile clair a 5 % comme sur
+    // l'Accueil. Les Reglages sont une longue liste lue de haut en bas, pas
+    // une scene : chaque carte doit se detacher du fond au premier coup
+    // d'oeil, y compris en plein soleil et sur un ecran a faible contraste.
+    settingsCardTop: '#202234',
+    settingsCardBottom: '#181A2A',
+    settingsCardRaisedTop: '#282A40',
+    settingsCardRaisedBottom: '#1E2032',
+    settingsCardBorder: 'rgba(255, 255, 255, 0.12)',
+    settingsCardBorderStrong: 'rgba(206, 196, 255, 0.22)',
+    settingsDivider: 'rgba(255, 255, 255, 0.09)',
+    settingsPressed: 'rgba(255, 255, 255, 0.06)',
     // Pastilles d'icone : une teinte par famille de reglages. La couleur
     // porte le classement, ce qui evite d'ecrire « section » partout.
     settingsTintViolet: 'rgba(167, 139, 250, 0.16)',
@@ -295,6 +324,10 @@ export const relockMaterial = {
     homeScoreDialogRingStroke: 7,
     homeScoreDialogRingGap: 5,
     homeScoreDialogGlyphSize: 22,
+    homeScoreDeltaGlyphSize: 12,
+    homeScoreTrendHeight: 64,
+    homeScoreTrendBarWidth: 8,
+    homeScoreTrendBarMin: 6,
     // Keep the native Home report's transparent slot in sync with this height.
     homeBlockedHeight: 280,
     homeMyAppsTileSize: 62,
@@ -404,8 +437,8 @@ export const relockMaterial = {
     homeScoreLineHeight: 34,
     homeScoreValueSize: 44,
     homeScoreValueLineHeight: 48,
-    homeScoreCaptionSize: 11,
-    homeScoreCaptionLineHeight: 14,
+    homeScoreCaptionSize: 13,
+    homeScoreCaptionLineHeight: 18,
     homeScoreTitleSize: 17,
     homeScoreTitleLineHeight: 22,
     // La carte d'Accueil porte un titre et des lignes plus grands que la
@@ -414,8 +447,8 @@ export const relockMaterial = {
     homeScoreCardTitleLineHeight: 25,
     homeScoreCardRowLabelSize: 15,
     homeScoreCardRowLabelLineHeight: 20,
-    homeScoreRowLabelSize: 13,
-    homeScoreRowLabelLineHeight: 17,
+    homeScoreRowLabelSize: 16,
+    homeScoreRowLabelLineHeight: 21,
     homeScoreRowValueSize: 22,
     homeScoreRowValueLineHeight: 26,
     homeScoreDetailValueSize: 21,
@@ -426,10 +459,10 @@ export const relockMaterial = {
     homeScoreFooterLineHeight: 16,
     homeScoreDialogTitleSize: 22,
     homeScoreDialogTitleLineHeight: 28,
-    homeScoreSectionSize: 14,
-    homeScoreSectionLineHeight: 18,
-    homeScoreBodySize: 13,
-    homeScoreBodyLineHeight: 19,
+    homeScoreSectionSize: 16,
+    homeScoreSectionLineHeight: 21,
+    homeScoreBodySize: 15,
+    homeScoreBodyLineHeight: 21,
     homeMetricSize: 21,
     homeMetricLineHeight: 25,
     homeSheetTitleSize: 24,
@@ -491,6 +524,13 @@ export const relockMaterial = {
     // Ramene au meme niveau que `decorative` — c'est un decor, pas un signal.
     // Miroir de `.opacity(...)` sur `scoreDial` dans les deux fichiers Swift.
     homeScoreDial: 0.22,
+    // « vs hier » accompagne l'ecart, il ne le concurrence pas : meme teinte,
+    // en retrait. C'est ce qui empeche « ↑ 4 vs hier » de se lire comme deux
+    // chiffres distincts.
+    homeScoreDeltaSuffix: 0.72,
+    // Un jour de la tendance sans score mesure reste visible, mais en creux :
+    // l'absence de mesure doit se voir sans se faire passer pour un zero.
+    homeScoreTrendEmpty: 0.28,
     decorative: 0.22,
     decorativeStrong: 0.34,
     disabled: 0.52,

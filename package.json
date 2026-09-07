@@ -81,7 +81,10 @@
     "check:icons": "node scripts/check-icons-stale.js",
     "check:imports": "node scripts/check-import-paths.js",
     "android:rebuild": "node scripts/ensure-env.cjs && rm -rf android/app/build android/app/.cxx android/build android/.gradle && cd android && ./gradlew :app:assembleDebug && cd .. && node scripts/wait-for-android-device.cjs && npx react-native run-android",
-    "bootsplash:generate": "node scripts/bootsplash-generate.cjs"
+    "bootsplash:generate": "node scripts/bootsplash-generate.cjs",
+    "legal:dev": "wrangler dev",
+    "legal:deploy": "wrangler deploy",
+    "legal:versions": "wrangler deployments list"
   },
   "dependencies": {
     "@react-native-clipboard/clipboard": "^1.14.1",
@@ -165,7 +168,8 @@
     "react-test-renderer": "19.1.4",
     "sharp": "0.34.2",
     "standard-version": "^9.5.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "wrangler": "^4.129.0"
   },
   "overrides": {
     "react-native-nitro-modules": "0.35.0"

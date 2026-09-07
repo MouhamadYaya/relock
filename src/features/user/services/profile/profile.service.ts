@@ -33,6 +33,32 @@ function isMissingColumn(error: { code?: string } | null): boolean {
   return error?.code === UNDEFINED_COLUMN
 }
 
+/**
+ * Le serveur exige une authentification récente avant de supprimer le compte.
+ * L'appelant doit faire reconnecter la personne, pas réessayer.
+ */
+export const REAUTH_REQUIRED = 'reauthentication_required'
+
+/**
+ * Le code machine renvoyé dans le corps d'une Edge Function.
+ *
+ * `functions.invoke` ne remonte qu'un `FunctionsHttpError` générique : le
+ * statut et la raison vivent dans la `Response` attachée, qu'il faut lire
+ * soi-même. Sans ça, « reconnecte-toi » serait indiscernable de « le serveur
+ * est en panne ».
+ */
+async function edgeErrorCode(error: unknown): Promise<string | null> {
+  const context = (error as { context?: unknown } | null)?.context
+  if (!(context instanceof Response)) return null
+  try {
+    const body: unknown = await context.clone().json()
+    const code = (body as { error?: unknown } | null)?.error
+    return typeof code === 'string' ? code : null
+  } catch {
+    return null
+  }
+}
+
 async function currentUserId(): Promise<string | null> {
   const { data } = await supabase.auth.getUser()
   return data.user?.id ?? null
@@ -141,6 +167,19 @@ export const ProfileService = {
     const { error } = await supabase.functions.invoke('delete-account', {
       method: 'POST',
     })
-    if (error) throw normalizeError(error)
+    if (!error) return
+
+    // Une session ancienne ne suffit pas pour une action irréversible : le
+    // serveur réclame une reconnexion. Ce cas a son propre code, parce que
+    // l'écran doit rouvrir la porte « compte », pas afficher « réessaie ».
+    if ((await edgeErrorCode(error)) === REAUTH_REQUIRED) {
+      throw normalizeError({
+        code: REAUTH_REQUIRED,
+        message: 'Reconnexion requise avant la suppression du compte.',
+        status: 403,
+        raw: error,
+      })
+    }
+    throw normalizeError(error)
   },
 }

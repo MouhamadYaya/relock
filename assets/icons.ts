@@ -2,6 +2,8 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
 // Run: npm run gen:icons
 
+import Arrowdown from '@assets/svgs/arrowdown.svg';
+import Arrowup from '@assets/svgs/arrowup.svg';
 import Back from '@assets/svgs/back.svg';
 import Bell from '@assets/svgs/bell.svg';
 import Block from '@assets/svgs/block.svg';
@@ -49,6 +51,8 @@ import User from '@assets/svgs/user.svg';
 
 
 export enum IconName {
+  ARROWDOWN = 'ARROWDOWN',
+  ARROWUP = 'ARROWUP',
   BACK = 'BACK',
   BELL = 'BELL',
   BLOCK = 'BLOCK',
@@ -97,6 +101,8 @@ export enum IconName {
 }
 
 export const AppIcon = {
+  [IconName.ARROWDOWN]: Arrowdown,
+  [IconName.ARROWUP]: Arrowup,
   [IconName.BACK]: Back,
   [IconName.BELL]: Bell,
   [IconName.BLOCK]: Block,

@@ -84,6 +84,20 @@ export interface PendingShieldRequest {
   requestedAt: number
 }
 
+/**
+ * Le choix de l'utilisateur, et ce qu'iOS applique réellement.
+ *
+ * Les deux divergent normalement : la protection n'est ARMÉE que pendant
+ * qu'un blocage protège. Case cochée + aucun blocage en cours = `enabled`
+ * vrai, `active` faux, et l'iPhone se comporte normalement.
+ */
+export interface UninstallProtection {
+  /** La case est cochée dans les Réglages. */
+  enabled: boolean
+  /** La restriction iOS est posée en ce moment même. */
+  active: boolean
+}
+
 export interface SelectionInfo {
   apps: number
   categories: number
@@ -197,6 +211,12 @@ interface BlocusScreenTimeNative {
   /** Purge les `count` premiers événements une fois la synchro réussie. */
   ackEvents(count: number): Promise<boolean>
   /** 1er lancement après (ré)install : purge le blocage système. true si frais. */
+  /**
+   * Protection contre la désinstallation. Rend `true` si la restriction a pu
+   * être appliquée (iOS 16+), `false` sinon — le choix reste enregistré.
+   */
+  setUninstallProtection(enabled: boolean): Promise<boolean>
+  uninstallProtection(): Promise<UninstallProtection>
   resetIfFreshInstall(): Promise<boolean>
   /** Vide le journal partagé écrit par les 5 extensions (voir ExtensionLog.swift). */
   drainExtensionLog?(): Promise<ExtensionLogEntry[]>
@@ -354,6 +374,19 @@ export const ScreenTime = {
       : Promise.resolve({ status: 'pending', historyDays: 0 }),
   pullEvents: () => ensure().pullEvents(),
   ackEvents: (count: number) => ensure().ackEvents(count),
+  setUninstallProtection: (enabled: boolean) =>
+    native?.setUninstallProtection
+      ? native.setUninstallProtection(enabled)
+      : Promise.resolve(false),
+  /**
+   * Sans module natif (simulateur, Android), la protection n'existe pas : on
+   * répond « ni demandée, ni active » plutôt que de laisser l'écran afficher
+   * un interrupteur qui ne commande rien.
+   */
+  uninstallProtection: (): Promise<UninstallProtection> =>
+    native?.uninstallProtection
+      ? native.uninstallProtection()
+      : Promise.resolve({ enabled: false, active: false }),
   resetIfFreshInstall: () =>
     native?.resetIfFreshInstall
       ? native.resetIfFreshInstall()

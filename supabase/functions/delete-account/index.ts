@@ -13,6 +13,18 @@
  * emportent ensuite profil, règles, événements, statistiques et réponses
  * d'onboarding. Aucune donnée résiduelle côté Supabase.
  *
+ * AUTHENTIFICATION RÉCENTE EXIGÉE
+ * Une session Supabase se renouvelle indéfiniment. Sans contrôle, un téléphone
+ * laissé déverrouillé — ou un jeton dérobé — suffit à effacer définitivement un
+ * compte et tout ce qui en dépend. On exige donc une authentification RÉCENTE,
+ * lue dans la revendication `amr` du jeton : contrairement à `iat`, elle ne
+ * bouge PAS au rafraîchissement, et c'est le seul horodatage qui atteste que
+ * la personne a réellement reprouvé son identité.
+ *
+ * Un jeton sans `amr` est refusé plutôt qu'accepté par défaut. Ce n'est pas un
+ * blocage définitif : la réponse demande une reconnexion, et le jeton émis
+ * ensuite porte la revendication.
+ *
  * CE QU'ELLE NE FAIT PAS
  * L'abonnement RevenueCat et les fichiers ImageKit ne sont pas touchés : le
  * premier appartient au compte Apple/Google (Apple interdit de l'annuler à
@@ -26,11 +38,59 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
+/**
+ * Ancienneté maximale de la dernière authentification réelle. Assez large pour
+ * couvrir « je me connecte, je lis l'écran, je réfléchis, je confirme », assez
+ * courte pour qu'une session oubliée depuis hier ne suffise pas.
+ */
+const REAUTH_MAX_AGE_SECONDS = 15 * 60
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' },
   })
+}
+
+/** Charge utile d'un JWT, sans vérification de signature. */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+  try {
+    // base64url → base64, puis remise du bourrage retiré à l'encodage.
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')
+    const payload: unknown = JSON.parse(atob(padded))
+    return payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Instant (epoch, secondes) de la dernière authentification RÉELLE, lu dans
+ * `amr` — la liste des méthodes employées, chacune horodatée. On prend la plus
+ * récente : se reconnecter par un autre moyen compte comme une reconnexion.
+ *
+ * `null` quand la revendication est absente ou illisible : impossible d'en
+ * conclure quoi que ce soit, donc l'appelant refuse.
+ */
+function lastAuthenticationAt(token: string): number | null {
+  const payload = decodeJwtPayload(token)
+  const amr = payload?.amr
+  if (!Array.isArray(amr)) return null
+
+  const timestamps = amr
+    .map(method =>
+      method && typeof method === 'object'
+        ? (method as { timestamp?: unknown }).timestamp
+        : null,
+    )
+    .filter((value): value is number => typeof value === 'number')
+
+  return timestamps.length > 0 ? Math.max(...timestamps) : null
 }
 
 Deno.serve(async (req: Request) => {
@@ -59,6 +119,26 @@ Deno.serve(async (req: Request) => {
   const userId = data?.user?.id
   if (error || !userId) {
     return json({ error: 'unauthorized' }, 401)
+  }
+
+  // Le jeton vient d'être VALIDÉ par `getUser()` (vérification côté serveur
+  // d'auth) : ses revendications sont donc dignes de confiance, et les lire
+  // sans revérifier la signature ne crée pas de faille.
+  const authenticatedAt = lastAuthenticationAt(
+    authorization.slice('Bearer '.length),
+  )
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  if (
+    authenticatedAt === null ||
+    nowSeconds - authenticatedAt > REAUTH_MAX_AGE_SECONDS
+  ) {
+    return json(
+      {
+        error: 'reauthentication_required',
+        maxAgeSeconds: REAUTH_MAX_AGE_SECONDS,
+      },
+      403,
+    )
   }
 
   const admin = createClient(url, serviceRoleKey)

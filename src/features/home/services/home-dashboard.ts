@@ -1,8 +1,4 @@
-import type {
-  HomeDashboardState,
-  HomeScoreBand,
-  HomeScores,
-} from '@/features/home/types'
+import type { HomeDashboardState, HomeScoreBand } from '@/features/home/types'
 
 function validScore(value: number | null | undefined): value is number {
   return (
@@ -11,32 +7,6 @@ function validScore(value: number | null | undefined): value is number {
     value >= 0 &&
     value <= 100
   )
-}
-
-/**
- * The global score has one public rule: it is the rounded arithmetic mean of
- * validated Focus and Rest scores. Missing inputs stay missing; Home must never
- * manufacture a score from unrelated telemetry.
- */
-export function globalScore(
-  focus: number | null | undefined,
-  rest: number | null | undefined,
-): number | null {
-  if (!validScore(focus) || !validScore(rest)) return null
-  return Math.round((focus + rest) / 2)
-}
-
-export function homeScores(
-  focus: number | null | undefined,
-  rest: number | null | undefined,
-): HomeScores {
-  const global = globalScore(focus, rest)
-  return {
-    focus: validScore(focus) ? focus : null,
-    rest: validScore(rest) ? rest : null,
-    global,
-    available: global !== null,
-  }
 }
 
 /**

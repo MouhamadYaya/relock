@@ -117,6 +117,24 @@ final class RelockMonitor: DeviceActivityMonitor {
     return raw.filter { $0.value > now }
   }
 
+  /// Pose ou lève la restriction de suppression d'application.
+  ///
+  /// ⚠️ Miroir exact de `BlocusScreenTime.applyRemovalPolicy` — garder les
+  /// deux en phase. C'est ICI que ça se joue le plus souvent : quand iOS
+  /// réveille l'extension pour ouvrir ou fermer une fenêtre, l'app ne tourne
+  /// pas. Si seule l'app savait poser la restriction, la protection ne
+  /// s'armerait jamais sur un blocage programmé.
+  ///
+  /// La restriction est GLOBALE (aucune app supprimable sur l'appareil) et
+  /// n'est donc armée que si l'utilisateur l'a demandée ET qu'un blocage
+  /// protège réellement.
+  private func applyRemovalPolicy(blocking: Bool) {
+    let wanted =
+      blocking
+      && (defaults?.bool(forKey: "blocus.uninstallProtection") ?? false)
+    store.application.denyAppRemoval = wanted ? true : nil
+  }
+
   /// Union des sélections des fenêtres actives → bouclier (ou retrait).
   private func recomputeShield() {
     var apps = Set<ApplicationToken>()
@@ -146,11 +164,13 @@ final class RelockMonitor: DeviceActivityMonitor {
       store.shield.applicationCategories = nil
       store.shield.webDomains = nil
       defaults?.set(false, forKey: "blocus.isBlocking")
+      applyRemovalPolicy(blocking: false)
     } else {
       store.shield.applications = apps.isEmpty ? nil : apps
       store.shield.applicationCategories = cats.isEmpty ? nil : .specific(cats)
       store.shield.webDomains = webs.isEmpty ? nil : webs
       defaults?.set(true, forKey: "blocus.isBlocking")
+      applyRemovalPolicy(blocking: true)
     }
   }
 

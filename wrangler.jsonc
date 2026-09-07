@@ -1,0 +1,21 @@
+/**
+ * Cloudflare Workers — site statique legal de Relock (landing + CGU + confidentialité, EN/FR).
+ * Sert `src/legal/` tel quel : aucun script Worker, uniquement des assets statiques.
+ *
+ * Commandes : `npm run legal:dev` (local) · `npm run legal:deploy` (production).
+ * Docs : https://developers.cloudflare.com/workers/static-assets/
+ */
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "relock-legal",
+  "compatibility_date": "2026-09-07",
+  "assets": {
+    "directory": "./src/legal",
+    // `./privacy/` → `privacy/index.html`, et redirection depuis `./privacy`.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

@@ -14,8 +14,16 @@ export const appConfig = {
   build: 1,
   enableLogs: __DEV__,
   bundleId: 'com.yaya.relock',
-  /** Identifiant App Store — sert aux liens « Noter » et « Partager ». */
-  appStoreId: '0000000000',
+  /**
+   * Identifiant App Store, `null` tant que la fiche n'existe pas.
+   *
+   * VOLONTAIREMENT `null` PLUTÔT QU'UN NUMÉRO D'EXEMPLE : `id0000000000` est
+   * une URL App Store syntaxiquement valide. Elle s'ouvre donc sans erreur —
+   * sur une fiche introuvable, ou pire, sur celle de quelqu'un d'autre le jour
+   * où Apple attribue ce numéro. `null` fait disparaître proprement les
+   * entrées qui en dépendent (voir `links.review` / `links.share`).
+   */
+  appStoreId: null as string | null,
 }
 
 /**
@@ -44,10 +52,25 @@ export function appBuild(): string | null {
  */
 export const links = {
   privacy: 'https://relock.app/privacy',
+  privacyFr: 'https://relock.app/fr/privacy',
   terms: 'https://relock.app/terms',
+  termsFr: 'https://relock.app/fr/terms',
   help: 'https://relock.app/help',
   supportEmail: 'hello@relock.app',
-  /** Fiche App Store, ouverte directement sur l'onglet des avis. */
-  review: `https://apps.apple.com/app/id${appConfig.appStoreId}?action=write-review`,
-  share: `https://apps.apple.com/app/id${appConfig.appStoreId}`,
+  /**
+   * Fiche App Store, ouverte directement sur l'onglet des avis. `null` tant
+   * qu'aucun identifiant n'est connu : l'appelant retire alors l'entrée
+   * « Noter » plutôt que d'ouvrir une fiche qui n'est pas la nôtre.
+   */
+  review: appConfig.appStoreId
+    ? `https://apps.apple.com/app/id${appConfig.appStoreId}?action=write-review`
+    : null,
+  /**
+   * Adresse partagée par « Partager l'app ». Repli sur le site tant que la
+   * fiche n'existe pas — un lien qui présente le produit vaut mieux qu'un lien
+   * App Store mort dans la conversation de quelqu'un.
+   */
+  share: appConfig.appStoreId
+    ? `https://apps.apple.com/app/id${appConfig.appStoreId}`
+    : 'https://relock.app',
 } as const

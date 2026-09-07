@@ -8,7 +8,13 @@
  *    survit à une désinstallation, ni les blocages, ni la série.
  */
 
+import { constants } from '@/config/constants'
+import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
+import type { BlockRuleView } from '@/features/blocking/types'
+import { getSessionQueryClient } from '@/session/session-bridge'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { offlineQueue } from '@/shared/services/api/offline/offline-queue'
+import { cacheEngine } from '@/shared/services/storage/cache-engine'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 import { supabase } from '@/shared/services/supabase/client'
 
@@ -64,4 +70,51 @@ export async function wipeCloudData(): Promise<boolean> {
 
   kvStorage.delete(PENDING)
   return true
+}
+
+/**
+ * Remise à zéro DEMANDÉE par l'utilisateur, depuis les Réglages.
+ *
+ * À ne pas confondre avec `runInstallReset`, qui répare l'état après une
+ * réinstallation. Ici c'est un choix : « je repars de zéro ».
+ *
+ * CE QUI DISPARAÎT
+ * Les règles, les événements, les statistiques quotidiennes, la série, le
+ * score — côté serveur ET dans le journal natif de l'App Group, sans quoi la
+ * prochaine synchronisation reconstruirait des statistiques à partir de
+ * vieux événements et l'historique « effacé » réapparaîtrait.
+ *
+ * CE QUI RESTE, VOLONTAIREMENT
+ * La session (on ne déconnecte pas quelqu'un qui a demandé un ménage),
+ * l'abonnement (il appartient au compte App Store), et les préférences
+ * personnelles — thème, langue, notifications. Effacer la langue de
+ * quelqu'un parce qu'il a voulu remettre ses compteurs à zéro serait une
+ * surprise, pas un service. L'écran de confirmation dit exactement cela.
+ *
+ * Rend `false` si la purge côté serveur a échoué : l'iPhone est alors déjà
+ * libéré, mais le compte n'est pas à jour, et l'écran doit le dire plutôt que
+ * d'annoncer un succès.
+ */
+export async function resetAllData(rules: BlockRuleView[]): Promise<boolean> {
+  // 1. Libérer l'iPhone d'abord. Si la suite échoue, on ne laisse personne
+  //    enfermé derrière un bouclier dont les règles viennent d'être effacées.
+  await emergencyUnlock(rules)
+
+  // 2. Le compte : règles, événements, statistiques, + journal natif.
+  const wiped = await wipeCloudData()
+
+  // 3. Les caches locaux, qui rejoueraient sinon l'ancien monde au prochain
+  //    démarrage : instantané React Query persisté, file hors ligne, cache
+  //    mémoire. La session Supabase vit AUSSI dans MMKV : on efface donc des
+  //    clés nommées, jamais tout le magasin.
+  kvStorage.delete(constants.RQ_CACHE)
+  offlineQueue.clear()
+  cacheEngine.clear()
+  const client = getSessionQueryClient()
+  if (client) {
+    await client.cancelQueries().catch(() => undefined)
+    client.clear()
+  }
+
+  return wiped
 }

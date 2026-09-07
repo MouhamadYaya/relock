@@ -31,7 +31,17 @@ export const env = {
   DEV_LOGIN_EMAIL: (Config.DEV_LOGIN_EMAIL ?? '').trim(),
   DEV_LOGIN_PASSWORD: (Config.DEV_LOGIN_PASSWORD ?? '').trim(),
   WS_URL: (Config.WS_URL ?? '').trim(),
-  ENV: (Config.ENV ?? (__DEV__ ? 'development' : 'production')).trim(),
+  /**
+   * Étiquette d'environnement, envoyée à Sentry.
+   *
+   * ⚠️ `??` ne se déclenche que sur `undefined` : une ligne `ENV=` dans `.env`
+   * produit une chaîne VIDE, qui passait le garde. Sentry retombait alors sur
+   * son défaut — `production` — et taguait ainsi les builds de développement.
+   * Le bruit de dev se mélangeait au vrai signal et faussait le « % de
+   * sessions sans crash », qui est précisément le chiffre sur lequel on décide
+   * de publier. D'où le `||` : il traite le vide comme une absence.
+   */
+  ENV: (Config.ENV ?? '').trim() || (__DEV__ ? 'development' : 'production'),
   /**
    * Sentry. Le DSN n'est pas un secret (il part dans le binaire), mais il
    * reste dans `.env` pour rester muet tant qu'il n'est pas renseigné.

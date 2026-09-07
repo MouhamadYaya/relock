@@ -12,12 +12,15 @@ import { buildSessions } from '@/features/blocking/session'
 import { useHomeScore } from '@/features/home/hooks/useHomeScore'
 import {
   dashboardState,
-  homeScores,
   isHomeNewUser,
   minutesUntilTomorrow,
 } from '@/features/home/services/home-dashboard'
 import { buildHomeMyApps } from '@/features/home/services/home-my-apps'
 import { referenceMyApps } from '@/features/home/services/home-reference-my-apps'
+import {
+  fixtureSnapshot,
+  toHomeScores,
+} from '@/features/home/services/home-score'
 import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
 import {
   type HomeReferenceFixture,
@@ -106,16 +109,28 @@ export function useHomeDashboard() {
 
   useNotificationReconciler(stats.streak, runningRules.length > 0)
 
-  // Le score est calculé par l'extension de rapport, seule à voir les mesures
-  // de Temps d'écran ; on ne fait que relire ce qu'elle dépose.
-  const score = useHomeScore()
-  const scores = useMemo(
-    () =>
-      referenceFixture
-        ? homeScores(referenceFixture.focusScore, referenceFixture.restScore)
-        : homeScores(score.focus, score.rest),
-    [referenceFixture, score.focus, score.rest],
+  // Le score se calcule ICI, sur les données que l'app détient réellement :
+  // le journal quotidien `daily_stats`, les règles et l'avancement des quotas.
+  // L'extension de rapport ne peut pas écrire dans l'App Group (sandbox Apple,
+  // cf. docs/ARCHITECTURE.md) : son score n'atteignait jamais le JS, et la
+  // feuille de détail ne pouvait donc pas expliquer le chiffre de la carte.
+  const reprievedApps = useMemo(
+    () => blocked.apps.filter(app => app.unlocked).length,
+    [blocked.apps],
   )
+  const computed = useHomeScore({
+    now,
+    history: stats.recent,
+    rules,
+    limitSteps,
+    reprievedApps,
+  })
+  // La fixture remplace le snapshot ENTIER (carte + feuille), pour que les
+  // captures de comparaison restent identiques d'un lancement à l'autre.
+  const score = referenceFixture
+    ? fixtureSnapshot(referenceFixture, now)
+    : computed
+  const scores = useMemo(() => toHomeScores(score), [score])
   const state = dashboardState({
     rulesPending,
     statsPending: stats.isPending,

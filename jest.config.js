@@ -8,6 +8,7 @@ module.exports = {
     '^@supabase/supabase-js$': '<rootDir>/jest/supabaseJsMock.js',
     '^@react-native-community/datetimepicker$':
       '<rootDir>/jest/datetimepickerMock.js',
+    '^expo-constants$': '<rootDir>/jest/expoConstantsMock.js',
     '\\.css$': '<rootDir>/jest/emptyMock.js',
   },
   transformIgnorePatterns: [

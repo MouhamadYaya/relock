@@ -21,15 +21,34 @@
  * colonne `profiles.avatar_url` reste protégée par RLS. Si ce désordre devient
  * gênant, la parade est de faire transiter le binaire par cette fonction.
  *
+ * GARDE-FOU DE DÉBIT
+ * Comme la signature ne contraint ni la taille, ni le nom, ni le dossier du
+ * fichier, un compte authentifié pourrait demander des autorisations en boucle
+ * et remplir la médiathèque — la facture est au stockage, pas à l'utilisateur.
+ * Le nombre d'autorisations par personne et par heure est donc borné côté base
+ * (`public.claim_upload_grant`), là où le compte est atomique et survit au
+ * redémarrage d'une instance.
+ *
  * DÉPLOIEMENT
  *   supabase secrets set IMAGEKIT_PRIVATE_KEY=private_xxxxxxxx
  *   supabase functions deploy imagekit-auth
+ * (le schéma doit contenir `upload_grants` + `claim_upload_grant`.)
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /** Fenêtre de validité. Courte : le triplet ne sert qu'à l'upload qui suit. */
 const EXPIRY_SECONDS = 600
+
+/**
+ * Plafond d'autorisations par personne et par fenêtre.
+ *
+ * Généreux à dessein : changer d'avatar plusieurs fois de suite est un usage
+ * normal, et un recadrage raté se rejoue. Ce qui est visé, c'est la boucle —
+ * pas l'hésitation.
+ */
+const MAX_GRANTS_PER_WINDOW = 20
+const RATE_WINDOW_SECONDS = 3600
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -85,6 +104,31 @@ Deno.serve(async req => {
     return json({ error: 'unauthorized' }, 401)
   }
 
+  // Garde-fou de débit, AVANT de signer quoi que ce soit. Une erreur de la
+  // base fait échouer la demande : en cas de doute, on ne signe pas.
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  )
+  const { data: allowed, error: quotaError } = await admin.rpc(
+    'claim_upload_grant',
+    {
+      p_user_id: userId,
+      p_max_grants: MAX_GRANTS_PER_WINDOW,
+      p_window_seconds: RATE_WINDOW_SECONDS,
+    },
+  )
+  if (quotaError) {
+    console.error('imagekit-auth: claim_upload_grant a échoué', quotaError)
+    return json({ error: 'quota_unavailable' }, 503)
+  }
+  if (allowed !== true) {
+    return json(
+      { error: 'rate_limited', retryAfterSeconds: RATE_WINDOW_SECONDS },
+      429,
+    )
+  }
+
   const token = crypto.randomUUID()
   const expire = Math.floor(Date.now() / 1000) + EXPIRY_SECONDS
   const signature = await hmacSha1Hex(privateKey, `${token}${expire}`)
@@ -94,7 +138,8 @@ Deno.serve(async req => {
     expire,
     signature,
     publicKey,
-    // Un dossier par utilisateur : l'ancien avatar est écrasé, pas accumulé.
+    // Un dossier par utilisateur. Convention appliquée par le client (voir
+    // « LIMITE ASSUMÉE » plus haut), pas contrainte cryptographique.
     folder: `avatars/${userId}`,
   })
 })

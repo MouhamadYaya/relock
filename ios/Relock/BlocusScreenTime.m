@@ -186,6 +186,15 @@ RCT_EXTERN_METHOD(setCelebrationsEnabled
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(setUninstallProtection
+                  : (BOOL)enabled
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(uninstallProtection
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(armedActivities
                   : (RCTPromiseResolveBlock)resolve rejecter
                   : (RCTPromiseRejectBlock)reject)

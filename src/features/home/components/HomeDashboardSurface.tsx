@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { useIsFocused } from '@react-navigation/native'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -42,7 +43,6 @@ interface Props {
   emptyUsageLabel: string
   activityLabel: string
   onPressHero: () => void
-  onPressScore?: () => void
   onRequestPermission: () => void
   scoreCard: React.ReactNode
   blockedAppsCard?: React.ReactNode
@@ -58,13 +58,15 @@ export function HomeDashboardSurface({
   emptyUsageLabel,
   activityLabel,
   onPressHero,
-  onPressScore,
   onRequestPermission,
   scoreCard,
   blockedAppsCard,
 }: Props) {
   const [reportReady, setReportReady] = useState(false)
+  const [reloadToken, setReloadToken] = useState(0)
   const [heroExpanded, setHeroExpanded] = useState(false)
+  const isFocused = useIsFocused()
+  const wasFocused = useRef(isFocused)
   const reduceMotion = useReducedMotion()
   const heroProgress = useSharedValue(0)
   const reportAvailable = isScreenTimeReportAvailable
@@ -73,6 +75,47 @@ export function HomeDashboardSurface({
   const canRenderReport = authorization === 'approved' && reportAvailable
   const showsBlockedCard = blockedAppsCard != null
   const metrics = homeSurfaceMetrics(showsBlockedCard)
+
+  /*
+    Le rapport est rendu par une extension, DANS UN AUTRE PROCESSUS. Dès que
+    l'Accueil quitte la fenêtre — un autre onglet, Réglages, l'app en
+    arrière-plan — iOS est libre de tuer ce processus. Au retour, la surface
+    distante revient VIDE et le reste : le héro Temps d'écran et le classement
+    des apps disparaissent sans erreur ni événement, et une carte vide se lit
+    comme une journée sans usage. Le pic de `ready` peut lui aussi être avalé
+    par la sortie de fenêtre (`ScreenTimeReportView.swift` ne l'émet que si la
+    vue est encore affichée), laissant l'écran d'attente à demeure.
+
+    Rien de tout cela ne se voit sur simulateur : Family Controls n'y tourne
+    pas, la vue native y est un mock SwiftUI local qui ne meurt jamais.
+
+    On redemande donc une connexion NEUVE à chaque retour à l'écran, sans
+    démonter la vue native (bien plus coûteux) : `reloadToken` suffit, le côté
+    natif recrée son contrôleur d'hébergement. Le squelette réapparaît le
+    temps de l'agrégation — un chargement visible vaut mieux qu'un vide muet.
+  */
+  const reconnectReport = useCallback(() => {
+    setReportReady(false)
+    setReloadToken(token => token + 1)
+  }, [])
+
+  useEffect(() => {
+    // Uniquement sur la transition flou → focus : au montage, la vue native
+    // se construit déjà, la relancer ne ferait que rallonger le premier rendu.
+    if (wasFocused.current === isFocused) return
+    wasFocused.current = isFocused
+    if (isFocused) reconnectReport()
+  }, [isFocused, reconnectReport])
+
+  useEffect(() => {
+    // Retour au premier plan sans changement d'onglet : la fenêtre a bien été
+    // perdue, l'extension a pu mourir avec elle.
+    if (!isFocused) return
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') reconnectReport()
+    })
+    return () => sub.remove()
+  }, [isFocused, reconnectReport])
 
   const open = (action: () => void) => {
     haptics.selectionTick()
@@ -100,7 +143,7 @@ export function HomeDashboardSurface({
       {canRenderReport && (
         <ScreenTimeReport
           mode="home"
-          reloadToken={0}
+          reloadToken={reloadToken}
           showsBlockedCard={showsBlockedCard}
           pointerEvents="auto"
           onCommand={event => {
@@ -114,9 +157,6 @@ export function HomeDashboardSurface({
               case 'home.apps':
                 open(onPressHero)
                 break
-              case 'home.score':
-                if (onPressScore) open(onPressScore)
-                break
             }
           }}
           style={styles.nativeReport}
@@ -124,13 +164,16 @@ export function HomeDashboardSurface({
       )}
 
       {((canRenderReport && !reportReady) || authorizationChecking) && (
-        <View pointerEvents="none" style={styles.skeletonLayer}>
+        <View
+          testID="home-report-skeleton"
+          pointerEvents="none"
+          style={styles.skeletonLayer}
+        >
           <View style={styles.heroSkeleton}>
             <View style={styles.skeletonLabel} />
             <View style={styles.skeletonValue} />
             <View style={styles.skeletonDelta} />
           </View>
-          <View style={[styles.scoreSkeleton, { top: scoreTop }]} />
           <View style={[styles.appsSkeleton, { top: metrics.reportTop }]}>
             <View style={styles.skeletonTitle} />
             <View style={styles.skeletonRows}>
@@ -188,9 +231,15 @@ export function HomeDashboardSurface({
         </>
       )}
 
-      {!canRenderReport && (
-        <View style={[styles.scoreCard, { top: scoreTop }]}>{scoreCard}</View>
-      )}
+      {/*
+        La carte de score est TOUJOURS celle de React Native, y compris
+        par-dessus le rapport natif. Le rapport ne peut pas publier son score
+        vers le JS (l'extension n'a pas le droit d'écrire dans l'App Group),
+        donc sa version affichait un chiffre que la feuille de détail était
+        incapable d'expliquer. Une seule carte, une seule source, un tap qui
+        ouvre l'explication de CE chiffre-là.
+      */}
+      <View style={[styles.scoreCard, { top: scoreTop }]}>{scoreCard}</View>
       {showsBlockedCard && (
         <View style={[styles.blockedCard, { top: metrics.blockedTop }]}>
           {blockedAppsCard}
@@ -260,16 +309,6 @@ const styles = StyleSheet.create({
     height: layout.homeReportRowHeight,
     borderRadius: radius.functional,
     backgroundColor: colors.homeSkeleton,
-  },
-  scoreSkeleton: {
-    position: 'absolute',
-    left: layout.screenHorizontal,
-    right: layout.screenHorizontal,
-    height: layout.homeScoreHeight,
-    borderRadius: radius.homeCard,
-    backgroundColor: colors.homeGlass1,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.homeGlassBorder,
   },
   heroDetail: {
     position: 'absolute',

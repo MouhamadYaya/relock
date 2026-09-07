@@ -204,6 +204,9 @@ function AppShell() {
           <Stack.Screen name="theme-picker" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="language-picker" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="delete-account" />
+          <Stack.Screen name="reset-app" />
         </Stack.Protected>
       </Stack>
     </NavThemeProvider>

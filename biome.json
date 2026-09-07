@@ -9,7 +9,15 @@
     "ignoreUnknown": false,
     "includes": [
       "**",
-      "!supabase/functions/**"
+      "!supabase/functions/**",
+      "!.claude/skills/**",
+      "!.github/skills/**",
+      "!src/legal/**",
+      "!docs/**",
+      "!**/*.xcassets/**",
+      "!assets/icons.ts",
+      "!src/i18n/i18n-types.d.ts",
+      "!nativewind-env.d.ts"
     ]
   },
   "formatter": {
@@ -148,10 +156,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "*.ts",
-        "*.tsx"
-      ],
+      "includes": ["*.ts", "*.tsx"],
       "linter": {
         "rules": {
           "correctness": {

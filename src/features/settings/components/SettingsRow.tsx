@@ -1,258 +1,295 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
-import { relockMaterial } from '@/shared/theme'
-import { fonts } from '@/shared/theme/tokens/fonts'
-import { spacing } from '@/shared/theme/tokens/spacing'
+import { settingsTheme } from '@/shared/theme'
 import { haptics } from '@/shared/utils/platform/haptics'
 
-const { colors, layout, radius, typography } = relockMaterial
-
-/**
- * La teinte d'une famille de réglages. La couleur de la pastille classe la
- * ligne : on retrouve « le violet, c'est moi », « le vert, c'est ce qui me
- * protège » sans avoir à relire les intitulés de section.
- */
-export type SettingsTint =
-  | 'violet'
-  | 'lavender'
-  | 'mint'
-  | 'blue'
-  | 'amber'
-  | 'danger'
-
-const TINTS: Record<SettingsTint, { fg: string; bg: string }> = {
-  violet: { fg: colors.accentViolet, bg: colors.settingsTintViolet },
-  lavender: { fg: colors.homeLavender, bg: colors.settingsTintLavender },
-  mint: { fg: colors.homeMint, bg: colors.settingsTintMint },
-  blue: { fg: colors.homeBlue, bg: colors.settingsTintBlue },
-  amber: { fg: colors.blockingWarning, bg: colors.settingsTintAmber },
-  danger: { fg: colors.blockingDanger, bg: colors.settingsTintDanger },
-}
+const { colors, size, spacing, type } = settingsTheme
 
 export interface SettingsRowProps {
-  icon: IconName
+  /**
+   * Icône monochrome, dans la gouttière de gauche. Omise, la gouttière reste
+   * en place et vide : c'est ce qui aligne les titres d'une carte au pixel,
+   * y compris quand une seule ligne n'a pas d'icône.
+   */
+  icon?: IconName
   label: string
-  /** Une ligne d'explication sous l'intitulé. Rare : la plupart s'en passent. */
+  /** Explication sous l'intitulé, 2 lignes maximum. */
   hint?: string
-  /** Valeur courante, alignée à droite (« Sombre », « Français »). */
+  /** Valeur courante, alignée à droite avant le chevron (« Sombre »). */
   value?: string
-  tint?: SettingsTint
   onPress?: () => void
   /** Interrupteur : fournir les deux, ou aucun des deux. */
   switchValue?: boolean
   onSwitchChange?: (value: boolean) => void
-  /** Pastille d'état — permissions accordées ou non. */
+  /** Coche de sélection à droite — feuilles de choix (langue, apparence). */
+  selected?: boolean
+  /**
+   * État d'un réglage système, affiché comme une VALEUR (aligné à droite,
+   * sur la ligne du titre) et non comme une pastille sous le sous-titre.
+   */
   status?: { label: string; granted: boolean }
   /** Action irréversible : l'intitulé passe au rouge. */
   danger?: boolean
   /** Opération en cours : remplace le chevron par un indicateur. */
   busy?: boolean
   disabled?: boolean
-  /** Élément libre à droite (badge d'abonnement, par exemple). */
+  /** Élément libre à droite (badge PRO). Rare. */
   accessory?: React.ReactNode
 }
 
 /**
- * Une ligne de réglage. Trois formes possibles, jamais mélangées :
- * navigation (chevron), interrupteur, ou lecture seule.
+ * L'unique ligne des Réglages. Trois variantes, une seule structure.
  *
- * Le chevron n'apparaît QUE si la ligne mène quelque part. C'est la promesse
- * la plus simple d'une liste de réglages, et celle qu'on trahit le plus
- * souvent : une flèche sur une ligne qui ne navigue pas se paie en confiance.
+ *   [ gouttière icône ] [ titre + sous-titre ] [ valeur · chevron | switch ]
+ *
+ * La structure est FIGÉE, et c'est le point de tout ce composant. La version
+ * précédente laissait chaque appelant composer sa ligne ; il suffisait alors
+ * qu'un élément puisse s'étirer ou revenir à la ligne pour que l'icône
+ * bascule au-dessus du texte et le chevron sur sa propre ligne — le défaut de
+ * `flexDirection` étant `column` en React Native, contrairement au web.
+ *
+ * Trois verrous rendent ce retour impossible :
+ *   1. `flexDirection: 'row'` ET `flexWrap: 'nowrap'` explicites sur la ligne ;
+ *   2. des largeurs fixes avec `flexShrink: 0` de part et d'autre ;
+ *   3. des marges plutôt que `gap` — l'espacement ne dépend plus du support
+ *      de `gap` par la version de Yoga embarquée.
+ *
+ * Le bloc de texte est le SEUL à porter `flex: 1` : c'est lui qui absorbe la
+ * place restante, donc lui qui se tronque quand un libellé allemand est trop
+ * long. Rien d'autre ne bouge.
  */
 export function SettingsRow({
   icon,
   label,
   hint,
   value,
-  tint = 'lavender',
   onPress,
   switchValue,
   onSwitchChange,
+  selected,
   status,
   danger,
   busy,
   disabled,
   accessory,
 }: SettingsRowProps) {
-  const palette = danger ? TINTS.danger : TINTS[tint]
+  const [pressed, setPressed] = React.useState(false)
   const hasSwitch = switchValue !== undefined && onSwitchChange !== undefined
   const navigates = onPress !== undefined && !hasSwitch
-  const labelColor = danger ? colors.blockingDanger : colors.homeCardInk
+  const inert = disabled || busy
 
-  const handlePress = () => {
-    if (disabled || busy) return
+  const toggle = () => {
+    if (inert || !hasSwitch) return
+    haptics.selectionTick()
+    onSwitchChange(!switchValue)
+  }
+
+  const press = () => {
+    if (inert) return
     haptics.selectionTick()
     onPress?.()
   }
 
   const body = (
     <>
-      <View style={[styles.tile, { backgroundColor: palette.bg }]}>
-        <IconSvg
-          name={icon}
-          size={layout.settingsIconSize}
-          color={palette.fg}
-        />
+      {/* La gouttière est toujours rendue, avec ou sans icône. */}
+      <View style={styles.gutter}>
+        {icon ? (
+          <IconSvg
+            name={icon}
+            size={size.icon}
+            strokeWidth={size.iconStroke}
+            color={danger ? colors.danger : colors.icon}
+          />
+        ) : null}
       </View>
 
-      <View style={styles.copy}>
+      <View style={styles.content}>
         <Text
-          numberOfLines={1}
-          maxFontSizeMultiplier={1.4}
-          style={[styles.label, { color: labelColor }]}
+          // Deux lignes, pas une : « Protection contre la désinstallation »
+          // ne tient pas sur une ligne en français, et le réduire de force
+          // rendrait le libellé illisible aux grandes tailles de texte.
+          numberOfLines={2}
+          style={[styles.title, danger && styles.titleDanger]}
         >
           {label}
         </Text>
         {hint ? (
-          <Text numberOfLines={2} maxFontSizeMultiplier={1.3} style={styles.hint}>
+          <Text numberOfLines={3} style={styles.subtitle}>
             {hint}
           </Text>
         ) : null}
       </View>
 
-      {value ? (
-        <Text numberOfLines={1} style={styles.value}>
-          {value}
-        </Text>
-      ) : null}
+      <View style={styles.trailing}>
+        {value ? (
+          <Text numberOfLines={1} style={styles.value}>
+            {value}
+          </Text>
+        ) : null}
 
-      {status ? (
-        <View style={styles.status}>
-          <View
-            style={[
-              styles.dot,
-              {
-                backgroundColor: status.granted
-                  ? colors.settingsStatusOn
-                  : colors.settingsStatusOff,
-              },
-            ]}
-          />
+        {status ? (
           <Text
+            numberOfLines={1}
             style={[
-              styles.statusLabel,
-              {
-                color: status.granted
-                  ? colors.settingsStatusOn
-                  : colors.settingsStatusOff,
-              },
+              styles.value,
+              status.granted ? styles.valueSuccess : styles.valueMuted,
             ]}
           >
             {status.label}
           </Text>
-        </View>
-      ) : null}
+        ) : null}
 
-      {accessory}
+        {accessory}
 
-      {hasSwitch ? (
-        <Switch
-          value={switchValue}
-          onValueChange={next => {
-            haptics.selectionTick()
-            onSwitchChange(next)
-          }}
-          disabled={disabled}
-          trackColor={{ true: colors.accentVioletDeep, false: colors.homeScoreTile }}
-          thumbColor={colors.homeCardInk}
-          ios_backgroundColor={colors.homeScoreTile}
-        />
-      ) : null}
+        {hasSwitch ? (
+          <Switch
+            // L'interrupteur porte lui-même l'intitulé : sans cela VoiceOver
+            // annonce « activé » sans jamais dire de QUOI, la rangée n'étant
+            // pas un élément accessible unique.
+            accessibilityLabel={label}
+            accessibilityHint={hint}
+            value={switchValue}
+            onValueChange={toggle}
+            disabled={inert}
+            trackColor={{ true: colors.accent, false: colors.control }}
+            thumbColor={colors.textPrimary}
+            ios_backgroundColor={colors.control}
+          />
+        ) : null}
 
-      {busy ? (
-        <ActivityIndicator color={colors.homeCardMuted} />
-      ) : navigates ? (
-        <IconSvg
-          name={IconName.FORWARD}
-          size={layout.settingsChevronSize}
-          color={colors.textTertiary}
-        />
-      ) : null}
+        {selected ? (
+          <IconSvg
+            name={IconName.CHECK}
+            size={size.check}
+            strokeWidth={size.iconStroke}
+            color={colors.accent}
+          />
+        ) : null}
+
+        {busy ? <ActivityIndicator color={colors.textSecondary} /> : null}
+
+        {navigates && !busy ? (
+          <IconSvg
+            name={IconName.FORWARD}
+            size={size.chevron}
+            strokeWidth={size.iconStroke}
+            color={colors.textTertiary}
+          />
+        ) : null}
+      </View>
     </>
   )
 
-  if (!navigates) {
-    return (
-      <View
-        style={[styles.row, disabled && styles.disabled]}
-        accessible={hasSwitch ? undefined : true}
-        accessibilityLabel={hasSwitch ? undefined : label}
-      >
-        {body}
-      </View>
-    )
+  // Une ligne à interrupteur reste tappable sur toute sa surface : viser un
+  // switch de 50 pt au bout d'une ligne de 350 est un geste de précision
+  // qu'on ne demande pas dans une liste de réglages.
+  const handler = hasSwitch ? toggle : navigates ? press : undefined
+
+  if (!handler) {
+    return <View style={disabled ? styles.rowDimmed : styles.row}>{body}</View>
   }
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={hasSwitch ? 'switch' : 'button'}
       accessibilityLabel={label}
       accessibilityHint={hint}
-      accessibilityState={{ disabled: disabled || busy }}
-      disabled={disabled || busy}
-      onPress={handlePress}
-      style={({ pressed }) => [
-        styles.row,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
-      ]}
+      accessibilityState={
+        hasSwitch
+          ? { checked: switchValue, disabled: inert }
+          : { disabled: inert, selected }
+      }
+      disabled={inert}
+      onPress={handler}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      style={
+        disabled ? styles.rowDimmed : pressed ? styles.rowPressed : styles.row
+      }
     >
       {body}
     </Pressable>
   )
 }
 
+/**
+ * La géométrie d'une ligne, dupliquée telle quelle dans chaque état.
+ *
+ * ⚠️ NE JAMAIS repasser à un `style` en TABLEAU ou en FONCTION sur ces
+ * `Pressable`. C'était la cause du défaut le plus visible de cet écran : la
+ * ligne perdait tout son style à l'exécution — donc son `flexDirection` —
+ * et retombait sur le défaut de React Native, `column`. L'icône passait
+ * au-dessus du titre, l'interrupteur et le chevron sous le texte, alignés à
+ * gauche. Rien de tout cela n'apparaît sous `react-test-renderer`, où le
+ * style-fonction est correctement résolu : la panne ne se voit QUE sur
+ * l'appareil, ce qui l'a rendue coûteuse à cerner.
+ *
+ * Un objet de style unique et statique par état supprime le problème à la
+ * racine. Le coût est cette répétition, tenue par `ROW_LAYOUT`.
+ */
+const ROW_LAYOUT = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  // Explicite, et non hérité d'un défaut : c'est la garantie qu'aucun
+  // enfant ne peut renvoyer le chevron à la ligne suivante.
+  flexWrap: 'nowrap',
+  minHeight: size.rowMinHeight,
+  paddingVertical: spacing.rowV,
+  paddingHorizontal: spacing.rowH,
+} as const
+
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: layout.settingsRowGap,
-    minHeight: layout.settingsRowMinHeight,
-    paddingHorizontal: layout.settingsRowHorizontal,
-    paddingVertical: layout.settingsRowVertical,
-  },
-  // Le retour au doigt est un éclaircissement du verre, pas un aplat gris :
-  // la carte reste translucide pendant l'appui.
-  pressed: { backgroundColor: colors.homeGlass1 },
-  disabled: { opacity: relockMaterial.opacity.disabled },
-  tile: {
-    width: layout.settingsIconTile,
-    height: layout.settingsIconTile,
-    borderRadius: layout.settingsIconTileRadius,
+  row: ROW_LAYOUT,
+  rowPressed: { ...ROW_LAYOUT, backgroundColor: colors.pressed },
+  rowDimmed: { ...ROW_LAYOUT, opacity: 0.45 },
+  // Le pictogramme est CENTRÉ dans une colonne de largeur constante : une
+  // icône large et une icône étroite laissent donc le texte au même x.
+  gutter: {
+    width: spacing.iconGutter,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: spacing.iconGap,
   },
-  copy: { flex: 1, minWidth: 0, gap: spacing.micro },
-  label: {
-    ...fonts.medium,
-    fontSize: typography.settingsRowLabelSize,
-    lineHeight: typography.settingsRowLabelLineHeight,
+  // Le seul bloc extensible de la ligne. `minWidth: 0` autorise la troncature
+  // du texte ; sans lui, un libellé long pousse le chevron hors de l'écran.
+  content: { flex: 1, minWidth: 0, marginRight: spacing.trailingGap },
+  title: {
+    color: colors.textPrimary,
+    fontSize: type.rowTitle.size,
+    fontWeight: type.rowTitle.weight,
   },
-  hint: {
-    ...fonts.regular,
-    color: colors.textTertiary,
-    fontSize: typography.settingsRowHintSize,
-    lineHeight: typography.settingsRowHintLineHeight,
+  titleDanger: { color: colors.danger },
+  subtitle: {
+    color: colors.textSecondary,
+    fontSize: type.rowSubtitle.size,
+    fontWeight: type.rowSubtitle.weight,
+    lineHeight: type.rowSubtitle.lineHeight,
+    marginTop: spacing.textGap,
+  },
+  // L'accessoire garde ses proportions : c'est le texte qui cède, jamais
+  // l'interrupteur qu'on écraserait pour gagner une ligne.
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 8,
   },
   value: {
-    ...fonts.regular,
-    color: colors.homeCardMuted,
-    fontSize: typography.settingsRowValueSize,
-    lineHeight: typography.settingsRowValueLineHeight,
-    maxWidth: '42%',
+    color: colors.textSecondary,
+    fontSize: type.rowValue.size,
+    fontWeight: type.rowValue.weight,
   },
-  status: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
-  dot: {
-    width: spacing.xs - 1,
-    height: spacing.xs - 1,
-    borderRadius: radius.capsule,
-  },
-  statusLabel: {
-    ...fonts.semiBold,
-    fontSize: typography.settingsRowHintSize,
-    lineHeight: typography.settingsRowValueLineHeight,
-  },
+  valueSuccess: { color: colors.success },
+  valueMuted: { color: colors.textTertiary },
 })

@@ -7,7 +7,9 @@ function createClient() {
       signUp: ok,
       signOut: ok,
       getSession: ok,
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe() {} } },
+      }),
     },
     from: () => ({}),
   }

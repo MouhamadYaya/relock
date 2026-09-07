@@ -105,3 +105,8 @@ android/sentry.properties
 
 # Supabase CLI — état local de liaison au projet (pas de secret, mais spécifique à la machine)
 supabase/.temp/
+
+# Cloudflare Wrangler
+.wrangler/
+.dev.vars
+.dev.vars.*

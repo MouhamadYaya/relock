@@ -134,20 +134,31 @@ describe('HomeDashboardSurface states', () => {
     expect(report?.props.pointerEvents).toBe('auto')
     expect(report?.props.reloadToken).toBe(0)
     expect(report?.props.showsBlockedCard).toBe(false)
+    // La carte de score reste rendue par React Native MÊME quand le rapport
+    // natif s'affiche : c'est la seule qui expose un score que la feuille de
+    // détail sait expliquer, l'extension n'ayant aucun moyen de publier le
+    // sien vers le JS.
     expect(
       renderer?.root
         .findAllByType(Text)
         .some(node => node.props.children === 'Score'),
-    ).toBe(false)
+    ).toBe(true)
   })
 
-  it('does not destroy an in-flight native report when returning to the tab', () => {
+  // Le rapport vit dans une extension, donc dans un AUTRE processus : iOS peut
+  // la tuer dès que l'Accueil quitte la fenêtre. Au retour, la surface revient
+  // vide et le reste — c'est la disparition du héro Temps d'écran et du
+  // classement des apps. On redemande donc une connexion neuve à chaque retour,
+  // sans démonter la vue native (bien plus coûteux qu'une reconnexion).
+  it('asks the native report for a fresh connection when returning to the tab', () => {
     act(() => {
       renderer = renderSurface('approved')
     })
     const props = renderer!.root.findByType(HomeDashboardSurface)
       .props as React.ComponentProps<typeof HomeDashboardSurface>
     const report = renderer!.root.findByProps({ testID: 'screen-time-report' })
+    act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
+
     act(() => {
       mockFocused = false
       renderer!.update(<HomeDashboardSurface {...props} />)
@@ -156,9 +167,48 @@ describe('HomeDashboardSurface states', () => {
       mockFocused = true
       renderer!.update(<HomeDashboardSurface {...props} />)
     })
+
     expect(renderer!.root.findByProps({ testID: 'screen-time-report' })).toBe(
       report,
     )
+    expect(report.props.reloadToken).toBe(1)
+  })
+
+  it('shows the skeleton again while the report reconnects', () => {
+    act(() => {
+      renderer = renderSurface('approved')
+    })
+    const props = renderer!.root.findByType(HomeDashboardSurface)
+      .props as React.ComponentProps<typeof HomeDashboardSurface>
+    const report = renderer!.root.findByProps({ testID: 'screen-time-report' })
+    const skeletons = () =>
+      renderer!.root.findAllByProps({ testID: 'home-report-skeleton' }).length
+
+    act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
+    expect(skeletons()).toBe(0)
+
+    act(() => {
+      mockFocused = false
+      renderer!.update(<HomeDashboardSurface {...props} />)
+    })
+    act(() => {
+      mockFocused = true
+      renderer!.update(<HomeDashboardSurface {...props} />)
+    })
+    // Un vide muet se lit comme une journée sans usage : tant que la nouvelle
+    // agrégation n'a pas répondu, l'écran dit qu'il charge.
+    expect(skeletons()).toBeGreaterThan(0)
+
+    act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
+    expect(skeletons()).toBe(0)
+  })
+
+  it('keeps the first render free of an extra reconnection', () => {
+    act(() => {
+      renderer = renderSurface('approved')
+    })
+    const report = renderer!.root.findByProps({ testID: 'screen-time-report' })
+    act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
     expect(report.props.reloadToken).toBe(0)
   })
 })

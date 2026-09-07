@@ -1,0 +1,3 @@
+# Fichiers présents dans src/legal/ mais qui ne doivent PAS être publiés.
+privacy-audit.md
+.DS_Store

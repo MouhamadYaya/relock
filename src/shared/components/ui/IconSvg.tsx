@@ -13,6 +13,13 @@ interface Props {
   size?: number
   /** Defaults to theme.colors.textPrimary when not provided. */
   color?: string
+  /**
+   * Épaisseur du trait. Le défaut (2) convient aux icônes posées sur un
+   * aplat coloré ; une liste de réglages monochrome demande un trait plus
+   * fin, sinon les icônes pèsent plus lourd que les intitulés qu'elles
+   * accompagnent.
+   */
+  strokeWidth?: number
   style?: ViewStyle
 }
 
@@ -20,6 +27,7 @@ export function IconSvg({
   name,
   size = DEFAULT_ICON_SIZE,
   color,
+  strokeWidth = DEFAULT_STROKE_WIDTH,
   style,
 }: Props) {
   const { theme } = useTheme()
@@ -41,7 +49,7 @@ export function IconSvg({
         color={iconColor}
         stroke={iconColor}
         fill="none"
-        strokeWidth={DEFAULT_STROKE_WIDTH}
+        strokeWidth={strokeWidth}
       />
     </View>
   )

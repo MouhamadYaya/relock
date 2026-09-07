@@ -15,6 +15,7 @@ jest.mock('@sentry/react-native', () => ({
   setTags: jest.fn(),
   setContext: jest.fn(),
   flush: jest.fn().mockResolvedValue(true),
+  close: jest.fn().mockResolvedValue(undefined),
   nativeCrash: jest.fn(),
   reactNavigationIntegration: jest.fn(() => ({
     name: 'ReactNavigation',

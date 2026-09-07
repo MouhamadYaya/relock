@@ -251,13 +251,11 @@ private final class HomeReportControls: UIControl {
   var onCommand: ((String) -> Void)?
   var showsBlockedCard = false { didSet { setNeedsLayout() } }
   private let hero = UIButton(type: .custom)
-  private let score = UIButton(type: .custom)
   private let apps = UIButton(type: .custom)
 
   override init(frame: CGRect) {
     super.init(frame: frame)
     configure(hero, command: "home.hero", label: "Ouvrir le détail du temps d’écran")
-    configure(score, command: "home.score", label: "Comprendre le score global")
     configure(apps, command: "home.apps", label: "Voir les applications dans Activité")
   }
 
@@ -275,7 +273,10 @@ private final class HomeReportControls: UIControl {
     // Miroir des tokens `homeHeroHeight` / `homeScoreHeight` / `homeBlockedHeight`
     // (relock-material.ts) : hero 360, score 270, carte « Mes apps » 280, gouttières 24.
     hero.frame = CGRect(x: 0, y: 140, width: bounds.width, height: 220)
-    score.frame = CGRect(x: 16, y: 360, width: bounds.width - 32, height: 290)
+    // Pas de zone « score » ici : la carte du score est une vraie vue React
+    // Native posée par-dessus ce rapport, elle capte son tap elle-meme. Un
+    // bouton natif au meme endroit ne ferait que doubler l'element pour
+    // VoiceOver.
     apps.frame = CGRect(
       x: 16, y: showsBlockedCard ? 978 : 674, width: bounds.width - 32, height: 232)
   }
@@ -634,8 +635,10 @@ final class ScreenTimeReportView: UIView {
         }
         .frame(width: geometry.size.width, height: 360, alignment: .top)
 
-        mockScoreCard
-          .padding(.horizontal, 16)
+        // Emplacement de la carte « Score global » : elle est rendue par React
+        // Native par-dessus cette simulation, comme par-dessus le vrai
+        // rapport. La dessiner ici afficherait deux cartes superposees.
+        Color.clear.frame(height: 290)
         Color.clear.frame(height: showsBlockedCard ? 328 : 24)
 
         VStack(alignment: .leading, spacing: 16) {
@@ -722,180 +725,6 @@ final class ScreenTimeReportView: UIView {
         .background(Color.clear)
         .environment(\.colorScheme, .dark)
       }
-    }
-
-    private var fixtureGlobal: Int { referenceFixture ? 72 : 86 }
-    private var fixtureFocus: Int { referenceFixture ? 78 : 88 }
-    private var fixtureRest: Int { referenceFixture ? 66 : 84 }
-    private var fixtureDelta: Int { referenceFixture ? 6 : -3 }
-
-    // Miroir des accents violet Relock et lavande côté React Native.
-      private let violet = Color(red: 0.655, green: 0.545, blue: 0.980)
-    private let lavender = Color(red: 0.784, green: 0.722, blue: 1.0)
-    private let amber = Color(red: 0.878, green: 0.635, blue: 0.306)
-    private let ink3 = Color(red: 0.522, green: 0.525, blue: 0.604)
-
-    private func band(_ value: Int) -> String {
-      if value >= 80 { return "Excellent équilibre" }
-      if value >= 60 { return "Bon équilibre" }
-      if value >= 35 { return "Équilibre moyen" }
-      return "Équilibre fragile"
-    }
-
-    /// Miroir de `scoreFooter` dans RelockActivityReport.swift : la phrase nomme
-    /// l'axe qui décroche. Le fixture prend Focus comme axe faible.
-    private var scoreFooter: String {
-      let value = fixtureGlobal
-      if value >= 80 { return "Journée maîtrisée : ton attention tient bon." }
-      if value >= 60 {
-        return "Bon rythme. Tu ouvres ton téléphone un peu plus que d’habitude."
-      }
-      if value >= 35 {
-        return "Ton attention se fragmente : beaucoup d’allers-retours aujourd’hui."
-      }
-      return "Tu décroches souvent aujourd’hui. Un blocage t’aiderait à tenir."
-    }
-
-    /// Carte « Score global » : anneau lumineux à gauche, les deux sous-scores à
-    /// droite, encouragement en pied. Hauteur miroir de `homeScoreHeight`
-    /// (relock-material.ts) et de la zone tactile de ScreenTimeReportView.
-    private var mockScoreCard: some View {
-      VStack(spacing: 0) {
-        HStack(alignment: .top, spacing: 12) {
-          VStack(alignment: .leading, spacing: 2) {
-            Text("Score global")
-              .font(.system(size: 20, weight: .bold))
-              .foregroundColor(ink)
-              .lineLimit(1)
-            Text("Aujourd’hui")
-              .font(.system(size: 14))
-              .foregroundColor(ink3)
-              .lineLimit(1)
-          }
-          Spacer(minLength: 8)
-          scoreDeltaPill(fixtureDelta)
-        }
-        .frame(height: 46)
-
-        Spacer(minLength: 0)
-
-        HStack(spacing: 0) {
-          scoreDial
-            .frame(width: 152, height: 152)
-          scoreSeparator
-          VStack(spacing: 0) {
-            scoreRow(
-              symbol: "circle.circle.fill", label: "Focus", value: fixtureFocus,
-              tint: violet)
-            Rectangle()
-              .fill(Color.white.opacity(0.09))
-              .frame(height: 1)
-            scoreRow(
-              symbol: "moon.fill", label: "Repos", value: fixtureRest,
-              tint: lavender)
-          }
-          .frame(height: 152)
-        }
-
-        Spacer(minLength: 0)
-
-        HStack(spacing: 8) {
-          Image(systemName: "heart")
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(lavender)
-          Text(scoreFooter)
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(ink2)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-        }
-        .frame(height: 20)
-      }
-      .padding(20)
-      .frame(maxWidth: .infinity, minHeight: 290, maxHeight: 290)
-      .modifier(HomeGlassCard(fill: 0.055, edge: 0.12))
-      .accessibilityElement(children: .combine)
-      .accessibilityLabel(
-        "Score global \(fixtureGlobal), \(band(fixtureGlobal)), Focus \(fixtureFocus), Repos \(fixtureRest)")
-    }
-
-    private func scoreDeltaPill(_ delta: Int) -> some View {
-      let rising = delta > 0
-      let tint = rising ? green : amber
-      return HStack(spacing: 4) {
-        Image(systemName: rising ? "arrow.up" : "arrow.down")
-          .font(.system(size: 12, weight: .bold))
-        Text(String(abs(delta)))
-          .font(.system(size: 15, weight: .semibold))
-          .monospacedDigit()
-        Text("vs hier")
-          .font(.system(size: 12, weight: .medium))
-          .opacity(0.72)
-          .lineLimit(1)
-      }
-      .foregroundColor(tint)
-      .padding(.horizontal, 12)
-      .padding(.vertical, 7)
-      .background(Capsule().fill(tint.opacity(0.14)))
-    }
-
-    /// Miroir de `scoreDial` dans RelockActivityReport.swift.
-    private var scoreDial: some View {
-      ZStack {
-        Image("home-score-dial")
-          .resizable()
-          .scaledToFit()
-          .opacity(0.22)
-          .accessibilityHidden(true)
-
-        VStack(spacing: 1) {
-          Text(String(fixtureGlobal))
-            .font(.system(size: 44, weight: .bold))
-            .monospacedDigit()
-            .foregroundColor(ink)
-          Text(band(fixtureGlobal))
-            .font(.system(size: 13, weight: .medium))
-            .foregroundColor(lavender)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-        }
-      }
-    }
-
-    private var scoreSeparator: some View {
-      Rectangle()
-        .fill(Color.white.opacity(0.09))
-        .frame(width: 1, height: 152)
-        .overlay(
-          Image(systemName: "arrowtriangle.right.fill")
-            .font(.system(size: 7))
-            .foregroundColor(Color.white.opacity(0.18))
-        )
-        .padding(.horizontal, 14)
-    }
-
-    private func scoreRow(
-      symbol: String,
-      label: String,
-      value: Int,
-      tint: Color
-    ) -> some View {
-      HStack(spacing: 10) {
-        Image(systemName: symbol)
-          .font(.system(size: 17, weight: .medium))
-          .foregroundColor(tint)
-          .frame(width: 24)
-        Text(label)
-          .font(.system(size: 15, weight: .medium))
-          .foregroundColor(ink)
-          .lineLimit(1)
-        Spacer(minLength: 8)
-        Text(String(value))
-          .font(.system(size: 22, weight: .bold))
-          .monospacedDigit()
-          .foregroundColor(ink)
-      }
-      .frame(maxHeight: .infinity)
     }
 
     private var referenceApps: [MockApp] {

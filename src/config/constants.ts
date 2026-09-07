@@ -45,6 +45,8 @@ export const constants = {
   PREF_HAPTICS: 'pref.haptics.v1',
   PREF_PAUSE_SOUND: 'pref.pauseSound.v1',
   PREF_CRASH_REPORTS: 'pref.crashReports.v1',
+  /** Heure des rappels du soir, en minutes depuis minuit. */
+  PREF_REMINDER_MINUTES: 'pref.reminderMinutes.v1',
 
   /** MMKV key (`navigationStorage`) for persisted React Navigation root state. */
   NAVIGATION_STATE_V1: 'navigation.state.v1',

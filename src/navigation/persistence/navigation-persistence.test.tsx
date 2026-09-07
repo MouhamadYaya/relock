@@ -4,11 +4,12 @@
  * le pathname n'a jamais changé — sinon rien n'est jamais écrit tant que
  * l'utilisateur n'a pas navigué une première fois.
  */
+
+import { router } from 'expo-router'
 import React from 'react'
 import { Linking } from 'react-native'
 import { act, create } from 'react-test-renderer'
 import { constants } from '@/config/constants'
-import { router } from 'expo-router'
 import { navigationStorage } from '@/shared/services/storage/mmkv'
 import {
   _resetExternalEntryForTests,

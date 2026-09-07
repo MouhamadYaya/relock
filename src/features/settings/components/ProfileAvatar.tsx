@@ -1,13 +1,11 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native'
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { buildAvatarUrl } from '@/shared/services/imagekit'
-import { relockMaterial } from '@/shared/theme'
-import { fonts } from '@/shared/theme/tokens/fonts'
+import { settingsTheme } from '@/shared/theme'
 
-const { colors, radius } = relockMaterial
+const { colors, radius, size: sizes } = settingsTheme
 
 /** Les initiales affichées tant qu'aucune photo n'a été choisie. */
 export function initialsFrom(source: string | null): string {
@@ -30,8 +28,7 @@ interface Props {
   /** Diamètre en points. Sert au style ET à la requête ImageKit. */
   size: number
   /** Pastille appareil photo. C'est elle qui dit « ça se change ». */
-  badgeSize?: number
-  badgeIconSize?: number
+  badge?: boolean
   /** Upload en cours. */
   busy?: boolean
 }
@@ -42,8 +39,10 @@ interface Props {
  *
  * La pastille est là MÊME quand une photo existe déjà. Sans elle, une photo
  * ronde ressemble à une décoration ; avec elle, elle ressemble à un champ.
- * C'est le seul indice qu'a l'utilisateur qu'il peut la changer — et il coûte
- * 24 points.
+ * C'est le seul indice qu'a l'utilisateur qu'il peut la changer.
+ *
+ * Elle reste monochrome comme le reste de l'écran : le violet est réservé aux
+ * interrupteurs actifs, à la coche de sélection et au badge PRO.
  *
  * L'image est demandée à ImageKit au diamètre exact d'affichage : on
  * télécharge une vignette, jamais l'original.
@@ -52,11 +51,30 @@ export function ProfileAvatar({
   avatar,
   displayName,
   size,
-  badgeSize,
-  badgeIconSize,
+  badge,
   busy,
 }: Props) {
-  const showBadge = badgeSize !== undefined && badgeIconSize !== undefined
+  // La pastille suit le diamètre : figée, elle avalerait un petit avatar et
+  // se perdrait sur un grand.
+  const badgeSize = Math.round(size * 0.36)
+
+  // On RÉSOUT avant de choisir la branche de rendu.
+  //
+  // Un chemin ImageKit stocké (`avatars/<uid>/photo.jpg`) reste « truthy »
+  // même quand l'intégration est coupée : `buildAvatarUrl` le renvoie alors
+  // tel quel, et le passer à `<Image>` produit un URI RELATIF — donc un disque
+  // vide, sans jamais retomber sur les initiales. Le test porte donc sur le
+  // résultat de la résolution, pas sur la présence d'une valeur en entrée.
+  const resolved = avatar ? buildAvatarUrl(avatar, size) : ''
+  const remoteUri = /^https?:\/\//i.test(resolved) ? resolved : null
+
+  // Même absolue, une URL peut échouer : média supprimé côté CDN, chemin
+  // erroné, avatar d'un fournisseur d'identité dont le lien a expiré. Sans ce
+  // repli, il resterait le même disque vide.
+  //
+  // On mémorise l'URL EN ÉCHEC, pas un booléen : une nouvelle photo reprend
+  // ainsi sa chance d'elle-même, sans effet de remise à zéro à tenir en phase.
+  const [failedUri, setFailedUri] = React.useState<string | null>(null)
 
   return (
     <View style={{ width: size, height: size }}>
@@ -66,34 +84,25 @@ export function ProfileAvatar({
           { width: size, height: size, borderRadius: size / 2 },
         ]}
       >
-        {/* Fond dégradé : une pastille d'initiales sur aplat plat fait
-            « champ vide », le dégradé fait « portrait en attente ». */}
-        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="avatarBase" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={colors.homeShieldLight} />
-              <Stop offset="1" stopColor={colors.accentVioletDeep} />
-            </LinearGradient>
-          </Defs>
-          <Rect width="100%" height="100%" fill="url(#avatarBase)" />
-        </Svg>
-
         {busy ? (
-          <ActivityIndicator color={colors.onBrightAccent} />
-        ) : avatar ? (
+          <ActivityIndicator color={colors.textPrimary} />
+        ) : remoteUri && failedUri !== remoteUri ? (
           <Image
-            source={{ uri: buildAvatarUrl(avatar, size) }}
+            source={{ uri: remoteUri }}
             style={StyleSheet.absoluteFill}
             accessibilityIgnoresInvertColors
+            onError={() => setFailedUri(remoteUri)}
           />
         ) : (
-          <Text style={[styles.initials, { fontSize: size * 0.36 }]}>
+          <Text
+            style={[styles.initials, { fontSize: Math.round(size * 0.36) }]}
+          >
             {initialsFrom(displayName)}
           </Text>
         )}
       </View>
 
-      {showBadge ? (
+      {badge ? (
         <View
           style={[
             styles.badge,
@@ -106,8 +115,9 @@ export function ProfileAvatar({
         >
           <IconSvg
             name={IconName.CAMERA}
-            size={badgeIconSize}
-            color={colors.onAccent}
+            size={Math.round(badgeSize * 0.56)}
+            strokeWidth={sizes.iconStroke}
+            color={colors.textPrimary}
           />
         </View>
       ) : null}
@@ -121,24 +131,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     // Rogne la photo au cercle, quel que soit son ratio d'origine.
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.homeBorderStrong,
+    backgroundColor: colors.control,
+    borderWidth: sizes.hairline,
+    borderColor: colors.controlBorder,
   },
   initials: {
-    ...fonts.bold,
-    color: colors.onBrightAccent,
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
   // La bordure sombre détache la pastille de la photo qu'elle chevauche —
-  // sans elle, un appareil photo blanc sur une photo claire disparaît.
+  // sans elle, un appareil photo clair sur une photo claire disparaît.
   badge: {
     position: 'absolute',
-    right: -1,
-    bottom: -1,
+    right: -2,
+    bottom: -2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.accentVioletDeep,
+    backgroundColor: colors.control,
     borderWidth: 2,
-    borderColor: colors.homeCanvas,
-    borderRadius: radius.capsule,
+    borderColor: colors.bg,
+    borderRadius: radius.pill,
   },
 })

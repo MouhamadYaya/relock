@@ -263,6 +263,31 @@ final class BlocusScreenTime: NSObject {
     return v == 0 || v > Date().timeIntervalSince1970
   }
 
+  /// Clé du réglage « Protection contre la désinstallation » (App Group).
+  /// Écrite par l'app, lue AUSSI par `RelockMonitor` : c'est l'extension qui
+  /// recalcule le bouclier quand iOS la réveille, app fermée.
+  static let uninstallProtectionKey = "blocus.uninstallProtection"
+
+  /// Pose — ou lève — la restriction de suppression d'application.
+  ///
+  /// ⚠️ `denyAppRemoval` est une restriction iOS **globale** : tant qu'elle
+  /// est posée, AUCUNE application ne peut être supprimée de l'appareil, pas
+  /// seulement Relock. Apple n'offre aucune granularité par app. D'où deux
+  /// garde-fous, et ils comptent autant l'un que l'autre :
+  ///   • elle n'est armée que si l'utilisateur l'a explicitement demandée ;
+  ///   • elle ne l'est que TANT QU'UN BLOCAGE protège réellement — dès que le
+  ///     bouclier tombe, l'iPhone redevient normal, sans action de personne.
+  ///
+  /// On écrit `nil` et non `false` pour lever la restriction : `false` reste
+  /// une règle posée dans le store, et un store non vide continue d'apparaître
+  /// dans les réglages Temps d'écran du système.
+  @available(iOS 16.0, *)
+  private func applyRemovalPolicy(blocking: Bool) {
+    let wanted =
+      blocking && (defaults?.bool(forKey: Self.uninstallProtectionKey) ?? false)
+    store.application.denyAppRemoval = wanted ? true : nil
+  }
+
   /// Union des sélections des fenêtres actuellement actives → bouclier.
   @available(iOS 16.0, *)
   private func recomputeShield() {
@@ -289,11 +314,13 @@ final class BlocusScreenTime: NSObject {
       store.shield.applicationCategories = nil
       store.shield.webDomains = nil
       defaults?.set(false, forKey: "blocus.isBlocking")
+      applyRemovalPolicy(blocking: false)
     } else {
       store.shield.applications = apps.isEmpty ? nil : apps
       store.shield.applicationCategories = cats.isEmpty ? nil : .specific(cats)
       store.shield.webDomains = webs.isEmpty ? nil : webs
       defaults?.set(true, forKey: "blocus.isBlocking")
+      applyRemovalPolicy(blocking: true)
     }
   }
 
@@ -1388,6 +1415,9 @@ final class BlocusScreenTime: NSObject {
     store.shield.applications = nil
     store.shield.applicationCategories = nil
     store.shield.webDomains = nil
+    // Une restriction de suppression laissée en place après une remise à zéro
+    // serait un iPhone verrouillé sans plus aucune app pour le déverrouiller.
+    store.application.denyAppRemoval = nil
     // L'ouverture depuis le Shield peut être le tout premier lancement du
     // conteneur. Le fichier repart à zéro mais conserve cette requête fraîche.
     let shieldStore = ShieldAttemptStore.production()
@@ -1480,6 +1510,48 @@ final class BlocusScreenTime: NSObject {
   ) {
     defaults?.set(enabled, forKey: "notif.celebrationsEnabled")
     resolve(true)
+  }
+
+  // MARK: - Protection contre la désinstallation
+
+  /// Enregistre le choix de l'utilisateur, puis l'applique IMMÉDIATEMENT.
+  ///
+  /// Le recalcul du bouclier qui suit n'est pas un raffinement : sans lui, une
+  /// case cochée pendant qu'un blocage tourne déjà n'aurait d'effet qu'au
+  /// prochain changement de fenêtre — c'est-à-dire potentiellement des heures
+  /// plus tard, alors que l'écran vient d'annoncer que la protection est
+  /// active.
+  @objc(setUninstallProtection:resolver:rejecter:)
+  func setUninstallProtection(
+    _ enabled: Bool,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    defaults?.set(enabled, forKey: Self.uninstallProtectionKey)
+    guard #available(iOS 16.0, *) else {
+      resolve(false)
+      return
+    }
+    recomputeShield()
+    resolve(true)
+  }
+
+  /// L'état RÉELLEMENT appliqué par iOS, et non le seul choix enregistré.
+  ///
+  /// Les deux peuvent diverger — la case est cochée mais plus rien ne bloque,
+  /// donc la restriction est levée. L'écran doit pouvoir dire laquelle des
+  /// deux il montre.
+  @objc(uninstallProtection:rejecter:)
+  func uninstallProtection(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let enabled = defaults?.bool(forKey: Self.uninstallProtectionKey) ?? false
+    var active = false
+    if #available(iOS 16.0, *) {
+      active = store.application.denyAppRemoval == true
+    }
+    resolve(["enabled": enabled, "active": active])
   }
 
   /// Bilan de santé natif (dev + diagnostic device) : build, autorisation,

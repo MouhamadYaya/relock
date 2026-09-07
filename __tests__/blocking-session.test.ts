@@ -5,7 +5,7 @@
  *  • un timer terminé et une règle expirée sont AUTO-SUPPRIMÉS ;
  *  • le mode strict verrouille la SESSION en cours, jamais la durée de vie.
  */
-import type { BlockRuleView } from '@/features/blocking/types'
+
 import {
   buildSessions,
   deriveSession,
@@ -14,6 +14,7 @@ import {
   lifetimeProgress,
   sessionEnd,
 } from '@/features/blocking/session'
+import type { BlockRuleView } from '@/features/blocking/types'
 
 const NOW = new Date('2026-07-14T19:35:00') // mardi 19h35, heure locale
 
@@ -58,13 +59,18 @@ test('limite quotidienne → toujours « en cours », jamais un autre état', ()
 
 test('quota : 0 tant que le natif n’a rien remonté (jamais inventé)', () => {
   const r = rule({ type: 'daily_limit', config: { limit_min: 120 } })
-  expect(deriveSession(r, NOW).indicator).toMatchObject({ kind: 'limit', pct: 0 })
+  expect(deriveSession(r, NOW).indicator).toMatchObject({
+    kind: 'limit',
+    pct: 0,
+  })
   // Palier remonté par le monitor natif.
   expect(deriveSession(r, NOW, { r1: 0.75 }).indicator).toMatchObject({
     pct: 0.75,
     reached: false,
   })
-  expect(deriveSession(r, NOW, { r1: 1 }).indicator).toMatchObject({ reached: true })
+  expect(deriveSession(r, NOW, { r1: 1 }).indicator).toMatchObject({
+    reached: true,
+  })
 })
 
 // ── Plage : en cours ou à venir, jamais rien d'autre ───────────────────
@@ -76,7 +82,9 @@ test('plage hors créneau → « à venir »', () => {
 
 test('plage à cheval sur minuit, en pleine nuit → « en cours »', () => {
   const r = rule({ config: { start_hour: 22, end_hour: 7 } })
-  expect(deriveSession(r, new Date('2026-07-15T02:00:00')).state).toBe('running')
+  expect(deriveSession(r, new Date('2026-07-15T02:00:00')).state).toBe(
+    'running',
+  )
 })
 
 test('jours : une plage lun→ven ne tourne pas le dimanche', () => {
@@ -117,7 +125,10 @@ test('strict verrouille la session en cours d’un timer', () => {
 })
 
 test('strict sur une limite → verrouillé jusqu’à MINUIT, pas au-delà', () => {
-  const r = rule({ type: 'daily_limit', config: { limit_min: 120, strict: true } })
+  const r = rule({
+    type: 'daily_limit',
+    config: { limit_min: 120, strict: true },
+  })
   expect(sessionEnd(r, NOW)).toEqual(new Date('2026-07-15T00:00:00'))
   expect(isSessionLocked(r, NOW)).toBe(true)
 })

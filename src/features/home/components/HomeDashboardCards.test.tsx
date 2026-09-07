@@ -99,6 +99,8 @@ describe('Home dashboard cards', () => {
           scores={{ global: null, focus: null, rest: null, available: false }}
           title="Score"
           subtitle="Aujourd’hui"
+          delta={null}
+          deltaSuffix="vs hier"
           bandLabel="Bon équilibre"
           footerLabel="Ton rythme est sain."
           focusLabel="Focus"
@@ -125,6 +127,8 @@ describe('Home dashboard cards', () => {
           scores={{ global: 72, focus: 78, rest: 66, available: true }}
           title="Score"
           subtitle="Aujourd’hui"
+          delta={4}
+          deltaSuffix="vs hier"
           bandLabel="Bon équilibre"
           footerLabel="Ton rythme est sain."
           focusLabel="Focus"
@@ -135,7 +139,9 @@ describe('Home dashboard cards', () => {
         />,
       )
     })
-    expect(texts()).toEqual(expect.arrayContaining([72, 78, 66]))
+    // L'écart avec hier vient du même instantané que le chiffre : la pastille
+    // ne peut pas raconter autre chose que la rosace.
+    expect(texts()).toEqual(expect.arrayContaining([72, 78, 66, 4, 'vs hier']))
   })
   it('renders actual rule membership, three native icons, overflow and a direct unlock action', () => {
     const onPress = jest.fn()
