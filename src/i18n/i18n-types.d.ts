@@ -28,8 +28,6 @@ declare module 'i18next' {
           "testimonial_3": string;
           "cancel": string;
           "continue": string;
-          "dev_window": string;
-          "dev_skip": string;
           "processing": string;
           "before": string;
           "after": string;
@@ -841,6 +839,19 @@ declare module 'i18next' {
             "hint": string;
             "footnote": string;
           };
+          "notifications_master_hint": string;
+          "notifications_protection": string;
+          "notifications_protection_hint": string;
+          "notifications_always_on": string;
+          "notifications_account": string;
+          "notifications_account_hint": string;
+          "notifications_offers": string;
+          "notifications_offers_hint": string;
+          "notifications_ritual": string;
+          "notifications_ritual_hint": string;
+          "notifications_quiet_start": string;
+          "notifications_quiet_end": string;
+          "notifications_quiet_hint": string;
         };
         "onboarding": {
           "headline": string;
@@ -862,6 +873,254 @@ declare module 'i18next' {
         };
         "app": {
           "title": string;
+        };
+        "notifications": {
+          "activation": {
+            "screen_time_missing": {
+              "title": string;
+              "body": string;
+            };
+            "selection_empty": {
+              "title": string;
+              "body": string;
+            };
+            "no_rule_d1": {
+              "title": string;
+              "body": string;
+            };
+            "rule_never_armed": {
+              "title": string;
+              "body": string;
+            };
+            "tutorial_incomplete": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "blocking": {
+            "all_rules_expired": {
+              "title": string;
+              "body": string;
+            };
+            "nothing_armed_tonight": {
+              "title_a": string;
+              "body_a": string;
+              "title_b": string;
+              "body_b": string;
+            };
+            "session_ending_soon": {
+              "title": string;
+              "body": string;
+            };
+            "session_ended": {
+              "title": string;
+              "body": string;
+            };
+            "schedule_starts_soon": {
+              "title": string;
+              "body": string;
+            };
+            "extend_suggested": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "strict": {
+            "attempt_burst": {
+              "title": string;
+              "body": string;
+            };
+            "first_completed": {
+              "title": string;
+              "body": string;
+            };
+            "locked_confirmation": {
+              "title": string;
+              "body": string;
+            };
+            "unlock_available": {
+              "title": string;
+              "body": string;
+            };
+            "midpoint": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "score": {
+            "first_ready": {
+              "title": string;
+              "body": string;
+            };
+            "band_up": {
+              "title": string;
+              "body": string;
+            };
+            "dropped": {
+              "title": string;
+              "body": string;
+            };
+            "improved": {
+              "title": string;
+              "body": string;
+            };
+            "weakest_axis_tip_focus": {
+              "title": string;
+              "body": string;
+            };
+            "weakest_axis_tip_rest": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "progress": {
+            "first_resist": {
+              "title": string;
+              "body": string;
+            };
+            "milestone_resists": {
+              "title": string;
+              "body": string;
+            };
+            "streak_milestone": {
+              "title_one": string;
+              "title_other": string;
+              "title": string;
+              "body_one": string;
+              "body_other": string;
+              "body": string;
+            };
+            "challenge_completed": {
+              "title_one": string;
+              "title_other": string;
+              "title": string;
+              "body_one": string;
+              "body_other": string;
+              "body": string;
+            };
+            "personal_best": {
+              "title": string;
+              "body": string;
+            };
+            "weekly_recap": {
+              "title": string;
+              "body": string;
+            };
+            "monthly_recap": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "retention": {
+            "streak_at_risk": {
+              "title": string;
+              "body": string;
+            };
+            "streak_broken_recover": {
+              "title": string;
+              "body": string;
+            };
+            "absent_14d": {
+              "title": string;
+              "body": string;
+            };
+            "absent_5d": {
+              "title": string;
+              "body": string;
+            };
+            "win_back_offer": {
+              "title": string;
+              "body": string;
+            };
+            "absent_2d": {
+              "title_a": string;
+              "body_a": string;
+              "title_b": string;
+              "body_b": string;
+            };
+          };
+          "billing": {
+            "renewal_failed": {
+              "title": string;
+              "body": string;
+            };
+            "entitlement_lost": {
+              "title": string;
+              "body": string;
+            };
+            "trial_ends_2d": {
+              "title": string;
+              "body": string;
+            };
+            "trial_ends_1d": {
+              "title": string;
+              "body": string;
+            };
+            "offer_expires_2h": {
+              "title": string;
+              "body": string;
+            };
+            "offer_expires_24h": {
+              "title": string;
+              "body": string;
+            };
+            "offer_available": {
+              "title": string;
+              "body": string;
+            };
+            "paywall_abandoned_d1": {
+              "title": string;
+              "body": string;
+            };
+            "paywall_abandoned_1h": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "health": {
+            "screen_time_revoked": {
+              "title": string;
+              "body": string;
+            };
+            "rules_desync": {
+              "title": string;
+              "body": string;
+            };
+            "extension_silent": {
+              "title": string;
+              "body": string;
+            };
+            "selection_drift": {
+              "title": string;
+              "body": string;
+            };
+            "sync_stalled": {
+              "title": string;
+              "body": string;
+            };
+            "incident": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "ritual": {
+            "bedtime": {
+              "title": string;
+              "body": string;
+            };
+            "my_moment": {
+              "title": string;
+              "body": string;
+            };
+            "morning_no_scroll": {
+              "title": string;
+              "body": string;
+            };
+          };
+          "soft_ask_title": string;
+          "soft_ask_body": string;
+          "soft_ask_decline": string;
+          "soft_ask_accept": string;
         };
       };
     };

@@ -20,7 +20,6 @@
     "testimonial_3": "C’est la pause qui change tout. Elle me laisse une seconde pour décider, et la plupart du temps je referme l’app.",
     "cancel": "Résiliable à tout moment",
     "continue": "Continuer",
-    "dev_window": "Aperçu de l’offre",
     "processing": "Traitement…",
     "before": "Avant",
     "after": "Après",
@@ -818,7 +817,20 @@
       "label": "Écran de blocage",
       "hint": "Ce que Relock affiche avant un déblocage",
       "footnote": "Le nouvel écran s’applique à partir de ta prochaine pause : celle qui est en cours va toujours à son terme."
-    }
+    },
+    "notifications_master_hint": "Les alertes de protection restent actives : elles préviennent quand un blocage ne s’applique plus.",
+    "notifications_protection": "Alertes de protection",
+    "notifications_protection_hint": "Toujours actives. Elles préviennent quand Relock ne bloque plus rien — sans elles, une panne serait invisible.",
+    "notifications_always_on": "Toujours actives",
+    "notifications_account": "Abonnement",
+    "notifications_account_hint": "Fin d’essai, échec de paiement, expiration. Jamais de promotion.",
+    "notifications_offers": "Offres et réductions",
+    "notifications_offers_hint": "Désactivé par défaut. Rien ne part sans ton accord.",
+    "notifications_ritual": "Rendez-vous quotidien",
+    "notifications_ritual_hint": "Un rappel à l’heure que tu choisis.",
+    "notifications_quiet_start": "Silence à partir de",
+    "notifications_quiet_end": "Jusqu’à",
+    "notifications_quiet_hint": "Aucune notification pendant cette plage. Ton réglage remplace la valeur par défaut (22 h – 8 h)."
   },
   "onboarding": {
     "headline": "Reprends le contrôle\nde ton attention.",
@@ -833,5 +845,253 @@
   },
   "app": {
     "title": "Relock"
+  },
+  "notifications": {
+    "activation": {
+      "screen_time_missing": {
+        "title": "Relock ne bloque encore rien",
+        "body": "L’autorisation Temps d’écran manque. Sans elle, aucune app ne peut être protégée."
+      },
+      "selection_empty": {
+        "title": "Un blocage sans apps",
+        "body": "Une de tes protections est active mais ne vise aucune app. Choisis-en une ou deux et elle se met à servir."
+      },
+      "no_rule_d1": {
+        "title": "Ton premier blocage t’attend",
+        "body": "Une app, une durée, et Relock s’occupe du reste. Moins d’une minute."
+      },
+      "rule_never_armed": {
+        "title": "Ta règle n’a jamais servi",
+        "body": "Elle est prête, il ne manque que de l’armer. Un geste, et ta soirée est couverte."
+      },
+      "tutorial_incomplete": {
+        "title": "On reprend où tu t’étais arrêté ?",
+        "body": "Il reste une étape avant que Relock soit vraiment opérationnel."
+      }
+    },
+    "blocking": {
+      "all_rules_expired": {
+        "title": "Plus aucune protection active",
+        "body": "Tes blocages sont tous arrivés au bout. Tu veux en relancer un ?"
+      },
+      "nothing_armed_tonight": {
+        "title_a": "Rien n’est armé pour ce soir",
+        "body_a": "C’est le moment que tu as identifié comme difficile. Un blocage rapide, et il est couvert.",
+        "title_b": "Ton heure sensible approche",
+        "body_b": "Rien ne protège encore. Trente secondes maintenant valent mieux qu’une heure perdue tout à l’heure."
+      },
+      "session_ending_soon": {
+        "title": "Ta protection se termine bientôt",
+        "body": "Dix minutes avant la fin. Tu peux la prolonger si tu préfères tenir encore un peu."
+      },
+      "session_ended": {
+        "title": "Protection terminée",
+        "body": "Ouvre Relock pour voir ce que tu as évité pendant cette session."
+      },
+      "schedule_starts_soon": {
+        "title": "Plage horaire dans un quart d’heure",
+        "body": "Tes apps vont être bloquées. Termine ce que tu as à faire."
+      },
+      "extend_suggested": {
+        "title": "Tu prolonges souvent",
+        "body": "Trois prolongations cette semaine. Une plage horaire régulière t’éviterait d’y penser."
+      }
+    },
+    "strict": {
+      "attempt_burst": {
+        "title": "C’est un moment difficile",
+        "body": "Tu butes sur le mur depuis quelques minutes. C’est exactement ce que le mode strict est là pour tenir."
+      },
+      "first_completed": {
+        "title": "Première session stricte tenue",
+        "body": "Tu es allé au bout sans porte de sortie. C’était le plus dur, et c’est fait."
+      },
+      "locked_confirmation": {
+        "title": "Verrou strict actif",
+        "body": "Jusqu’à {{until}}, tu ne pourras pas revenir en arrière. C’est ce que tu as choisi."
+      },
+      "unlock_available": {
+        "title": "Le verrou est levé",
+        "body": "Ta protection stricte est terminée. Tu reprends la main."
+      },
+      "midpoint": {
+        "title": "À mi-parcours",
+        "body": "La moitié du verrou est derrière toi. La suite est plus facile que ce que tu crois."
+      }
+    },
+    "score": {
+      "first_ready": {
+        "title": "Ton score est prêt",
+        "body": "Assez d’historique pour te dire où tu en es : {{score}} sur 100."
+      },
+      "band_up": {
+        "title": "Tu changes de palier",
+        "body": "Ton score passe à {{score}}. Ce n’est pas un hasard, c’est ce que tu as fait cette semaine."
+      },
+      "dropped": {
+        "title": "Ton score a baissé",
+        "body": "Ça arrive. Ouvre Relock pour voir ce qui a bougé."
+      },
+      "improved": {
+        "title": "Ton score progresse",
+        "body": "Ton score : +{{delta}} par rapport à la semaine dernière."
+      },
+      "weakest_axis_tip_focus": {
+        "title": "Ton point faible : la concentration",
+        "body": "Tes journées sont hachées. Un blocage sur tes heures de travail changerait le plus de choses."
+      },
+      "weakest_axis_tip_rest": {
+        "title": "Ton point faible : le repos",
+        "body": "Les soirées débordent. Une plage horaire après 22 h changerait le plus de choses."
+      }
+    },
+    "progress": {
+      "first_resist": {
+        "title": "Première victoire",
+        "body": "Tu viens de résister. C’est exactement comme ça qu’on reprend le contrôle."
+      },
+      "milestone_resists": {
+        "title": "{{total}} résistances",
+        "body": "{{total}} fois où tu as choisi ton temps plutôt que le scroll. Continue."
+      },
+      "streak_milestone": {
+        "title_one": "{{days}} jour de suite",
+        "title_other": "{{days}} jours de suite",
+        "title": "{{days}} jours de suite",
+        "body_one": "Ta série tient. C’est la régularité qui fait la différence, pas les grands jours.",
+        "body_other": "Ta série tient. C’est la régularité qui fait la différence, pas les grands jours.",
+        "body": "Ta série tient. C’est la régularité qui fait la différence, pas les grands jours."
+      },
+      "challenge_completed": {
+        "title_one": "{{days}} jour tenu",
+        "title_other": "{{days}} jours tenus",
+        "title": "{{days}} jours tenus",
+        "body_one": "Ton défi est allé jusqu’au bout. Ouvre Relock pour voir ce qu’il t’a rendu.",
+        "body_other": "Ton défi est allé jusqu’au bout. Ouvre Relock pour voir ce qu’il t’a rendu.",
+        "body": "Ton défi est allé jusqu’au bout. Ouvre Relock pour voir ce qu’il t’a rendu."
+      },
+      "personal_best": {
+        "title": "Ta meilleure semaine",
+        "body": "{{minutes}} min regagnées — tu n’étais jamais allé aussi loin."
+      },
+      "weekly_recap": {
+        "title": "Ton bilan de la semaine est prêt",
+        "body": "Ouvre Relock pour voir le temps que tu as regagné cette semaine."
+      },
+      "monthly_recap": {
+        "title": "Ton mois en un coup d’œil",
+        "body": "Ouvre Relock pour voir ce que le mois a donné."
+      }
+    },
+    "retention": {
+      "streak_at_risk": {
+        "title": "Ta série tient à un geste",
+        "body": "Arme un blocage ce soir pour ne pas la casser."
+      },
+      "streak_broken_recover": {
+        "title": "On repart de 1, pas de 0",
+        "body": "La série s’est arrêtée hier. Ce que tu as gagné avant, tu l’as toujours."
+      },
+      "absent_14d": {
+        "title": "On en reste là",
+        "body": "Relock ne te relancera plus. L’app reste là si tu veux reprendre, quand tu veux."
+      },
+      "absent_5d": {
+        "title": "Ton temps t’attend toujours",
+        "body": "Tu avais une raison de commencer. Elle n’a pas changé."
+      },
+      "win_back_offer": {
+        "title": "Une offre t’attend",
+        "body": "Reprends là où tu t’étais arrêté, à tarif réduit."
+      },
+      "absent_2d": {
+        "title_a": "Tes apps peuvent attendre",
+        "body_a": "Un blocage rapide, et tu retrouves ton temps.",
+        "title_b": "On reprend le contrôle ?",
+        "body_b": "Deux jours sans blocage. Une minute suffit pour relancer."
+      }
+    },
+    "billing": {
+      "renewal_failed": {
+        "title": "Ton paiement n’est pas passé",
+        "body": "Ton abonnement va s’interrompre. Mets à jour ton moyen de paiement pour garder tes protections."
+      },
+      "entitlement_lost": {
+        "title": "Tes protections sont réduites",
+        "body": "Ton abonnement a expiré. Les blocages en cours continuent, mais tu ne peux plus en créer."
+      },
+      "trial_ends_2d": {
+        "title": "Ton essai se termine dans 2 jours",
+        "body": "Rien à faire si tu veux continuer. Tu peux annuler à tout moment depuis les Réglages."
+      },
+      "trial_ends_1d": {
+        "title": "Dernier jour d’essai",
+        "body": "Le prélèvement a lieu demain. Tu peux encore annuler depuis les Réglages."
+      },
+      "offer_expires_2h": {
+        "title": "Ton offre se termine dans 2 heures",
+        "body": "Après ça, elle disparaît."
+      },
+      "offer_expires_24h": {
+        "title": "Ton offre court encore 24 heures",
+        "body": "Ensuite elle disparaît et le tarif revient à la normale."
+      },
+      "offer_available": {
+        "title": "Une offre est ouverte pour toi",
+        "body": "Tarif réduit sur Relock, pour une durée limitée."
+      },
+      "paywall_abandoned_d1": {
+        "title": "Tu y étais presque",
+        "body": "Ton offre de bienvenue est encore là."
+      },
+      "paywall_abandoned_1h": {
+        "title": "Une question sur l’abonnement ?",
+        "body": "Ton offre reste ouverte si tu veux y revenir."
+      }
+    },
+    "health": {
+      "screen_time_revoked": {
+        "title": "Relock ne protège plus tes apps",
+        "body": "L’autorisation Temps d’écran a été retirée. Tes blocages ne s’appliquent plus."
+      },
+      "rules_desync": {
+        "title": "Un blocage ne s’applique pas",
+        "body": "Une de tes règles est active dans Relock mais pas sur ton iPhone. Ouvre l’app pour la réarmer."
+      },
+      "extension_silent": {
+        "title": "Vérifie tes protections",
+        "body": "Relock n’a plus de nouvelles de ses protections depuis deux jours. Ouvre l’app pour vérifier."
+      },
+      "selection_drift": {
+        "title": "Un blocage a perdu ses apps",
+        "body": "La sélection d’une de tes règles est vide : elle ne bloque plus rien."
+      },
+      "sync_stalled": {
+        "title": "Tes statistiques sont en retard",
+        "body": "Rien n’est perdu, mais les chiffres affichés datent. Ouvre l’app pour les mettre à jour."
+      },
+      "incident": {
+        "title": "Relock ne protège plus tes apps",
+        "body": "Plusieurs protections ne s’appliquent plus. Ouvre l’app pour rétablir la situation."
+      }
+    },
+    "ritual": {
+      "bedtime": {
+        "title": "C’est l’heure de couper",
+        "body": "Ta soirée t’appartient. Un blocage, et l’écran s’arrête là."
+      },
+      "my_moment": {
+        "title": "Ton moment sans écran",
+        "body": "C’est l’heure que tu as choisie. Arme ton blocage."
+      },
+      "morning_no_scroll": {
+        "title": "Commence la journée à toi",
+        "body": "Avant le premier scroll : arme ton blocage."
+      }
+    },
+    "soft_ask_title": "Un coup de pouce discret ?",
+    "soft_ask_body": "Relock peut te prévenir si ta série est en danger, ou si une protection cesse de s’appliquer. Jamais de promotion, et tu gardes la main depuis les Réglages.",
+    "soft_ask_decline": "Non merci",
+    "soft_ask_accept": "Activer les rappels"
   }
 }

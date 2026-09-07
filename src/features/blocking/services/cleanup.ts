@@ -8,28 +8,26 @@
  */
 
 import { BlockRulesService } from '@/features/blocking/services/block-rules/block-rules.service'
-import {
-  isFinished,
-  lifetimeDays,
-  ruleTitle,
-} from '@/features/blocking/session'
+import { isFinished, lifetimeDays } from '@/features/blocking/session'
 import type { BlockRuleView } from '@/features/blocking/types'
-import { getNotifPrefs } from '@/features/notifications/prefs'
-import { Notif } from '@/shared/native/notifications'
+import { noteChallengeCompleted } from '@/features/notifications/engine/signals'
+import { NotificationService } from '@/features/notifications/notification.service'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 
-/** Félicite quand un DÉFI est allé au bout (jamais pour un simple timer). */
+/**
+ * Félicite quand un DÉFI est allé au bout (jamais pour un simple timer).
+ *
+ * On dépose un SIGNAL, on n'envoie pas la notification ici : une félicitation
+ * doit respecter le canal, les heures calmes et le budget comme n'importe quel
+ * autre message. La version précédente écrivait directement dans iOS, en
+ * français codé en dur — donc impossible à éteindre depuis les Réglages, alors
+ * même que l'écran affichait un interrupteur qui prétendait le faire.
+ */
 function congratulate(rule: BlockRuleView): void {
   const days = lifetimeDays(rule)
   if (!days) return
-  const p = getNotifPrefs()
-  if (!p.master || !p.progression) return
-  Notif.schedule(
-    `relock.challenge.${rule.id}`,
-    Math.floor(Date.now() / 1000) + 2,
-    `${days} jours tenus`,
-    `« ${ruleTitle(rule)} » est allée au bout. Tu as tenu ${days} jours — c'est toi qui mènes.`,
-  ).catch(() => {})
+  noteChallengeCompleted(Date.now(), days)
+  NotificationService.runFromLastKnown().catch(() => {})
 }
 
 /**

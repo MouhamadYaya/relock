@@ -1,4 +1,8 @@
 import { router } from 'expo-router'
+import {
+  noteEntitled,
+  noteEntitlementLost,
+} from '@/features/notifications/engine/signals'
 import { constants } from '@/config/constants'
 import { clearOnboardingCheckpoint } from '@/features/onboarding/services/onboarding-checkpoint'
 import { resetPaywallViews } from '@/features/onboarding/services/paywall-views'
@@ -104,6 +108,10 @@ export function signOutToAuth() {
  */
 export function applyEntitlement(active: boolean) {
   kvStorage.setString(constants.ENTITLEMENT_ACTIVE, active ? '1' : '0')
+  // Le moteur de notifications a besoin de la DATE de la perte, pas seulement
+  // de l'état : « ton abonnement a expiré » n'a de sens que quelques jours.
+  if (active) noteEntitled(null)
+  else noteEntitlementLost(Date.now())
   const store = useAppGateStore.getState()
   if (store.entitled === active) return
   store.setEntitled(active)

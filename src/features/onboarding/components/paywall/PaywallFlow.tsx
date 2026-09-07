@@ -23,6 +23,7 @@ import {
   PaywallTextButton,
 } from '@/features/onboarding/components/paywall/PaywallPrimitives'
 import { PW } from '@/features/onboarding/components/paywall/paywall-theme'
+import { notePaywallAbandoned } from '@/features/notifications/engine/signals'
 import { shouldShowCancellationOffer } from '@/features/onboarding/services/paywall-flow'
 import type {
   PaywallPlan,
@@ -232,6 +233,10 @@ export function PaywallFlow({
           cancellationOfferShown.current,
         )
       ) {
+        // Un abandon de PAIEMENT, pas un écran de prix refermé : la feuille
+        // Apple a bien été présentée. C'est la seule annulation qui mérite
+        // qu'on en reparle plus tard.
+        notePaywallAbandoned(Date.now())
         cancellationOfferShown.current = true
         setSheetVisible(true)
       } else if (result.status === 'failed')

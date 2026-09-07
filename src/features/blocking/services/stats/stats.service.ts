@@ -6,6 +6,7 @@
  * (proxy fiable des ouvertures évitées ; iOS ne donne pas le nb d'ouvertures).
  */
 
+import { noteSynced } from '@/features/notifications/engine/signals'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { supabase } from '@/shared/services/supabase/client'
 import type { DailyStats } from '@/shared/services/supabase/database.types'
@@ -134,6 +135,10 @@ export const StatsService = {
       if (error) throw normalizeError(error) // jour non acké → retry plus tard
       await ScreenTime.ackEvents(countPerDay[date]) // purge CE jour uniquement
     }
+    // Une synchronisation RÉUSSIE, pas une tentative : c'est cette date que le
+    // watchdog `health.sync_stalled` désarme. La poser plus haut ferait taire
+    // l'alerte précisément quand la synchronisation échoue.
+    noteSynced(Date.now())
   },
 
   /**

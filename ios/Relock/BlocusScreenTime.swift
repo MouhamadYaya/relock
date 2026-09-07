@@ -1512,10 +1512,10 @@ final class BlocusScreenTime: NSObject {
 
   // MARK: - Notifications locales (rappels, progression)
   //
-  // 100 % local : pas d'APNs. L'app planifie les notifs DIFFÉRÉES (rappel série
-  // du soir, bilan hebdo, win-back) via un reconciler idempotent côté JS. Les
-  // célébrations TEMPS RÉEL (1ʳᵉ victoire, jalons) partent de l'extension
-  // bouclier (`RelockShieldAction`), seule réveillée quand l'app est fermée.
+  // 100 % local : pas d'APNs. L'app planifie les notifs DIFFÉRÉES via un moteur
+  // idempotent côté JS (deux files : `relock.r.` roulante à 7 jours,
+  // `relock.a.` d'ancrage hors horizon). Les célébrations TEMPS RÉEL partent de
+  // l'extension bouclier (`RelockShieldAction`), seule réveillée app fermée.
 
   private var notifCenter: UNUserNotificationCenter { .current() }
 
@@ -1544,27 +1544,121 @@ final class BlocusScreenTime: NSObject {
     }
   }
 
-  /// Planifie une notif locale à une date absolue (timestamp Unix, secondes).
-  /// Un même `id` remplace la précédente → idempotent, aucun doublon.
-  @objc(scheduleNotif:timestamp:title:body:resolver:rejecter:)
-  func scheduleNotif(
-    _ id: String, timestamp: NSNumber, title: String, body: String,
-    resolver resolve: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    let interval = Date(timeIntervalSince1970: timestamp.doubleValue)
-      .timeIntervalSinceNow
-    guard interval > 0 else { resolve(false); return }  // jamais dans le passé
+  /// Compose le contenu commun aux deux planificateurs.
+  ///
+  /// `payload` devient `userInfo["relock"]` : c'est la seule chose qui permet,
+  /// au tap, de savoir QUEL nœud a parlé et OÙ il voulait emmener l'utilisateur.
+  /// Sans elle, une notification touchée ouvre l'app au hasard.
+  private func notifContent(
+    title: String, body: String, options: NSDictionary?
+  ) -> UNMutableNotificationContent {
     let content = UNMutableNotificationContent()
     content.title = title
     content.body = body
-    content.sound = .default
-    let req = UNNotificationRequest(
-      identifier: id, content: content,
-      trigger: UNTimeIntervalNotificationTrigger(
-        timeInterval: interval, repeats: false))
-    notifCenter.removePendingNotificationRequests(withIdentifiers: [id])
-    notifCenter.add(req) { err in resolve(err == nil) }
+
+    if let payload = options?["payload"] as? [String: Any] {
+      content.userInfo = ["relock": payload]
+    }
+    if let thread = options?["threadId"] as? String, !thread.isEmpty {
+      // Regroupe les messages d'une même famille dans le centre de
+      // notifications : cinq bilans hebdo empilés valent une seule pile.
+      content.threadIdentifier = thread
+    }
+    if let category = options?["categoryId"] as? String, !category.isEmpty {
+      content.categoryIdentifier = category
+    }
+    if let relevance = options?["relevanceScore"] as? NSNumber {
+      content.relevanceScore = relevance.doubleValue
+    }
+
+    // `passive` ne sonne pas et n'allume pas l'écran : c'est le niveau par
+    // défaut de tout ce qui n'a pas besoin d'être vu maintenant.
+    // `critical` n'existe pas ici — il exige un entitlement Apple dédié et
+    // n'a aucune justification dans un produit de bien-être numérique.
+    let level = options?["interruptionLevel"] as? String ?? "active"
+    switch level {
+    case "passive":
+      content.interruptionLevel = .passive
+      content.sound = nil
+    case "timeSensitive":
+      content.interruptionLevel = .timeSensitive
+      content.sound = .default
+    default:
+      content.interruptionLevel = .active
+      content.sound = .default
+    }
+    return content
+  }
+
+  private func submit(
+    _ request: UNNotificationRequest,
+    _ resolve: @escaping RCTPromiseResolveBlock
+  ) {
+    // Même identifiant ⇒ remplacement. La purge préalable garantit qu'aucun
+    // doublon ne peut survivre à un replanning.
+    notifCenter.removePendingNotificationRequests(withIdentifiers: [request.identifier])
+    notifCenter.add(request) { err in resolve(err == nil) }
+  }
+
+  /// Planifie à un INSTANT ABSOLU (timestamp Unix, secondes).
+  ///
+  /// Trigger par intervalle : correct pour un instant mondial (fin d'essai,
+  /// échéance d'offre, délai relatif). À ne PAS utiliser pour une heure locale
+  /// récurrente — voir `scheduleNotifCalendar`.
+  @objc(scheduleNotif:timestamp:title:body:options:resolver:rejecter:)
+  func scheduleNotif(
+    _ id: String, timestamp: NSNumber, title: String, body: String,
+    options: NSDictionary?,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    let interval = Date(timeIntervalSince1970: timestamp.doubleValue).timeIntervalSinceNow
+    guard interval > 0 else { resolve(false); return }  // jamais dans le passé
+    let request = UNNotificationRequest(
+      identifier: id,
+      content: notifContent(title: title, body: body, options: options),
+      trigger: UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false))
+    submit(request, resolve)
+  }
+
+  /// Planifie à une HEURE LOCALE (trigger calendrier).
+  ///
+  /// « Dimanche 19h » doit rester 19h après un vol Montréal → Paris. Un trigger
+  /// par intervalle, lui, est figé à l'instant calculé au départ et arriverait
+  /// à 13h. Seul le trigger calendrier suit le fuseau du téléphone.
+  ///
+  /// `components` accepte `hour`, `minute`, `weekday` (1 = dimanche, convention
+  /// Apple) et `day` (jour du mois).
+  @objc(scheduleNotifCalendar:components:repeats:title:body:options:resolver:rejecter:)
+  func scheduleNotifCalendar(
+    _ id: String, components: NSDictionary, repeats: Bool,
+    title: String, body: String, options: NSDictionary?,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    var comps = DateComponents()
+    if let hour = components["hour"] as? NSNumber { comps.hour = hour.intValue }
+    if let minute = components["minute"] as? NSNumber { comps.minute = minute.intValue }
+    if let weekday = components["weekday"] as? NSNumber { comps.weekday = weekday.intValue }
+    if let day = components["day"] as? NSNumber { comps.day = day.intValue }
+    guard comps.hour != nil || comps.minute != nil else { resolve(false); return }
+
+    let request = UNNotificationRequest(
+      identifier: id,
+      content: notifContent(title: title, body: body, options: options),
+      trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: repeats))
+    submit(request, resolve)
+  }
+
+  /// Annule des notifications par identifiant exact (file d'ancrage).
+  @objc(cancelNotifs:resolver:rejecter:)
+  func cancelNotifs(
+    _ ids: [String],
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    notifCenter.removePendingNotificationRequests(withIdentifiers: ids)
+    resolve(true)
   }
 
   /// Annule les notifs planifiées dont l'identifiant commence par `prefix`.
@@ -1581,6 +1675,45 @@ final class BlocusScreenTime: NSObject {
     }
   }
 
+  /// Identifiants réellement en attente côté iOS.
+  ///
+  /// C'est la SEULE vérité pour le garde de capacité : iOS plafonne les
+  /// notifications locales en attente et jette silencieusement les suivantes.
+  /// Compter ce qu'on croit avoir écrit ne suffit pas — une notification tirée
+  /// entre-temps a quitté la file sans prévenir personne.
+  @objc(pendingNotifIds:rejecter:)
+  func pendingNotifIds(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    notifCenter.getPendingNotificationRequests { reqs in
+      resolve(reqs.map { $0.identifier })
+    }
+  }
+
+  /// Notifications LIVRÉES encore présentes dans le centre de notifications.
+  /// Une notification lue puis balayée sans tap n'est pas une notification
+  /// ignorée : ce signal nuance le score de fatigue.
+  @objc(deliveredNotifIds:rejecter:)
+  func deliveredNotifIds(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    notifCenter.getDeliveredNotifications { notes in
+      resolve(notes.map { $0.request.identifier })
+    }
+  }
+
+  /// Consomme les taps enregistrés par `RelockNotificationDelegate`.
+  /// Lecture destructive : une réponse traitée deux fois routerait deux fois.
+  @objc(consumeNotifResponses:rejecter:)
+  func consumeNotifResponses(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    resolve(RelockNotificationDelegate.shared.drainResponses())
+  }
+
   /// Active/désactive les célébrations temps réel (lu par l'extension bouclier).
   @objc(setCelebrationsEnabled:resolver:rejecter:)
   func setCelebrationsEnabled(
@@ -1589,6 +1722,25 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     defaults?.set(enabled, forKey: "notif.celebrationsEnabled")
+    resolve(true)
+  }
+
+  /// Publie les textes TRADUITS des célébrations dans l'App Group.
+  ///
+  /// L'extension bouclier ne peut pas charger i18next : elle écrivait donc du
+  /// français en dur, quelle que soit la langue de l'utilisateur. On lui dépose
+  /// ici le texte déjà traduit, remis à jour à chaque changement de langue.
+  @objc(setCelebrationCopy:resolver:rejecter:)
+  func setCelebrationCopy(
+    _ copy: NSDictionary,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let data = try? JSONSerialization.data(withJSONObject: copy) else {
+      resolve(false)
+      return
+    }
+    defaults?.set(data, forKey: "notif.celebrationCopy")
     resolve(true)
   }
 

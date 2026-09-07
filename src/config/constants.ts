@@ -62,6 +62,25 @@ export const constants = {
   /** Heure des rappels du soir, en minutes depuis minuit. */
   PREF_REMINDER_MINUTES: 'pref.reminderMinutes.v1',
 
+  /**
+   * Notifications v2. `NOTIF_PREFS_LEGACY` n'est lu qu'une fois, pour la
+   * migration : les trois booléens de la v1 deviennent des canaux, et l'ancienne
+   * clé est effacée pour qu'aucun code ne puisse la relire par accident.
+   */
+  NOTIF_PREFS: 'notif.prefs.v2',
+  NOTIF_PREFS_LEGACY: 'notif.prefs',
+  /** Journal d'instrumentation (anneau borné). */
+  NOTIF_LOG: 'notif.log.v1',
+  /**
+   * État du moteur : derniers envois par nœud, ancres écrites, score de
+   * fatigue par famille, drapeau de purge de l'ancien préfixe `relock.sched.`.
+   */
+  NOTIF_STATE: 'notif.state.v1',
+  /** Soft-ask déjà proposé (permission demandée une seule fois, au bon moment). */
+  NOTIF_PERMISSION_ASKED: 'notif.permissionAsked',
+  /** Première ouverture connue de l'app — base de `daysSinceInstall`. */
+  NOTIF_INSTALLED_AT: 'notif.installedAt.v1',
+
   /** MMKV key (`navigationStorage`) for persisted React Navigation root state. */
   NAVIGATION_STATE_V1: 'navigation.state.v1',
 }

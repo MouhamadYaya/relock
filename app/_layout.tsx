@@ -14,6 +14,8 @@ import { flags } from '@/config/constants'
 import { env } from '@/config/env'
 import { usePendingShieldRequest } from '@/features/blocking/hooks/usePendingShieldRequest'
 import { runInstallReset } from '@/features/blocking/services/reset.service'
+import { useNotificationEngine } from '@/features/notifications/hooks/useNotificationEngine'
+import { useNotificationRouter } from '@/features/notifications/routing/useNotificationRouter'
 import { initializeRevenueCat } from '@/features/onboarding/services/revenuecat'
 import { userKeys } from '@/features/user/api/keys'
 import { useT } from '@/i18n/useT'
@@ -75,6 +77,14 @@ function AppShell() {
   // expire referme donc la porte, exactement comme il l'avait ouverte.
   const appUnlocked = root === 'app'
   usePendingShieldRequest(appUnlocked)
+
+  // UN SEUL point de montage du moteur de notifications. Deux passages
+  // concurrents avec des sources différentes se détruiraient l'un l'autre : la
+  // file roulante est purgée puis réécrite intégralement à chaque passage.
+  useNotificationEngine(appUnlocked)
+  // Les taps sont consommés ici, et pas dans un écran : un tap démarre souvent
+  // l'app à froid, et l'écran de destination n'est pas encore monté.
+  useNotificationRouter(appUnlocked)
 
   // L'instrumentation de navigation a besoin du conteneur pour nommer les
   // transactions et rattacher un écran à chaque événement. Sans ce
@@ -211,6 +221,13 @@ function AppShell() {
           <Stack.Screen name="profile" />
           <Stack.Screen name="delete-account" />
           <Stack.Screen name="reset-app" />
+          {/* Diagnostic du moteur de notifications : tout s'y décide hors
+              écran, et une notification qui ne part pas ressemble exactement à
+              une notification qui n'avait pas lieu d'être. Dev uniquement, et
+              SANS bouton dans l'UI (comme tous les raccourcis de dev depuis le
+              2026-09-07) : on l'ouvre au deep link
+              `relock://notifications-debug`. */}
+          {__DEV__ ? <Stack.Screen name="notifications-debug" /> : null}
         </Stack.Protected>
       </Stack>
     </NavThemeProvider>

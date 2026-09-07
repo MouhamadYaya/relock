@@ -1,5 +1,6 @@
 import { ruleDays } from '@/features/blocking/session'
 import type { BlockRuleView } from '@/features/blocking/types'
+import { noteRuleArmed } from '@/features/notifications/engine/signals'
 import { ScreenTime } from '@/shared/native/screen-time'
 
 const n = (v: unknown, d = 0): number => (typeof v === 'number' ? v : d)
@@ -25,6 +26,10 @@ export async function armRule(rule: BlockRuleView): Promise<void> {
   } else {
     await ScreenTime.startTimedBlock(rule.id, n(c.duration_min, 30), !!c.strict)
   }
+  // Une règle qui a réellement protégé une fois : c'est ce qui distingue
+  // « il faut créer un blocage » de « il faut l'armer », deux messages
+  // d'activation très différents.
+  noteRuleArmed(Date.now())
 }
 
 /**

@@ -20,8 +20,6 @@
     "testimonial_3": "Die Pause macht den Unterschied. Sie gibt mir eine Sekunde zum Entscheiden — meistens schließe ich die App.",
     "cancel": "Jederzeit kündbar",
     "continue": "Weiter",
-    "dev_window": "Angebotsvorschau",
-    "dev_skip": "Paywall überspringen (Dev)",
     "processing": "Wird verarbeitet…",
     "before": "Vor",
     "after": "Mit",
@@ -785,7 +783,20 @@
       "label": "Sperrbildschirm",
       "hint": "Was Relock vor dem Entsperren zeigt",
       "footnote": "Der neue Bildschirm gilt ab der nächsten Pause: eine laufende Pause läuft immer zu Ende."
-    }
+    },
+    "notifications_master_hint": "Schutzhinweise bleiben aktiv: Sie warnen dich, wenn eine Sperre nicht mehr greift.",
+    "notifications_protection": "Schutzhinweise",
+    "notifications_protection_hint": "Immer aktiv. Sie warnen, wenn Relock nichts mehr blockiert – ohne sie bliebe ein Ausfall unsichtbar.",
+    "notifications_always_on": "Immer aktiv",
+    "notifications_account": "Abo",
+    "notifications_account_hint": "Ende der Testphase, fehlgeschlagene Zahlung, Ablauf. Nie Werbung.",
+    "notifications_offers": "Angebote und Rabatte",
+    "notifications_offers_hint": "Standardmäßig aus. Ohne deine Zustimmung wird nichts gesendet.",
+    "notifications_ritual": "Tägliche Erinnerung",
+    "notifications_ritual_hint": "Eine Erinnerung zu der Zeit, die du wählst.",
+    "notifications_quiet_start": "Ruhe ab",
+    "notifications_quiet_end": "Bis",
+    "notifications_quiet_hint": "Keine Mitteilungen in diesem Zeitraum. Deine Einstellung ersetzt den Standard (22–8 Uhr)."
   },
   "onboarding": {
     "headline": "Alles, was du brauchst,\nan einem Ort.",
@@ -807,5 +818,253 @@
   },
   "app": {
     "title": "App"
+  },
+  "notifications": {
+    "activation": {
+      "screen_time_missing": {
+        "title": "Relock blockiert noch nichts",
+        "body": "Die Bildschirmzeit-Freigabe fehlt. Ohne sie lässt sich keine App schützen."
+      },
+      "selection_empty": {
+        "title": "Eine Sperre ohne Apps",
+        "body": "Eine deiner Sperren ist aktiv, betrifft aber keine App. Wähl eine oder zwei aus, dann wirkt sie."
+      },
+      "no_rule_d1": {
+        "title": "Deine erste Sperre wartet",
+        "body": "Eine App, eine Dauer – den Rest übernimmt Relock. Unter einer Minute."
+      },
+      "rule_never_armed": {
+        "title": "Deine Regel lief noch nie",
+        "body": "Sie ist bereit, sie muss nur scharf gestellt werden. Ein Tipp, und dein Abend ist abgedeckt."
+      },
+      "tutorial_incomplete": {
+        "title": "Weitermachen, wo du aufgehört hast?",
+        "body": "Ein Schritt fehlt noch, bis Relock wirklich einsatzbereit ist."
+      }
+    },
+    "blocking": {
+      "all_rules_expired": {
+        "title": "Keine Sperre ist aktiv",
+        "body": "Alle deine Sperren sind ausgelaufen. Willst du eine neu starten?"
+      },
+      "nothing_armed_tonight": {
+        "title_a": "Für heute Abend ist nichts scharf gestellt",
+        "body_a": "Das ist der Moment, den du als schwierig markiert hast. Eine kurze Sperre, und er ist abgedeckt.",
+        "title_b": "Deine kritische Stunde kommt",
+        "body_b": "Noch schützt nichts. Dreißig Sekunden jetzt sind besser als eine verlorene Stunde gleich."
+      },
+      "session_ending_soon": {
+        "title": "Deine Sperre endet bald",
+        "body": "Noch zehn Minuten. Du kannst sie verlängern, wenn du länger durchhalten willst."
+      },
+      "session_ended": {
+        "title": "Sperre beendet",
+        "body": "Öffne Relock, um zu sehen, was du in dieser Zeit vermieden hast."
+      },
+      "schedule_starts_soon": {
+        "title": "Zeitfenster in einer Viertelstunde",
+        "body": "Deine Apps werden gleich gesperrt. Bring zu Ende, was du gerade machst."
+      },
+      "extend_suggested": {
+        "title": "Du verlängerst oft",
+        "body": "Drei Verlängerungen diese Woche. Ein festes Zeitfenster würde dir das Nachdenken sparen."
+      }
+    },
+    "strict": {
+      "attempt_burst": {
+        "title": "Das ist ein schwieriger Moment",
+        "body": "Du stößt seit ein paar Minuten an die Wand. Genau dafür ist der strenge Modus da."
+      },
+      "first_completed": {
+        "title": "Erste strenge Sitzung durchgehalten",
+        "body": "Du bist ohne Hintertür bis zum Ende gegangen. Das war der schwerste Teil, und er ist geschafft."
+      },
+      "locked_confirmation": {
+        "title": "Strenge Sperre aktiv",
+        "body": "Bis {{until}} gibt es kein Zurück. So hast du es gewählt."
+      },
+      "unlock_available": {
+        "title": "Die Sperre ist aufgehoben",
+        "body": "Deine strenge Sperre ist vorbei. Du hast wieder die Kontrolle."
+      },
+      "midpoint": {
+        "title": "Halbzeit",
+        "body": "Die Hälfte liegt hinter dir. Der Rest ist leichter, als du denkst."
+      }
+    },
+    "score": {
+      "first_ready": {
+        "title": "Dein Score ist da",
+        "body": "Genug Verlauf, um dir zu sagen, wo du stehst: {{score}} von 100."
+      },
+      "band_up": {
+        "title": "Du steigst eine Stufe auf",
+        "body": "Dein Score liegt jetzt bei {{score}}. Kein Zufall – das ist deine Woche."
+      },
+      "dropped": {
+        "title": "Dein Score ist gefallen",
+        "body": "Kommt vor. Öffne Relock, um zu sehen, was sich verändert hat."
+      },
+      "improved": {
+        "title": "Dein Score steigt",
+        "body": "Dein Score: +{{delta}} gegenüber der letzten Woche."
+      },
+      "weakest_axis_tip_focus": {
+        "title": "Deine Schwachstelle: Konzentration",
+        "body": "Deine Tage sind zerstückelt. Eine Sperre während der Arbeitszeit würde am meisten bringen."
+      },
+      "weakest_axis_tip_rest": {
+        "title": "Deine Schwachstelle: Erholung",
+        "body": "Die Abende laufen über. Ein Zeitfenster ab 22 Uhr würde am meisten bringen."
+      }
+    },
+    "progress": {
+      "first_resist": {
+        "title": "Erster Sieg",
+        "body": "Du hast gerade widerstanden. Genau so holt man sich die Kontrolle zurück."
+      },
+      "milestone_resists": {
+        "title": "{{total}} Mal widerstanden",
+        "body": "{{total}} Mal hast du deine Zeit dem Scrollen vorgezogen. Weiter so."
+      },
+      "streak_milestone": {
+        "title_one": "{{days}} Tag in Folge",
+        "title_other": "{{days}} Tage in Folge",
+        "title": "{{days}} Tage in Folge",
+        "body_one": "Deine Serie hält. Beständigkeit macht den Unterschied, nicht die großen Tage.",
+        "body_other": "Deine Serie hält. Beständigkeit macht den Unterschied, nicht die großen Tage.",
+        "body": "Deine Serie hält. Beständigkeit macht den Unterschied, nicht die großen Tage."
+      },
+      "challenge_completed": {
+        "title_one": "{{days}} Tag durchgehalten",
+        "title_other": "{{days}} Tage durchgehalten",
+        "title": "{{days}} Tage durchgehalten",
+        "body_one": "Deine Challenge ist bis zum Ende gegangen. Öffne Relock und sieh, was sie dir zurückgegeben hat.",
+        "body_other": "Deine Challenge ist bis zum Ende gegangen. Öffne Relock und sieh, was sie dir zurückgegeben hat.",
+        "body": "Deine Challenge ist bis zum Ende gegangen. Öffne Relock und sieh, was sie dir zurückgegeben hat."
+      },
+      "personal_best": {
+        "title": "Deine beste Woche",
+        "body": "{{minutes}} Min. zurückgewonnen – so weit warst du noch nie."
+      },
+      "weekly_recap": {
+        "title": "Deine Wochenbilanz ist fertig",
+        "body": "Öffne Relock, um zu sehen, wie viel Zeit du diese Woche zurückgewonnen hast."
+      },
+      "monthly_recap": {
+        "title": "Dein Monat auf einen Blick",
+        "body": "Öffne Relock, um zu sehen, wie der Monat gelaufen ist."
+      }
+    },
+    "retention": {
+      "streak_at_risk": {
+        "title": "Deine Serie hängt an einer Handbewegung",
+        "body": "Stell heute Abend eine Sperre scharf, damit sie nicht reißt."
+      },
+      "streak_broken_recover": {
+        "title": "Du fängst bei 1 an, nicht bei 0",
+        "body": "Die Serie ist gestern gerissen. Was du davor gewonnen hast, bleibt dir."
+      },
+      "absent_14d": {
+        "title": "Wir belassen es dabei",
+        "body": "Relock meldet sich nicht mehr. Die App ist da, wenn du wieder anfangen willst."
+      },
+      "absent_5d": {
+        "title": "Deine Zeit wartet weiter auf dich",
+        "body": "Du hattest einen Grund anzufangen. Der hat sich nicht geändert."
+      },
+      "win_back_offer": {
+        "title": "Ein Angebot wartet",
+        "body": "Mach da weiter, wo du aufgehört hast – zum reduzierten Preis."
+      },
+      "absent_2d": {
+        "title_a": "Deine Apps können warten",
+        "body_a": "Eine kurze Sperre, und deine Zeit gehört wieder dir.",
+        "title_b": "Zurück zur Kontrolle?",
+        "body_b": "Zwei Tage ohne Sperre. Eine Minute reicht, um neu zu starten."
+      }
+    },
+    "billing": {
+      "renewal_failed": {
+        "title": "Deine Zahlung ist fehlgeschlagen",
+        "body": "Dein Abo läuft sonst aus. Aktualisiere deine Zahlungsmethode, um deine Sperren zu behalten."
+      },
+      "entitlement_lost": {
+        "title": "Deine Sperren sind eingeschränkt",
+        "body": "Dein Abo ist abgelaufen. Laufende Sperren bleiben, neue kannst du nicht mehr anlegen."
+      },
+      "trial_ends_2d": {
+        "title": "Deine Testphase endet in 2 Tagen",
+        "body": "Du musst nichts tun, wenn du weitermachen willst. Kündigen kannst du jederzeit in den Einstellungen."
+      },
+      "trial_ends_1d": {
+        "title": "Letzter Tag deiner Testphase",
+        "body": "Morgen wird abgebucht. Du kannst noch in den Einstellungen kündigen."
+      },
+      "offer_expires_2h": {
+        "title": "Dein Angebot endet in 2 Stunden",
+        "body": "Danach ist es weg."
+      },
+      "offer_expires_24h": {
+        "title": "Dein Angebot läuft noch 24 Stunden",
+        "body": "Danach verschwindet es und der Preis ist wieder normal."
+      },
+      "offer_available": {
+        "title": "Ein Angebot ist für dich offen",
+        "body": "Relock zum reduzierten Preis, für begrenzte Zeit."
+      },
+      "paywall_abandoned_d1": {
+        "title": "Du warst fast da",
+        "body": "Dein Willkommensangebot gilt noch."
+      },
+      "paywall_abandoned_1h": {
+        "title": "Fragen zum Abo?",
+        "body": "Dein Angebot bleibt offen, falls du zurückkommen willst."
+      }
+    },
+    "health": {
+      "screen_time_revoked": {
+        "title": "Relock schützt deine Apps nicht mehr",
+        "body": "Die Bildschirmzeit-Freigabe wurde entzogen. Deine Sperren greifen nicht mehr."
+      },
+      "rules_desync": {
+        "title": "Eine Sperre greift nicht",
+        "body": "Eine deiner Regeln ist in Relock aktiv, aber nicht auf deinem iPhone. Öffne die App, um sie neu scharf zu stellen."
+      },
+      "extension_silent": {
+        "title": "Prüf deine Sperren",
+        "body": "Relock hat seit zwei Tagen nichts mehr von seinen Sperren gehört. Öffne die App zur Kontrolle."
+      },
+      "selection_drift": {
+        "title": "Eine Sperre hat ihre Apps verloren",
+        "body": "Bei einer deiner Regeln ist die Auswahl leer: Sie blockiert nichts mehr."
+      },
+      "sync_stalled": {
+        "title": "Deine Statistiken hinken hinterher",
+        "body": "Nichts ist verloren, aber die angezeigten Zahlen sind veraltet. Öffne die App, um sie zu aktualisieren."
+      },
+      "incident": {
+        "title": "Relock schützt deine Apps nicht mehr",
+        "body": "Mehrere Sperren greifen nicht mehr. Öffne die App, um das zu beheben."
+      }
+    },
+    "ritual": {
+      "bedtime": {
+        "title": "Zeit, Schluss zu machen",
+        "body": "Dein Abend gehört dir. Eine Sperre, und der Bildschirm hört hier auf."
+      },
+      "my_moment": {
+        "title": "Dein bildschirmfreier Moment",
+        "body": "Das ist die Zeit, die du gewählt hast. Stell deine Sperre scharf."
+      },
+      "morning_no_scroll": {
+        "title": "Beginn den Tag bei dir",
+        "body": "Vor dem ersten Scrollen: stell deine Sperre scharf."
+      }
+    },
+    "soft_ask_title": "Ein dezenter Anstoß?",
+    "soft_ask_body": "Relock kann dich warnen, wenn deine Serie in Gefahr ist oder eine Sperre nicht mehr greift. Nie Werbung, und du behältst die Kontrolle in den Einstellungen.",
+    "soft_ask_decline": "Nein danke",
+    "soft_ask_accept": "Erinnerungen aktivieren"
   }
 }

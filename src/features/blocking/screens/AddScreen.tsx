@@ -40,7 +40,7 @@ import { NotificationService } from '@/features/notifications/notification.servi
 import {
   hasAskedNotifPermission,
   markNotifPermissionAsked,
-} from '@/features/notifications/prefs'
+} from '@/features/notifications/prefs/prefs'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import {
@@ -606,12 +606,12 @@ export default function AddScreen() {
     if (hasAskedNotifPermission() || !NotificationService) return
     markNotifPermissionAsked()
     Alert.alert(
-      'Un coup de pouce discret ?',
-      "Relock peut t'envoyer un rappel si ta série est en danger — jamais de spam, et tu gardes le contrôle depuis les Réglages.",
+      t('notifications.soft_ask_title'),
+      t('notifications.soft_ask_body'),
       [
-        { text: 'Non merci', style: 'cancel' },
+        { text: t('notifications.soft_ask_decline'), style: 'cancel' },
         {
-          text: 'Activer les rappels',
+          text: t('notifications.soft_ask_accept'),
           onPress: () => {
             NotificationService.ensurePermission().catch(() => {})
           },

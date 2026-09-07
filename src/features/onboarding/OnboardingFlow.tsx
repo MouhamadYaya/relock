@@ -15,6 +15,8 @@ import { SceneRecognition } from '@/features/onboarding/components/SceneRecognit
 import { SceneRitual } from '@/features/onboarding/components/SceneRitual'
 import { SceneVictory } from '@/features/onboarding/components/SceneVictory'
 import { SCREEN_TIME_ESTIMATES } from '@/features/onboarding/services/annualProjection'
+import { riskHourFromMoments } from '@/features/notifications/engine/risk-hour'
+import { noteRiskHour } from '@/features/notifications/engine/signals'
 import { saveOnboardingAnswers } from '@/features/onboarding/services/onboarding-answers.service'
 import {
   type OnboardingCheckpoint,
@@ -566,6 +568,10 @@ export default function OnboardingFlow() {
    * Écriture en arrière-plan — une ligne non écrite n'arrête pas le parcours.
    */
   const persistAnswers = useCallback(() => {
+    // L'heure que l'utilisateur vient de nommer devient SON heure de rappel :
+    // c'est la différence entre « pense à armer un blocage » et « ton heure
+    // difficile approche ».
+    noteRiskHour(riskHourFromMoments(moment))
     void saveOnboardingAnswers({
       name,
       trigger,

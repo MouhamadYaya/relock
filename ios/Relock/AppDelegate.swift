@@ -4,6 +4,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import RNBootSplash
+import UserNotifications
 
 @main
 class AppDelegate: ExpoAppDelegate {
@@ -16,6 +17,13 @@ class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // AVANT tout le reste : un tap sur une notification démarre l'app À FROID
+    // et iOS livre la réponse dès `didFinishLaunching`. Poser le délégué plus
+    // tard (depuis JS, ou dans `didBecomeActive`) revient à ne jamais recevoir
+    // les taps de démarrage à froid — précisément ceux qui portent une
+    // destination. Voir RelockNotificationDelegate.
+    RelockNotificationDelegate.shared.install()
+
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()

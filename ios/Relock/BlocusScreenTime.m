@@ -177,6 +177,22 @@ RCT_EXTERN_METHOD(scheduleNotif
                   timestamp : (nonnull NSNumber *)timestamp
                   title : (nonnull NSString *)title
                   body : (nonnull NSString *)body
+                  options : (NSDictionary *)options
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(scheduleNotifCalendar
+                  : (nonnull NSString *)id
+                  components : (nonnull NSDictionary *)components
+                  repeats : (BOOL)repeats
+                  title : (nonnull NSString *)title
+                  body : (nonnull NSString *)body
+                  options : (NSDictionary *)options
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(cancelNotifs
+                  : (nonnull NSArray *)ids
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
@@ -185,8 +201,25 @@ RCT_EXTERN_METHOD(cancelNotifsWithPrefix
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(pendingNotifIds
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(deliveredNotifIds
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(consumeNotifResponses
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(setCelebrationsEnabled
                   : (BOOL)enabled
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(setCelebrationCopy
+                  : (nonnull NSDictionary *)copy
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 

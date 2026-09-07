@@ -26,10 +26,12 @@ import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
 import { RITUAL_COPY } from '@/features/blocking/services/pause-ritual/ritual-copy'
 import { NotificationService } from '@/features/notifications/notification.service'
 import {
+  DEFAULT_QUIET_HOURS,
+  effectiveQuietHours,
   getNotifPrefs,
-  type NotifPrefs,
   setNotifPrefs,
-} from '@/features/notifications/prefs'
+} from '@/features/notifications/prefs/prefs'
+import type { NotifChannel, NotifPrefs } from '@/features/notifications/types'
 import {
   isRevenueCatEnabled,
   openRevenueCatCustomerCenter,
@@ -116,19 +118,31 @@ export default function SettingsScreen() {
 
   // Notifications : préférences persistées, appliquées IMMÉDIATEMENT.
   const [notif, setNotif] = React.useState<NotifPrefs>(getNotifPrefs)
-  const updateNotif = (patch: Partial<NotifPrefs>) => {
-    const next = { ...notif, ...patch }
+
+  const applyNotif = (next: NotifPrefs, askPermission: boolean) => {
     setNotif(next)
     setNotifPrefs(next)
-    const turningOn = next.master && Object.values(patch).some(v => v === true)
     ;(async () => {
-      if (turningOn) {
+      if (askPermission) {
         await NotificationService.ensurePermission()
         setNotifPermission(await Notif.permissionStatus())
       }
-      await NotificationService.reconcileFromLast()
+      // Le moteur est idempotent : réappliquer tout de suite avec les
+      // dernières sources connues fait disparaître (ou apparaître) les
+      // notifications concernées sans attendre le prochain passage.
+      await NotificationService.runFromLastKnown()
     })().catch(() => {})
   }
+
+  const setChannelPref = (channel: NotifChannel, enabled: boolean) => {
+    const next: NotifPrefs = {
+      ...notif,
+      channels: { ...notif.channels, [channel]: enabled },
+    }
+    applyNotif(next, enabled && next.master)
+  }
+
+  const quiet = effectiveQuietHours(notif)
 
   // Statuts RÉELS des permissions et de la protection, jamais codés en dur :
   // ce que l'écran affiche doit venir du système, sinon il ment dès qu'on
@@ -366,15 +380,41 @@ export default function SettingsScreen() {
     )
   }
 
-  // ─── Heure des rappels ──────────────────────────────────────────────────
+  // ─── Heure du rituel ────────────────────────────────────────────────────
+  //
+  // Cette heure était enregistrée depuis toujours sans que rien ne la lise :
+  // le moteur v1 tirait à 20h30 en dur. Elle pilote désormais réellement le
+  // rendez-vous quotidien (`ritual.my_moment`).
   const onChangeReminder = (_event: DateTimePickerEvent, date?: Date) => {
     if (!date) return
     const minutes = date.getHours() * 60 + date.getMinutes()
     setReminder(minutes)
     setReminderMinutes(minutes)
-    // Replanifie tout de suite : le reconciler est idempotent, et le rappel de
-    // ce soir doit déjà tomber à la nouvelle heure.
-    NotificationService.reconcileFromLast().catch(() => {})
+    applyNotif(
+      { ...notif, ritual: { ...notif.ritual, myMomentMinutes: minutes } },
+      false,
+    )
+  }
+
+  // ─── Fenêtre de silence ─────────────────────────────────────────────────
+  const onChangeQuiet = (edge: 'start' | 'end', date?: Date) => {
+    if (!date) return
+    const minutes = date.getHours() * 60 + date.getMinutes()
+    const next = {
+      startMinutes: edge === 'start' ? minutes : quiet.startMinutes,
+      endMinutes: edge === 'end' ? minutes : quiet.endMinutes,
+    }
+    // Début = fin ne veut rien dire (silence de 24 h ou de zéro selon la
+    // lecture) : on retombe alors sur la fenêtre par défaut plutôt que
+    // d'enregistrer un réglage ininterprétable.
+    applyNotif(
+      {
+        ...notif,
+        quietHours:
+          next.startMinutes === next.endMinutes ? DEFAULT_QUIET_HOURS : next,
+      },
+      false,
+    )
   }
 
   // ─── Export ─────────────────────────────────────────────────────────────
@@ -558,8 +598,26 @@ export default function SettingsScreen() {
           <SettingsRow
             icon={IconName.BELL}
             label={t('settings.notifications_master')}
+            hint={t('settings.notifications_master_hint')}
             switchValue={notif.master}
-            onSwitchChange={v => updateNotif({ master: v })}
+            onSwitchChange={v => applyNotif({ ...notif, master: v }, v)}
+          />
+          {/*
+            Les alertes de protection ne sont pas un canal : elles ne se
+            désactivent pas, et elles survivent à l'interrupteur maître. C'est
+            un choix assumé — un utilisateur qui CROIT être protégé alors que
+            plus rien ne bloque est le pire scénario du produit — mais un choix
+            qui doit être DIT. Une ligne verrouillée qui l'annonce vaut mieux
+            qu'un interrupteur silencieux qui ne fait pas ce qu'il promet.
+          */}
+          <SettingsRow
+            icon={IconName.SHIELD}
+            label={t('settings.notifications_protection')}
+            hint={t('settings.notifications_protection_hint')}
+            status={{
+              label: t('settings.notifications_always_on'),
+              granted: true,
+            }}
           />
           {/*
             Les catégories restent VISIBLES quand l'interrupteur maître est
@@ -572,13 +630,56 @@ export default function SettingsScreen() {
             icon={IconName.CLOCK}
             label={t('settings.notifications_reminders')}
             hint={t('settings.notifications_reminders_hint')}
-            switchValue={notif.reminders}
-            onSwitchChange={v => updateNotif({ reminders: v })}
+            switchValue={notif.channels.reminders}
+            onSwitchChange={v => setChannelPref('reminders', v)}
             disabled={!notif.master}
           />
-          {notif.reminders ? (
+          <SettingsRow
+            icon={IconName.STAR}
+            label={t('settings.notifications_progression')}
+            hint={t('settings.notifications_progression_hint')}
+            switchValue={notif.channels.progression}
+            onSwitchChange={v => setChannelPref('progression', v)}
+            disabled={!notif.master}
+          />
+          <SettingsRow
+            icon={IconName.CROWN}
+            label={t('settings.notifications_account')}
+            hint={t('settings.notifications_account_hint')}
+            switchValue={notif.channels.account}
+            onSwitchChange={v => setChannelPref('account', v)}
+            disabled={!notif.master}
+          />
+          {/*
+            Promotionnel ⇒ OPT-IN, faux par défaut. Notifier une offre sans
+            accord explicite est ce qu'Apple sanctionne, et ce que personne
+            n'apprécie. La ligne existe pour que ce soit un choix, pas un
+            réglage caché.
+          */}
+          <SettingsRow
+            icon={IconName.CUP}
+            label={t('settings.notifications_offers')}
+            hint={t('settings.notifications_offers_hint')}
+            switchValue={notif.channels.offers}
+            onSwitchChange={v => setChannelPref('offers', v)}
+            disabled={!notif.master}
+          />
+          {/*
+            Le rituel : l'heure que l'utilisateur choisit lui-même. Jusqu'ici
+            cette heure était enregistrée sans être lue par quoi que ce soit —
+            le réglage existait, l'effet non.
+          */}
+          <SettingsRow
+            icon={IconName.SUNRISE}
+            label={t('settings.notifications_ritual')}
+            hint={t('settings.notifications_ritual_hint')}
+            switchValue={notif.channels.ritual}
+            onSwitchChange={v => setChannelPref('ritual', v)}
+            disabled={!notif.master}
+          />
+          {notif.channels.ritual ? (
             <SettingsRow
-              icon={IconName.SUNRISE}
+              icon={IconName.CLOCK}
               label={t('settings.reminder_time')}
               disabled={!notif.master}
               accessory={
@@ -593,13 +694,41 @@ export default function SettingsScreen() {
               }
             />
           ) : null}
+          {/*
+            La fenêtre de silence REMPLACE la valeur par défaut, elle ne s'y
+            ajoute pas : choisir 23h–7h doit rendre notifiable à 22h30, sinon
+            le réglage ne servirait à rien.
+          */}
           <SettingsRow
-            icon={IconName.STAR}
-            label={t('settings.notifications_progression')}
-            hint={t('settings.notifications_progression_hint')}
-            switchValue={notif.progression}
-            onSwitchChange={v => updateNotif({ progression: v })}
+            icon={IconName.MOON}
+            label={t('settings.notifications_quiet_start')}
+            hint={t('settings.notifications_quiet_hint')}
             disabled={!notif.master}
+            accessory={
+              <DateTimePicker
+                mode="time"
+                display="compact"
+                themeVariant="dark"
+                value={minutesToDate(quiet.startMinutes)}
+                onChange={(_e, date) => onChangeQuiet('start', date)}
+                accessibilityLabel={t('settings.notifications_quiet_start')}
+              />
+            }
+          />
+          <SettingsRow
+            icon={IconName.SUNRISE}
+            label={t('settings.notifications_quiet_end')}
+            disabled={!notif.master}
+            accessory={
+              <DateTimePicker
+                mode="time"
+                display="compact"
+                themeVariant="dark"
+                value={minutesToDate(quiet.endMinutes)}
+                onChange={(_e, date) => onChangeQuiet('end', date)}
+                accessibilityLabel={t('settings.notifications_quiet_end')}
+              />
+            }
           />
         </SettingsSection>
 

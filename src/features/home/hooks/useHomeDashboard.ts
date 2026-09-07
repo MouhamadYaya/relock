@@ -21,7 +21,7 @@ import {
   fixtureSnapshot,
   toHomeScores,
 } from '@/features/home/services/home-score'
-import { useNotificationReconciler } from '@/features/notifications/useNotificationReconciler'
+import { NotificationService } from '@/features/notifications/notification.service'
 import {
   type HomeReferenceFixture,
   ScreenTime,
@@ -107,8 +107,6 @@ export function useHomeDashboard() {
     }, [blocked.refresh]),
   )
 
-  useNotificationReconciler(stats.streak, runningRules.length > 0)
-
   // Le score se calcule ICI, sur les données que l'app détient réellement :
   // le journal quotidien `daily_stats`, les règles et l'avancement des quotas.
   // L'extension de rapport ne peut pas écrire dans l'App Group (sandbox Apple,
@@ -131,6 +129,14 @@ export function useHomeDashboard() {
     ? fixtureSnapshot(referenceFixture, now)
     : computed
   const scores = useMemo(() => toHomeScores(score), [score])
+
+  // Le moteur de notifications est monté une seule fois, dans le layout
+  // racine : il n'a donc pas accès à ce calcul, qui n'existe que sur l'Accueil.
+  // On le lui publie plutôt que de le recalculer ailleurs — une seconde source
+  // de vérité sur le score est précisément le défaut qu'on vient d'éliminer.
+  useEffect(() => {
+    NotificationService.noteScore(score)
+  }, [score])
   const state = dashboardState({
     rulesPending,
     statsPending: stats.isPending,

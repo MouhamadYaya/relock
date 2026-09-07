@@ -9,7 +9,10 @@ import {
 } from '@/features/blocking/services/emergency-quota'
 import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
 import { NotificationService } from '@/features/notifications/notification.service'
-import { getNotifPrefs, setNotifPrefs } from '@/features/notifications/prefs'
+import {
+  getNotifPrefs,
+  setNotifPrefs,
+} from '@/features/notifications/prefs/prefs'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { Notif } from '@/shared/native/notifications'
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -104,7 +107,7 @@ jest.mock('@/session/bootstrap', () => ({
 jest.mock('@/features/notifications/notification.service', () => ({
   NotificationService: {
     ensurePermission: jest.fn().mockResolvedValue(true),
-    reconcileFromLast: jest.fn().mockResolvedValue(undefined),
+    runFromLastKnown: jest.fn().mockResolvedValue(undefined),
   },
 }))
 
@@ -245,7 +248,23 @@ describe('SettingsScreen', () => {
       setPreference(key, true)
     }
     setReminderMinutes(DEFAULT_REMINDER_MINUTES)
-    setNotifPrefs({ master: true, reminders: true, progression: true })
+    setNotifPrefs({
+      version: 2,
+      master: true,
+      channels: {
+        reminders: true,
+        progression: true,
+        account: true,
+        offers: false,
+        ritual: false,
+      },
+      quietHours: null,
+      ritual: {
+        myMomentMinutes: null,
+        bedtimeMinutes: null,
+        morningMinutes: null,
+      },
+    })
     kvStorage.delete(constants.EMERGENCY_UNLOCK_AT)
     usePreferences.setState({
       haptics: true,
@@ -374,8 +393,7 @@ describe('SettingsScreen', () => {
     // retrouve telle quelle.
     expect(getNotifPrefs()).toMatchObject({
       master: false,
-      reminders: true,
-      progression: true,
+      channels: { reminders: true, progression: true },
     })
   })
 
@@ -530,7 +548,13 @@ describe('SettingsScreen', () => {
     })
   })
 
-  it('replanifie les notifications quand l’heure des rappels change', async () => {
+  it('replanifie les notifications quand l’heure du rituel change', async () => {
+    // L'heure ne s'affiche qu'une fois le canal « rendez-vous quotidien »
+    // activé : sans rituel choisi, il n'y a pas d'heure à régler.
+    setNotifPrefs({
+      ...getNotifPrefs(),
+      channels: { ...getNotifPrefs().channels, ritual: true },
+    })
     const tree = await render()
     const picker = pickerFor(tree, 'settings.reminder_time')
 
@@ -539,8 +563,10 @@ describe('SettingsScreen', () => {
     })
 
     expect(getReminderMinutes()).toBe(21 * 60 + 15)
-    // Le rappel de ce soir doit déjà tomber à la nouvelle heure.
-    expect(NotificationService.reconcileFromLast).toHaveBeenCalled()
+    // Cette heure était enregistrée sans que rien ne la lise : elle pilote
+    // désormais réellement le rendez-vous quotidien.
+    expect(getNotifPrefs().ritual.myMomentMinutes).toBe(21 * 60 + 15)
+    expect(NotificationService.runFromLastKnown).toHaveBeenCalled()
   })
 
   /**

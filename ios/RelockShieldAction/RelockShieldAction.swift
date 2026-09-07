@@ -23,6 +23,21 @@ final class RelockShieldAction: ShieldActionDelegate {
   private let defaults = UserDefaults(suiteName: RelockShieldAction.suite)
   private let attempts = ShieldAttemptStore.production()
 
+  /// Textes des célébrations, déposés TRADUITS par l'app dans le groupe d'app.
+  ///
+  /// Cette extension ne peut pas charger i18next : elle écrivait donc du
+  /// français codé en dur, quelle que soit la langue de l'utilisateur — un
+  /// russophone recevait ses félicitations en français. L'app republie ces
+  /// textes à chaque passage du moteur, donc à chaque changement de langue.
+  /// Le repli français ne sert que le cas où l'app n'a pas encore tourné une
+  /// seule fois depuis la mise à jour.
+  private func celebrationCopy() -> [String: String] {
+    guard let data = defaults?.data(forKey: "notif.celebrationCopy"),
+      let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: String]
+    else { return [:] }
+    return parsed
+  }
+
   /// Notifie la première victoire et les paliers, sans réveiller Relock.
   private func celebrate(total: Int) {
     if let on = defaults?.object(forKey: "notif.celebrationsEnabled") as? Bool,
@@ -30,18 +45,30 @@ final class RelockShieldAction: ShieldActionDelegate {
     {
       return
     }
+    // Fenêtre de silence. Volontairement en dur ici : l'extension doit pouvoir
+    // décider seule, sans dépendre d'une préférence que l'app n'aurait pas
+    // encore publiée. Le moteur applique la fenêtre choisie par l'utilisateur
+    // pour tout ce qu'il planifie lui-même.
     let hour = Calendar.current.component(.hour, from: Date())
     if hour >= 22 || hour < 8 { return }
 
+    let copy = celebrationCopy()
     let title: String
     let body: String
     if total == 1 {
-      title = "Première victoire"
+      title = copy["firstTitle"] ?? "Première victoire"
       body =
-        "Tu viens de résister. C'est exactement comme ça qu'on reprend le contrôle."
+        copy["firstBody"]
+        ?? "Tu viens de résister. C'est exactement comme ça qu'on reprend le contrôle."
     } else if [10, 50, 100, 250, 500, 1000].contains(total) {
-      title = "\(total) résistances"
-      body = "\(total) fois où tu as choisi ton temps plutôt que le scroll. Continue."
+      // Le gabarit porte `{total}` : l'app ne peut pas connaître le compteur au
+      // moment où elle publie les textes, seule l'extension le connaît.
+      let titleTemplate = copy["milestoneTitle"] ?? "{total} résistances"
+      let bodyTemplate =
+        copy["milestoneBody"]
+        ?? "{total} fois où tu as choisi ton temps plutôt que le scroll. Continue."
+      title = titleTemplate.replacingOccurrences(of: "{total}", with: "\(total)")
+      body = bodyTemplate.replacingOccurrences(of: "{total}", with: "\(total)")
     } else {
       return
     }
@@ -50,6 +77,18 @@ final class RelockShieldAction: ShieldActionDelegate {
     content.title = title
     content.body = body
     content.sound = .default
+    // Même charge utile que les notifications du moteur : un tap sur une
+    // célébration doit emmener à l'Activité, pas ouvrir l'app au hasard.
+    content.userInfo = [
+      "relock": [
+        "v": 1,
+        "n": total == 1 ? "progress.first_resist" : "progress.milestone_resists",
+        "f": "progress",
+        "s": Int(Date().timeIntervalSince1970),
+        "r": ["p": "/(tabs)/activity"],
+      ]
+    ]
+    content.threadIdentifier = "progress"
     let request = UNNotificationRequest(
       identifier: "relock.celebrate.\(total)",
       content: content,

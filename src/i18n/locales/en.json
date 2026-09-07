@@ -20,8 +20,6 @@
     "testimonial_3": "The pause is the whole thing. It gives me a second to decide, and most of the time I close the app.",
     "cancel": "Cancel anytime",
     "continue": "Continue",
-    "dev_window": "Offer preview",
-    "dev_skip": "Skip paywall (dev)",
     "processing": "Processing…",
     "before": "Before",
     "after": "After",
@@ -832,7 +830,20 @@
       "label": "Blocking screen",
       "hint": "What Relock shows before an unlock",
       "footnote": "The new screen applies from your next pause on: one already under way always runs to its end."
-    }
+    },
+    "notifications_master_hint": "Protection alerts stay on: they warn you when a block stops applying.",
+    "notifications_protection": "Protection alerts",
+    "notifications_protection_hint": "Always on. They warn you when Relock stops blocking — without them, a failure would be invisible.",
+    "notifications_always_on": "Always on",
+    "notifications_account": "Subscription",
+    "notifications_account_hint": "Trial ending, failed payment, expiry. Never promotional.",
+    "notifications_offers": "Offers and discounts",
+    "notifications_offers_hint": "Off by default. Nothing is sent without your agreement.",
+    "notifications_ritual": "Daily check-in",
+    "notifications_ritual_hint": "A reminder at the time you choose.",
+    "notifications_quiet_start": "Quiet from",
+    "notifications_quiet_end": "Until",
+    "notifications_quiet_hint": "No notifications during this window. Your setting replaces the default (10 pm – 8 am)."
   },
   "onboarding": {
     "headline": "Everything you need,\nin one place.",
@@ -854,5 +865,253 @@
   },
   "app": {
     "title": "App"
+  },
+  "notifications": {
+    "activation": {
+      "screen_time_missing": {
+        "title": "Relock isn’t blocking anything yet",
+        "body": "Screen Time access is missing. Without it, no app can be protected."
+      },
+      "selection_empty": {
+        "title": "A block with no apps",
+        "body": "One of your protections is active but targets no app. Pick one or two and it starts working."
+      },
+      "no_rule_d1": {
+        "title": "Your first block is waiting",
+        "body": "One app, one duration, and Relock handles the rest. Under a minute."
+      },
+      "rule_never_armed": {
+        "title": "Your rule has never run",
+        "body": "It’s ready — it just needs arming. One tap and your evening is covered."
+      },
+      "tutorial_incomplete": {
+        "title": "Pick up where you left off?",
+        "body": "One step left before Relock is actually operational."
+      }
+    },
+    "blocking": {
+      "all_rules_expired": {
+        "title": "No protection is active",
+        "body": "All your blocks have run their course. Want to start one again?"
+      },
+      "nothing_armed_tonight": {
+        "title_a": "Nothing is armed for tonight",
+        "body_a": "This is the moment you flagged as hard. A quick block, and it’s covered.",
+        "title_b": "Your risky hour is coming up",
+        "body_b": "Nothing is protecting it yet. Thirty seconds now beats an hour lost later."
+      },
+      "session_ending_soon": {
+        "title": "Your protection ends soon",
+        "body": "Ten minutes left. You can extend it if you’d rather hold on a bit longer."
+      },
+      "session_ended": {
+        "title": "Protection finished",
+        "body": "Open Relock to see what you avoided during this session."
+      },
+      "schedule_starts_soon": {
+        "title": "Scheduled block in fifteen minutes",
+        "body": "Your apps are about to be blocked. Wrap up what you’re doing."
+      },
+      "extend_suggested": {
+        "title": "You extend often",
+        "body": "Three extensions this week. A regular schedule would save you the thought."
+      }
+    },
+    "strict": {
+      "attempt_burst": {
+        "title": "This is a hard moment",
+        "body": "You’ve been hitting the wall for a few minutes. That’s exactly what strict mode is here to hold."
+      },
+      "first_completed": {
+        "title": "First strict session held",
+        "body": "You went all the way with no way out. That was the hard part, and it’s done."
+      },
+      "locked_confirmation": {
+        "title": "Strict lock active",
+        "body": "Until {{until}}, there’s no going back. That’s what you chose."
+      },
+      "unlock_available": {
+        "title": "The lock is off",
+        "body": "Your strict protection is over. You’re back in control."
+      },
+      "midpoint": {
+        "title": "Halfway there",
+        "body": "Half the lock is behind you. The rest is easier than you think."
+      }
+    },
+    "score": {
+      "first_ready": {
+        "title": "Your score is ready",
+        "body": "Enough history to tell you where you stand: {{score}} out of 100."
+      },
+      "band_up": {
+        "title": "You moved up a tier",
+        "body": "Your score is now {{score}}. That’s not luck — it’s what you did this week."
+      },
+      "dropped": {
+        "title": "Your score dropped",
+        "body": "It happens. Open Relock to see what shifted."
+      },
+      "improved": {
+        "title": "Your score is climbing",
+        "body": "Your score: +{{delta}} compared to last week."
+      },
+      "weakest_axis_tip_focus": {
+        "title": "Your weak spot: focus",
+        "body": "Your days are fragmented. A block during work hours would change the most."
+      },
+      "weakest_axis_tip_rest": {
+        "title": "Your weak spot: rest",
+        "body": "Evenings run over. A schedule after 10 pm would change the most."
+      }
+    },
+    "progress": {
+      "first_resist": {
+        "title": "First win",
+        "body": "You just resisted. That’s exactly how control comes back."
+      },
+      "milestone_resists": {
+        "title": "{{total}} times resisted",
+        "body": "{{total}} times you chose your time over the scroll. Keep going."
+      },
+      "streak_milestone": {
+        "title_one": "{{days}} day in a row",
+        "title_other": "{{days}} days in a row",
+        "title": "{{days}} days in a row",
+        "body_one": "Your streak is holding. Consistency is what makes the difference, not big days.",
+        "body_other": "Your streak is holding. Consistency is what makes the difference, not big days.",
+        "body": "Your streak is holding. Consistency is what makes the difference, not big days."
+      },
+      "challenge_completed": {
+        "title_one": "{{days}} day held",
+        "title_other": "{{days}} days held",
+        "title": "{{days}} days held",
+        "body_one": "Your challenge went all the way. Open Relock to see what it gave back.",
+        "body_other": "Your challenge went all the way. Open Relock to see what it gave back.",
+        "body": "Your challenge went all the way. Open Relock to see what it gave back."
+      },
+      "personal_best": {
+        "title": "Your best week",
+        "body": "{{minutes}} min reclaimed — you’ve never gone this far."
+      },
+      "weekly_recap": {
+        "title": "Your week in review is ready",
+        "body": "Open Relock to see the time you reclaimed this week."
+      },
+      "monthly_recap": {
+        "title": "Your month at a glance",
+        "body": "Open Relock to see how the month went."
+      }
+    },
+    "retention": {
+      "streak_at_risk": {
+        "title": "Your streak hangs on one move",
+        "body": "Arm a block tonight so you don’t break it."
+      },
+      "streak_broken_recover": {
+        "title": "You restart at 1, not 0",
+        "body": "The streak stopped yesterday. What you gained before is still yours."
+      },
+      "absent_14d": {
+        "title": "We’ll leave it there",
+        "body": "Relock won’t nudge you again. The app is here whenever you want to pick it back up."
+      },
+      "absent_5d": {
+        "title": "Your time is still waiting",
+        "body": "You had a reason to start. It hasn’t changed."
+      },
+      "win_back_offer": {
+        "title": "An offer is waiting",
+        "body": "Pick up where you left off, at a reduced price."
+      },
+      "absent_2d": {
+        "title_a": "Your apps can wait",
+        "body_a": "A quick block, and your time is yours again.",
+        "title_b": "Ready to take back control?",
+        "body_b": "Two days with no block. One minute is enough to start again."
+      }
+    },
+    "billing": {
+      "renewal_failed": {
+        "title": "Your payment didn’t go through",
+        "body": "Your subscription is about to lapse. Update your payment method to keep your protections."
+      },
+      "entitlement_lost": {
+        "title": "Your protections are reduced",
+        "body": "Your subscription expired. Running blocks continue, but you can’t create new ones."
+      },
+      "trial_ends_2d": {
+        "title": "Your trial ends in 2 days",
+        "body": "Nothing to do if you want to continue. You can cancel any time from Settings."
+      },
+      "trial_ends_1d": {
+        "title": "Last day of your trial",
+        "body": "Billing happens tomorrow. You can still cancel from Settings."
+      },
+      "offer_expires_2h": {
+        "title": "Your offer ends in 2 hours",
+        "body": "After that, it’s gone."
+      },
+      "offer_expires_24h": {
+        "title": "Your offer runs for 24 more hours",
+        "body": "Then it disappears and the price goes back to normal."
+      },
+      "offer_available": {
+        "title": "An offer is open for you",
+        "body": "Reduced price on Relock, for a limited time."
+      },
+      "paywall_abandoned_d1": {
+        "title": "You were nearly there",
+        "body": "Your welcome offer is still available."
+      },
+      "paywall_abandoned_1h": {
+        "title": "A question about the subscription?",
+        "body": "Your offer is still open if you want to come back to it."
+      }
+    },
+    "health": {
+      "screen_time_revoked": {
+        "title": "Relock is no longer protecting your apps",
+        "body": "Screen Time access was revoked. Your blocks no longer apply."
+      },
+      "rules_desync": {
+        "title": "A block isn’t applying",
+        "body": "One of your rules is active in Relock but not on your iPhone. Open the app to re-arm it."
+      },
+      "extension_silent": {
+        "title": "Check your protections",
+        "body": "Relock hasn’t heard from its protections in two days. Open the app to check."
+      },
+      "selection_drift": {
+        "title": "A block lost its apps",
+        "body": "One of your rules has an empty selection: it isn’t blocking anything."
+      },
+      "sync_stalled": {
+        "title": "Your stats are behind",
+        "body": "Nothing is lost, but the numbers shown are stale. Open the app to refresh them."
+      },
+      "incident": {
+        "title": "Relock is no longer protecting your apps",
+        "body": "Several protections have stopped applying. Open the app to put things right."
+      }
+    },
+    "ritual": {
+      "bedtime": {
+        "title": "Time to cut off",
+        "body": "Your evening is yours. One block, and the screen stops there."
+      },
+      "my_moment": {
+        "title": "Your screen-free moment",
+        "body": "This is the time you chose. Arm your block."
+      },
+      "morning_no_scroll": {
+        "title": "Start the day on your terms",
+        "body": "Before the first scroll: arm your block."
+      }
+    },
+    "soft_ask_title": "A quiet nudge?",
+    "soft_ask_body": "Relock can warn you when your streak is at risk, or when a protection stops applying. Never promotional, and you stay in control from Settings.",
+    "soft_ask_decline": "No thanks",
+    "soft_ask_accept": "Turn on reminders"
   }
 }
