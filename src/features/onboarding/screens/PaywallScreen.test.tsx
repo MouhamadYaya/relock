@@ -2,8 +2,11 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { PREVIEW_PLANS } from '@/features/onboarding/components/paywall/paywall-preview'
 import PaywallScreen from '@/features/onboarding/screens/PaywallScreen'
-import { loadPaywallCatalog } from '@/features/onboarding/services/revenuecat'
-import { syncEntitlement } from '@/session/bootstrap'
+import {
+  loadPaywallCatalog,
+  restoreRevenueCatPurchases,
+} from '@/features/onboarding/services/revenuecat'
+import { syncEntitlement, unlockAfterPurchase } from '@/session/bootstrap'
 
 jest.mock('@/features/onboarding/components/paywall/PaywallFlow', () => ({
   PaywallFlow: 'PaywallFlow',
@@ -81,5 +84,38 @@ describe('écran paywall', () => {
     await mount()
     expect(flow().plans).toEqual([])
     expect(flow().escapable).toBe(false)
+  })
+
+  /**
+   * La porte ne s'ouvre que sur `restored`.
+   *
+   * Le piège vaut d'être gardé : le service a rendu un booléen avant de rendre
+   * `restored | none | failed`, et le test de véracité laissé derrière
+   * (`if (restored)`) trouvait vraies les TROIS chaînes. Une restauration vide
+   * — ou une panne de réseau — déverrouillait alors l'abonnement.
+   */
+  const restoreVia = async (result: 'restored' | 'none' | 'failed') => {
+    jest.mocked(restoreRevenueCatPurchases).mockResolvedValue(result)
+    await mount()
+    let returned: unknown
+    await act(async () => {
+      returned = await flow().onRestore()
+    })
+    return returned
+  }
+
+  it('déverrouille sur une restauration aboutie', async () => {
+    expect(await restoreVia('restored')).toBe('restored')
+    expect(unlockAfterPurchase).toHaveBeenCalledTimes(1)
+  })
+
+  it('ne déverrouille pas quand ce compte n’a aucun abonnement', async () => {
+    expect(await restoreVia('none')).toBe('none')
+    expect(unlockAfterPurchase).not.toHaveBeenCalled()
+  })
+
+  it('ne déverrouille pas quand le store n’a pas pu répondre', async () => {
+    expect(await restoreVia('failed')).toBe('failed')
+    expect(unlockAfterPurchase).not.toHaveBeenCalled()
   })
 })
