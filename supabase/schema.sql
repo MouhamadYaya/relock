@@ -115,8 +115,16 @@ create policy "own_settings" on public.settings     for all using (auth.uid() = 
 create policy "own_onboarding_answers" on public.onboarding_answers for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Crée automatiquement profile + settings à l'inscription.
+--
+-- `search_path = ''` plutôt que `= public` : une fonction SECURITY DEFINER
+-- s'exécute avec les droits de son PROPRIÉTAIRE (ici le superutilisateur), donc
+-- tout nom non qualifié qu'elle résout est un nom qu'un attaquant capable de
+-- créer un objet homonyme plus tôt dans le chemin détournerait avec ces droits.
+-- Le chemin vide supprime la question : plus rien n'est implicite, chaque table
+-- est nommée `public.…` en toutes lettres (les fonctions natives comme `now()`
+-- restent joignables, `pg_catalog` étant toujours consulté d'office).
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.profiles (id) values (new.id) on conflict do nothing;
   insert into public.settings (user_id) values (new.id) on conflict do nothing;
@@ -159,7 +167,8 @@ create or replace function public.claim_upload_grant(
   p_max_grants     integer,
   p_window_seconds integer
 ) returns boolean
-language plpgsql security definer set search_path = public as $$
+-- Chemin de recherche vide, même raison que `handle_new_user` ci-dessus.
+language plpgsql security definer set search_path = '' as $$
 declare
   v_count integer;
 begin

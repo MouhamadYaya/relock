@@ -52,7 +52,7 @@
     "exit_subtitle": "A calmer mind.\nMore time for what matters.",
     "exit_cta": "Claim your one-time offer",
     "exit_decline": "I'd rather pay full price",
-    "exit_footer": "Cancel anytime · Money-back guarantee",
+    "exit_footer": "Cancel anytime in the App Store",
     "payment_failed": "The payment didn't go through. You can try again.",
     "payment_pending": "The payment is pending. No other offer is being shown.",
     "plans_title_accent": "more life",
@@ -74,8 +74,8 @@
     "brand": "RELOCK",
     "close": "Close",
     "restore": "Restore",
-    "terms": "Conditions",
-    "privacy": "Confidentialité",
+    "terms": "Terms",
+    "privacy": "Privacy",
     "before": "AVANT",
     "with_relock": "AVEC RELOCK",
     "before_title": "Encore un scroll.",
@@ -158,18 +158,18 @@
   "navigation": {
     "tabs": {
       "home": "Home",
-      "blocks": "Blocks",
+      "blocks": "Rules",
       "activity": "Activity"
     }
   },
   "blocking": {
-    "title": "Blocks",
+    "title": "Rules",
     "add_rule": "New rule",
     "blocked_apps": "Blocked apps",
     "unlock_all": "Unblock all",
     "unlock": "Unblock",
     "unlock_x": "Unblock X",
-    "rules_title": "Rules",
+    "rules_title": "My rules",
     "empty_rules": {
       "no_apps_blocked": "All apps are available.",
       "trouble_hint": "Doesn't seem right?",
@@ -212,16 +212,16 @@
       "close": "Close",
       "types": {
         "session": {
-          "title": "Session",
-          "description": "e.g. 30 min"
+          "title": "Block now",
+          "description": "Starts right away, for as long as you choose"
         },
         "schedule": {
-          "title": "Schedule",
-          "description": "e.g. 9am – 5pm"
+          "title": "Time slot",
+          "description": "Every day, at the same hours"
         },
         "limit": {
-          "title": "Time limit",
-          "description": "e.g. 45 min/day"
+          "title": "Daily limit",
+          "description": "A time budget, then it locks"
         }
       },
       "productive": {
@@ -429,6 +429,75 @@
       "reassure": "That is the point: you, right now, decide for you, later.",
       "confirm": "I commit",
       "cancel": "Cancel"
+    },
+    "pause_ritual": {
+      "change": "Change screen",
+      "sheet_title": "Choose your screen",
+      "sheet_body": "What Relock shows before you open a blocked app.",
+      "applies_next": "Your choice applies to the next pause.",
+      "confirmed": "{{ritual}} — set for your next pause.",
+      "breathing": {
+        "title": "Breathing",
+        "description": "Six guided seconds, nothing to do."
+      },
+      "math": {
+        "title": "Mental math",
+        "description": "Three sums to work out in your head."
+      },
+      "transcribe": {
+        "title": "Copy a text",
+        "description": "One sentence to retype, word for word."
+      }
+    },
+    "math": {
+      "prompt": "Solve three sums to continue.",
+      "done": "Done. The door opens.",
+      "hint": "Type your answer, then confirm.",
+      "wrong": "Not quite. Here is another one.",
+      "remaining": "{{count}} sum left",
+      "remaining_plural": "{{count}} sums left",
+      "progress": "{{done}} of {{total}} sums",
+      "erase": "Delete",
+      "check": "Confirm"
+    },
+    "transcribe": {
+      "prompt": "Copy this sentence, exactly.",
+      "done": "Copied. The door opens.",
+      "placeholder": "Type the sentence here",
+      "field": "Sentence to copy",
+      "incomplete": "Copy the sentence",
+      "match": "The sentence matches.",
+      "mismatch": "It drifts — pick up where the grey starts.",
+      "progress": "{{done}} / {{total}} characters",
+      "line_1": "I am choosing to open this app right now, knowing exactly what I am doing.",
+      "line_2": "What I am looking for here, the screen will not give me; I know that already.",
+      "line_3": "Thirty seconds of attention are worth more than an hour of scrolling.",
+      "line_4": "Nobody asked me to open this: it is the habit talking, not me.",
+      "line_5": "Tomorrow I will remember none of the things I see tonight.",
+      "line_6": "I set this limit myself, at a moment when I was thinking more clearly."
+    },
+    "locked": "Blocked",
+    "rule_types": {
+      "schedule": "Time slot",
+      "limit": "Daily limit",
+      "timed": "Timed block"
+    },
+    "resume_sheet": {
+      "title": "Rule paused",
+      "body": "It is protecting nothing right now. Hold to restart it where it left off.",
+      "apps": "Apps",
+      "apps_single": "{{n}} app",
+      "apps_plural": "{{n}} apps",
+      "type": "Type",
+      "per_day": "{{time}} per day",
+      "strict": "Strict mode",
+      "strict_on": "Yes",
+      "paused": "State",
+      "confirm": "Hold to resume",
+      "cancel": "Keep it paused"
+    },
+    "preset_recap": {
+      "activate": "Activate this rule"
     }
   },
   "home": {
@@ -502,7 +571,6 @@
     "score_band_fair": "Fair balance",
     "score_band_poor": "Fragile balance",
     "score_footer_excellent": "A day well held. Keep this rhythm!",
-    "score_footer_pending": "Your score arrives once a few days have been measured.",
     "score_improve_title": "Tips to raise your score",
     "score_tip_block": "Block the apps you open most.",
     "score_tip_focus": "At the wall, tap “Close”.",
@@ -759,7 +827,12 @@
     "reset_partial": "Blocks lifted, but clearing your account failed. Try again once online.",
     "emergency_quota": "You get one emergency unlock per week.",
     "emergency_locked_title": "Already used this week",
-    "emergency_locked_body": "You get one emergency unlock per week. The next one will be available on {{date}}."
+    "emergency_locked_body": "You get one emergency unlock per week. The next one will be available on {{date}}.",
+    "pause_ritual": {
+      "label": "Blocking screen",
+      "hint": "What Relock shows before an unlock",
+      "footnote": "The new screen applies from your next pause on: one already under way always runs to its end."
+    }
   },
   "onboarding": {
     "headline": "Everything you need,\nin one place.",

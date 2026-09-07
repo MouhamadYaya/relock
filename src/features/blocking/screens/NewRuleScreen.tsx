@@ -324,27 +324,30 @@ export default function NewRuleScreen() {
             { paddingBottom: insets.bottom + spacing.xl },
           ]}
         >
-          <View style={styles.typesRow}>
+          {/*
+            Les trois types en premier, pleine largeur : au repos la feuille ne
+            montre qu'eux (plus le haut de la premiere section), donc le choix
+            structurant se fait avant que les modeles illustres n'entrent en
+            scene.
+          */}
+          <View style={styles.typesStack}>
             <BlockingTypeCard
               kind="session"
               title={t('blocking.new_rule.types.session.title')}
               description={t('blocking.new_rule.types.session.description')}
               onPress={() => openEditor('block_now')}
-              style={styles.typeCard}
             />
             <BlockingTypeCard
               kind="schedule"
               title={t('blocking.new_rule.types.schedule.title')}
               description={t('blocking.new_rule.types.schedule.description')}
               onPress={() => openEditor('schedule')}
-              style={styles.typeCard}
             />
             <BlockingTypeCard
               kind="limit"
               title={t('blocking.new_rule.types.limit.title')}
               description={t('blocking.new_rule.types.limit.description')}
               onPress={() => openEditor('daily_limit')}
-              style={styles.typeCard}
             />
           </View>
 
@@ -439,14 +442,9 @@ const styles = StyleSheet.create({
     lineHeight: typography.blockingSectionLineHeight,
     letterSpacing: typography.blockingSectionLetterSpacing,
   },
-  typesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
+  typesStack: {
+    gap: spacing.sm,
     marginTop: spacing.md,
-  },
-  typeCard: {
-    flex: 1,
   },
   section: {
     marginTop: spacing.xxl,

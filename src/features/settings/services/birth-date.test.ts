@@ -1,4 +1,5 @@
 import {
+  birthDateAnchor,
   birthDateBounds,
   formatBirthDate,
   formatMemberSince,
@@ -34,6 +35,16 @@ describe('birth-date', () => {
     const { min, max } = birthDateBounds(now)
     expect(min.getFullYear()).toBe(1900)
     expect(max).toBe(now)
+  })
+
+  it('pose les molettes sur une année plausible, jamais aujourd’hui', () => {
+    const now = new Date(2026, 8, 7, 12)
+    const anchor = birthDateAnchor(now)
+    // Personne n'est né ce matin : partir d'aujourd'hui oblige à faire
+    // défiler quarante ans de molette.
+    expect(anchor.getFullYear()).toBe(2001)
+    expect(anchor.getTime()).toBeLessThan(now.getTime())
+    expect(anchor.getTime()).toBeGreaterThan(birthDateBounds(now).min.getTime())
   })
 
   it('formate une date lisible, et rend null sans date', () => {

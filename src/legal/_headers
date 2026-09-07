@@ -1,0 +1,44 @@
+# En-têtes de sécurité du site public getrelock.com.
+#
+# POURQUOI CE FICHIER
+# Le site est servi par Cloudflare Workers en assets statiques (wrangler.jsonc).
+# Sans directive explicite, Cloudflare ne pose AUCUN en-tête de sécurité : la
+# page de confidentialité — celle que l'App Store référence, celle qui engage
+# juridiquement — peut alors être encadrée dans une iframe invisible et
+# recouverte d'un faux formulaire. C'est le scénario qui compte ici : il n'y a
+# ni session ni cookie à voler, mais l'adresse getrelock.com porte la confiance
+# du produit, et c'est précisément elle qu'un hameçonnage emprunterait.
+#
+# Cloudflare lit ce fichier depuis la racine du répertoire d'assets ; il n'est
+# pas publié comme une page. Docs : developers.cloudflare.com/workers/static-assets/headers/
+
+/*
+  # Le site ne charge RIEN de tiers : ni police, ni analytics, ni CDN. Tous les
+  # scripts sont externes et de même origine (menu.js), aucun gestionnaire
+  # `on*=` ni bloc <style> inline — la politique la plus stricte passe donc
+  # telle quelle. Si une police Google ou un script d'analyse arrive un jour,
+  # c'est ICI qu'il faudra l'autoriser explicitement, jamais en retirant la
+  # directive.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+
+  # Interdit l'encadrement. `frame-ancestors` ci-dessus fait le même travail sur
+  # les navigateurs récents ; celui-ci couvre les plus anciens.
+  X-Frame-Options: DENY
+
+  # Empêche le navigateur de deviner un type MIME et d'exécuter comme script un
+  # fichier servi comme texte.
+  X-Content-Type-Options: nosniff
+
+  # Ne divulgue le référent complet qu'en navigation interne : un lien sortant
+  # depuis la politique de confidentialité ne dit pas QUELLE page était lue.
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Un site de documents n'a besoin d'aucune de ces interfaces. On les refuse
+  # toutes plutôt que d'attendre qu'un script tiers en réclame une.
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+
+  # HTTPS obligatoire pendant deux ans, sous-domaines compris.
+  # `preload` est volontairement ABSENT : l'inscription à la liste de préchargement
+  # des navigateurs est difficilement réversible et engagerait tout getrelock.com,
+  # y compris de futurs sous-domaines encore inexistants.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains

@@ -1,6 +1,13 @@
 import * as AppleAuthentication from 'expo-apple-authentication'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -19,7 +26,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { GradientLine } from './bits'
+import { BackBtn, GradientLine } from './bits'
 import { Reveal } from './motion'
 import { haptic, OB } from './tokens'
 
@@ -263,19 +270,36 @@ export function SceneAuth({
   onApple,
   onGoogle,
   busy = false,
+  onBack,
 }: {
   onApple: () => void
   onGoogle: () => void
   busy?: boolean
+  /**
+   * Sortie de l'écran, quand il a été OUVERT par un geste plutôt qu'imposé
+   * par le parcours. C'est le cas de « J'ai déjà un compte » sur le paywall :
+   * sans elle, refermer la feuille Apple laissait l'utilisateur enfermé sur
+   * cet écran — porte dure, aucun retour, aucune façon de payer. Le parcours
+   * d'onboarding, lui, ne la passe pas : le compte y est obligatoire.
+   */
+  onBack?: () => void
 }) {
   const insets = useSafeAreaInsets()
   const [appleAvailable, setAppleAvailable] = useState(false)
 
   useEffect(() => {
     let mounted = true
-    AppleAuthentication.isAvailableAsync().then(available => {
-      if (mounted) setAppleAvailable(available)
-    })
+    AppleAuthentication.isAvailableAsync()
+      .then(available => {
+        if (mounted) setAppleAvailable(available)
+      })
+      // Un échec du test de disponibilité ne doit pas faire DISPARAÎTRE Sign
+      // in with Apple : sur iOS, l'offrir à côté de Google n'est pas une
+      // option (App Store, 4.8). On retombe donc sur la plateforme, et c'est
+      // `AuthService.signInWithApple` qui refusera proprement s'il le faut.
+      .catch(() => {
+        if (mounted) setAppleAvailable(Platform.OS === 'ios')
+      })
     return () => {
       mounted = false
     }
@@ -290,6 +314,13 @@ export function SceneAuth({
           { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 6 },
         ]}
       >
+        {onBack ? (
+          // Hors flux : le bloc sphère + titre reste centré sur la hauteur
+          // pleine, exactement comme quand le retour n'existe pas.
+          <View style={[styles.backSlot, { top: insets.top + 6 }]}>
+            <BackBtn onPress={onBack} />
+          </View>
+        ) : null}
         <View style={styles.top}>
           <Reveal index={0}>
             <AuthOrb size={ORB_SIZE} />
@@ -354,6 +385,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: 44,
   },
+  backSlot: { position: 'absolute', left: 20, zIndex: 2 },
   title: { marginTop: 26, alignSelf: 'stretch' },
   sub: {
     ...fonts.regular,

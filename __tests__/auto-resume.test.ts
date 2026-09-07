@@ -12,6 +12,7 @@ jest.mock('@/shared/native/screen-time', () => ({
 }))
 jest.mock('@/features/blocking/services/arm', () => ({
   armRule: jest.fn().mockResolvedValue(undefined),
+  armRuleIfNeeded: jest.fn().mockResolvedValue(undefined),
 }))
 jest.mock(
   '@/features/blocking/services/block-rules/block-rules.service',
@@ -20,7 +21,7 @@ jest.mock(
   }),
 )
 
-import { armRule } from '@/features/blocking/services/arm'
+import { armRuleIfNeeded } from '@/features/blocking/services/arm'
 import { resumeExpiredSuspensions } from '@/features/blocking/services/auto-resume'
 import { BlockRulesService } from '@/features/blocking/services/block-rules/block-rules.service'
 import type { BlockRuleView } from '@/features/blocking/types'
@@ -57,8 +58,9 @@ describe('resumeExpiredSuspensions', () => {
     )
     expect(n).toBe(1)
     expect(BlockRulesService.resume).toHaveBeenCalledWith('r1')
-    // Ré-armer AVANT de lever le masque, jamais l'inverse.
-    expect(armRule).toHaveBeenCalled()
+    // Réparer la surveillance AVANT de lever le masque, jamais l'inverse — et
+    // seulement si elle manque : ré-armer rendrait son quota à une limite.
+    expect(armRuleIfNeeded).toHaveBeenCalled()
     expect(ScreenTime.resumeRule).toHaveBeenCalledWith('r1')
   })
 

@@ -203,6 +203,10 @@ function AppShell() {
           <Stack.Screen name="preset-recap" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="theme-picker" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="language-picker" options={HALF_SHEET_OPTIONS} />
+          <Stack.Screen
+            name="pause-ritual-picker"
+            options={HALF_SHEET_OPTIONS}
+          />
           <Stack.Screen name="settings" />
           <Stack.Screen name="profile" />
           <Stack.Screen name="delete-account" />

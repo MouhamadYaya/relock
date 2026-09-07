@@ -42,6 +42,10 @@ RCT_EXTERN_METHOD(appKeys
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(draftAppKeys
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(blockedAppKeys
                   : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
@@ -196,6 +200,10 @@ RCT_EXTERN_METHOD(uninstallProtection
                   rejecter : (RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(armedActivities
+                  : (RCTPromiseResolveBlock)resolve rejecter
+                  : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(purgeStaleLimitWindows
                   : (RCTPromiseResolveBlock)resolve rejecter
                   : (RCTPromiseRejectBlock)reject)
 

@@ -52,7 +52,7 @@
     "exit_subtitle": "Mehr Ruhe im Kopf.\nMehr Zeit für das Wesentliche.",
     "exit_cta": "Einmaliges Angebot sichern",
     "exit_decline": "Ich zahle lieber den vollen Preis",
-    "exit_footer": "Jederzeit kündbar · Geld-zurück-Garantie",
+    "exit_footer": "Jederzeit im App Store kündbar",
     "payment_failed": "Die Zahlung ist fehlgeschlagen. Du kannst es erneut versuchen.",
     "payment_pending": "Die Zahlung wird noch geprüft. Es wird kein weiteres Angebot angezeigt.",
     "plans_title_accent": "mehr Leben",
@@ -74,8 +74,8 @@
     "brand": "RELOCK",
     "close": "Schließen",
     "restore": "Wiederherstellen",
-    "terms": "Conditions",
-    "privacy": "Confidentialité",
+    "terms": "Nutzungsbedingungen",
+    "privacy": "Datenschutz",
     "before": "AVANT",
     "with_relock": "AVEC RELOCK",
     "before_title": "Encore un scroll.",
@@ -158,18 +158,18 @@
   "navigation": {
     "tabs": {
       "home": "Start",
-      "blocks": "Blockaden",
+      "blocks": "Regeln",
       "activity": "Aktivität"
     }
   },
   "blocking": {
-    "title": "Blockaden",
+    "title": "Regeln",
     "add_rule": "Neue Regel",
     "blocked_apps": "Blockierte Apps",
     "unlock_all": "Alle entsperren",
     "unlock": "Entsperren",
     "unlock_x": "X entsperren",
-    "rules_title": "Regeln",
+    "rules_title": "Meine Regeln",
     "empty_rules": {
       "no_apps_blocked": "Alle Apps sind verfügbar.",
       "trouble_hint": "Sieht das nicht richtig aus?",
@@ -212,16 +212,16 @@
       "close": "Schließen",
       "types": {
         "session": {
-          "title": "Sitzung",
-          "description": "z. B. 30 Min."
+          "title": "Jetzt blockieren",
+          "description": "Startet sofort, für die Dauer, die du wählst"
         },
         "schedule": {
-          "title": "Zeitplan",
-          "description": "z. B. 9–17 Uhr"
+          "title": "Zeitfenster",
+          "description": "Jeden Tag, zu denselben Zeiten"
         },
         "limit": {
-          "title": "Zeitlimit",
-          "description": "z. B. 45 Min./Tag"
+          "title": "Tageslimit",
+          "description": "Ein Zeitbudget, dann wird gesperrt"
         }
       },
       "productive": {
@@ -429,6 +429,75 @@
       "reassure": "Genau darum geht es: Du entscheidest jetzt für dich später.",
       "confirm": "Ich verpflichte mich",
       "cancel": "Abbrechen"
+    },
+    "pause_ritual": {
+      "change": "Bildschirm wechseln",
+      "sheet_title": "Wähle deinen Bildschirm",
+      "sheet_body": "Was Relock zeigt, bevor eine gesperrte App aufgeht.",
+      "applies_next": "Deine Wahl gilt ab der nächsten Pause.",
+      "confirmed": "{{ritual}} — für die nächste Pause festgelegt.",
+      "breathing": {
+        "title": "Atmen",
+        "description": "Sechs geführte Sekunden, sonst nichts."
+      },
+      "math": {
+        "title": "Kopfrechnen",
+        "description": "Drei Aufgaben, im Kopf zu lösen."
+      },
+      "transcribe": {
+        "title": "Text abschreiben",
+        "description": "Ein Satz, Wort für Wort abzutippen."
+      }
+    },
+    "math": {
+      "prompt": "Löse drei Aufgaben, um fortzufahren.",
+      "done": "Erledigt. Die Tür geht auf.",
+      "hint": "Antwort eingeben, dann bestätigen.",
+      "wrong": "Daneben. Hier ist eine neue Aufgabe.",
+      "remaining": "Noch {{count}} Aufgabe",
+      "remaining_plural": "Noch {{count}} Aufgaben",
+      "progress": "{{done}} von {{total}} Aufgaben",
+      "erase": "Löschen",
+      "check": "Bestätigen"
+    },
+    "transcribe": {
+      "prompt": "Schreibe diesen Satz genau ab.",
+      "done": "Abgeschrieben. Die Tür geht auf.",
+      "placeholder": "Satz hier eintippen",
+      "field": "Abzuschreibender Satz",
+      "incomplete": "Schreibe den Satz ab",
+      "match": "Der Satz stimmt.",
+      "mismatch": "Es weicht ab — setze dort an, wo es grau wird.",
+      "progress": "{{done}} / {{total}} Zeichen",
+      "line_1": "Ich entscheide mich jetzt bewusst dafür, diese App zu öffnen.",
+      "line_2": "Was ich hier suche, gibt mir der Bildschirm nicht; das weiß ich längst.",
+      "line_3": "Dreißig Sekunden Aufmerksamkeit sind mehr wert als eine Stunde Scrollen.",
+      "line_4": "Niemand hat mich gebeten, das zu öffnen: es ist die Gewohnheit.",
+      "line_5": "Morgen werde ich mich an nichts davon erinnern, was ich heute sehe.",
+      "line_6": "Diese Grenze habe ich selbst gesetzt, als ich klarer gedacht habe."
+    },
+    "locked": "Blockiert",
+    "rule_types": {
+      "schedule": "Zeitfenster",
+      "limit": "Tageslimit",
+      "timed": "Timer-Blockierung"
+    },
+    "resume_sheet": {
+      "title": "Regel pausiert",
+      "body": "Sie schützt gerade nichts. Halte gedrückt, um sie dort fortzusetzen, wo sie aufgehört hat.",
+      "apps": "Apps",
+      "apps_single": "{{n}} App",
+      "apps_plural": "{{n}} Apps",
+      "type": "Typ",
+      "per_day": "{{time}} pro Tag",
+      "strict": "Strenger Modus",
+      "strict_on": "Ja",
+      "paused": "Status",
+      "confirm": "Zum Fortsetzen halten",
+      "cancel": "Pausiert lassen"
+    },
+    "preset_recap": {
+      "activate": "Diese Regel aktivieren"
     }
   },
   "home": {
@@ -491,7 +560,6 @@
     "score_band_fair": "Mittlere Balance",
     "score_band_poor": "Fragile Balance",
     "score_footer_excellent": "Ein gut gehaltener Tag. Bleib in diesem Rhythmus!",
-    "score_footer_pending": "Dein Score erscheint, sobald einige Tage gemessen sind.",
     "score_improve_title": "Tipps, um den Score zu heben",
     "score_tip_block": "Sperre die Apps, die du am meisten öffnest.",
     "score_tip_focus": "An der Wand „Schließen“ tippen.",
@@ -712,7 +780,12 @@
     "reset_partial": "Sperren aufgehoben, aber das Löschen im Konto ist fehlgeschlagen. Versuch es online erneut.",
     "emergency_quota": "Du hast eine Notfall-Entsperrung pro Woche.",
     "emergency_locked_title": "Diese Woche schon genutzt",
-    "emergency_locked_body": "Du hast eine Notfall-Entsperrung pro Woche. Die nächste ist am {{date}} verfügbar."
+    "emergency_locked_body": "Du hast eine Notfall-Entsperrung pro Woche. Die nächste ist am {{date}} verfügbar.",
+    "pause_ritual": {
+      "label": "Sperrbildschirm",
+      "hint": "Was Relock vor dem Entsperren zeigt",
+      "footnote": "Der neue Bildschirm gilt ab der nächsten Pause: eine laufende Pause läuft immer zu Ende."
+    }
   },
   "onboarding": {
     "headline": "Alles, was du brauchst,\nan einem Ort.",

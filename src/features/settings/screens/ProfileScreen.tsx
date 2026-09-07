@@ -1,3 +1,4 @@
+import { IconName } from '@assets/icons'
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
@@ -19,6 +20,7 @@ import { ProfileAvatar } from '@/features/settings/components/ProfileAvatar'
 import { SettingsHeader } from '@/features/settings/components/SettingsHeader'
 import { SettingsSection } from '@/features/settings/components/SettingsSection'
 import {
+  birthDateAnchor,
   birthDateBounds,
   formatBirthDate,
   formatMemberSince,
@@ -33,6 +35,7 @@ import {
 } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
 import { useT } from '@/i18n/useT'
+import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { isImageKitConfigured } from '@/shared/services/imagekit'
 import { captureError } from '@/shared/services/monitoring/sentry'
@@ -58,7 +61,8 @@ export default function ProfileScreen() {
 
   const [draftName, setDraftName] = React.useState(name ?? '')
   const [draftBirth, setDraftBirth] = React.useState<string | null>(birthDate)
-  const [pickerOpen, setPickerOpen] = React.useState(false)
+  const [birthOpen, setBirthOpen] = React.useState(false)
+  const nameInput = React.useRef<TextInput>(null)
   const [pressedPhoto, setPressedPhoto] = React.useState(false)
   const [pressedSave, setPressedSave] = React.useState(false)
 
@@ -80,7 +84,10 @@ export default function ProfileScreen() {
   const saving = updateName.isPending || updateBirthDate.isPending
 
   const bounds = React.useMemo(() => birthDateBounds(), [])
-  const birthValue = parseBirthDate(draftBirth) ?? bounds.max
+  // Le sélecteur part d'une année plausible quand rien n'est choisi. Cette
+  // valeur n'est JAMAIS affichée dans le champ — elle n'existe qu'à
+  // l'intérieur du sélecteur, après un appui explicite.
+  const birthValue = parseBirthDate(draftBirth) ?? birthDateAnchor()
   const birthLabel = formatBirthDate(draftBirth, i18n.language)
   const memberSince = formatMemberSince(createdAt, i18n.language)
 
@@ -133,11 +140,16 @@ export default function ProfileScreen() {
   }
 
   const onChangeBirth = (event: DateTimePickerEvent, date?: Date) => {
-    // Android referme son sélecteur lui-même et signale l'annulation ; iOS le
-    // garde ouvert et ne notifie que les changements.
-    if (Platform.OS === 'android') setPickerOpen(false)
+    // Android referme son sélecteur lui-même et signale l'annulation ; iOS
+    // garde le sien ouvert et ne notifie que les changements.
+    if (Platform.OS === 'android') setBirthOpen(false)
     if (event.type === 'dismissed' || !date) return
     setDraftBirth(toIsoDate(date))
+  }
+
+  const toggleBirthPicker = () => {
+    haptics.selectionTick()
+    setBirthOpen(open => !open)
   }
 
   /**
@@ -216,89 +228,105 @@ export default function ProfileScreen() {
         </Pressable>
 
         <SettingsSection caption={t('settings.profile.identity_footnote')}>
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>{t('settings.profile.name')}</Text>
-            <TextInput
-              value={draftName}
-              onChangeText={setDraftName}
-              placeholder={t('settings.profile.name_placeholder')}
-              placeholderTextColor={colors.textTertiary}
-              maxLength={NAME_MAX_LENGTH}
-              autoCapitalize="words"
-              autoCorrect={false}
-              returnKeyType="done"
-              selectionColor={colors.accent}
-              style={styles.fieldInput}
-              accessibilityLabel={t('settings.profile.name')}
+          {/* Le crayon dit que la ligne s'édite. Sans lui, un champ de texte
+              sans cadre ni fond ressemble à une valeur en lecture seule —
+              c'est le prix de la sobriété, et il se paie d'un pictogramme. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.profile.name')}
+            onPress={() => nameInput.current?.focus()}
+            style={styles.field}
+          >
+            <View style={styles.fieldBody}>
+              <Text style={styles.fieldLabel}>
+                {t('settings.profile.name')}
+              </Text>
+              <TextInput
+                ref={nameInput}
+                value={draftName}
+                onChangeText={setDraftName}
+                placeholder={t('settings.profile.name_placeholder')}
+                placeholderTextColor={colors.textTertiary}
+                maxLength={NAME_MAX_LENGTH}
+                autoCapitalize="words"
+                autoCorrect={false}
+                returnKeyType="done"
+                selectionColor={colors.accent}
+                style={styles.fieldInput}
+                accessibilityLabel={t('settings.profile.name')}
+              />
+            </View>
+            <IconSvg
+              name={IconName.PEN}
+              size={size.icon}
+              strokeWidth={size.iconStroke}
+              color={colors.icon}
             />
-          </View>
+          </Pressable>
 
-          <View style={styles.field}>
-            <View style={styles.fieldHeader}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.profile.birth_date')}
+            accessibilityState={{ expanded: birthOpen }}
+            onPress={toggleBirthPicker}
+            style={styles.field}
+          >
+            <View style={styles.fieldBody}>
               <Text style={styles.fieldLabel}>
                 {t('settings.profile.birth_date')}
               </Text>
-              {draftBirth ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t('settings.profile.birth_date_clear')}
-                  hitSlop={8}
-                  onPress={() => {
-                    haptics.selectionTick()
-                    setDraftBirth(null)
-                  }}
-                >
-                  <Text style={styles.clear}>{t('common.delete')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
+              {/*
+                VIDE tant que rien n'a été choisi.
 
-            {/* iOS affiche une pastille native qui ouvre son propre calendrier
-                — inutile de la doubler d'un bouton. Android n'a pas cet
-                affichage compact : on y garde une ligne qui ouvre le dialogue
-                système. */}
-            {Platform.OS === 'ios' ? (
-              <View style={styles.dateRow}>
-                <DateTimePicker
-                  mode="date"
-                  display="compact"
-                  themeVariant="dark"
-                  value={birthValue}
-                  minimumDate={bounds.min}
-                  maximumDate={bounds.max}
-                  onChange={onChangeBirth}
-                  accessibilityLabel={t('settings.profile.birth_date')}
-                />
-                {!draftBirth ? (
-                  <Text style={styles.fieldEmpty}>
-                    {t('settings.profile.birth_date_empty')}
-                  </Text>
-                ) : null}
-              </View>
-            ) : (
+                Le champ affichait la date du JOUR, produite par le sélecteur
+                natif faute de valeur. Elle avait toutes les apparences d'une
+                donnée enregistrée : on croyait sa date de naissance renseignée
+                — et fausse. Un espace vide ne ment pas, et le crayon dit quoi
+                en faire.
+              */}
+              <Text numberOfLines={1} style={styles.fieldValue}>
+                {birthLabel ?? ' '}
+              </Text>
+            </View>
+            {draftBirth ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={t('settings.profile.birth_date')}
-                onPress={() => setPickerOpen(true)}
+                accessibilityLabel={t('settings.profile.birth_date_clear')}
+                hitSlop={12}
+                onPress={() => {
+                  haptics.selectionTick()
+                  setDraftBirth(null)
+                  setBirthOpen(false)
+                }}
               >
-                <Text
-                  style={draftBirth ? styles.fieldValue : styles.fieldEmpty}
-                >
-                  {birthLabel ?? t('settings.profile.birth_date_empty')}
-                </Text>
+                <Text style={styles.clear}>{t('common.delete')}</Text>
               </Pressable>
-            )}
-            {pickerOpen && Platform.OS === 'android' ? (
-              <DateTimePicker
-                mode="date"
-                display="default"
-                value={birthValue}
-                minimumDate={bounds.min}
-                maximumDate={bounds.max}
-                onChange={onChangeBirth}
+            ) : (
+              <IconSvg
+                name={IconName.PEN}
+                size={size.icon}
+                strokeWidth={size.iconStroke}
+                color={colors.icon}
               />
-            ) : null}
-          </View>
+            )}
+          </Pressable>
+
+          {/* Le sélecteur n'apparaît qu'à la demande. Sur iOS, des molettes
+              plutôt que la pastille compacte : elles s'utilisent du premier
+              coup, là où la pastille demandait un second appui pour ouvrir
+              son calendrier. */}
+          {birthOpen ? (
+            <DateTimePicker
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              themeVariant="dark"
+              value={birthValue}
+              minimumDate={bounds.min}
+              maximumDate={bounds.max}
+              onChange={onChangeBirth}
+              accessibilityLabel={t('settings.profile.birth_date')}
+            />
+          ) : null}
         </SettingsSection>
 
         <SettingsSection caption={t('settings.profile.email_footnote')}>
@@ -359,6 +387,19 @@ const SAVE = {
   backgroundColor: colors.accent,
 }
 
+/**
+ * Saisie et valeur partagent la MÊME métrique. Sans cela, le nom se décalait
+ * de un ou deux points selon qu'il était en cours de saisie ou simplement
+ * affiché — assez pour qu'on le voie sans savoir le nommer.
+ */
+const FIELD_TEXT = {
+  color: colors.textPrimary,
+  fontSize: type.rowTitle.size,
+  lineHeight: 22,
+  fontWeight: type.rowTitle.weight,
+  marginTop: spacing.textGap,
+}
+
 const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.screenH },
   photoCard: PHOTO_CARD,
@@ -375,14 +416,24 @@ const styles = StyleSheet.create({
     fontWeight: type.caption.weight,
     marginTop: 4,
   },
+  /**
+   * Un champ est une LIGNE, comme partout ailleurs : bloc de texte extensible
+   * à gauche, accessoire à droite, tout centré verticalement. L'intitulé et
+   * la valeur partagent exactement le même axe — c'est ce qui manquait au
+   * nom, qui flottait entre son libellé et le bord de la carte.
+   */
   field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
+    minHeight: size.rowMinHeight,
     paddingHorizontal: spacing.rowH,
     paddingVertical: 14,
   },
-  fieldHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  fieldBody: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: spacing.trailingGap,
   },
   fieldLabel: {
     color: colors.textSecondary,
@@ -390,33 +441,13 @@ const styles = StyleSheet.create({
     fontWeight: type.caption.weight,
   },
   fieldInput: {
-    color: colors.textPrimary,
-    fontSize: type.rowTitle.size,
-    fontWeight: type.rowTitle.weight,
+    ...FIELD_TEXT,
     // Le champ n'a ni cadre ni fond : c'est la carte qui fait la surface. Le
-    // padding vertical nul évite qu'iOS ajoute sa propre marge au-dessus.
+    // padding vertical nul évite qu'iOS ajoute sa propre marge au-dessus et
+    // décale la saisie par rapport à son intitulé.
     paddingVertical: 0,
-    marginTop: 4,
   },
-  fieldValue: {
-    color: colors.textPrimary,
-    fontSize: type.rowTitle.size,
-    fontWeight: type.rowTitle.weight,
-    marginTop: 4,
-  },
-  fieldEmpty: {
-    color: colors.textTertiary,
-    fontSize: type.rowTitle.size,
-    fontWeight: '400',
-    marginTop: 4,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    // Le sélecteur natif s'aligne à gauche comme les autres valeurs.
-    marginLeft: -10,
-  },
+  fieldValue: FIELD_TEXT,
   clear: {
     color: colors.danger,
     fontSize: type.caption.size,

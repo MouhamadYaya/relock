@@ -22,7 +22,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   useWindowDimensions,
   View,
@@ -51,17 +50,18 @@ import { Footnote, GhostLink, Moon, Pill, RedAlert } from './bits'
 import { LockAnimation } from './LockAnimation'
 import { Reveal } from './motion'
 import { OnboardingRuleCard } from './OnboardingRuleCard'
-import { PickerAnimation } from './PickerAnimation'
+import { PICKER_DEMO_TAUGHT_MS, PickerAnimation } from './PickerAnimation'
+import { RuleInfoSheet, type RuleInfoTarget } from './RuleInfoSheet'
 import { haptic, OB } from './tokens'
 
 /** Hauteur prise par le titre, le CTA et les marges sûres de l'écran verrouillage. */
 const LOCK_SCENE_CHROME = 300
 /**
- * Attente imposée sur l'écran de démonstration du sélecteur — calée sur la
- * fin de la seconde coche dans `PickerAnimation`. À ré-ajuster si sa
- * chronologie change.
+ * Attente imposée sur l'écran de démonstration du sélecteur. Elle SUIT la
+ * chronologie de `PickerAnimation` au lieu de la recopier : accélérer la
+ * boucle raccourcit le verrou du même coup, sans re-calage manuel.
  */
-const PICKER_UNLOCK_MS = 4400
+const PICKER_UNLOCK_MS = PICKER_DEMO_TAUGHT_MS
 
 /** Proportion de l'appareil dessiné par `LockAnimation` (partiel, bas effacé). */
 const LOCK_PHONE_RATIO = 1.42
@@ -128,9 +128,9 @@ function TutorialScene({
 }
 
 /**
- * Cadre de téléphone : la vidéo de démo doit se lire comme « un écran de
- * l'app », pas comme une image collée dans la page. Le ratio suit celui des
- * captures (2.17), et la vidéo est rognée dedans plutôt qu'étirée.
+ * Cadre de téléphone : la maquette doit se lire comme « un écran de l'app »,
+ * pas comme une image collée dans la page. Le ratio suit celui des captures
+ * (2.17), et le contenu est rogné dedans plutôt qu'étiré.
  */
 function PhoneFrame({
   width,
@@ -247,8 +247,8 @@ export function SceneGroundRules({ onNext }: { onNext: () => void }) {
  */
 export function SceneLockDemo({ onNext }: { onNext: () => void }) {
   // Cet appareil-là n'est pas rogné au ratio d'un vrai iPhone : on n'en montre
-  // que le haut (le bas s'efface), donc `usePhoneWidth` — calibré sur 2.17 —
-  // le rapetissait de moitié. On dimensionne sur la hauteur réellement libre.
+  // que le haut (le bas s'efface). On dimensionne donc sur la hauteur
+  // réellement libre, pas sur le ratio d'un cadre complet.
   const { width: screenW, height: screenH } = useWindowDimensions()
   const width = Math.round(
     Math.min(screenW * 0.74, (screenH - LOCK_SCENE_CHROME) / LOCK_PHONE_RATIO),
@@ -269,41 +269,47 @@ export function SceneLockDemo({ onNext }: { onNext: () => void }) {
 // ─── 3 · Le Hard Mode ────────────────────────────────────────────────────
 
 /**
- * Le seul écran du tutoriel où l'on demande un engagement. Le bouton n'est
- * PAS une maquette : sa valeur part dans `config.strict` de la règle créée à
- * la fin (voir `useActivateFirstRule`) — un écran qui promet un choix et n'en
- * applique aucun est un mensonge poli.
+ * Une VITRINE, pas un réglage. Cet écran annonce que le Hard Mode existe dans
+ * l'app ; il ne l'active pas, et n'écrit rien dans les règles créées à la fin
+ * du parcours (elles restent non strictes — voir `useActivateFirstRule`).
+ *
+ * ⚠️ NE PAS y remettre de contrôle manipulable — ni `Switch`, ni carte de
+ * choix, ni `Pressable`. Un interrupteur qu'on peut basculer ici fait croire
+ * qu'on allume la fonctionnalité pour toute l'app, alors que le Hard Mode se
+ * décide blocage par blocage, plus tard, au moment de créer le blocage. C'est
+ * exactement l'ambiguïté que cet écran a causée en production.
+ *
+ * L'interrupteur dessiné ci-dessous est donc en Views pures, figé en position
+ * allumée : rien à toucher, rien qui réponde au doigt. Trois garde-fous le
+ * disent au lieu d'un seul — le badge « DANS L'APP » en tête d'écran, la
+ * maquette de téléphone qui pose la scène ailleurs qu'ici, et la note de bas
+ * d'écran qui dit où et quand il s'active vraiment.
  */
-export function SceneHardMode({
-  value,
-  onChange,
-  onNext,
-}: {
-  value: boolean
-  onChange: (v: boolean) => void
-  onNext: () => void
-}) {
+export function SceneHardMode({ onNext }: { onNext: () => void }) {
   const width = usePhoneWidth()
 
   return (
     <TutorialScene
-      title="Prêt à t'engager à fond ?"
-      sub="Avec le Hard Mode, tu ne peux ni débloquer temporairement une app, ni arrêter la règle avant la fin."
+      badge="DANS L’APP"
+      title="Et si tu veux ne rien te laisser passer…"
+      sub="Le Hard Mode verrouille un blocage : ni déblocage temporaire d’une app, ni arrêt de la règle avant la fin."
       footer={
         <>
           <Pill label="Continuer" onPress={onNext} />
-          <Footnote
-            text={
-              value
-                ? 'Hard Mode activé sur ta première règle. Tu pourras le retirer sur les suivantes.'
-                : 'Tu pourras l’activer plus tard, règle par règle.'
-            }
-          />
+          <Footnote text="Rien à régler maintenant. Tu l’activeras toi-même dans l’app, blocage par blocage, le jour où tu en auras besoin." />
         </>
       }
     >
       <Reveal index={2}>
-        <View style={{ width, height: width * PHONE_RATIO }}>
+        {/* Une image, pas une interface : le lecteur d'écran ne doit pas
+            annoncer un interrupteur que personne ne peut actionner. */}
+        <View
+          style={{ width, height: width * PHONE_RATIO }}
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden
+          pointerEvents="none"
+        >
           <PhoneFrame width={width}>
             <View style={styles.mockList}>
               {[1, 0.72, 0.5, 0.32].map(o => (
@@ -315,20 +321,16 @@ export function SceneHardMode({
             </View>
           </PhoneFrame>
           {/* Posée par-dessus le cadre, à cheval sur ses bords : c'est le
-              geste qui compte, pas le décor derrière. */}
+              réglage qui compte, pas le décor derrière. */}
           <View style={styles.hardModeBar}>
             <Text style={styles.hardModeLabel}>Hard Mode</Text>
-            <Switch
-              value={value}
-              onValueChange={v => {
-                haptic.select()
-                onChange(v)
-              }}
-              accessibilityLabel="Hard Mode"
-              trackColor={{ false: 'rgba(120,120,128,0.32)', true: OB.accent }}
-              thumbColor="#FFFFFF"
-              ios_backgroundColor="rgba(120,120,128,0.32)"
-            />
+            {/* Interrupteur DESSINÉ, jamais un `Switch` : un vrai composant
+                reste focusable et basculable au lecteur d'écran même
+                `disabled`, et `disabled` le grise — ce qui donnerait une
+                fonctionnalité qui a l'air cassée. */}
+            <View style={styles.fauxSwitch}>
+              <View style={styles.fauxSwitchKnob} />
+            </View>
           </View>
         </View>
       </Reveal>
@@ -339,10 +341,22 @@ export function SceneHardMode({
 // ─── 4 · La démo du sélecteur ────────────────────────────────────────────
 
 /**
- * Aide facultative depuis la sélection, sans étape supplémentaire du parcours.
- * La démonstration ne modifie jamais la sélection enregistrée par Apple.
+ * Passage obligé AVANT le vrai sélecteur : personne ne devine seul qu'il faut
+ * déplier une catégorie pour atteindre les apps, et découvrir ça dans la
+ * feuille d'Apple — qu'on ne contrôle pas — c'est l'abandon assuré.
+ *
+ * Le même écran ressert d'aide facultative depuis la sélection (« Voir
+ * comment faire ») ; seul le libellé du bouton change, d'où `cta`. La
+ * démonstration ne modifie jamais la sélection enregistrée par Apple.
  */
-export function ScenePickerDemo({ onNext }: { onNext: () => void }) {
+export function ScenePickerDemo({
+  onNext,
+  cta = 'J’ai compris',
+}: {
+  onNext: () => void
+  /** Libellé une fois la démonstration vue — la suite diffère selon l'appelant. */
+  cta?: string
+}) {
   const { width } = useWindowDimensions()
   const reduceMotion = useReducedMotion()
   const [ready, setReady] = useState(false)
@@ -375,7 +389,7 @@ export function ScenePickerDemo({ onNext }: { onNext: () => void }) {
       sub="Les apps sont rangées par catégorie."
       footer={
         <Pill
-          label={ready ? 'J’ai compris' : 'Regarde la démonstration'}
+          label={ready ? cta : 'Regarde la démonstration'}
           onPress={onNext}
           disabled={!ready}
           progress={gate}
@@ -396,6 +410,10 @@ export function ScenePickerDemo({ onNext }: { onNext: () => void }) {
  * bloquer : on refuse d'avancer, et on renvoie vers la démo plutôt que de
  * répéter la même consigne — s'il n'a rien choisi, c'est souvent qu'il n'a
  * pas compris l'écran système, pas qu'il a changé d'avis.
+ *
+ * La feuille d'Apple s'ouvre D'ELLE-MÊME à l'arrivée. La carte « + » qui la
+ * précédait n'annonçait que ce qui vient d'être montré à l'écran d'avant, au
+ * prix d'un tap de plus avant le seul geste de l'écran.
  */
 export function ScenePickApps({
   count,
@@ -439,6 +457,17 @@ export function ScenePickApps({
     }
   }, [onCount, onNext])
 
+  // UNE seule fois : s'il ferme la feuille sans rien choisir, la relancer
+  // dans son dos l'enfermerait dans un sélecteur qu'il ne peut plus quitter.
+  // Sans module natif (Android, build sans Family Controls), il n'y a aucune
+  // feuille à ouvrir — on laisse l'écran et son bouton faire le passage.
+  const autoOpened = useRef(false)
+  useEffect(() => {
+    if (autoOpened.current || !ScreenTime.isAvailable) return
+    autoOpened.current = true
+    void pick()
+  }, [pick])
+
   const picked = count > 0
 
   if (showHelp) {
@@ -469,44 +498,29 @@ export function ScenePickApps({
       }
     >
       <View style={styles.pickStage}>
-        <Reveal index={2}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              picked
-                ? `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}. Modifier la sélection.`
-                : 'Ouvrir le sélecteur d’apps'
-            }
-            onPress={pick}
-            disabled={busy}
-            style={[styles.pickCard, picked && styles.pickCardDone]}
-          >
-            {busy ? (
-              <ActivityIndicator color={OB.accent} />
-            ) : (
-              <>
-                <View style={[styles.pickIcon, picked && styles.pickIconDone]}>
-                  <IconSvg
-                    name={picked ? IconName.CHECK : IconName.PLUS}
-                    size={26}
-                    color={picked ? OB.onAccent : OB.ink}
-                  />
-                </View>
-                <Text style={styles.pickCount}>
-                  {picked
-                    ? `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`
-                    : 'Aucune app sélectionnée'}
-                </Text>
-                <Text style={styles.pickHint}>
-                  {picked
-                    ? 'Touche pour modifier'
-                    : 'Touche pour ouvrir le sélecteur d’Apple'}
-                </Text>
-              </>
-            )}
-          </Pressable>
-        </Reveal>
-        {emptyTry && !picked ? (
+        {/* Rien à inviter tant que la feuille est ouverte ou qu'elle n'a rien
+            rendu : la scène ne montre QUE le résultat du geste. */}
+        {picked ? (
+          <Reveal index={2}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}. Modifier la sélection.`}
+              onPress={pick}
+              disabled={busy}
+              style={[styles.pickCard, styles.pickCardDone]}
+            >
+              <View style={[styles.pickIcon, styles.pickIconDone]}>
+                <IconSvg name={IconName.CHECK} size={26} color={OB.onAccent} />
+              </View>
+              <Text style={styles.pickCount}>
+                {`${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`}
+              </Text>
+              <Text style={styles.pickHint}>Touche pour modifier</Text>
+            </Pressable>
+          </Reveal>
+        ) : busy ? (
+          <ActivityIndicator color={OB.accent} />
+        ) : emptyTry ? (
           <View style={styles.pickAlert}>
             <RedAlert text="Relock n’a rien à bloquer tant que tu n’as choisi aucune app. Choisis-en au moins une pour continuer." />
           </View>
@@ -522,6 +536,15 @@ export function ScenePickApps({
  * Les VRAIES fiches de préréglages de l'app (`rule-templates.ts`), pas des
  * illustrations : ce qu'il choisit ici est exactement ce qu'il retrouvera
  * dans l'onglet Blocages une minute plus tard.
+ *
+ * ⚠️ Défaut de naissance corrigé ici, à ne pas réintroduire : l'écran
+ * demandait de choisir des règles sans jamais redire sur QUOI elles
+ * porteraient. Les apps ont été cochées deux écrans plus tôt, dans le
+ * sélecteur d'Apple, et plus rien ne les mentionnait — les testeurs lisaient
+ * huit vignettes décoratives sans savoir ce qu'elles allaient bloquer. Trois
+ * rappels y répondent, à trois distances de lecture : le sous-titre compte
+ * les apps, chaque carte porte leurs icônes RÉELLES, et le « ? » de la carte
+ * ouvre l'explication complète de cette règle-là.
  */
 export function SceneRules({
   name,
@@ -530,6 +553,7 @@ export function SceneRules({
   onToggle,
   busy,
   onActivate,
+  appCount,
 }: {
   name: string
   recommendedIds: string[]
@@ -537,9 +561,41 @@ export function SceneRules({
   onToggle: (template: RuleTemplate) => void
   busy: boolean
   onActivate: () => void
+  /** Éléments rendus par le sélecteur d'Apple à l'écran précédent. */
+  appCount: number
 }) {
   const t = useT()
   const { width } = useWindowDimensions()
+  const [info, setInfo] = useState<RuleInfoTarget | null>(null)
+  // Résolues UNE fois pour les huit cartes : la sélection est la même pour
+  // toutes — `bindSelection` la recopiera telle quelle dans chaque règle — donc
+  // huit interrogations du natif rendraient huit fois la même liste.
+  const [appKeys, setAppKeys] = useState<string[]>([])
+
+  useEffect(() => {
+    // Sélection vide (Android, sélecteur passé, apps décochées au retour) :
+    // rien à résoudre, et on RETIRE les vignettes précédentes — des icônes
+    // survivantes affirmeraient un blocage que plus rien ne porte.
+    if (!ScreenTime.isAvailable || appCount === 0) {
+      setAppKeys([])
+      return
+    }
+    let cancelled = false
+    ScreenTime.draftAppKeys()
+      .then(keys => {
+        if (!cancelled) setAppKeys(keys)
+      })
+      .catch(() => {
+        // Sélection illisible : les cartes restent sans vignette plutôt que de
+        // montrer une icône devinée. Le sous-titre garde le compte, qui lui
+        // vient du sélecteur.
+      })
+    return () => {
+      cancelled = true
+    }
+    // `appCount` bouge quand il revient modifier sa sélection : c'est le seul
+    // signal disponible pour recharger les jetons.
+  }, [appCount])
   const templates = useMemo(
     () =>
       prioritizePlanTemplates(
@@ -561,6 +617,25 @@ export function SceneRules({
   // est choisie ferait douter de ce qui va réellement s'allumer.
   const plural = count > 1
 
+  // Le sous-titre porte à lui seul le lien entre les deux écrans : c'est la
+  // première chose lue, avant même que les vignettes ne soient remarquées.
+  // Sans sélection connue (Android, sélecteur passé), on ne bluffe pas un
+  // nombre — la phrase reste vraie, simplement moins précise.
+  const appsLabel =
+    appCount > 0
+      ? `S’applique ${appCount === 1 ? 'à l’app' : `aux ${appCount} apps`} que tu viens de choisir.`
+      : 'S’applique aux apps que tu choisiras.'
+  const sub =
+    appCount > 0
+      ? `Chacune protège un moment de la journée en bloquant ${
+          appCount === 1 ? 'l’app' : `les ${appCount} apps`
+        } que tu viens de choisir. Garde celles qui te parlent, décoche les autres.`
+      : 'Chacune protège un moment de la journée en bloquant les apps que tu as choisies. Garde celles qui te parlent, décoche les autres.'
+  // Les vignettes ne couvrent que les apps : une catégorie ou un domaine web
+  // cochés n'ont pas d'icône propre et se replient sur le « +N », pour que le
+  // total montré colle à celui annoncé par le sélecteur.
+  const appOthers = Math.max(0, appCount - appKeys.length)
+
   return (
     <TutorialScene
       title={
@@ -568,7 +643,7 @@ export function SceneRules({
           ? `${name}, voici les règles que je te propose`
           : 'Voici les règles que je te propose'
       }
-      sub="Garde celles qui te parlent, décoche les autres. Tu en ajouteras d’autres quand tu voudras."
+      sub={sub}
       footer={
         <>
           <Pill
@@ -618,11 +693,31 @@ export function SceneRules({
                   haptic.select()
                   onToggle(template)
                 }}
+                appKeys={appKeys}
+                appOthers={appOthers}
+                appsLabel={appsLabel}
+                onInfo={() =>
+                  setInfo({
+                    presetId: template.presetId,
+                    title: template.title,
+                  })
+                }
               />
             </View>
           ))}
         </ScrollView>
       </View>
+      {/*
+        Une seule feuille pour les huit cartes : huit `Modal` montés en
+        parallèle pour n'en ouvrir qu'un coûtent huit vues natives, et
+        `RuleInfoSheet` lit de toute façon la règle dans `info`.
+      */}
+      <RuleInfoSheet
+        target={info}
+        onClose={() => setInfo(null)}
+        appKeys={appKeys}
+        appCount={appCount}
+      />
     </TutorialScene>
   )
 }
@@ -668,18 +763,6 @@ const styles = StyleSheet.create({
     color: OB.accent,
   },
 
-  phone: {
-    borderWidth: 4,
-    borderColor: '#1B1B1F',
-    backgroundColor: '#000000',
-    overflow: 'hidden',
-  },
-  phoneScreen: {
-    flex: 1,
-    overflow: 'hidden',
-    backgroundColor: '#0A0A0C',
-  },
-
   // Pas de padding ici : le ciel est un enfant `absoluteFill` direct de
   // `ground` — en RN un padding sur ce parent resserre l'enfant absolu, ce qui
   // laissait une bande noire à droite. Le padding vit dans `groundContent`.
@@ -694,6 +777,18 @@ const styles = StyleSheet.create({
     color: OB.ink,
     textAlign: 'center',
     marginTop: 40,
+  },
+
+  phone: {
+    borderWidth: 4,
+    borderColor: '#1B1B1F',
+    backgroundColor: '#000000',
+    overflow: 'hidden',
+  },
+  phoneScreen: {
+    flex: 1,
+    overflow: 'hidden',
+    backgroundColor: '#0A0A0C',
   },
 
   mockList: { flex: 1, padding: 14, gap: 12, justifyContent: 'center' },
@@ -720,6 +815,23 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.10)',
   },
   hardModeLabel: { ...fonts.semiBold, fontSize: 18, color: OB.ink },
+  // Cotes de l'interrupteur iOS (51×31, pastille de 27) : le dessin doit
+  // passer pour le vrai, sinon la vitrine ne montre pas ce qu'elle promet.
+  fauxSwitch: {
+    width: 51,
+    height: 31,
+    borderRadius: 999,
+    backgroundColor: OB.accent,
+    padding: 2,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  fauxSwitchKnob: {
+    width: 27,
+    height: 27,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+  },
 
   pickStage: { alignItems: 'center', gap: 18, alignSelf: 'stretch' },
   pickCard: {

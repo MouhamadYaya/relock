@@ -484,7 +484,7 @@ private struct HomeReportCopy {
           "Équilibre fragile", "Équilibre moyen", "Bon équilibre",
           "Excellent équilibre",
         ],
-        footerPending: "Ton score arrive dès que quelques jours seront mesurés.",
+        footerPending: "Calcul en cours",
         footerProvisional: "Score encore approximatif : il se précise chaque jour.",
         footerFocus: [
           "Tu décroches souvent aujourd’hui. Un blocage t’aiderait à tenir.",
@@ -519,7 +519,7 @@ private struct HomeReportCopy {
           "Fragile Balance", "Mittlere Balance", "Gute Balance",
           "Ausgezeichnete Balance",
         ],
-        footerPending: "Dein Score erscheint, sobald einige Tage gemessen sind.",
+        footerPending: "Wird berechnet",
         footerProvisional: "Noch ungefähr — der Score wird täglich genauer.",
         footerFocus: [
           "Du greifst heute oft zum Handy. Eine Sperre würde helfen.",
@@ -554,7 +554,7 @@ private struct HomeReportCopy {
           "Хрупкий баланс", "Средний баланс", "Хороший баланс",
           "Отличный баланс",
         ],
-        footerPending: "Балл появится, когда наберётся несколько дней замеров.",
+        footerPending: "Идёт расчёт",
         footerProvisional: "Пока приблизительно — балл уточняется каждый день.",
         footerFocus: [
           "Сегодня ты часто отвлекаешься. Блокировка помогла бы удержаться.",
@@ -589,7 +589,7 @@ private struct HomeReportCopy {
           "Fragile balance", "Fair balance", "Good balance",
           "Excellent balance",
         ],
-        footerPending: "Your score arrives once a few days have been measured.",
+        footerPending: "Calculating",
         footerProvisional: "Still approximate — the score sharpens every day.",
         footerFocus: [
           "You are drifting often today. A block would help you hold on.",

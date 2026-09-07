@@ -23,6 +23,7 @@ import {
   markEmergencyUnlockUsed,
 } from '@/features/blocking/services/emergency-quota'
 import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
+import { RITUAL_COPY } from '@/features/blocking/services/pause-ritual/ritual-copy'
 import { NotificationService } from '@/features/notifications/notification.service'
 import {
   getNotifPrefs,
@@ -93,6 +94,9 @@ export default function SettingsScreen() {
   const entitled = useAppGateStore(s => s.entitled)
   const revenueCatEnabled = isRevenueCatEnabled()
   const { rules, refetch: refetchRules } = useBlockRulesQuery()
+  const crashReports = usePreferences(state => state.crashReports)
+  const pauseRitual = usePreferences(state => state.pauseRitual)
+  const setPreference = usePreferences(state => state.setPreference)
 
   // Rapports d'anomalie. La politique de confidentialité PUBLIÉE
   // (`src/legal/privacy/`) promet « disable or enable crash reporting in
@@ -100,8 +104,6 @@ export default function SettingsScreen() {
   // renvoie. Cet interrupteur est donc un engagement, pas un confort : le
   // retirer sans changer la politique fait mentir l'app.
   // Verrouillé par `privacy-commitments.test.tsx`.
-  const crashReports = usePreferences(state => state.crashReports)
-  const setPreference = usePreferences(state => state.setPreference)
 
   // Rapports d'anomalie : la politique de confidentialité publiée promet
   // « disable or enable crash reporting in Settings ». L'interrupteur est donc
@@ -497,12 +499,28 @@ export default function SettingsScreen() {
           />
         </SettingsSection>
 
-        <SettingsSection title={t('settings.sections.personalization')}>
+        <SettingsSection
+          title={t('settings.sections.personalization')}
+          caption={t('settings.pause_ritual.footnote')}
+        >
           <SettingsRow
             icon={IconName.GLOBE}
             label={t('settings.language.label')}
             value={LANGUAGE_NAME[i18n.language] ?? i18n.language.toUpperCase()}
             onPress={() => router.push('/language-picker')}
+          />
+          {/*
+            Le rituel de pause : ce que Relock demande avant d'ouvrir une app
+            bloquée. Il a sa place ici, et non dans « Protection » — il ne
+            change RIEN à ce qui est bloqué ni à la solidité du blocage, il
+            change la façon dont on le franchit. C'est un réglage de forme.
+          */}
+          <SettingsRow
+            icon={IconName.BREATHE}
+            label={t('settings.pause_ritual.label')}
+            hint={t('settings.pause_ritual.hint')}
+            value={t(RITUAL_COPY[pauseRitual].title)}
+            onPress={() => router.push('/pause-ritual-picker')}
           />
         </SettingsSection>
 
@@ -620,6 +638,12 @@ export default function SettingsScreen() {
           title={t('settings.sections.privacy')}
           caption={t('settings.privacy_footnote')}
         >
+          {/*
+            ⚠️ NE PAS SUPPRIMER sans retirer d'abord la promesse
+            correspondante de `src/legal/privacy/index.html` (§9, « Crash
+            reports: disable or enable crash reporting in Settings ») et
+            redéployer le site. Voir `privacy-commitments.test.ts`.
+          */}
           <SettingsRow
             icon={IconName.PULSE}
             label={t('settings.crash_reports')}
@@ -651,7 +675,11 @@ export default function SettingsScreen() {
           <SettingsRow
             icon={IconName.INFO}
             label={t('settings.help')}
-            onPress={() => openLink(links.help)}
+            onPress={() =>
+              openLink(
+                i18n.language.startsWith('fr') ? links.helpFr : links.help,
+              )
+            }
           />
           {/* Un stylo, pas un graphique à barres : on propose une idée, on
               ne consulte pas des statistiques. */}

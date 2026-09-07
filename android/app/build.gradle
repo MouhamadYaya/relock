@@ -103,6 +103,27 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+
+        // Clé de publication. Elle n'est JAMAIS dans le dépôt : ni le keystore,
+        // ni les mots de passe. Tout vient de propriétés Gradle définies hors
+        // arborescence — `~/.gradle/gradle.properties` sur un poste, variables
+        // d'environnement `ORG_GRADLE_PROJECT_*` en CI.
+        //
+        //   RELOCK_UPLOAD_STORE_FILE=/chemin/absolu/relock-upload.keystore
+        //   RELOCK_UPLOAD_STORE_PASSWORD=…
+        //   RELOCK_UPLOAD_KEY_ALIAS=relock-upload
+        //   RELOCK_UPLOAD_KEY_PASSWORD=…
+        //
+        // Le bloc n'est déclaré que si ces propriétés existent : sans elles, un
+        // `assembleRelease` local doit continuer de fonctionner (voir plus bas).
+        if (project.hasProperty('RELOCK_UPLOAD_STORE_FILE')) {
+            release {
+                storeFile file(RELOCK_UPLOAD_STORE_FILE)
+                storePassword RELOCK_UPLOAD_STORE_PASSWORD
+                keyAlias RELOCK_UPLOAD_KEY_ALIAS
+                keyPassword RELOCK_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
 
     buildTypes {
@@ -110,7 +131,31 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            signingConfig signingConfigs.debug
+            // POURQUOI CE N'EST PAS `signingConfigs.debug`.
+            //
+            // Le keystore de debug est livré avec CHAQUE installation du SDK
+            // Android : même fichier, même mot de passe (`android`), même alias,
+            // pour tout le monde sur Terre. Signer une release avec, c'est
+            // publier une app dont n'importe qui peut fabriquer une mise à jour
+            // que le système accepte comme légitime — Android n'identifie une
+            // app que par son `applicationId` PLUS sa signature. Play Console
+            // refuse d'ailleurs tout binaire signé ainsi.
+            //
+            // Sans clé de publication configurée, on retombe volontairement sur
+            // la clé de debug pour ne pas casser un build local — mais le binaire
+            // produit est alors NON PUBLIABLE, et le message ci-dessous le dit.
+            if (project.hasProperty('RELOCK_UPLOAD_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+                logger.warn(
+                    "\n[relock] ⚠️  Release signée avec la clé de DEBUG (publique).\n" +
+                    "[relock]     Binaire de test uniquement — ne pas distribuer.\n" +
+                    "[relock]     Pour publier : définir RELOCK_UPLOAD_STORE_FILE,\n" +
+                    "[relock]     RELOCK_UPLOAD_STORE_PASSWORD, RELOCK_UPLOAD_KEY_ALIAS\n" +
+                    "[relock]     et RELOCK_UPLOAD_KEY_PASSWORD dans ~/.gradle/gradle.properties.\n"
+                )
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

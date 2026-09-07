@@ -7,6 +7,7 @@
 .rl-shell {
   width: min(1160px, calc(100% - 40px));
   margin-inline: auto;
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
 }
 
 .rl-skip {
@@ -30,11 +31,25 @@
   z-index: 50;
   top: 0;
   border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+
+/*
+ * The blur sits on a pseudo-element on purpose: `backdrop-filter` applied to
+ * the header itself would turn it into the containing block for the
+ * `position: fixed` mobile drawer nested inside, collapsing the drawer to the
+ * height of the header.
+ */
+.rl-header::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
   background: rgb(5 6 11 / 78%);
   backdrop-filter: blur(20px) saturate(125%);
 }
 
 .rl-header__inner {
+  position: relative;
   min-height: 76px;
   display: flex;
   align-items: center;
@@ -142,6 +157,168 @@
 .rl-button--soft:hover,
 .rl-button--soft:focus-visible {
   background: rgb(255 255 255 / 10%);
+}
+
+/*
+ * Mobile navigation — burger on the left, wordmark centred.
+ * Built on <details> so the menu still opens with JavaScript disabled;
+ * `menu.js` only layers on Escape, backdrop clicks, scroll-lock and focus.
+ * Hidden above the 960px breakpoint, where `.rl-nav` takes over.
+ */
+.rl-menu {
+  display: none;
+}
+
+.rl-burger {
+  position: relative;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink, #f7f6fc);
+  border-radius: 12px;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 180ms ease;
+}
+
+.rl-burger::-webkit-details-marker {
+  display: none;
+}
+
+.rl-burger:hover,
+.rl-burger:focus-visible {
+  background: rgb(255 255 255 / 8%);
+}
+
+.rl-burger__bars {
+  position: relative;
+  display: block;
+}
+
+.rl-burger__bars,
+.rl-burger__bars::before,
+.rl-burger__bars::after {
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentcolor;
+  transition:
+    transform 220ms ease,
+    background-color 140ms ease;
+}
+
+.rl-burger__bars::before,
+.rl-burger__bars::after {
+  position: absolute;
+  left: 0;
+  content: "";
+}
+
+.rl-burger__bars::before {
+  top: -6px;
+}
+
+.rl-burger__bars::after {
+  top: 6px;
+}
+
+.rl-menu[open] .rl-burger__bars {
+  background: transparent;
+}
+
+.rl-menu[open] .rl-burger__bars::before {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.rl-menu[open] .rl-burger__bars::after {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.rl-menu__backdrop {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  background: rgb(5 6 11 / 66%);
+}
+
+.rl-menu__panel {
+  position: fixed;
+  z-index: 2;
+  inset: 0 auto 0 0;
+  width: min(86vw, 340px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding:
+    calc(84px + env(safe-area-inset-top)) 18px
+    calc(28px + env(safe-area-inset-bottom))
+    calc(18px + env(safe-area-inset-left));
+  border-right: 1px solid rgb(255 255 255 / 10%);
+  background: #0b0d18;
+  box-shadow: 0 0 60px rgb(0 0 0 / 55%);
+  animation: rl-menu-in 240ms ease;
+}
+
+@keyframes rl-menu-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+.rl-menu__panel a {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: var(--ink, #f7f6fc);
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.rl-menu__panel a:hover,
+.rl-menu__panel a:focus-visible {
+  background: rgb(255 255 255 / 7%);
+}
+
+.rl-menu__panel a[aria-current="page"] {
+  color: var(--lavender, #c8b8ff);
+}
+
+.rl-menu__panel .rl-button {
+  margin-top: 14px;
+  padding-inline: 18px;
+  color: #0b0d18;
+  font-size: 0.9rem;
+}
+
+.rl-menu__panel .rl-button:hover,
+.rl-menu__panel .rl-button:focus-visible {
+  color: #0b0d18;
+}
+
+.rl-menu__sep {
+  height: 1px;
+  margin: 10px 14px;
+  border: 0;
+  background: rgb(255 255 255 / 10%);
+}
+
+.rl-menu__label {
+  margin: 12px 0 2px;
+  padding-inline: 14px;
+  color: var(--subtle, #787582);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .rl-hero {
@@ -702,7 +879,27 @@
 }
 
 @media (max-width: 960px) {
-  .rl-nav a:not(.rl-lang) {
+  /* Burger left · wordmark centred · empty third column keeps it centred. */
+  .rl-header__inner {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rl-header__inner > .rl-menu {
+    display: block;
+    grid-area: 1 / 1;
+    justify-self: start;
+  }
+
+  /* Scoped to the header: the footer wordmark stays flush left. */
+  .rl-header__inner > .rl-brand {
+    grid-area: 1 / 2;
+    justify-self: center;
+  }
+
+  .rl-header__inner > .rl-nav {
     display: none;
   }
 
@@ -749,20 +946,6 @@
 
   .rl-header__inner {
     min-height: 66px;
-  }
-
-  .rl-brand__wordmark {
-    display: none;
-  }
-
-  .rl-nav {
-    gap: 0;
-  }
-
-  .rl-nav .rl-button {
-    min-height: 42px;
-    padding-inline: 14px;
-    font-size: 0.78rem;
   }
 
   .rl-hero {
@@ -823,6 +1006,15 @@
 
   .rl-footer__bottom {
     flex-direction: column;
+  }
+
+  .rl-footer a {
+    min-height: 44px;
+    align-content: center;
+  }
+
+  .rl-footer__grid {
+    gap: 34px;
   }
 }
 

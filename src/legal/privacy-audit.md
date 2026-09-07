@@ -14,7 +14,7 @@ The two highest-impact policy limitations are:
 1. Account deletion removes the Supabase authentication user and cascading Supabase rows, but the function explicitly does not remove ImageKit assets or RevenueCat records.
 2. The JSON export omits several local, Supabase, and provider-held datasets and caps two returned datasets at 400 rows.
 
-Other release blockers include an iOS privacy manifest that declares no collection despite the implemented data flows, an App Tracking Transparency prompt without an identified advertising/IDFA use, no application-level MMKV encryption key, no age gate, no complete retention schedule, and Apple sign-in code that does not implement nonce/replay protection.
+Other release blockers include an iOS privacy manifest that declares no collection despite the implemented data flows, no application-level MMKV encryption key, no age gate, and Apple sign-in code that does not implement nonce/replay protection. Two items on this list were closed on September 7, 2026: the App Tracking Transparency prompt was removed (no advertising SDK and no IDFA read exist, so displaying it was both an App Store rejection risk and a contradiction of the published policy), and a retention schedule was decided and published — see Section 8.
 
 ## 1. Data inventory
 
@@ -38,7 +38,7 @@ Other release blockers include an iOS privacy manifest that declares no collecti
 | Network breadcrumbs | HTTP method, scrubbed path, status/problem code, duration | Debug API failures and performance | Sentry when monitoring is active | [logging.interceptor.ts:60](../shared/services/api/interceptors/logging.interceptor.ts#L60), [scrub.ts:24](../shared/services/monitoring/scrub.ts#L24) |
 | Extension telemetry | Local extension log details and native error context | Relay extension failures to the app/Sentry | iOS App Group local log, then Sentry if enabled | [extension-telemetry.ts:31](../shared/services/monitoring/extension-telemetry.ts#L31), [ExtensionLog.swift:34](../../ios/Shared/ExtensionLog.swift#L34), [ExtensionSentry.swift:38](../../ios/Shared/ExtensionSentry.swift#L38) |
 | Notifications | System authorization status, local notification identifiers, reminder preferences and calculated reminder content/time | Schedule streak, win-back, and weekly local reminders | On device through the local notification API and MMKV preferences | [notifications.ts:1](../shared/native/notifications.ts#L1), [notifications.ts:11](../shared/native/notifications.ts#L11), [notification.service.ts:73](../features/notifications/services/notification.service.ts#L73) |
-| Website access/support | Static website itself sets no analytics, ad scripts, form, or cookies; hosting logs and support messages are operational unknowns | Deliver the site, secure hosting, answer messages | `[HOSTING PROVIDER]` and support systems | [index.html](./index.html), [pages.css](./pages.css) |
+| Website access/support | Static website itself sets no analytics, ad scripts, form, or cookies; Cloudflare's edge logs and the support mailbox are outside this repository | Deliver the site, secure hosting, answer messages | Cloudflare Workers ([wrangler.jsonc](../../wrangler.jsonc)) and the mailbox behind contact@getrelock.com | [index.html](./index.html), [pages.css](./pages.css) |
 
 ## 2. Storage and retention map
 
@@ -62,7 +62,8 @@ Other release blockers include an iOS privacy manifest that declares no collecti
 | RevenueCat | Subscription catalog, purchase/restore/customer-center and entitlement state | Supabase UUID, purchase/customer information, onboarding conversion attributes | [RevenueCat Privacy Policy](https://www.revenuecat.com/privacy) |
 | ImageKit | Profile-photo upload and delivery | User-selected image, file metadata, user-specific folder, hosted URL | [ImageKit Privacy Policy](https://imagekit.io/privacy-policy-new) |
 | Sentry | Crash, performance, profiling, optional masked replay | Diagnostic context, route names, scrubbed request metadata, Supabase UUID, extension errors | [Sentry Privacy Policy](https://sentry.io/privacy/) |
-| `[HOSTING PROVIDER]` | Static legal/marketing website | Expected HTTP access/security logs; deployment is not in the repository | `[HOST PRIVACY NOTICE]` |
+| Cloudflare | Static legal/marketing website hosting, DNS, TLS, and email routing for contact@getrelock.com | Visitor IP, user agent, request metadata in short-lived edge and Workers logs; inbound support mail in transit | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
+| Network Solutions | Registrar of the getrelock.com domain | Domain registration record only; DNS is delegated to Cloudflare, so no visitor traffic reaches it | [Network Solutions Privacy Notice](https://www.networksolutions.com/legal/privacy-notice) |
 
 No advertising SDK, social-pixel script, third-party website analytics script, ad-network dependency, `AdSupport` import, or advertising-identifier read was identified in the audited source. This does not prove the absence of non-code business sharing or infrastructure-level analytics.
 
@@ -84,9 +85,9 @@ RevenueCat is not limited to anonymous store entitlement checks. Relock logs Rev
 
 ### 4.3 App Tracking Transparency
 
-The Info.plist contains an ATT purpose string, the native module requests authorization, and onboarding/paywall code invokes the prompt. [Info.plist:71](../../ios/Relock/Info.plist#L71), [RelockTracking.swift:46](../../ios/Relock/RelockTracking.swift#L46), [useTrackingPrompt.ts:18](../shared/native/useTrackingPrompt.ts#L18), [OnboardingFlow.tsx:306](../features/onboarding/OnboardingFlow.tsx#L306), [PaywallScreen.tsx:85](../features/onboarding/screens/PaywallScreen.tsx#L85)
+**Resolved on 2026-09-07: the prompt was removed.** The audit found an ATT purpose string in `Info.plist`, a native module that requested authorization, and two call sites (onboarding `welcome`, then the paywall) that invoked it — while no advertising SDK and no advertising-identifier read existed anywhere in the source. Asking for tracking permission without tracking is a documented App Store rejection reason, and it would have contradicted the published policy's "we do not track you".
 
-No advertising SDK or advertising-identifier consumption was identified. Product/legal owners must confirm why ATT is requested and either remove it or disclose the actual cross-company tracking purpose.
+Removed: `NSUserTrackingUsageDescription` from [Info.plist](../../ios/Relock/Info.plist), the `useTrackingPrompt` hook and its test, and both call sites in [OnboardingFlow.tsx](../features/onboarding/OnboardingFlow.tsx) and [PaywallScreen.tsx](../features/onboarding/screens/PaywallScreen.tsx). Kept: the native bridge [RelockTracking.swift](../../ios/Relock/RelockTracking.swift) and [tracking.ts](../shared/native/tracking.ts), which now carries the reason and the recipe for restoring the prompt if a real attribution need ever appears — the policy must change in the same commit.
 
 ## 5. User-facing controls
 
@@ -126,48 +127,55 @@ No in-app workflow was identified for downloading all local/provider data, delet
 
 | Priority | Gap | Policy or release impact | Required action/owner |
 |---|---|---|---|
-| Critical | iOS `PrivacyInfo.xcprivacy` declares no collected data and no tracking despite account, profile, subscription, telemetry, and backend flows | App Store disclosure can conflict with product behavior and the policy | Update the manifest/privacy nutrition answers after counsel and App Store review. [PrivacyInfo.xcprivacy:44](../../ios/Relock/PrivacyInfo.xcprivacy#L44) |
-| High | Account deletion excludes ImageKit and RevenueCat | A broad “delete your data” promise would be false | Implement provider deletion or a documented manual workflow, then describe residual legal retention. [delete-account/index.ts:16](../../supabase/functions/delete-account/index.ts#L16) |
+| ~~Critical~~ **Closed 2026-09-07** | ~~iOS `PrivacyInfo.xcprivacy` declares no collected data~~ | — | `NSPrivacyCollectedDataTypes` now declares email, name, photo, user ID, other user content, purchase history, product interaction, crash, performance, and other diagnostic data — all *linked*, none *tracking*; `NSPrivacyTracking` stays `false`. **The App Store Connect nutrition labels must be filled to match, by hand, in the portal.** [PrivacyInfo.xcprivacy:44](../../ios/Relock/PrivacyInfo.xcprivacy#L44) |
+| High | Account deletion excludes ImageKit and RevenueCat | The published policy now promises removal within 30 days; without automation this depends on the owner doing it by hand | Automate provider deletion inside `delete-account`, or keep a dated log proving the manual run. [delete-account/index.ts:16](../../supabase/functions/delete-account/index.ts#L16) |
 | High | Export is partial and capped | It is not a complete portability/access response | Expand export or describe it precisely and maintain a manual rights-request process. [data-export.ts:22](../features/settings/services/data-export.ts#L22) |
 | High | Replaced profile photos accumulate on ImageKit | Orphaned personal images may remain without user visibility | Delete the previous asset after successful replacement and on account deletion. [imagekit.upload.ts:99](../shared/services/imagekit/imagekit.upload.ts#L99) |
-| High | ATT prompt exists without an evidenced tracking purpose | Prompt and privacy labels may be misleading; purpose cannot be drafted accurately | Confirm the intended tracking flow or remove ATT request and purpose string. [RelockTracking.swift:46](../../ios/Relock/RelockTracking.swift#L46) |
+| ~~High~~ **Closed 2026-09-07** | ~~ATT prompt exists without an evidenced tracking purpose~~ | — | Removed: both `useTrackingPrompt` call sites, the hook, and `NSUserTrackingUsageDescription`. The native bridge is kept and documented; restoring the prompt requires putting the key back **and** updating the policy in the same change. [tracking.ts:1](../shared/native/tracking.ts#L1) |
 | High | No age gate or parental-consent flow | Target-audience/children section cannot be finalized | Set launch minimum age and implement gating/consent if required. [birth-date.ts:11](../features/settings/services/birth-date.ts#L11) |
-| High | No complete retention schedule | Policy cannot state definite retention periods | Approve periods for each provider, local logs, backups, support and website logs; configure deletion jobs. |
+| ~~High~~ **Closed 2026-09-07** | ~~No complete retention schedule~~ | — | Periods approved and published in §7 of both policies: Supabase to account deletion (backups ≤ 30 days), ImageKit and RevenueCat ≤ 30 days after deletion, Sentry 90 days, support mail 24 months, Cloudflare Workers logs ≤ 7 days. The ImageKit and RevenueCat deletions are a **manual** owner-run process until automated — the promise is only kept if it is actually run. |
 | High | Apple sign-in has no nonce verification | Replay-risk control is absent | Implement provider-recommended nonce verification before release. [auth.service.ts:85](../features/auth/services/auth/auth.service.ts#L85) |
 | Medium | MMKV has no app-level encryption key | Tokens and local personal data should not be described as encrypted by Relock | Threat-model platform protection and add encrypted storage where appropriate. [mmkv.ts:105](../shared/services/storage/mmkv.ts#L105) |
 | Medium | Sentry crash reporting defaults on | Consent/legal-basis and disclosure may differ by jurisdiction | Confirm launch markets, lawful basis, first-run notice, deployed sampling, replay, profiling, and retention. [app-preferences.ts:26](../shared/services/storage/app-preferences.ts#L26) |
 | Medium | RevenueCat receives behavioral onboarding attributes | “Subscription processing only” disclosure would be incomplete | Confirm necessity, lawful basis, retention, and deletion handling. [revenuecat.ts:329](../features/onboarding/services/revenuecat.ts#L329) |
-| Medium | Platform availability is ambiguous | Terms/marketing could incorrectly promise Android blocking | Confirm supported devices and launch stores; align the site and store listings. |
-| Medium | Legal URLs/contact values were placeholder product configuration | In-app legal access can fail until production host is deployed | Deploy `relock.app`, confirm paths and replace contact placeholders. [app-config.ts:41](../config/app-config.ts#L41) |
+| ~~Medium~~ **Closed 2026-09-07** | ~~Platform availability is ambiguous~~ | — | Terms §4 now state iPhone/iPad through the App Store, Canada and the United States, and scope the Google/Google Play wording to a future Android release. |
+| ~~Medium~~ **Closed 2026-09-07** | ~~Legal URLs/contact values were placeholder product configuration~~ | — | The site is live on `getrelock.com` (Cloudflare Workers, see `wrangler.jsonc`) and `links` in [app-config.ts](../config/app-config.ts) points at it. |
+| Medium | The paywall had no Terms/Privacy links | App Store Guideline 3.1.2 rejection | Closed 2026-09-07 — `PaywallLegalLinks` renders on the plans screen and the exit offer, covered by a test. [PaywallPrimitives.tsx](../features/onboarding/components/paywall/PaywallPrimitives.tsx) |
+| Medium | The exit offer promised a “money-back guarantee” | Refunds are Apple’s to grant; the claim contradicted Terms §6 and consumer law | Closed 2026-09-07 — replaced by “Cancel anytime in the App Store” in all four locales. |
 
-## 8. Information that code cannot determine
+## 8. Facts supplied by the owner (2026-09-07)
 
-The following must be supplied by the product/legal owner before publication. The policy and terms use matching bracketed placeholders.
+Every bracketed placeholder in the English and French policy and terms has been replaced with the values below. No placeholder remains in `src/legal/**/*.html`.
 
-| Required fact | Placeholder used |
+| Fact | Value |
 |---|---|
-| Full legal entity name and entity type | `[LEGAL ENTITY NAME AND ENTITY TYPE]` |
-| Registered/business address | `[REGISTERED ADDRESS]` |
-| Privacy, legal, and support email addresses | `[PRIVACY CONTACT EMAIL]`, `[LEGAL CONTACT EMAIL]`, `[SUPPORT EMAIL]` |
-| Governing law, courts, and launch jurisdictions | `[GOVERNING JURISDICTION]`, `[COURTS AND VENUE]` |
-| Effective and last-updated dates | `[EFFECTIVE DATE]`, `[LAST UPDATED]` |
-| Minimum age and target audience | `[MINIMUM AGE AND TARGET AUDIENCE]` |
-| Public platform/device/region availability | `[CONFIRM PLATFORM AVAILABILITY]` |
-| App Store/public download URL | `[APP_STORE_URL]` |
-| Supabase project region and backup/log retention | `[SUPABASE PROJECT REGION]`, `[SUPABASE RETENTION AND BACKUP PERIOD]` |
-| Sentry production sampling, replay/profiling use, and server retention | `[SENTRY PRODUCTION SETTINGS AND RETENTION]` |
-| ImageKit region, retention, and deletion workflow | `[IMAGEKIT RETENTION AND DELETION PROCESS]` |
-| RevenueCat retention and customer-deletion workflow | `[REVENUECAT RETENTION AND DELETION PROCESS]` |
-| Website host, access-log fields, processing region, and retention | `[HOSTING PROVIDER]`, `[HOSTING LOG DETAILS AND RETENTION]` |
-| Whether the business sells/shares data outside audited code | `[CONFIRM NO SALE OR CROSS-CONTEXT BEHAVIORAL ADVERTISING]` |
-| Privacy request verification, response, and provider escalation procedure | `[INTERNAL PRIVACY REQUEST PROCESS]` |
-| Liability cap and consumer-law localization | `[LIABILITY CAP AMOUNT]` |
-| DPO, EU/UK representative, Quebec privacy officer, or other required representative | `[DPO OR REPRESENTATIVE, IF REQUIRED]` |
+| Legal entity | YATECH — sole proprietorship (entreprise individuelle) registered in Quebec, Canada |
+| Business address | 1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada |
+| Contact for privacy, legal, and support | contact@getrelock.com (single address; Cloudflare Email Routing → a Google mailbox) |
+| Website | https://getrelock.com — Cloudflare Workers static assets; Network Solutions is the registrar only |
+| Effective / last updated | September 7, 2026 |
+| Minimum age | 16 |
+| Launch markets | Canada and the United States |
+| Platform | iPhone and iPad via the App Store; Android wording is conditional |
+| Governing law and courts | Province of Quebec, Canada |
+| Dispute process | 30-day informal resolution by email, expressly non-blocking. **No arbitration clause and no class-action waiver** — both are unenforceable against Quebec consumers |
+| Liability cap | CAD $100, or the amount paid in the previous 12 months, whichever is greater |
+| Privacy officer | The owner of YATECH, by default under Quebec law, at contact@getrelock.com |
+| Supabase retention | Until account deletion; backup copies overwritten within 30 days |
+| Sentry retention | 90 days (Sentry’s default event retention) |
+| ImageKit retention | Until replaced or the account is deleted; removed within 30 days |
+| RevenueCat retention | Life of the subscription relationship; deleted within 30 days of a request |
+| Support / website logs | Support mail 24 months; Cloudflare Workers request logs ≤ 7 days, held by Cloudflare |
+| Sale / cross-context advertising | None, and none in the preceding 12 months |
+| Transfers | Every provider is US-established; data is stored and accessed outside Quebec and Canada, primarily in the United States, under each provider’s data-processing terms |
+| Notice of material change | 30 days’ advance notice in-app, plus email where held and required |
+
+Two of these are **promises, not implemented behaviour**: the 30-day ImageKit and RevenueCat deletions are run by hand today (see Section 7). They must be honoured on every request.
 
 ## 9. Assumptions used in the draft
 
 1. The final repeated instruction to produce both policies supersedes the earlier sentence asking to defer privacy-policy content.
-2. The static site itself will not add analytics, advertising scripts, forms, consent-management tools, or cookies before publication. Hosting logs remain unknown.
+2. The static site adds no analytics, advertising scripts, forms, consent-management tools, or cookies. Cloudflare’s own edge logs remain outside our control and are described as such.
 3. Relock does not itself receive payment-card details because the audited purchase flow uses the platform stores and RevenueCat.
 4. Relock does not sell personal data or use it for third-party advertising; this is only a draft assumption because source code cannot prove business-side disclosures.
 5. The live service will use the schema and Edge Functions in this repository. Deployment status has not been verified.
@@ -176,9 +184,9 @@ The following must be supplied by the product/legal owner before publication. Th
 ## 10. Publication checklist
 
 - Resolve or accept every gap in Section 7 with an accountable owner.
-- Replace every bracketed placeholder in all HTML files.
+- ~~Replace every bracketed placeholder in all HTML files.~~ Done 2026-09-07.
 - Verify the production vendor dashboards, data regions, retention, replay/profiling settings, and data-processing agreements.
-- Align Apple privacy nutrition labels, `PrivacyInfo.xcprivacy`, Google Play Data Safety, and the ATT purpose with actual production behavior.
+- Align Apple privacy nutrition labels, `PrivacyInfo.xcprivacy`, and Google Play Data Safety with actual production behavior. The ATT answer is now simply “no tracking”, since the prompt was removed.
 - Test complete export and deletion across Supabase, ImageKit, RevenueCat, Sentry, backups, and local data.
 - Confirm subscription/trial/cancellation text against live App Store and Google Play offers.
 - Have a qualified privacy attorney review the English and French policy, terms, and launch-jurisdiction requirements before publication.

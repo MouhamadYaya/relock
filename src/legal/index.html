@@ -18,6 +18,25 @@
     <a class="rl-skip" href="#main">Skip to content</a>
     <header class="rl-header">
       <div class="rl-shell rl-header__inner">
+        <details class="rl-menu">
+          <summary class="rl-burger" aria-label="Menu">
+            <span class="rl-burger__bars" aria-hidden="true"></span>
+          </summary>
+          <div class="rl-menu__backdrop"></div>
+          <nav class="rl-menu__panel" aria-label="Mobile navigation">
+            <a href="#inside">Features</a>
+            <a href="#why">Why Relock</a>
+            <a href="#faq">FAQ</a>
+            <a href="./help/">Help centre</a>
+            <a href="./terms/">Terms</a>
+            <a href="./privacy/">Privacy</a>
+            <a class="rl-button" href="mailto:contact@getrelock.com?subject=Relock%20early%20access">Get early access</a>
+            <hr class="rl-menu__sep" />
+            <p class="rl-menu__label">Language</p>
+            <a href="./" lang="en" hreflang="en" aria-current="page">English</a>
+            <a href="./fr/" lang="fr" hreflang="fr">Français</a>
+          </nav>
+        </details>
         <a class="rl-brand" href="./" aria-label="Relock home"><span>Relock</span></a>
         <nav class="rl-nav" aria-label="Primary navigation">
           <a href="#inside">Features</a>
@@ -25,7 +44,7 @@
           <a href="#faq">FAQ</a>
           <a href="./terms/">Terms</a>
           <a href="./privacy/">Privacy</a>
-          <a class="rl-button" href="[APP_STORE_URL]">Get Relock</a>
+          <a class="rl-button" href="mailto:contact@getrelock.com?subject=Relock%20early%20access">Get early access</a>
         </nav>
       </div>
     </header>
@@ -41,17 +60,18 @@
               pull you away, then return to the day you meant to have.
             </p>
             <div class="p-actions">
-              <a class="rl-button" href="[APP_STORE_URL]">Download on the App Store</a>
+              <a class="rl-button" href="mailto:contact@getrelock.com?subject=Relock%20early%20access">Request early access</a>
               <a class="rl-button rl-button--soft" href="#inside">See what is inside</a>
             </div>
-            <p class="p-store-note">Built around Apple Screen Time controls. [CONFIRM PLATFORM AVAILABILITY]</p>
+            <p class="p-store-note">Built around Apple Screen Time controls. Coming to the App Store for iPhone and iPad, in Canada and the United States.</p>
           </div>
           <figure class="p-hero__visual">
             <img
               src="./ecranAcceuilETActivite.png"
               alt="Relock home and activity screens showing focus progress and intentional app-opening activity"
-              width="1320"
-              height="1120"
+              fetchpriority="high"
+              width="1920"
+              height="1440"
             />
           </figure>
         </div>
@@ -96,8 +116,8 @@
               <img
                 src="./EcranConfigurationBlocage.png"
                 alt="Large Relock mockup showing app selection and blocking-rule configuration"
-                width="1280"
-                height="1120"
+                width="1920"
+                height="1440"
                 loading="lazy"
               />
             </figure>
@@ -169,8 +189,8 @@
             <img
               src="./EcranCreationDeRegledeBlocageEtEcranDEblocage.png"
               alt="Large Relock mockup showing rule creation and the intentional blocked-app pause"
-              width="1280"
-              height="1120"
+              width="1920"
+              height="1440"
               loading="lazy"
             />
           </figure>
@@ -213,7 +233,7 @@
             </details>
             <details>
               <summary>Can I export or delete my data?</summary>
-              <p>The app includes a limited JSON export and an account-deletion flow. Some provider-held data requires separate handling, as explained in the Privacy Policy.</p>
+              <p>Yes. Settings has a JSON export and an account-deletion control you can use yourself, at any time. Data our providers hold for us — your profile photo, your subscription record — is removed within 30 days afterwards. Write to contact@getrelock.com for anything the export leaves out.</p>
             </details>
           </div>
         </div>
@@ -223,7 +243,7 @@
         <div class="rl-shell">
           <h2>Put one good decision between you and the scroll.</h2>
           <p>Start with the app that steals five minutes. Build the pause that gives those minutes back.</p>
-          <a class="rl-button" href="[APP_STORE_URL]">Get Relock</a>
+          <a class="rl-button" href="mailto:contact@getrelock.com?subject=Relock%20early%20access">Request early access</a>
         </div>
       </section>
     </main>
@@ -242,15 +262,17 @@
           </div>
           <div>
             <h2>Company</h2>
-            <a href="mailto:[SUPPORT EMAIL]">Support</a>
+            <a href="./help/">Help centre</a>
+            <a href="mailto:contact@getrelock.com">Support</a>
             <details class="rl-language"><summary>Language</summary><div class="rl-language__options"><a href="./" lang="en" hreflang="en" aria-current="page">English</a><a href="./fr/" lang="fr" hreflang="fr">Français</a></div></details>
           </div>
         </div>
         <div class="rl-footer__bottom">
-          <span>© [YEAR] [LEGAL ENTITY NAME]. All rights reserved.</span>
-          <span>[REGISTERED ADDRESS]</span>
+          <span>© 2026 YATECH. All rights reserved.</span>
+          <span>1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada</span>
         </div>
       </div>
     </footer>
+    <script src="./menu.js" defer></script>
   </body>
 </html>

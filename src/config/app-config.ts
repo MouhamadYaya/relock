@@ -44,19 +44,27 @@ export function appBuild(): string | null {
 }
 
 /**
+ * Origine du site public, servi par Cloudflare Workers depuis `src/legal/`
+ * (config à la racine dans `wrangler.jsonc`, déploiement `npm run legal:deploy`).
+ *
+ * Un seul endroit à changer si le domaine bouge.
+ */
+const SITE_ORIGIN = 'https://getrelock.com'
+
+/**
  * Adresses publiques.
  *
- * ⚠️ À REMPLACER par les URLs réelles avant publication : l'App Store exige
- * une politique de confidentialité ATTEIGNABLE (guideline 5.1.1) et un moyen
- * de contact. Les liens ci-dessous sont des emplacements, pas des promesses.
+ * Les chemins portent leur slash final : c'est la forme canonique servie par le
+ * Worker, qui redirige sinon en 307 — autant éviter l'aller-retour dans la WebView.
  */
 export const links = {
-  privacy: 'https://relock.app/privacy',
-  privacyFr: 'https://relock.app/fr/privacy',
-  terms: 'https://relock.app/terms',
-  termsFr: 'https://relock.app/fr/terms',
-  help: 'https://relock.app/help',
-  supportEmail: 'hello@relock.app',
+  privacy: `${SITE_ORIGIN}/privacy/`,
+  privacyFr: `${SITE_ORIGIN}/fr/privacy/`,
+  terms: `${SITE_ORIGIN}/terms/`,
+  termsFr: `${SITE_ORIGIN}/fr/terms/`,
+  help: `${SITE_ORIGIN}/help/`,
+  helpFr: `${SITE_ORIGIN}/fr/help/`,
+  supportEmail: 'contact@getrelock.com',
   /**
    * Fiche App Store, ouverte directement sur l'onglet des avis. `null` tant
    * qu'aucun identifiant n'est connu : l'appelant retire alors l'entrée
@@ -72,5 +80,5 @@ export const links = {
    */
   share: appConfig.appStoreId
     ? `https://apps.apple.com/app/id${appConfig.appStoreId}`
-    : 'https://relock.app',
+    : SITE_ORIGIN,
 } as const

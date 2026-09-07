@@ -13,7 +13,16 @@
 
 .landing-page .rl-header {
   color: #f7f6fc;
+}
+
+.landing-page .rl-header::before {
   background: rgb(5 6 11 / 92%);
+}
+
+/* Sticky header clearance, so in-page anchors do not land under the bar. */
+.landing-page #main,
+.landing-page main section[id] {
+  scroll-margin-top: 84px;
 }
 
 .landing-page .rl-nav a {
@@ -604,10 +613,6 @@
     width: 100px;
     flex-basis: 100px;
     background-size: 100px auto;
-  }
-
-  .landing-page .rl-nav a:not(.rl-button) {
-    display: none;
   }
 
   .p-hero {

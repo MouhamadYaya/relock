@@ -11,6 +11,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import Animated, {
+  Easing,
   FadeInDown,
   interpolateColor,
   type SharedValue,
@@ -365,6 +366,29 @@ export function GhostLink({
 const CHOICE_DENSE_MAX_H = 780
 
 /**
+ * Transition cocher / décocher — SANS ressort, délibérément.
+ *
+ * `withSpring({ damping: 18, stiffness: 220 })` est sous-amorti (ζ ≈ 0,6) :
+ * en revenant à 0 il DÉPASSE sa cible puis repasse au-dessus plusieurs fois.
+ * Chaque repassage rallumait brièvement le fond clair, la pastille d'accent
+ * et le liseré des tuiles — d'où l'impression de « lumière » et de tremblement
+ * sur la réponse qu'on venait justement de décocher. Une durée fixe ne peut
+ * pas dépasser sa cible : la carte s'éteint une fois, et reste éteinte.
+ */
+const SELECT_TRANSITION = {
+  duration: 170,
+  easing: Easing.out(Easing.quad),
+} as const
+
+/**
+ * Rang au-delà duquel la cascade d'entrée cesse de se décaler. Les écrans de
+ * question vont désormais jusqu'à dix-huit réponses : un retard strictement
+ * proportionnel ferait attendre près d'une seconde avant de voir la dernière,
+ * alors que la cascade n'est là que pour poser l'écran.
+ */
+const STAGGER_MAX = 6
+
+/**
  * Carte de réponse. Sélection = INVERSION complète (fond clair, texte
  * sombre), le langage d'Opal et Cal AI : dans un univers sombre, le
  * contraste maximal est la couleur.
@@ -390,12 +414,14 @@ export function ChoiceCard({
 
   const t = useSharedValue(selected ? 1 : 0)
   useEffect(() => {
-    t.value = withSpring(selected ? 1 : 0, { damping: 18, stiffness: 220 })
+    t.value = withTiming(selected ? 1 : 0, SELECT_TRANSITION)
   }, [selected, t])
 
+  // Pas de pulsation d'échelle : c'est l'inversion du fond qui dit la
+  // sélection, et un rebond d'échelle sur une liste entière se lit comme un
+  // tremblement dès qu'on change d'avis.
   const cardStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(t.value, [0, 1], [OB.card, OB.ink]),
-    transform: [{ scale: 1 + t.value * 0.012 }],
   }))
   const labelStyle = useAnimatedStyle(() => ({
     color: interpolateColor(t.value, [0, 1], [OB.ink, '#0B0B10']),
@@ -408,14 +434,23 @@ export function ChoiceCard({
       ['rgba(0,0,0,0)', OB.accent],
     ),
   }))
+  // Le ✓ s'efface AVEC son fond. Monté/démonté sur `selected`, il partait
+  // instantanément et laissait une pastille d'accent pleine, sans coche, le
+  // temps de la transition — le point lumineux orphelin sur une réponse
+  // décochée.
+  const checkStyle = useAnimatedStyle(() => ({ opacity: t.value }))
 
   return (
-    <Animated.View entering={FadeInDown.duration(400).delay(80 + index * 55)}>
+    <Animated.View
+      entering={FadeInDown.duration(400).delay(
+        80 + Math.min(index, STAGGER_MAX) * 55,
+      )}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={() => {
-          haptic.select()
+          haptic.tick()
           onPress()
         }}
       >
@@ -434,7 +469,9 @@ export function ChoiceCard({
             {label}
           </Animated.Text>
           <Animated.View style={[styles.choiceDot, dotStyle]}>
-            {selected ? <Text style={styles.choiceCheck}>✓</Text> : null}
+            <Animated.Text style={[styles.choiceCheck, checkStyle]}>
+              ✓
+            </Animated.Text>
           </Animated.View>
         </Animated.View>
       </Pressable>
@@ -472,26 +509,29 @@ export function ChoiceTile({
 }) {
   const t = useSharedValue(selected ? 1 : 0)
   useEffect(() => {
-    t.value = withSpring(selected ? 1 : 0, { damping: 18, stiffness: 220 })
+    t.value = withTiming(selected ? 1 : 0, SELECT_TRANSITION)
   }, [selected, t])
 
   const tileStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(t.value, [0, 1], [OB.card, OB.ink]),
     borderColor: interpolateColor(t.value, [0, 1], [OB.hairline, OB.accent]),
-    transform: [{ scale: 1 + t.value * 0.018 }],
   }))
   const labelStyle = useAnimatedStyle(() => ({
     color: interpolateColor(t.value, [0, 1], [OB.ink, '#0B0B10']),
   }))
 
   return (
-    <Animated.View entering={FadeInDown.duration(380).delay(80 + index * 28)}>
+    <Animated.View
+      entering={FadeInDown.duration(380).delay(
+        80 + Math.min(index, STAGGER_MAX) * 28,
+      )}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityState={{ selected }}
         onPress={() => {
-          haptic.select()
+          haptic.tick()
           onPress()
         }}
       >
@@ -663,7 +703,6 @@ export function GuideCard({
   activeSide,
   onActivePress,
   activeBusy = false,
-  interactive = true,
   dimmed = false,
   frameVariant = 'permission',
 }: {
@@ -674,8 +713,6 @@ export function GuideCard({
   activeSide: 'left' | 'right'
   onActivePress?: () => void
   activeBusy?: boolean
-  /** false : les deux choix restent une pure prévisualisation (aucun n'est réel). */
-  interactive?: boolean
   /**
    * true dès que la vraie demande système est lancée : la carte s'efface
    * (fondu) pour ne jamais rester visible à côté d'une fenêtre native dont
@@ -713,7 +750,7 @@ export function GuideCard({
       </Text>
     )
     const pill =
-      active && interactive && onActivePress ? (
+      active && onActivePress ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={label}
@@ -731,7 +768,12 @@ export function GuideCard({
           }}
         >
           <Animated.View
-            style={[styles.guidePill, styles.guidePillActive, aStyle]}
+            style={[
+              styles.guidePill,
+              styles.guidePillActive,
+              styles.guidePillGlow,
+              aStyle,
+            ]}
           >
             {text}
           </Animated.View>
@@ -1061,6 +1103,26 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: OB.ink28,
     backgroundColor: 'rgba(164,154,254,0.14)',
+  },
+  /**
+   * Anneau du seul bouton réellement cliquable : un liseré accent d'un
+   * point posé sur le bord même de la pilule, doublé d'un halo court de la
+   * même teinte. Il prend le relais de la flèche — l'œil suit la pointe,
+   * puis trouve la cible allumée. Volontairement court (rayon 12, opacité
+   * 0.45, deux fois moins que le `pillGlow` des CTA pleine largeur) : la
+   * réplique inerte d'à côté garde son liseré gris, et le contraste entre
+   * les deux suffit. Un halo plus large baverait sur elle et transformerait
+   * la carte en néon.
+   */
+  guidePillGlow: {
+    borderWidth: 1,
+    borderColor: 'rgba(164,154,254,0.55)',
+    backgroundColor: 'rgba(164,154,254,0.20)',
+    shadowColor: OB.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 8,
   },
   guidePillLabel: { ...fonts.semiBold, fontSize: 13.5, letterSpacing: -0.2 },
   guidePillLabelActive: { color: OB.accent },

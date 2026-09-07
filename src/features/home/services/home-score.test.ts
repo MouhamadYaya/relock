@@ -88,7 +88,7 @@ describe('weakestComponent', () => {
 describe('scoreFooterKey', () => {
   it('waits rather than encouraging a score that does not exist', () => {
     expect(scoreFooterKey(snapshot({ global: null }))).toBe(
-      'home.score_footer_pending',
+      'home.score_calculating',
     )
   })
 

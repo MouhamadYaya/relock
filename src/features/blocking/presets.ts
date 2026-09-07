@@ -114,12 +114,17 @@ export const NEW_RULE_PRESETS: Preset[] = [
     20,
     22,
   ),
+  // Le SEUL préréglage strict. La nuit est la fenêtre où l'engagement tient
+  // tout seul : elle a une fin connue, et personne n'a de raison légitime de
+  // rouvrir Instagram à 3 h. Verrouiller une journée de travail, en revanche,
+  // reviendrait à confisquer le téléphone à quelqu'un qui en a besoin.
   schedule(
     NEW_RULE_PRESET_IDS.sleep,
     'Sommeil profond',
     'Protège ta nuit du scroll tardif.',
     22,
     6,
+    { strict: true },
   ),
   scheduleAt(
     NEW_RULE_PRESET_IDS.evening,
@@ -248,6 +253,36 @@ export function findPreset(id: string): Preset | undefined {
   return PRESETS.find(p => p.id === id)
 }
 
+/** Ce préréglage arme-t-il un blocage VERROUILLÉ ? (cf. `isStrictRule`) */
+export function isStrictPreset(p: Preset): boolean {
+  return p.config.strict === true
+}
+
+const numCfg = (v: unknown, d: number): number =>
+  typeof v === 'number' ? v : d
+
+/**
+ * Fin de la première session verrouillée — le seul chiffre qui engage, et donc
+ * celui que la feuille d'engagement doit annoncer avant de créer la règle.
+ * Même découpage que `sessionEnd`, mais sur un préréglage qui n'existe pas
+ * encore en base : il n'y a pas de règle à interroger.
+ */
+export function presetStrictEnd(p: Preset, now = new Date()): Date {
+  const c = p.config
+  if (p.type === 'progressive_delay') {
+    return new Date(now.getTime() + numCfg(c.duration_min, 30) * 60_000)
+  }
+  if (p.type === 'daily_limit') {
+    const midnight = new Date(now)
+    midnight.setHours(24, 0, 0, 0)
+    return midnight
+  }
+  const end = new Date(now)
+  end.setHours(numCfg(c.end_hour, 8), numCfg(c.end_minute, 0), 0, 0)
+  if (end.getTime() <= now.getTime()) end.setDate(end.getDate() + 1)
+  return end
+}
+
 const hh = (h: unknown, m: unknown) =>
   `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 
@@ -260,15 +295,32 @@ export function presetDetail(p: Preset): string {
   return `${hh(c.start_hour, c.start_minute)} → ${hh(c.end_hour, c.end_minute)} · ${daysLabel((c.days as number[]) ?? null)}`
 }
 
-/** Lignes du récapitulatif : ce que l'utilisateur valide, sans jargon. */
+/**
+ * Lignes du récapitulatif : ce que l'utilisateur valide, sans jargon.
+ *
+ * La ligne « Mode strict » n'apparaît QUE quand le préréglage en porte un —
+ * afficher « Non » partout ailleurs banaliserait le mot au point qu'on ne le
+ * lirait plus le jour où il vaut « Oui ». C'est le premier des deux
+ * avertissements : celui-ci se lit avant de toucher quoi que ce soit, la
+ * feuille d'engagement arrive ensuite.
+ */
 export function presetLines(p: Preset): { label: string; value: string }[] {
   const c = p.config
+  const strict = isStrictPreset(p)
+    ? [
+        {
+          label: 'Mode strict',
+          value: 'Oui — impossible d’arrêter avant la fin',
+        },
+      ]
+    : []
   if (p.type === 'daily_limit') {
     return [
       { label: 'Type', value: 'Limite de temps' },
       { label: 'Limite', value: `${c.limit_min} minutes par jour` },
       { label: 'Jours', value: 'Tous les jours' },
       { label: 'Une fois épuisée', value: 'Bloqué jusqu’à minuit' },
+      ...strict,
     ]
   }
   if (p.type === 'progressive_delay') {
@@ -276,6 +328,7 @@ export function presetLines(p: Preset): { label: string; value: string }[] {
       { label: 'Type', value: 'Blocage minuté' },
       { label: 'Durée', value: `${c.duration_min} minutes` },
       { label: 'Démarre', value: 'Immédiatement' },
+      ...strict,
     ]
   }
   return [
@@ -285,6 +338,7 @@ export function presetLines(p: Preset): { label: string; value: string }[] {
       value: `${hh(c.start_hour, c.start_minute)} → ${hh(c.end_hour, c.end_minute)}`,
     },
     { label: 'Jours', value: daysLabel((c.days as number[]) ?? null) },
+    ...strict,
   ]
 }
 

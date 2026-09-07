@@ -10,18 +10,29 @@
 import { create } from 'zustand'
 import {
   type AppPreferences,
+  getPauseRitual,
   getPreferences,
+  type PauseRitual,
+  setPauseRitual,
   setPreference,
 } from '@/shared/services/storage/app-preferences'
 
 type PreferencesStore = AppPreferences & {
+  /** Le rituel exigé avant un déblocage — pas un booléen, d'où sa propre action. */
+  pauseRitual: PauseRitual
   setPreference: (key: keyof AppPreferences, value: boolean) => void
+  setPauseRitual: (ritual: PauseRitual) => void
 }
 
 export const usePreferences = create<PreferencesStore>(set => ({
   ...getPreferences(),
+  pauseRitual: getPauseRitual(),
   setPreference: (key, value) => {
     setPreference(key, value)
     set({ [key]: value } as Pick<AppPreferences, typeof key>)
+  },
+  setPauseRitual: ritual => {
+    setPauseRitual(ritual)
+    set({ pauseRitual: ritual })
   },
 }))

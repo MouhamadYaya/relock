@@ -14,6 +14,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { PaywallMarquee } from '@/features/onboarding/components/paywall/PaywallMarquee'
 import {
   PaywallButton,
+  PaywallLegalLinks,
   PaywallStars,
   PaywallTextButton,
 } from '@/features/onboarding/components/paywall/PaywallPrimitives'
@@ -234,6 +235,7 @@ export function PaywallPlans({
             disabled={locked}
           />
         ) : null}
+        <PaywallLegalLinks />
       </View>
     </View>
   )

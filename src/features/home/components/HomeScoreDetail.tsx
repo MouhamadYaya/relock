@@ -20,12 +20,8 @@ import Animated, {
 import { HomeCardMaterial } from '@/features/home/components/HomeCardMaterial'
 import { HomeScoreRings } from '@/features/home/components/HomeScoreRings'
 import { scoreBand } from '@/features/home/services/home-dashboard'
-import type {
-  HomeScoreBand,
-  HomeScoreComponent,
-  HomeScoreSignal,
-  HomeScoreSnapshot,
-} from '@/features/home/types'
+import { scoreFooterKey } from '@/features/home/services/home-score'
+import type { HomeScoreBand, HomeScoreSnapshot } from '@/features/home/types'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { relockMaterial } from '@/shared/theme'
@@ -66,134 +62,10 @@ const BAND_KEYS = {
   unknown: 'home.score_calculating',
 } as const satisfies Record<HomeScoreBand, string>
 
-/** Icône, libellé et gabarit de mesure — un jeu par signal. */
-const SIGNALS = {
-  pressure: {
-    icon: IconName.BLOCK,
-    label: 'home.score_signal_pressure_label',
-    measure: 'home.score_signal_pressure_measure',
-  },
-  resistance: {
-    icon: IconName.CHECK,
-    label: 'home.score_signal_resistance_label',
-    measure: 'home.score_signal_resistance_measure',
-  },
-  breaches: {
-    icon: IconName.CLOCK,
-    label: 'home.score_signal_breaches_label',
-    measure: 'home.score_signal_breaches_measure',
-  },
-  coverage: {
-    icon: IconName.SHIELDFILL,
-    label: 'home.score_signal_coverage_label',
-    measure: 'home.score_signal_coverage_measure',
-  },
-  regularity: {
-    icon: IconName.CALENDAR,
-    label: 'home.score_signal_regularity_label',
-    measure: 'home.score_signal_regularity_measure',
-  },
-  quota: {
-    icon: IconName.CHART,
-    label: 'home.score_signal_quota_label',
-    measure: 'home.score_signal_quota_measure',
-  },
-} as const satisfies Record<
-  HomeScoreSignal,
-  { icon: IconName; label: string; measure: string }
->
-
 interface Props {
   visible: boolean
   snapshot: HomeScoreSnapshot
   onClose: () => void
-}
-
-const tintOf = (axis: 'focus' | 'rest') =>
-  axis === 'focus' ? colors.accentViolet : colors.homeLavender
-
-function Bar({ value, tint }: { value: number | null; tint: string }) {
-  return (
-    <View style={styles.track}>
-      <View
-        style={[
-          styles.fill,
-          {
-            width: `${Math.max(0, Math.min(100, value ?? 0))}%`,
-            backgroundColor: tint,
-          },
-        ]}
-      />
-    </View>
-  )
-}
-
-/** Un axe : sa note, sa barre et la ligne qui dit ce qu'il mesure. */
-function AxisRow({
-  icon,
-  axis,
-  label,
-  value,
-  body,
-}: {
-  icon: IconName
-  axis: 'focus' | 'rest'
-  label: string
-  value: number | null
-  body: string
-}) {
-  const tint = tintOf(axis)
-  return (
-    <View style={styles.axis}>
-      <View style={styles.axisHead}>
-        <IconSvg
-          name={icon}
-          size={layout.homeScoreDialogGlyphSize}
-          color={tint}
-        />
-        <Text style={styles.axisLabel}>{label}</Text>
-        <Text style={styles.axisValue}>{value ?? '—'}</Text>
-      </View>
-      <Bar value={value} tint={tint} />
-      <Text style={styles.body}>{body}</Text>
-    </View>
-  )
-}
-
-/**
- * Une mesure du jour, sur une seule ligne : ce qui a été observé, et la note
- * qui en découle. Le chiffre brut est là pour être recompté — c'est lui qui
- * fait la différence entre un score et une décoration. Aucune glose : la
- * ligne se comprend seule, et six paragraphes empilés ne se lisaient pas.
- */
-function SignalRow({
-  component,
-  label,
-  measure,
-  icon,
-}: {
-  component: HomeScoreComponent
-  label: string
-  measure: string
-  icon: IconName
-}) {
-  const tint = tintOf(component.axis)
-  return (
-    <View style={styles.signal}>
-      <IconSvg name={icon} size={layout.homeScoreTileGlyphSize} color={tint} />
-      <View style={styles.signalCopy}>
-        <Text numberOfLines={1} style={styles.signalLabel}>
-          {label}
-        </Text>
-        <Text numberOfLines={1} style={styles.signalMeasure}>
-          {measure}
-        </Text>
-      </View>
-      <Text style={[styles.signalValue, { color: tint }]}>
-        {component.score}
-      </Text>
-    </View>
-  )
 }
 
 /**
@@ -444,57 +316,52 @@ export function HomeScoreDetail({ visible, snapshot, onClose }: Props) {
                 </View>
               </View>
 
+              {/*
+                Les deux arcs de la rosace n'ont aucun sens sans être nommés.
+                Une ligne suffit — elle remplace les deux sections d'axes, qui
+                disaient la même chose en dix fois plus de mots.
+              */}
+              <View style={styles.legend}>
+                <View style={styles.legendItem}>
+                  <IconSvg
+                    name={IconName.FOCUS}
+                    size={layout.homeScoreLegendGlyphSize}
+                    color={colors.accentViolet}
+                  />
+                  <Text style={styles.legendLabel}>
+                    {t('home.focus_score')}
+                  </Text>
+                  <Text style={styles.legendValue}>
+                    {snapshot.focus ?? '—'}
+                  </Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <IconSvg
+                    name={IconName.REST}
+                    size={layout.homeScoreLegendGlyphSize}
+                    color={colors.homeLavender}
+                  />
+                  <Text style={styles.legendLabel}>{t('home.rest_score')}</Text>
+                  <Text style={styles.legendValue}>{snapshot.rest ?? '—'}</Text>
+                </View>
+              </View>
+
               {snapshot.trend.length > 0 && (
                 <>
                   <SectionTitle>{t('home.score_trend_title')}</SectionTitle>
                   <Trend snapshot={snapshot} />
-                  <Text style={styles.scale}>{t('home.score_what_body')}</Text>
                 </>
               )}
 
-              <SectionTitle>{t('home.score_how_title')}</SectionTitle>
-              <AxisRow
-                icon={IconName.FOCUS}
-                axis="focus"
-                label={t('home.focus_score')}
-                value={snapshot.focus}
-                body={t('home.score_how_focus')}
-              />
-              <AxisRow
-                icon={IconName.REST}
-                axis="rest"
-                label={t('home.rest_score')}
-                value={snapshot.rest}
-                body={t('home.score_how_rest')}
-              />
-              <View style={styles.formula}>
-                <Text style={styles.formulaText}>
-                  {t('home.score_formula')}
-                </Text>
-              </View>
-
-              {snapshot.components.length > 0 && (
-                <>
-                  <SectionTitle>{t('home.score_today')}</SectionTitle>
-                  <View style={styles.signals}>
-                    {snapshot.components.map(component => {
-                      const meta = SIGNALS[component.signal]
-                      return (
-                        <SignalRow
-                          key={component.signal}
-                          component={component}
-                          icon={meta.icon}
-                          label={t(meta.label)}
-                          measure={t(meta.measure, {
-                            observed: component.observed,
-                            reference: component.reference ?? 0,
-                          })}
-                        />
-                      )
-                    })}
-                  </View>
-                </>
-              )}
+              {/*
+                Une phrase, pas un tableau. `scoreFooterKey` choisit d'après le
+                snapshot : la mesure qui pèse le plus quand la journée décroche,
+                les félicitations quand elle tient, et l'état d'attente tant que
+                la référence manque. Elle dit donc toujours quelque chose de
+                vrai sur AUJOURD'HUI, sans exposer le calcul qui la produit.
+              */}
+              <SectionTitle>{t('home.score_today')}</SectionTitle>
+              <Text style={styles.body}>{t(scoreFooterKey(snapshot))}</Text>
 
               <SectionTitle>{t('home.score_improve_title')}</SectionTitle>
               <View style={styles.hints}>
@@ -533,17 +400,6 @@ export function HomeScoreDetail({ visible, snapshot, onClose }: Props) {
                   label={t('home.score_lower_gap')}
                 />
               </View>
-
-              {available && (
-                <Text style={styles.note}>
-                  {t(
-                    snapshot.status === 'ready'
-                      ? 'home.score_confidence_ready'
-                      : 'home.score_confidence_provisional',
-                    { days: snapshot.historyDays },
-                  )}
-                </Text>
-              )}
             </ScrollView>
           </View>
         </Animated.View>
@@ -658,12 +514,36 @@ const styles = StyleSheet.create({
     lineHeight: typography.homeScoreCaptionLineHeight,
     fontVariant: ['tabular-nums'],
   },
-  scale: {
+  legend: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  legendItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.functional,
+    backgroundColor: colors.homeScoreTile,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.homeBorder,
+  },
+  legendLabel: {
     ...fonts.medium,
-    marginTop: spacing.xs,
-    color: colors.textTertiary,
+    flex: 1,
+    color: colors.textSecondary,
     fontSize: typography.homeScoreCaptionSize,
     lineHeight: typography.homeScoreCaptionLineHeight,
+  },
+  legendValue: {
+    ...fonts.bold,
+    color: colors.textPrimary,
+    fontSize: typography.homeScoreRowLabelSize,
+    lineHeight: typography.homeScoreRowLabelLineHeight,
+    fontVariant: ['tabular-nums'],
   },
   section: {
     ...fonts.semiBold,
@@ -679,82 +559,6 @@ const styles = StyleSheet.create({
     fontSize: typography.homeScoreBodySize,
     lineHeight: typography.homeScoreBodyLineHeight,
   },
-  axis: { gap: spacing.xs, marginBottom: spacing.md },
-  axisHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  axisLabel: {
-    ...fonts.semiBold,
-    flex: 1,
-    color: colors.textPrimary,
-    fontSize: typography.homeScoreRowLabelSize,
-    lineHeight: typography.homeScoreRowLabelLineHeight,
-  },
-  axisValue: {
-    ...fonts.bold,
-    color: colors.textPrimary,
-    fontSize: typography.homeScoreDetailValueSize,
-    lineHeight: typography.homeScoreDetailValueLineHeight,
-    fontVariant: ['tabular-nums'],
-  },
-  track: {
-    height: layout.homeScoreBarHeight,
-    overflow: 'hidden',
-    borderRadius: radius.capsule,
-    backgroundColor: colors.homeProgressTrack,
-  },
-  fill: { height: '100%', borderRadius: radius.capsule },
-  signals: {
-    overflow: 'hidden',
-    borderRadius: radius.functional,
-    backgroundColor: colors.homeScoreTile,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.homeBorder,
-  },
-  signal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  signalCopy: { flex: 1 },
-  signalLabel: {
-    ...fonts.medium,
-    color: colors.textPrimary,
-    fontSize: typography.homeScoreBodySize,
-    lineHeight: typography.homeScoreBodyLineHeight,
-  },
-  signalMeasure: {
-    ...fonts.regular,
-    color: colors.textTertiary,
-    fontSize: typography.homeScoreCaptionSize,
-    lineHeight: typography.homeScoreCaptionLineHeight,
-    fontVariant: ['tabular-nums'],
-  },
-  signalValue: {
-    ...fonts.bold,
-    fontSize: typography.homeScoreDetailValueSize,
-    lineHeight: typography.homeScoreDetailValueLineHeight,
-    fontVariant: ['tabular-nums'],
-  },
-  formula: {
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.capsule,
-    backgroundColor: colors.homeCardSoft,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.homeBorder,
-  },
-  formulaText: {
-    ...fonts.medium,
-    color: colors.textPrimary,
-    fontSize: typography.homeScoreCaptionSize,
-    lineHeight: typography.homeScoreCaptionLineHeight,
-  },
   hints: { gap: spacing.xs },
   hint: {
     flexDirection: 'row',
@@ -768,15 +572,5 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: typography.homeScoreBodySize,
     lineHeight: typography.homeScoreBodyLineHeight,
-  },
-  note: {
-    ...fonts.regular,
-    marginTop: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.homeBorder,
-    paddingTop: spacing.md,
-    color: colors.textTertiary,
-    fontSize: typography.homeScoreCaptionSize,
-    lineHeight: typography.homeScoreCaptionLineHeight,
   },
 })

@@ -187,6 +187,35 @@ jest.mock('react-native-mmkv', () => {
   return { createMMKV }
 })
 
+// Trousseau matériel : une Map en mémoire, mêmes signatures que le vrai module.
+// `getItem` / `setItem` sont SYNCHRONES et `deleteItemAsync` ne l'est pas —
+// c'est exactement cette asymétrie que `secure-store.ts` doit gérer, donc le
+// mock la reproduit telle quelle plutôt que de tout rendre synchrone.
+jest.mock('expo-secure-store', () => {
+  const store = new Map()
+  return {
+    AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: 'AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY',
+    AFTER_FIRST_UNLOCK: 'AFTER_FIRST_UNLOCK',
+    WHEN_UNLOCKED: 'WHEN_UNLOCKED',
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'WHEN_UNLOCKED_THIS_DEVICE_ONLY',
+    getItem: key => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => {
+      store.set(key, value)
+    },
+    getItemAsync: async key => (store.has(key) ? store.get(key) : null),
+    setItemAsync: async (key, value) => {
+      store.set(key, value)
+    },
+    deleteItemAsync: async key => {
+      store.delete(key)
+    },
+    isAvailableAsync: async () => true,
+    canUseBiometricAuthentication: () => false,
+    /** Réservé aux tests : remet le trousseau à zéro entre deux cas. */
+    __reset: () => store.clear(),
+  }
+})
+
 jest.mock('react-native-webview', () => {
   const React = require('react')
   const { View } = require('react-native')

@@ -46,6 +46,13 @@ export const constants = {
   PREF_PAUSE_SOUND: 'pref.pauseSound.v1',
   PREF_CRASH_REPORTS: 'pref.crashReports.v1',
   /**
+   * Rituel de pause exigé avant un déblocage (`respiration`, `calcul`,
+   * `transcription`). Une clé à part entière, et non un booléen : le jeu de
+   * rituels est destiné à s'agrandir, et une valeur inconnue doit pouvoir
+   * retomber sur la respiration sans migration.
+   */
+  PREF_PAUSE_RITUAL: 'pref.pauseRitual.v1',
+  /**
    * Dernier déblocage d'urgence (timestamp ms). Le quota hebdomadaire s'en
    * déduit — on ne stocke pas un compteur, qui se désynchroniserait du temps
    * qui passe.

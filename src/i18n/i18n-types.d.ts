@@ -438,6 +438,75 @@ declare module 'i18next' {
             "confirm": string;
             "cancel": string;
           };
+          "pause_ritual": {
+            "change": string;
+            "sheet_title": string;
+            "sheet_body": string;
+            "applies_next": string;
+            "confirmed": string;
+            "breathing": {
+              "title": string;
+              "description": string;
+            };
+            "math": {
+              "title": string;
+              "description": string;
+            };
+            "transcribe": {
+              "title": string;
+              "description": string;
+            };
+          };
+          "math": {
+            "prompt": string;
+            "done": string;
+            "hint": string;
+            "wrong": string;
+            "remaining": string;
+            "remaining_plural": string;
+            "progress": string;
+            "erase": string;
+            "check": string;
+          };
+          "transcribe": {
+            "prompt": string;
+            "done": string;
+            "placeholder": string;
+            "field": string;
+            "incomplete": string;
+            "match": string;
+            "mismatch": string;
+            "progress": string;
+            "line_1": string;
+            "line_2": string;
+            "line_3": string;
+            "line_4": string;
+            "line_5": string;
+            "line_6": string;
+          };
+          "locked": string;
+          "rule_types": {
+            "schedule": string;
+            "limit": string;
+            "timed": string;
+          };
+          "resume_sheet": {
+            "title": string;
+            "body": string;
+            "apps": string;
+            "apps_single": string;
+            "apps_plural": string;
+            "type": string;
+            "per_day": string;
+            "strict": string;
+            "strict_on": string;
+            "paused": string;
+            "confirm": string;
+            "cancel": string;
+          };
+          "preset_recap": {
+            "activate": string;
+          };
         };
         "home": {
           "my_apps": {
@@ -510,12 +579,6 @@ declare module 'i18next' {
           "score_band_fair": string;
           "score_band_poor": string;
           "score_footer_excellent": string;
-          "score_footer_pending": string;
-          "score_what_body": string;
-          "score_how_title": string;
-          "score_how_focus": string;
-          "score_how_rest": string;
-          "score_formula": string;
           "score_improve_title": string;
           "score_tip_block": string;
           "score_tip_focus": string;
@@ -554,20 +617,6 @@ declare module 'i18next' {
           "score_delta_suffix": string;
           "score_delta_same": string;
           "score_trend_title": string;
-          "score_confidence_ready": string;
-          "score_confidence_provisional": string;
-          "score_signal_pressure_label": string;
-          "score_signal_pressure_measure": string;
-          "score_signal_resistance_label": string;
-          "score_signal_resistance_measure": string;
-          "score_signal_breaches_label": string;
-          "score_signal_breaches_measure": string;
-          "score_signal_coverage_label": string;
-          "score_signal_coverage_measure": string;
-          "score_signal_regularity_label": string;
-          "score_signal_regularity_measure": string;
-          "score_signal_quota_label": string;
-          "score_signal_quota_measure": string;
           "score_lowers_title": string;
           "score_lower_pressure": string;
           "score_lower_breach": string;
@@ -787,6 +836,11 @@ declare module 'i18next' {
           "emergency_quota": string;
           "emergency_locked_title": string;
           "emergency_locked_body": string;
+          "pause_ritual": {
+            "label": string;
+            "hint": string;
+            "footnote": string;
+          };
         };
         "onboarding": {
           "headline": string;

@@ -3,11 +3,6 @@ import { Text } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { HomeDashboardSurface } from '@/features/home/components/HomeDashboardSurface'
 
-let mockFocused = true
-jest.mock('@react-navigation/native', () => ({
-  useIsFocused: () => mockFocused,
-}))
-
 jest.mock('@/shared/native/ScreenTimeReport', () => {
   const { View } = require('react-native')
   return {
@@ -21,6 +16,10 @@ jest.mock('@/shared/native/ScreenTimeReport', () => {
 jest.mock('@/shared/utils/platform/haptics', () => ({
   haptics: { selectionTick: jest.fn() },
 }))
+
+function skeletonCount(renderer: ReactTestRenderer): number {
+  return renderer.root.findAllByProps({ testID: 'home-report-skeleton' }).length
+}
 
 function renderSurface(
   authorization: 'checking' | 'denied' | 'unavailable' | 'approved',
@@ -49,10 +48,6 @@ function renderSurface(
 
 describe('HomeDashboardSurface states', () => {
   let renderer: ReactTestRenderer | undefined
-
-  beforeEach(() => {
-    mockFocused = true
-  })
 
   afterEach(() => {
     act(() => renderer?.unmount())
@@ -132,7 +127,6 @@ describe('HomeDashboardSurface states', () => {
 
     const report = renderer?.root.findByProps({ testID: 'screen-time-report' })
     expect(report?.props.pointerEvents).toBe('auto')
-    expect(report?.props.reloadToken).toBe(0)
     expect(report?.props.showsBlockedCard).toBe(false)
     // La carte de score reste rendue par React Native MÊME quand le rapport
     // natif s'affiche : c'est la seule qui expose un score que la feuille de
@@ -145,41 +139,14 @@ describe('HomeDashboardSurface states', () => {
     ).toBe(true)
   })
 
-  // Le rapport vit dans une extension, donc dans un AUTRE processus : iOS peut
-  // la tuer dès que l'Accueil quitte la fenêtre. Au retour, la surface revient
-  // vide et le reste — c'est la disparition du héro Temps d'écran et du
-  // classement des apps. On redemande donc une connexion neuve à chaque retour,
-  // sans démonter la vue native (bien plus coûteux qu'une reconnexion).
-  it('asks the native report for a fresh connection when returning to the tab', () => {
+  // Le cycle de vie de la surface distante appartient au natif : c'est UIKit,
+  // pas React, qui sait quand la vue quitte sa fenêtre. Le JS ne fait que
+  // refléter ce qu'il annonce — sans quoi les deux reconstruiraient chacun de
+  // leur côté, et chaque retour d'onglet paierait deux agrégations.
+  it('restores the skeleton while the native report reconnects', () => {
     act(() => {
       renderer = renderSurface('approved')
     })
-    const props = renderer!.root.findByType(HomeDashboardSurface)
-      .props as React.ComponentProps<typeof HomeDashboardSurface>
-    const report = renderer!.root.findByProps({ testID: 'screen-time-report' })
-    act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
-
-    act(() => {
-      mockFocused = false
-      renderer!.update(<HomeDashboardSurface {...props} />)
-    })
-    act(() => {
-      mockFocused = true
-      renderer!.update(<HomeDashboardSurface {...props} />)
-    })
-
-    expect(renderer!.root.findByProps({ testID: 'screen-time-report' })).toBe(
-      report,
-    )
-    expect(report.props.reloadToken).toBe(1)
-  })
-
-  it('shows the skeleton again while the report reconnects', () => {
-    act(() => {
-      renderer = renderSurface('approved')
-    })
-    const props = renderer!.root.findByType(HomeDashboardSurface)
-      .props as React.ComponentProps<typeof HomeDashboardSurface>
     const report = renderer!.root.findByProps({ testID: 'screen-time-report' })
     const skeletons = () =>
       renderer!.root.findAllByProps({ testID: 'home-report-skeleton' }).length
@@ -187,28 +154,30 @@ describe('HomeDashboardSurface states', () => {
     act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
     expect(skeletons()).toBe(0)
 
-    act(() => {
-      mockFocused = false
-      renderer!.update(<HomeDashboardSurface {...props} />)
-    })
-    act(() => {
-      mockFocused = true
-      renderer!.update(<HomeDashboardSurface {...props} />)
-    })
     // Un vide muet se lit comme une journée sans usage : tant que la nouvelle
     // agrégation n'a pas répondu, l'écran dit qu'il charge.
+    act(() => report.props.onCommand({ nativeEvent: { command: 'reloading' } }))
     expect(skeletons()).toBeGreaterThan(0)
 
     act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
     expect(skeletons()).toBe(0)
   })
 
-  it('keeps the first render free of an extra reconnection', () => {
+  it('keeps the same ready native wrapper through parent rerenders', () => {
     act(() => {
       renderer = renderSurface('approved')
     })
+    const props = renderer!.root.findByType(HomeDashboardSurface)
+      .props as React.ComponentProps<typeof HomeDashboardSurface>
     const report = renderer!.root.findByProps({ testID: 'screen-time-report' })
     act(() => report.props.onCommand({ nativeEvent: { command: 'ready' } }))
-    expect(report.props.reloadToken).toBe(0)
+
+    act(() => {
+      renderer!.update(<HomeDashboardSurface {...props} />)
+    })
+    expect(renderer!.root.findByProps({ testID: 'screen-time-report' })).toBe(
+      report,
+    )
+    expect(skeletonCount(renderer!)).toBe(0)
   })
 })

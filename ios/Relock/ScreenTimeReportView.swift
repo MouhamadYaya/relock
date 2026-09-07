@@ -10,11 +10,12 @@ import os
 ///   du tableau de bord dans un rapport unique).
 /// - `offset` : recule de 0 à 6 jours dans le temps.
 ///
-/// Le rapport est rendu dans un autre processus. Son contrôleur doit rester
-/// enfant du contrôleur RN pour recevoir le cycle de vie UIKit. La Home le
-/// conserve lors des transitions et retours d'arrière-plan; seule une
-/// configuration modifiée demande sa reconstruction. Les props RN sont
-/// regroupées pour ne pas interrompre une agrégation encore en cours.
+/// Le rapport est rendu dans un autre processus. Son contrôleur reste enfant
+/// du contrôleur RN et sa vue reste attachée à la même UIWindow, même quand un
+/// onglet natif détache temporairement l'Accueil. Recréer cette surface à
+/// chaque retour rendrait le délai de reconnexion Apple visible.
+/// Les props RN sont regroupées pour ne pas interrompre une agrégation encore
+/// en cours.
 @available(iOS 16.0, *)
 private struct ReportContainer: View {
   let offset: Int
@@ -23,7 +24,8 @@ private struct ReportContainer: View {
   /// Change à chaque reconstruction : force SwiftUI à créer un NOUVEAU
   /// DeviceActivityReport (nouvelle connexion à l'extension), au lieu de
   /// « mettre à jour » une surface distante peut-être morte.
-  let epoch: Int
+  let identity: UUID
+  let queryDate: Date
 
   /// Intervalle du jour demandé.
   private func interval(_ cal: Calendar, _ now: Date) -> DateInterval {
@@ -36,7 +38,7 @@ private struct ReportContainer: View {
   @ViewBuilder
   private var report: some View {
     let cal = Calendar.current
-    let now = Date()
+    let now = queryDate
     // iPhone uniquement : `.all` additionnerait Mac/iPad → total > 24 h/jour.
     let devices = DeviceActivityFilter.Devices(.init([.iPhone]))
 
@@ -55,7 +57,7 @@ private struct ReportContainer: View {
         DeviceActivityReport.Context(
           showsBlockedCard ? "TodayHomeWithBlocks" : "TodayHomeWithoutBlocks"),
         filter: DeviceActivityFilter(
-          segment: .daily(during: DateInterval(start: start, end: today.end)),
+          segment: .daily(during: DateInterval(start: start, end: now)),
           users: .all, devices: devices))
 
     default:
@@ -72,7 +74,26 @@ private struct ReportContainer: View {
 
   var body: some View {
     report
-      .id(epoch)
+      .id(identity)
+  }
+}
+
+/// A window attachment happens before a native tab transition has completed.
+/// Mount the remote SwiftUI report only after UIKit has finished presenting
+/// this child, including when its React Native ScrollView is already scrolled.
+private final class ReportHostingController: UIHostingController<AnyView> {
+  var onVisible: (() -> Void)?
+  private(set) var isVisible = false
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    isVisible = true
+    onVisible?()
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    isVisible = false
+    super.viewWillDisappear(animated)
   }
 }
 
@@ -335,10 +356,22 @@ final class ScreenTimeReportView: UIView {
   @objc var onCommand: RCTDirectEventBlock?
   var onNavigateToSettings: (() -> Void)?
 
-  private var hosting: UIViewController?
+  private var hosting: ReportHostingController?
+  private var reportMounted = false
   private var rebuildWorkItem: DispatchWorkItem?
+  private var readyWorkItem: DispatchWorkItem?
+  private var queryRefreshWorkItems: [DispatchWorkItem] = []
+  private var rebuildRevision = 0
+  // Monotonic across wrapper lifetimes, so diagnostics can distinguish a
+  // new React Native view from a reconnect of an existing one.
+  private static var nextEpoch = 0
   private var epoch = 0
   private var reportNeedsRebuild = true
+  private var wasBackgrounded = false
+  // Native tabs remove an inactive screen from the window. Moving only the
+  // remote report into a covered sibling keeps its XPC surface alive without
+  // exposing or copying Screen Time data into the host application.
+  private let homeParkingContainer = UIView()
   #if DEBUG
     // Instrumentation du cycle de vie de la surface distante.
     //
@@ -361,15 +394,74 @@ final class ScreenTimeReportView: UIView {
   private let homeTouchSurface = HomeReportControls()
 
   deinit {
+    NotificationCenter.default.removeObserver(self)
+    rebuildWorkItem?.cancel()
+    readyWorkItem?.cancel()
+    queryRefreshWorkItems.forEach { $0.cancel() }
     let controller = hosting
+    let parkingContainer = homeParkingContainer
     DispatchQueue.main.async {
       controller?.willMove(toParent: nil)
       controller?.view.removeFromSuperview()
       controller?.removeFromParent()
+      parkingContainer.removeFromSuperview()
     }
   }
 
+  /// Retour d'arrière-plan : mesuré sur iPhone, ce chemin ne produit AUCUN
+  /// détachement de fenêtre (`didMoveToWindow` reste muet). L'observateur
+  /// distingue donc une vraie reprise pour reconstruire Activity, tandis que
+  /// Home conserve volontairement sa surface et ses derniers pixels.
+  ///
+  /// `willEnterForeground` et NON `didBecomeActive` : ce dernier se déclenche
+  /// aussi à la fermeture du centre de contrôle ou d'une alerte système —
+  /// mesuré ici, il reconstruisait le rapport alors que l'app n'avait jamais
+  /// quitté l'écran, ce qui rend le squelette clignotant sans aucun gain.
+  private func observeForeground() {
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(applicationDidEnterBackground),
+      name: UIApplication.didEnterBackgroundNotification, object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(applicationWillEnterForeground),
+      name: UIApplication.willEnterForegroundNotification, object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(applicationDidBecomeActive),
+      name: UIApplication.didBecomeActiveNotification, object: nil)
+  }
+
+  @objc private func applicationDidEnterBackground() {
+    wasBackgrounded = true
+    // Preserve Home's last rendered surface. Rebuilding it on every foreground
+    // guarantees a user-visible empty interval while Apple's service reconnects.
+    // Activity remains explicitly refreshable and keeps its previous policy.
+    if mode != "home" {
+      invalidateReport()
+    }
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  @objc private func applicationWillEnterForeground() {
+    // Une reprise sans passage effectif en arrière-plan ne peut pas avoir tué
+    // l'extension : reconstruire là ne ferait que clignoter pour rien.
+    guard wasBackgrounded else { return }
+    wasBackgrounded = false
+    #if DEBUG
+      foregroundCount += 1
+    #endif
+    scheduleRebuildIfNeeded()
+  }
+
+  @objc private func applicationDidBecomeActive() {
+    // Drain a pending rebuild only. Closing Control Center or a permission
+    // alert does not invalidate an already mounted report.
+    scheduleRebuildIfNeeded()
+    mountVisibleReport()
+  }
+
   private func configureActivityControls() {
+    observeForeground()
     activityControls.onSelect = { [weak self] offset in
       guard let self else { return }
       self.offset = NSNumber(value: offset)
@@ -377,13 +469,10 @@ final class ScreenTimeReportView: UIView {
     }
     activityControls.onRefresh = { [weak self] in
       guard let self else { return }
-      // Ne jamais détruire ici le rapport visible : iOS peut refuser de
-      // repeindre une DeviceActivityReport recréée immédiatement et laisser
-      // l'écran vide. La surface courante reste alimentée par Temps d'écran;
-      // on invalide uniquement sa présentation locale.
       self.activityControls.acknowledgeRefresh()
-      self.hosting?.view.setNeedsLayout()
-      self.hosting?.view.setNeedsDisplay()
+      // JS checks authorization, then changes reloadToken. All reconnects
+      // share the same deferred native mount, including a manual recovery.
+      self.onCommand?(["command": "refresh"])
     }
     activityControls.onSettings = { [weak self] in
       self?.onNavigateToSettings?()
@@ -413,6 +502,8 @@ final class ScreenTimeReportView: UIView {
       let age = lastRebuildAt == 0 ? -1 : Int((CACurrentMediaTime() - lastRebuildAt) * 1000)
       diagnostics.accessibilityValue =
         "mode=\(mode) win=\(window == nil ? 0 : 1) host=\(hosting == nil ? 0 : 1)"
+        + " visible=\(hosting?.isVisible == true ? 1 : 0) mounted=\(reportMounted ? 1 : 0)"
+        + " parked=\(hosting?.view.superview === homeParkingContainer ? 1 : 0)"
         + " epoch=\(epoch) req=\(requestCount) skip=\(skipCount)"
         + " det=\(detachCount) att=\(attachCount) fg=\(foregroundCount)"
         + " tok=\(reloadToken.intValue) age=\(age)"
@@ -428,6 +519,56 @@ final class ScreenTimeReportView: UIView {
     activityControls.update(offset: offset.intValue)
   }
 
+  private func parkHomeReport(in sourceWindow: UIWindow) {
+    guard mode == "home", let reportView = hosting?.view,
+      reportView.superview === self
+    else { return }
+
+    homeParkingContainer.isUserInteractionEnabled = false
+    homeParkingContainer.clipsToBounds = true
+    homeParkingContainer.backgroundColor = .clear
+    homeParkingContainer.frame = CGRect(origin: .zero, size: reportView.bounds.size)
+    homeParkingContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    if homeParkingContainer.superview !== sourceWindow {
+      homeParkingContainer.removeFromSuperview()
+      if let rootView = sourceWindow.rootViewController?.view,
+        rootView.superview === sourceWindow
+      {
+        sourceWindow.insertSubview(homeParkingContainer, belowSubview: rootView)
+      } else {
+        sourceWindow.insertSubview(homeParkingContainer, at: 0)
+      }
+    }
+    homeParkingContainer.addSubview(reportView)
+    reportView.frame = homeParkingContainer.bounds
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  private func restoreHomeReport() {
+    guard mode == "home", let reportView = hosting?.view,
+      reportView.superview === homeParkingContainer
+    else { return }
+    insertSubview(reportView, at: 0)
+    reportView.frame = bounds
+    homeParkingContainer.removeFromSuperview()
+    bringSubviewToFront(homeTouchSurface)
+    bringSubviewToFront(activityControls)
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  override func willMove(toWindow newWindow: UIWindow?) {
+    // Move between two views of the SAME UIWindow before UIKit detaches the
+    // inactive native tab. The report therefore never observes window=nil.
+    if newWindow == nil, let sourceWindow = window {
+      parkHomeReport(in: sourceWindow)
+    }
+    super.willMove(toWindow: newWindow)
+  }
+
   override func didMoveToWindow() {
     super.didMoveToWindow()
     #if DEBUG
@@ -435,23 +576,40 @@ final class ScreenTimeReportView: UIView {
       publishDiagnostics()
     #endif
     if window == nil {
-      rebuildWorkItem?.cancel()
-      rebuildWorkItem = nil
-      // Home has proper controller containment now. Preserve it across tab
-      // transitions and scroll clipping; UIKit forwards disappearance and
-      // reappearance to the remote report. Destroying it on every transient
-      // detach loses the rendered surface and starts a new slow aggregation.
-      if mode != "home" { removeHostingController() }
-    } else if hosting == nil || reportNeedsRebuild {
-      setNeedsRebuild()
+      if mode != "home" {
+        invalidateReport()
+      }
+    } else {
+      restoreHomeReport()
+      if hosting == nil || reportNeedsRebuild {
+        setNeedsRebuild()
+      }
     }
   }
 
   private func removeHostingController() {
+    reportMounted = false
+    hosting?.onVisible = nil
     hosting?.willMove(toParent: nil)
     hosting?.view.removeFromSuperview()
     hosting?.removeFromParent()
     hosting = nil
+    homeParkingContainer.removeFromSuperview()
+  }
+
+  private func invalidateReport() {
+    reportNeedsRebuild = true
+    rebuildRevision += 1
+    rebuildWorkItem?.cancel()
+    rebuildWorkItem = nil
+    readyWorkItem?.cancel()
+    readyWorkItem = nil
+    queryRefreshWorkItems.forEach { $0.cancel() }
+    queryRefreshWorkItems.removeAll()
+    removeHostingController()
+    #if DEBUG
+      publishDiagnostics()
+    #endif
   }
 
   private var parentController: UIViewController? {
@@ -467,22 +625,35 @@ final class ScreenTimeReportView: UIView {
   /// configuration complète avant de créer le rapport : aucune connexion
   /// Apple intermédiaire n'est lancée puis détruite en plein calcul.
   private func setNeedsRebuild() {
-    reportNeedsRebuild = true
+    // Tear down BEFORE the debounce, never in the same turn as the new mount.
+    // Prop batches and rapid tab changes invalidate all older scheduled work.
+    invalidateReport()
     #if DEBUG
       requestCount += 1
       publishDiagnostics()
     #endif
-    rebuildWorkItem?.cancel()
+    scheduleRebuildIfNeeded()
+  }
+
+  private func scheduleRebuildIfNeeded() {
+    guard reportNeedsRebuild, rebuildWorkItem == nil, window != nil,
+      !wasBackgrounded, UIApplication.shared.applicationState == .active,
+      bounds.width > 0, bounds.height > 0, parentController != nil
+    else { return }
+    let revision = rebuildRevision
     let work = DispatchWorkItem { [weak self] in
-      self?.rebuildWorkItem = nil
-      self?.rebuild()
+      guard let self, self.rebuildRevision == revision else { return }
+      self.rebuildWorkItem = nil
+      self.rebuild()
     }
     rebuildWorkItem = work
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: work)
   }
 
   private func rebuild() {
-    guard window != nil, bounds.width > 0, bounds.height > 0,
+    guard reportNeedsRebuild, window != nil, !wasBackgrounded,
+      UIApplication.shared.applicationState == .active,
+      bounds.width > 0, bounds.height > 0,
       let parent = parentController, #available(iOS 16.0, *)
     else {
       #if DEBUG
@@ -492,7 +663,8 @@ final class ScreenTimeReportView: UIView {
       return
     }
     reportNeedsRebuild = false
-    epoch += 1
+    ScreenTimeReportView.nextEpoch += 1
+    epoch = ScreenTimeReportView.nextEpoch
     #if DEBUG
       lastRebuildAt = CACurrentMediaTime()
       publishDiagnostics()
@@ -500,24 +672,11 @@ final class ScreenTimeReportView: UIView {
     ScreenTimeReportView.log.info(
       "rebuild #\(self.epoch, privacy: .public) mode=\(self.mode, privacy: .public) offset=\(self.offset.intValue, privacy: .public)"
     )
-    // Toujours un contrôleur NEUF : c'est ce qui force une nouvelle connexion
-    // à l'extension de rapport. L'ancien contenu (peut-être mort) part avec.
-    removeHostingController()
+    // The previous controller was released before scheduling this mount.
+    onCommand?(["command": "reloading"])
 
-    #if targetEnvironment(simulator)
-      let vc = UIHostingController(
-        rootView: MockReport(
-          mode: mode as String,
-          showsBlockedCard: showsBlockedCard,
-          homeReferenceFixture: UserDefaults.standard.bool(
-            forKey: "HomeReferenceFixture")).ignoresSafeArea())
-    #else
-      let root = ReportContainer(
-        offset: offset.intValue, mode: mode as String,
-        showsBlockedCard: showsBlockedCard, epoch: epoch
-      ).ignoresSafeArea()
-      let vc = UIHostingController(rootView: root)
-    #endif
+    let vc = ReportHostingController(rootView: AnyView(Color.clear))
+    vc.onVisible = { [weak self] in self?.mountVisibleReport() }
     // Home already lays out its status bar/header and bottom tab clearance.
     // SwiftUI otherwise inserts the phone's 59pt top inset inside the fixed
     // report, silently clipping the last application row.
@@ -528,24 +687,84 @@ final class ScreenTimeReportView: UIView {
     vc.view.isOpaque = false
     vc.view.frame = bounds
     vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    hosting = vc
     parent.addChild(vc)
     addSubview(vc.view)
     vc.didMove(toParent: parent)
-    hosting = vc
     bringSubviewToFront(homeTouchSurface)
     bringSubviewToFront(activityControls)
-    // Le JS attend CE signal pour retirer son écran d'attente : sans lui, le
-    // rapport se dessine derrière un placeholder qui ne part jamais.
+    #if DEBUG
+      publishDiagnostics()
+    #endif
+  }
+
+  private func mountVisibleReport() {
+    guard let vc = hosting, vc.isVisible, !reportMounted,
+      !reportNeedsRebuild, window != nil, !wasBackgrounded,
+      UIApplication.shared.applicationState == .active, #available(iOS 16.0, *)
+    else { return }
+    reportMounted = true
+    #if targetEnvironment(simulator)
+      vc.rootView = AnyView(MockReport(
+        mode: mode as String, showsBlockedCard: showsBlockedCard,
+        homeReferenceFixture: UserDefaults.standard.bool(forKey: "HomeReferenceFixture")
+      ).ignoresSafeArea())
+    #else
+      let reportIdentity = UUID()
+      vc.rootView = AnyView(ReportContainer(
+        offset: offset.intValue, mode: mode as String,
+        showsBlockedCard: showsBlockedCard, identity: reportIdentity, queryDate: Date()
+      ).ignoresSafeArea())
+      if mode == "home" {
+        // The device service can miss its first refresh while the extension
+        // proxy is connecting, then wait for a 60-second timer. Update the
+        // real end date on the SAME connection; never recreate its ID.
+        // UIKit schedules this because SwiftUI's .task is not reliably entered
+        // when a remote report replaces Activity in an already scrolled Home.
+        // A navigation-stack return can take over two seconds to attach the
+        // service. Two bounded attempts cover warm and slower connections;
+        // both are cancelled only on a real configuration replacement.
+        for delay in [1.0, 3.0] {
+          let refresh = DispatchWorkItem { [weak self, weak vc] in
+            guard let self, let vc, self.hosting === vc, self.reportMounted,
+              !self.reportNeedsRebuild, vc.view.window != nil
+            else { return }
+            ScreenTimeReportView.log.info(
+              "refresh query #\(self.epoch, privacy: .public) after=\(delay, privacy: .public)s")
+            vc.rootView = AnyView(ReportContainer(
+              offset: self.offset.intValue, mode: self.mode as String,
+              showsBlockedCard: self.showsBlockedCard,
+              identity: reportIdentity, queryDate: Date()
+            ).ignoresSafeArea())
+          }
+          queryRefreshWorkItems.append(refresh)
+          DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: refresh)
+        }
+      }
+    #endif
+    // This acknowledges the LOCAL mount, not completion of Apple's remote
+    // aggregation (DeviceActivityReport exposes no completion callback).
+    // Never let an old controller dismiss a newer report's placeholder.
     let readyEpoch = epoch
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
-      guard let self, self.epoch == readyEpoch, self.window != nil else { return }
+    let ready = DispatchWorkItem { [weak self, weak vc] in
+      guard let self, let vc, self.hosting === vc, self.epoch == readyEpoch,
+        !self.reportNeedsRebuild, vc.view.window != nil
+      else { return }
+      self.readyWorkItem = nil
       self.onCommand?(["command": "ready"])
     }
+    readyWorkItem = ready
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: ready)
+    #if DEBUG
+      publishDiagnostics()
+    #endif
   }
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    hosting?.view.frame = bounds
+    if hosting?.view.superview === self {
+      hosting?.view.frame = bounds
+    }
     homeTouchSurface.frame = bounds
     #if DEBUG
       diagnostics.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
@@ -553,7 +772,7 @@ final class ScreenTimeReportView: UIView {
       publishDiagnostics()
     #endif
     activityControls.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 134)
-    if window != nil, hosting == nil, rebuildWorkItem == nil { setNeedsRebuild() }
+    scheduleRebuildIfNeeded()
   }
 }
 

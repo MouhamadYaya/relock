@@ -32,7 +32,12 @@ import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { AllAppsGlyph, FacebookIcon, SocialGlyph } from './decor-icons'
 
-const LOOP_MS = 7400
+/**
+ * Durée d'un tour complet. Volontairement serrée : cette démonstration est un
+ * passage obligé avant le vrai sélecteur, et chaque seconde d'attente en plus
+ * se paie en abandons. Le geste enseigné — déplier, cocher — reste lisible.
+ */
+const LOOP_MS = 5000
 
 /** Repères de la boucle, en fraction de `LOOP_MS`. */
 const T = {
@@ -51,6 +56,15 @@ const T = {
 
 /** Durée d'un halo de tap et d'une apparition de coche. */
 const BEAT = 0.06
+
+/**
+ * Instant où la seconde coche a fini d'apparaître : le geste est alors montré
+ * en entier, le repli qui suit n'apprend plus rien. `ScenePickerDemo` s'en
+ * sert pour déverrouiller son bouton — la chronologie n'est définie qu'ici.
+ */
+export const PICKER_DEMO_TAUGHT_MS = Math.round(
+  (T.checkSecond + BEAT) * LOOP_MS,
+)
 
 /** Couleurs relevées sur une vraie feuille iOS sombre. */
 const C = {

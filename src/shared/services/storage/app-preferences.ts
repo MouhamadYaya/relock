@@ -74,6 +74,46 @@ export function setReminderMinutes(minutes: number): void {
   }
 }
 
+/**
+ * Le rituel exigé avant d'ouvrir la porte.
+ *
+ * Trois frictions de nature différente, pour trois façons de se reprendre :
+ * `breathing` apaise, `math` occupe la tête, `transcribe` occupe les mains.
+ * Le choix est une préférence d'app et non un réglage par règle : la friction
+ * doit être une habitude stable, pas un paramètre qu'on ajuste règle par
+ * règle jusqu'à trouver la plus facile.
+ */
+export const PAUSE_RITUALS = ['breathing', 'math', 'transcribe'] as const
+export type PauseRitual = (typeof PAUSE_RITUALS)[number]
+
+export const DEFAULT_PAUSE_RITUAL: PauseRitual = 'breathing'
+
+function isPauseRitual(value: string | null): value is PauseRitual {
+  return (PAUSE_RITUALS as readonly string[]).includes(value ?? '')
+}
+
+/**
+ * Le rituel choisi. Toute valeur inconnue — écrite par une version plus
+ * récente, puis rétrogradée — retombe sur la respiration plutôt que de
+ * laisser l'écran de blocage sans contenu.
+ */
+export function getPauseRitual(): PauseRitual {
+  try {
+    const raw = kvStorage.getString(constants.PREF_PAUSE_RITUAL)
+    return isPauseRitual(raw) ? raw : DEFAULT_PAUSE_RITUAL
+  } catch {
+    return DEFAULT_PAUSE_RITUAL
+  }
+}
+
+export function setPauseRitual(ritual: PauseRitual): void {
+  try {
+    kvStorage.setString(constants.PREF_PAUSE_RITUAL, ritual)
+  } catch {
+    // Idem : ne jamais faire échouer un choix de confort.
+  }
+}
+
 const KEYS: Record<keyof AppPreferences, string> = {
   haptics: constants.PREF_HAPTICS,
   pauseSound: constants.PREF_PAUSE_SOUND,

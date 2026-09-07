@@ -9,20 +9,23 @@
  * donc toujours le même : récapitulatif → choix des apps → activer.
  */
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useState } from 'react'
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import React, { useRef, useState } from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { HalfSheet } from '@/features/blocking/components/HalfSheet'
+import { HoldToConfirmButton } from '@/features/blocking/components/HoldToConfirmButton'
+import { StrictCommitmentSheet } from '@/features/blocking/components/StrictCommitmentSheet'
+import { hhmm } from '@/features/blocking/format'
 import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMutation'
 import { returnToBlocks } from '@/features/blocking/navigation/return-to-blocks'
-import { findPreset, presetLines } from '@/features/blocking/presets'
+import {
+  findPreset,
+  isStrictPreset,
+  presetLines,
+  presetStrictEnd,
+} from '@/features/blocking/presets'
 import { armRule } from '@/features/blocking/services/arm'
 import type { BlockRuleView } from '@/features/blocking/types'
+import { useT } from '@/i18n/useT'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -47,9 +50,14 @@ const FW = {
 const f = (w: keyof typeof FW) => FW[w]
 
 export default function PresetRecapScreen() {
+  const t = useT()
   const { presetId } = useLocalSearchParams<{ presetId: string }>()
   const preset = findPreset(presetId)
   const createRule = useCreateRuleMutation()
+  // Engagement du mode strict : la feuille rend sa réponse à la promesse que
+  // `activate` attend — même mécanique que l'éditeur de règle.
+  const [strictPrompt, setStrictPrompt] = useState(false)
+  const strictAnswer = useRef<((committed: boolean) => void) | null>(null)
   // ⚠️ On part TOUJOURS de zéro, jamais du dernier choix global du picker.
   // Un préréglage dit QUAND bloquer, pas QUOI : hériter de la sélection d'une
   // règle précédente activait le blocage sur des apps que l'utilisateur
@@ -72,8 +80,29 @@ export default function PresetRecapScreen() {
     }
   }
 
+  const confirmStrictCommitment = (): Promise<boolean> =>
+    new Promise(resolve => {
+      strictAnswer.current = resolve
+      setStrictPrompt(true)
+    })
+
+  const answerStrict = (committed: boolean) => {
+    setStrictPrompt(false)
+    const resolve = strictAnswer.current
+    strictAnswer.current = null
+    resolve?.(committed)
+  }
+
   const activate = async () => {
     if (working || !count) return
+    // Un préréglage strict verrouille tout autant qu'un blocage réglé à la
+    // main : il passe donc par la MÊME porte d'engagement. Sans elle, la seule
+    // règle impossible à arrêter de l'app serait aussi la seule qu'on puisse
+    // armer sans jamais avoir lu le mot « irréversible ».
+    if (isStrictPreset(preset)) {
+      const committed = await confirmStrictCommitment()
+      if (!committed) return
+    }
     setWorking(true)
     // Id CLIENT : lie la mécanique native à la future ligne DB.
     const id = genUUID()
@@ -118,10 +147,16 @@ export default function PresetRecapScreen() {
         {close => (
           <View style={s.wrap}>
             <Text style={[f(700), s.title]}>C'est en place.</Text>
+            {/* Une règle STRICTE ne se suspend pas : promettre le contraire
+                ici serait le premier mensonge de l'app, et il tomberait au
+                pire moment — quand l'utilisateur essaiera. */}
             <Text style={[f(400), s.pitch]}>
               « {preset.title} » bloque maintenant {count} app
               {(count ?? 0) > 1 ? 's' : ''}. Tu la retrouveras dans l'onglet
-              Blocages — pour la suspendre ou la retirer quand tu veux.
+              Règles —{' '}
+              {isStrictPreset(preset)
+                ? 'en mode strict : impossible de l’arrêter avant la fin de chaque session.'
+                : 'pour la suspendre ou la retirer quand tu veux.'}
             </Text>
             <Pressable
               accessibilityRole="button"
@@ -169,24 +204,38 @@ export default function PresetRecapScreen() {
             </Text>
           )}
 
-          <Pressable
-            accessibilityRole="button"
-            disabled={working}
-            onPress={needsApps ? pickApps : activate}
-            style={[s.primary, working && s.primaryOff]}
-          >
-            {working ? (
-              <ActivityIndicator color={C.onViolet} />
-            ) : (
-              <Text style={[f(600), s.primaryTxt]}>
-                {needsApps ? 'Choisir les apps' : 'Activer ce blocage'}
-              </Text>
-            )}
-          </Pressable>
+          {/* Choisir les apps n'engage à rien : un tap suffit. ARMER la règle,
+              si : même maintien que partout ailleurs dans l'app, parce que
+              c'est le geste qui met un blocage en marche. */}
+          {needsApps ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={pickApps}
+              style={s.primary}
+            >
+              <Text style={[f(600), s.primaryTxt]}>Choisir les apps</Text>
+            </Pressable>
+          ) : (
+            <HoldToConfirmButton
+              testID="preset-activate"
+              idleLabel={t('blocking.preset_recap.activate')}
+              holdingLabel={t('blocking.hold.keep_holding')}
+              pending={working}
+              onConfirm={activate}
+              style={s.hold}
+            />
+          )}
 
           <Pressable accessibilityRole="button" onPress={close} style={s.ghost}>
             <Text style={[f(500), s.ghostTxt]}>Pas maintenant</Text>
           </Pressable>
+
+          <StrictCommitmentSheet
+            visible={strictPrompt}
+            endsAtLabel={hhmm(presetStrictEnd(preset))}
+            onCancel={() => answerStrict(false)}
+            onCommit={() => answerStrict(true)}
+          />
         </View>
       )}
     </HalfSheet>
@@ -229,8 +278,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryOff: { opacity: 0.45 },
   primaryTxt: { fontSize: 16, color: C.onViolet },
+  hold: { marginTop: 18 },
   ghost: { height: 44, alignItems: 'center', justifyContent: 'center' },
   ghostTxt: { fontSize: 14, color: C.txt2 },
 })

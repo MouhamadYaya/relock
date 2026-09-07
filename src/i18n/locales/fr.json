@@ -51,7 +51,7 @@
     "exit_subtitle": "Un esprit plus calme.\nPlus de temps pour l’essentiel.",
     "exit_cta": "Profiter de mon offre unique",
     "exit_decline": "Je préfère payer le plein tarif",
-    "exit_footer": "Résiliable à tout moment · Garantie satisfait ou remboursé",
+    "exit_footer": "Résiliable à tout moment dans l’App Store",
     "payment_failed": "Le paiement n’a pas abouti. Tu peux réessayer.",
     "payment_pending": "Le paiement est en attente de validation. Aucune autre offre n’est affichée.",
     "plans_title_accent": "plus de vie",
@@ -157,18 +157,18 @@
   "navigation": {
     "tabs": {
       "home": "Accueil",
-      "blocks": "Blocages",
+      "blocks": "Règles",
       "activity": "Activité"
     }
   },
   "blocking": {
-    "title": "Blocages",
+    "title": "Règles",
     "add_rule": "Nouvelle règle",
     "blocked_apps": "Apps bloquées",
     "unlock_all": "Tout débloquer",
     "unlock": "Débloquer",
     "unlock_x": "Débloquer X",
-    "rules_title": "Règles",
+    "rules_title": "Mes règles",
     "empty_rules": {
       "no_apps_blocked": "Toutes les apps sont disponibles.",
       "trouble_hint": "Ça ne marche pas ?",
@@ -211,16 +211,16 @@
       "close": "Fermer",
       "types": {
         "session": {
-          "title": "Session",
-          "description": "p. ex. 30 min"
+          "title": "Bloquer maintenant",
+          "description": "Tout de suite, pour la durée que tu choisis"
         },
         "schedule": {
-          "title": "Planification",
-          "description": "ex. 9h – 17h"
+          "title": "Plage horaire",
+          "description": "Tous les jours, aux mêmes heures"
         },
         "limit": {
-          "title": "Limite de temps",
-          "description": "ex. 45 min/jour"
+          "title": "Limite par jour",
+          "description": "Un quota de temps, puis c’est bloqué"
         }
       },
       "productive": {
@@ -428,6 +428,75 @@
       "reassure": "C’est le but : c’est toi, maintenant, qui décides pour toi, tout à l’heure.",
       "confirm": "Je m’engage",
       "cancel": "Annuler"
+    },
+    "pause_ritual": {
+      "change": "Changer d’écran",
+      "sheet_title": "Choisis ton écran",
+      "sheet_body": "Ce que Relock affichera avant d’ouvrir une app bloquée.",
+      "applies_next": "Ton choix s’applique à la prochaine pause.",
+      "confirmed": "{{ritual}} — écran défini pour la prochaine pause.",
+      "breathing": {
+        "title": "Respiration",
+        "description": "Six secondes de souffle guidé, rien à faire."
+      },
+      "math": {
+        "title": "Calcul mental",
+        "description": "Trois opérations à résoudre de tête."
+      },
+      "transcribe": {
+        "title": "Recopier un texte",
+        "description": "Une phrase à retaper, mot pour mot."
+      }
+    },
+    "math": {
+      "prompt": "Résous trois calculs pour continuer.",
+      "done": "C’est fait. La porte s’ouvre.",
+      "hint": "Tape ta réponse, puis valide.",
+      "wrong": "Raté. Voici un autre calcul.",
+      "remaining": "Encore {{count}} calcul",
+      "remaining_plural": "Encore {{count}} calculs",
+      "progress": "{{done}} calcul sur {{total}}",
+      "erase": "Effacer",
+      "check": "Valider"
+    },
+    "transcribe": {
+      "prompt": "Recopie cette phrase, à l’identique.",
+      "done": "Phrase recopiée. La porte s’ouvre.",
+      "placeholder": "Tape la phrase ici",
+      "field": "Phrase à recopier",
+      "incomplete": "Recopie la phrase",
+      "match": "La phrase est juste.",
+      "mismatch": "Ça diverge — reprends au passage en gris.",
+      "progress": "{{done}} / {{total}} caractères",
+      "line_1": "Je choisis d’ouvrir cette application maintenant, en connaissance de cause.",
+      "line_2": "Ce que je cherche ici, l’écran ne me le donnera pas ; je le sais déjà.",
+      "line_3": "Trente secondes d’attention valent mieux qu’une heure de défilement.",
+      "line_4": "Personne ne m’a demandé d’ouvrir ça : c’est l’habitude qui parle.",
+      "line_5": "Demain, je ne me souviendrai d’aucune des choses vues ce soir.",
+      "line_6": "J’ai posé cette limite moi-même, à un moment où je réfléchissais mieux."
+    },
+    "locked": "Bloqué",
+    "rule_types": {
+      "schedule": "Plage horaire",
+      "limit": "Limite de temps",
+      "timed": "Blocage minuté"
+    },
+    "resume_sheet": {
+      "title": "Règle en pause",
+      "body": "Elle ne protège plus rien pour l’instant. Maintiens pour la remettre en marche là où elle s’est arrêtée.",
+      "apps": "Apps",
+      "apps_single": "{{n}} app",
+      "apps_plural": "{{n}} apps",
+      "type": "Type",
+      "per_day": "{{time}} par jour",
+      "strict": "Mode strict",
+      "strict_on": "Oui",
+      "paused": "État",
+      "confirm": "Maintenir pour réactiver",
+      "cancel": "Laisser en pause"
+    },
+    "preset_recap": {
+      "activate": "Activer cette règle"
     }
   },
   "home": {
@@ -488,7 +557,6 @@
     "score_band_fair": "Équilibre moyen",
     "score_band_poor": "Équilibre fragile",
     "score_footer_excellent": "Journée maîtrisée. Garde ce rythme !",
-    "score_footer_pending": "Ton score arrive dès que quelques jours seront mesurés.",
     "score_improve_title": "Astuces pour faire monter le score",
     "score_tip_block": "Bloque les apps que tu ouvres le plus.",
     "score_tip_focus": "Devant le mur, confirme « Fermer ».",
@@ -745,7 +813,12 @@
     "reset_partial": "Blocages levés, mais l’effacement côté compte a échoué. Réessaie une fois en ligne.",
     "emergency_quota": "Tu as droit à un déblocage d’urgence par semaine.",
     "emergency_locked_title": "Déjà utilisé cette semaine",
-    "emergency_locked_body": "Tu as droit à un déblocage d’urgence par semaine. Le prochain sera disponible le {{date}}."
+    "emergency_locked_body": "Tu as droit à un déblocage d’urgence par semaine. Le prochain sera disponible le {{date}}.",
+    "pause_ritual": {
+      "label": "Écran de blocage",
+      "hint": "Ce que Relock affiche avant un déblocage",
+      "footnote": "Le nouvel écran s’applique à partir de ta prochaine pause : celle qui est en cours va toujours à son terme."
+    }
   },
   "onboarding": {
     "headline": "Reprends le contrôle\nde ton attention.",

@@ -31,10 +31,10 @@ import {
   BrandActionSurface,
   SheetBloom,
 } from '@/features/blocking/components/BlockingSurfaces'
-import { BreathingPauseModal } from '@/features/blocking/components/BreathingPauseModal'
 import { HalfSheet } from '@/features/blocking/components/HalfSheet'
 import { HoldToDeleteSheet } from '@/features/blocking/components/HoldToDeleteSheet'
 import { PauseDurationSheet } from '@/features/blocking/components/PauseDurationSheet'
+import { PauseRitualModal } from '@/features/blocking/components/PauseRitualModal'
 import { StrictBlockSheet } from '@/features/blocking/components/StrictBlockSheet'
 import { UnlockAppsSheet } from '@/features/blocking/components/UnlockAppsSheet'
 import { UnlockDurationSheet } from '@/features/blocking/components/UnlockDurationSheet'
@@ -509,7 +509,7 @@ export default function BlockDetailScreen() {
             onClose={() => setStrictNotice(false)}
           />
 
-          <BreathingPauseModal
+          <PauseRitualModal
             visible={flow === 'breathing-unlock'}
             tokenKey={shortcutKey ?? undefined}
             allApps={!shortcutKey}
@@ -537,7 +537,7 @@ export default function BlockDetailScreen() {
             onPick={confirmUnlock}
           />
 
-          <BreathingPauseModal
+          <PauseRitualModal
             visible={flow === 'breathing-quit'}
             allApps
             onCancel={() => setFlow(null)}

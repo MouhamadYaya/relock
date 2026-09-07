@@ -259,12 +259,32 @@ export const relockMaterial = {
     quickChevronSize: 20,
     bottomNavigationClearance: 49,
     scrollBottom: 28,
-    blockingTypeCardMinHeight: 148,
+    // Les trois types de règle sont la porte d'entrée du produit : ce sont
+    // des rangées pleine largeur, pas des vignettes en grille. 78 pt, c'est
+    // la hauteur où le pictogramme (48 pt de scène) et deux lignes de texte
+    // tiennent sans que la rangée se mette à ressembler à une carte creuse.
+    blockingTypeRowMinHeight: 78,
     blockingTypeGlyphSize: 32,
     blockingTypeChevronSize: 20,
     blockingTemplateCardMinHeight: 224,
     blockingLockedTileSize: 68,
     blockingScrollBottom: 112,
+    // Écrans de blocage (respiration, calcul, recopie).
+    // La vignette est une SILHOUETTE DE TÉLÉPHONE : c'est elle qui dit « voici
+    // l'écran que tu verras », là où une carte large se lisait comme une
+    // simple ligne de réglage. Le rapport reprend celui d'un téléphone
+    // moderne, assez étroit pour que les trois tiennent de front sur un
+    // iPhone SE.
+    pauseRitualTileRatio: 0.52,
+    pauseRitualTileRadius: 22,
+    // Le symbole central : lisible d'un coup d'œil à un mètre, sans détail à
+    // déchiffrer. C'est le seul contenu de la vignette.
+    pauseRitualGlyphSize: 52,
+    // Touche du pavé numérique : 62 pt de haut, au-dessus des 44 pt
+    // recommandés — on y tape vite, parfois de travers, et une faute de
+    // frappe relance un calcul.
+    pauseKeyHeight: 62,
+    pauseKeyGap: 10,
     blockingCardColumnWidth: '48.4%',
     homeHeaderActionSize: 44,
     // Entete d'Accueil : le logotype a gauche, la serie et les reglages a

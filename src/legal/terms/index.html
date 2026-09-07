@@ -15,6 +15,22 @@
     <a class="rl-skip" href="#main">Skip to content</a>
     <header class="rl-header">
       <div class="rl-shell rl-header__inner">
+        <details class="rl-menu">
+          <summary class="rl-burger" aria-label="Menu">
+            <span class="rl-burger__bars" aria-hidden="true"></span>
+          </summary>
+          <div class="rl-menu__backdrop"></div>
+          <nav class="rl-menu__panel" aria-label="Mobile navigation">
+            <a href="../">Home</a>
+            <a href="../help/">Help centre</a>
+            <a href="../privacy/">Privacy</a>
+            <a href="./" aria-current="page">Terms</a>
+            <hr class="rl-menu__sep" />
+            <p class="rl-menu__label">Language</p>
+            <a href="./" lang="en" hreflang="en" aria-current="page">English</a>
+            <a href="../fr/terms/" lang="fr" hreflang="fr">Français</a>
+          </nav>
+        </details>
         <a class="rl-brand" href="../" aria-label="Relock home"><span>Relock</span></a>
         <nav class="rl-nav" aria-label="Legal navigation"><a href="../">Home</a><a href="../privacy/">Privacy</a></nav>
       </div>
@@ -26,11 +42,11 @@
           <p class="rl-eyebrow">Legal</p>
           <h1>Terms of Service</h1>
           <div class="legal-hero__meta">
-            <span>Effective: <span class="placeholder">[EFFECTIVE DATE]</span></span>
-            <span>Last updated: <span class="placeholder">[LAST UPDATED]</span></span>
-            <span>Version: Draft 1.0</span>
+            <span>Effective: September 7, 2026</span>
+            <span>Last updated: September 7, 2026</span>
+            <span>Version: 1.0</span>
           </div>
-          <p class="legal-notice">These Terms reflect the audited Relock product. Bracketed text must be confirmed before publication.</p>
+          <p class="legal-notice">These Terms govern the Relock mobile application and the getrelock.com website. Relock is offered to people aged 16 and over in Canada and the United States.</p>
         </div>
       </section>
 
@@ -44,15 +60,16 @@
           <a href="#third-parties">9. Third parties</a><a href="#privacy">10. Privacy</a>
           <a href="#termination">11. Termination</a><a href="#disclaimers">12. Disclaimers</a>
           <a href="#liability">13. Liability</a><a href="#indemnity">14. Indemnity</a>
-          <a href="#law">15. Governing law</a><a href="#changes">16. Changes</a><a href="#contact">17. Contact</a>
+          <a href="#law">15. Disputes &amp; law</a><a href="#changes">16. Changes</a><a href="#contact">17. Contact</a>
         </nav>
 
         <article class="legal-content">
           <section id="agreement">
             <h2>1. Agreement to these Terms</h2>
             <p>
-              These Terms of Service ("Terms") are a legal agreement between you and
-              <span class="placeholder">[LEGAL ENTITY NAME AND ENTITY TYPE]</span> ("Relock," "we," "us," or "our")
+              These Terms of Service ("Terms") are a legal agreement between you and YATECH, a sole proprietorship
+              registered in Quebec, Canada, with its business address at 1187C rue Jogues, Drummondville,
+              Quebec J2B 4X8, Canada ("Relock," "we," "us," or "our"),
               governing your access to the Relock mobile application, website, and related services (the "Service").
               By creating an account, purchasing a subscription, or using the Service, you agree to these Terms. If
               you do not agree, do not use the Service.
@@ -62,9 +79,11 @@
           <section id="eligibility">
             <h2>2. Eligibility</h2>
             <p>
-              You must be at least <span class="placeholder">[MINIMUM AGE]</span> and legally able to enter this
-              agreement. If applicable law requires parental or guardian consent, you may use the Service only with
-              that consent. <span class="placeholder">[CONFIRM TARGET AUDIENCE AND AGE REQUIREMENTS.]</span>
+              <strong>You must be at least 16 years old</strong> and legally able to enter this agreement. Relock is
+              built for adults and older teenagers who want to manage their own screen time; it is not directed to
+              children and we do not knowingly allow anyone under 16 to create an account. If the law of your
+              province, state, or country requires a parent’s or guardian’s consent at your age, you may use the
+              Service only with that consent, and that person accepts these Terms with you.
             </p>
           </section>
 
@@ -73,7 +92,7 @@
             <p>
               Relock supports account access through Sign in with Apple and Google Sign-In. You are responsible for
               keeping your provider account and device secure, for information submitted through your account, and
-              for promptly notifying us at <a href="mailto:[SUPPORT EMAIL]">[SUPPORT EMAIL]</a> if you suspect
+              for promptly notifying us at <a href="mailto:contact@getrelock.com">contact@getrelock.com</a> if you suspect
               unauthorized access. You must provide accurate information and may not impersonate another person.
             </p>
           </section>
@@ -86,8 +105,14 @@
               may differ by device, operating-system version, permission status, subscription tier, region, or store.
             </p>
             <p>
-              We may improve, add, suspend, or remove Service features. Where required by law, we will provide notice
-              of material changes. <span class="placeholder">[CONFIRM PUBLIC PLATFORM AND REGION AVAILABILITY.]</span>
+              Relock is offered on iPhone and iPad through the Apple App Store, to people located in Canada and the
+              United States. Its blocking features are built on Apple Screen Time (Family Controls) and are available
+              only on Apple devices that support it. Where an Android version is offered, references in these Terms
+              to Google and Google Play apply to it; until then they do not.
+            </p>
+            <p>
+              We may improve, add, suspend, or remove Service features, and we may change the countries or platforms
+              where Relock is offered. Where required by law, we will provide notice of material changes.
             </p>
           </section>
 
@@ -200,9 +225,17 @@
             </p>
             <p>
               Our total liability arising from the Service will not exceed the greater of the amount you paid Relock
-              for the Service during the 12 months before the event giving rise to the claim or
-              <span class="placeholder">[LIABILITY CAP AMOUNT]</span>. This section does not limit liability that cannot
-              be limited under applicable law. <span class="placeholder">[COUNSEL TO LOCALIZE THIS CLAUSE.]</span>
+              for the Service during the 12 months before the event giving rise to the claim or CAD $100.
+            </p>
+            <p>
+              Nothing in these Terms limits liability that cannot be limited by law. In particular, if you are a
+              consumer in Quebec, the <em>Consumer Protection Act</em> and the <em>Civil Code of Québec</em> give you
+              warranties and remedies that no contract can take away, and nothing here excludes our liability for
+              bodily or moral injury, for gross or intentional fault, or for the legal warranty of quality. If you are
+              a consumer elsewhere in Canada or in the United States, some jurisdictions do not allow the exclusion of
+              incidental or consequential damages or of implied warranties, so those exclusions may not apply to you.
+              In every case you keep the rights your local consumer law gives you, and this section applies only to
+              the extent that law allows.
             </p>
           </section>
 
@@ -216,12 +249,28 @@
           </section>
 
           <section id="law">
-            <h2>15. Governing law and disputes</h2>
+            <h2>15. Resolving a dispute, governing law, and courts</h2>
             <p>
-              These Terms are governed by the laws of <span class="placeholder">[GOVERNING JURISDICTION]</span>, without
-              regard to conflict-of-law rules. Subject to mandatory consumer rights, courts located in
-              <span class="placeholder">[COURTS AND VENUE]</span> will have exclusive jurisdiction.
-              <span class="placeholder">[CONFIRM WHETHER ARBITRATION, INFORMAL RESOLUTION, OR CLASS-ACTION TERMS ARE APPROPRIATE AND ENFORCEABLE.]</span>
+              <strong>Let us try to fix it first.</strong> Most problems are faster to solve by email than in court.
+              Before starting a legal proceeding, please write to
+              <a href="mailto:contact@getrelock.com">contact@getrelock.com</a> with your account email, what happened,
+              and what outcome you are looking for. We will reply and try in good faith to resolve it with you within
+              30 days. This step is a courtesy, not a barrier: it does not stop you from going to court, from
+              contacting a consumer-protection authority, or from seeking urgent relief at any time, and it does not
+              suspend any limitation period.
+            </p>
+            <p>
+              <strong>Governing law and courts.</strong> These Terms are governed by the laws in force in the
+              Province of Quebec, Canada, and the federal laws of Canada that apply there, without regard to
+              conflict-of-law rules. The courts of the Province of Quebec, Canada have jurisdiction over any dispute
+              arising from these Terms or the Service.
+            </p>
+            <p>
+              This choice cannot take away a protection that the law of your own province, state, or country gives
+              you as a consumer. If you are a consumer domiciled in Quebec, you keep the right to bring your action
+              before the court of your own domicile. If you are a consumer in the United States or elsewhere in
+              Canada, and the mandatory law of your home jurisdiction gives you the right to sue there, this section
+              does not remove it. We do not require arbitration and these Terms contain no class-action waiver.
             </p>
           </section>
 
@@ -237,9 +286,9 @@
           <section id="contact">
             <h2>17. Contact and general terms</h2>
             <p>
-              Questions about these Terms:<br /><span class="placeholder">[LEGAL ENTITY NAME]</span><br />
-              <span class="placeholder">[REGISTERED ADDRESS]</span><br />
-              <a href="mailto:[LEGAL CONTACT EMAIL]">[LEGAL CONTACT EMAIL]</a>
+              Questions about these Terms:<br />YATECH (sole proprietorship)<br />
+              1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada<br />
+              <a href="mailto:contact@getrelock.com">contact@getrelock.com</a>
             </p>
             <p>
               If any provision is unenforceable, the remaining provisions stay effective. Our failure to enforce a
@@ -248,17 +297,6 @@
               Policy are the entire agreement about the Service, except for store terms and any additional terms we
               expressly present for a feature.
             </p>
-          </section>
-
-          <section class="legal-review" aria-labelledby="reviewer-notes">
-            <h2 id="reviewer-notes">Reviewer notes before publication</h2>
-            <ul>
-              <li>Confirm the legal entity, minimum age, platform/region scope, governing law, venue, contact information, and liability cap.</li>
-              <li>Confirm the exact store products and any trial language shown in production; do not add a duration that is not guaranteed by the store offer.</li>
-              <li>Localize consumer-rights, warranty, liability, cancellation, dispute, and auto-renewal language for every launch jurisdiction.</li>
-              <li>Ensure App Store and Google Play listing terms match these Terms and the live purchase flow.</li>
-            </ul>
-            <p><strong>This draft must be reviewed by a qualified attorney before publication or reliance.</strong></p>
           </section>
         </article>
       </div>
@@ -269,10 +307,11 @@
         <div class="rl-footer__grid">
           <div><a class="rl-brand" href="../"><span>Relock</span></a><p>Make space for what you meant to do.</p></div>
           <div><h2>Legal</h2><a href="../privacy/">Privacy Policy</a><a href="./">Terms of Service</a></div>
-          <div><h2>Company</h2><a href="mailto:[SUPPORT EMAIL]">Support</a><details class="rl-language"><summary>Language</summary><div class="rl-language__options"><a href="./" lang="en" hreflang="en" aria-current="page">English</a><a href="../fr/terms/" lang="fr" hreflang="fr">Français</a></div></details></div>
+          <div><h2>Company</h2><a href="../help/">Help centre</a><a href="mailto:contact@getrelock.com">Support</a><details class="rl-language"><summary>Language</summary><div class="rl-language__options"><a href="./" lang="en" hreflang="en" aria-current="page">English</a><a href="../fr/terms/" lang="fr" hreflang="fr">Français</a></div></details></div>
         </div>
-        <div class="rl-footer__bottom"><span>© [YEAR] [LEGAL ENTITY NAME]. All rights reserved.</span><span>[REGISTERED ADDRESS]</span></div>
+        <div class="rl-footer__bottom"><span>© 2026 YATECH. All rights reserved.</span><span>1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada</span></div>
       </div>
     </footer>
+    <script src="../menu.js" defer></script>
   </body>
 </html>

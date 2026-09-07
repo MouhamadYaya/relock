@@ -3,6 +3,19 @@
  * « Autoriser "Relock" à suivre votre activité dans les apps et sur les
  * sites Web d'autres entreprises ? ».
  *
+ * ⚠️ RIEN N'APPELLE `requestTrackingPermission()` AUJOURD'HUI, ET C'EST
+ * VOLONTAIRE. Relock n'embarque aucun SDK publicitaire et ne lit aucun
+ * identifiant publicitaire : afficher la feuille ATT sans suivi réel est un
+ * motif de rejet documenté à la revue App Store, et contredirait la
+ * politique de confidentialité publiée, qui affirme « nous ne vous suivons
+ * pas ». `NSUserTrackingUsageDescription` a donc été retiré d'Info.plist.
+ *
+ * Pour rétablir la demande le jour où une attribution réelle existe :
+ * remettre la clé dans `ios/Relock/Info.plist`, puis appeler
+ * `requestTrackingPermission()` depuis l'écran voulu — ET mettre à jour la
+ * politique de confidentialité (site + fiche App Store) dans le même
+ * changement.
+ *
  * Sur Android, sur un build sans le module natif, ou sur iOS < 14,
  * `isTrackingPromptAvailable` vaut false et les appels résolvent
  * `'unavailable'` : aucun code appelant n'a besoin de tester la plateforme.

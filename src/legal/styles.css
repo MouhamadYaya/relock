@@ -72,6 +72,9 @@
 html {
   scroll-behavior: smooth;
   background: var(--canvas);
+  /* Stop iOS Safari inflating body copy when the device is rotated. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {

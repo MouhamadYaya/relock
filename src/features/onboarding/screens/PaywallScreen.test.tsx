@@ -24,15 +24,13 @@ jest.mock('@/session/bootstrap', () => ({
   syncEntitlement: jest.fn(async () => undefined),
   unlockAfterPurchase: jest.fn(),
 }))
+const mockSignIn = jest.fn()
 jest.mock('@/session/useSocialSignIn', () => ({
   useSocialSignIn: () => ({
-    signInWithApple: jest.fn(),
-    signInWithGoogle: jest.fn(),
+    signInWithApple: mockSignIn,
+    signInWithGoogle: mockSignIn,
     pending: false,
   }),
-}))
-jest.mock('@/shared/native/useTrackingPrompt', () => ({
-  useTrackingPrompt: jest.fn(),
 }))
 jest.mock('@/i18n/useT', () => ({ useT: () => (k: string) => k }))
 
@@ -49,21 +47,11 @@ describe('écran paywall', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockSignIn.mockReset().mockResolvedValue({ ok: true })
     jest.mocked(syncEntitlement).mockResolvedValue(undefined)
     jest.mocked(loadPaywallCatalog).mockResolvedValue(catalog)
   })
   afterEach(() => act(() => renderer?.unmount()))
-
-  it('argumente à la première vue, va droit au prix ensuite', async () => {
-    await mount()
-    expect(flow().initialScreen).toBe('benefits')
-    act(() => renderer.unmount())
-
-    // Deuxième présentation : le plan et le rituel ne se rejouent pas, et le
-    // pitch non plus — il l'a déjà vu.
-    await mount()
-    expect(flow().initialScreen).toBe('plans')
-  })
 
   it('ne laisse jamais sortir', async () => {
     await mount()
@@ -81,5 +69,71 @@ describe('écran paywall', () => {
     await mount()
     expect(flow().plans).toEqual([])
     expect(flow().escapable).toBe(false)
+  })
+})
+
+/**
+ * « J'ai déjà un compte » est la seule chose qu'on puisse OUVRIR depuis une
+ * porte dont on ne peut pas sortir. Elle doit donc se refermer : une feuille
+ * Apple qu'on annule ne peut pas coûter l'accès au tarif — c'est-à-dire, ici,
+ * l'accès à l'app entière.
+ */
+describe('connexion depuis le paywall', () => {
+  let renderer: ReactTestRenderer
+  const mount = async () => {
+    await act(async () => {
+      renderer = create(<PaywallScreen />)
+    })
+  }
+  const flow = () =>
+    renderer.root.find(node => (node.type as unknown) === 'PaywallFlow').props
+  const authScene = () =>
+    renderer.root.find(node => (node.type as unknown) === 'SceneAuth')
+  const countOf = (name: string) =>
+    renderer.root.findAll(node => (node.type as unknown) === name).length
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockSignIn.mockReset().mockResolvedValue({ ok: true })
+    jest.mocked(syncEntitlement).mockResolvedValue(undefined)
+    // Le cul-de-sac réel : RevenueCat muet, aucun tarif affichable. C'est le
+    // seul écran qui propose la connexion.
+    jest.mocked(loadPaywallCatalog).mockResolvedValue(null)
+  })
+  afterEach(() => act(() => renderer?.unmount()))
+
+  it('ouvre l’écran de compte, et sait le refermer', async () => {
+    await mount()
+    act(() => flow().onSignIn())
+    expect(countOf('SceneAuth')).toBe(1)
+    expect(authScene().props.onBack).toEqual(expect.any(Function))
+
+    act(() => authScene().props.onBack())
+    // On revient à l'écran d'où l'on venait — pas dans le vide.
+    expect(countOf('SceneAuth')).toBe(0)
+    expect(countOf('PaywallFlow')).toBe(1)
+  })
+
+  it('n’enferme pas quand la feuille de connexion est annulée', async () => {
+    mockSignIn.mockResolvedValue({
+      ok: false,
+      canceled: true,
+      error: { code: 'AUTH_CANCELED', message: 'annulé', raw: null },
+    })
+    await mount()
+    act(() => flow().onSignIn())
+    await act(async () => authScene().props.onApple())
+    // L'écran reste (il peut réessayer), mais la sortie existe toujours.
+    expect(countOf('SceneAuth')).toBe(1)
+    act(() => authScene().props.onBack())
+    expect(countOf('PaywallFlow')).toBe(1)
+  })
+
+  it('ramène aux tarifs quand le compte n’a aucun abonnement', async () => {
+    await mount()
+    act(() => flow().onSignIn())
+    await act(async () => authScene().props.onGoogle())
+    expect(countOf('SceneAuth')).toBe(0)
+    expect(countOf('PaywallFlow')).toBe(1)
   })
 })

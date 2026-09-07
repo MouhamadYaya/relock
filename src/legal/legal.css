@@ -140,6 +140,8 @@
 
 .legal-table-wrap {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   margin: 26px 0;
   border: 1px solid rgb(255 255 255 / 9%);
   border-radius: 20px;
@@ -219,6 +221,11 @@
 
   .legal-toc strong {
     grid-column: 1 / -1;
+  }
+
+  /* Stacked table-of-contents entries become real touch targets. */
+  .legal-toc a {
+    min-height: 44px;
   }
 }
 

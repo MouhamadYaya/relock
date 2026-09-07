@@ -44,7 +44,6 @@
 		AB1CE0000000000000000007 /* RelockBlockAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000002 /* RelockBlockAttributes.swift */; };
 		AB1CE0000000000000000008 /* RelockWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB1CE0000000000000000004 /* RelockWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */; };
-		C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */; };
 		C0DE00000000000000000001 /* ActivityPhysicalScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */; };
 		C0DE10000000000000000001 /* ShieldAttemptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000011 /* ShieldAttemptStore.swift */; };
 		C0DE10000000000000000002 /* ShieldAttemptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE10000000000000000011 /* ShieldAttemptStore.swift */; };
@@ -64,6 +63,7 @@
 		C0DE20000000000000000021 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
 		C0DE20000000000000000022 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
 		C0DE20000000000000000023 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
+		C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
 		C775DF612177016E41684402 /* Shield.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 54500C62E4A3555FF6A9CDE2 /* Shield.xcassets */; };
@@ -203,16 +203,16 @@
 		BA36F585153B5E7C7D71D1B7 /* RelockShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA97067EDAE6D8F92FDAD17E /* RelockShieldAction.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = RelockShieldAction.entitlements; path = RelockShieldAction/RelockShieldAction.entitlements; sourceTree = "<group>"; };
 		BE6C76F37A41348D6134E60C /* RelockActivityReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = RelockActivityReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeReportSurvivalTests.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000002 /* ActivityPhysicalScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityPhysicalScrollTests.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000003 /* RelockUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RelockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0DE10000000000000000011 /* ShieldAttemptStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShieldAttemptStore.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000012 /* RelockShieldCopy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RelockShieldCopy.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000013 /* ShieldAttemptStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldAttemptStoreTests.swift; sourceTree = "<group>"; };
 		C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelockBridgeDiagnosticsTests.swift; sourceTree = "<group>"; };
-		C0DE20000000000000000003 /* ExtensionLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLogTests.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000001 /* ExtensionLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionLog.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000002 /* ExtensionSentry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionSentry.swift; sourceTree = "<group>"; };
+		C0DE20000000000000000003 /* ExtensionLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLogTests.swift; sourceTree = "<group>"; };
+		C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeReportSurvivalTests.swift; sourceTree = "<group>"; };
 		C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlocusScreenTime.swift; path = Relock/BlocusScreenTime.swift; sourceTree = "<group>"; };
 		C504AB07807F4A598A8D411D /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = Relock/BootSplash.storyboard; sourceTree = "<group>"; };
 		D1A700000000000000000001 /* NativeDurationPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeDurationPickerView.swift; path = Relock/NativeDurationPickerView.swift; sourceTree = "<group>"; };

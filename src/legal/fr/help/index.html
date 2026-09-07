@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05060B" />
+    <meta name="description" content="Centre d’aide Relock : autorisation Temps d’écran, création de règles de blocage, blocage qui ne s’applique pas, abonnement et données personnelles." />
+    <title>Centre d’aide | Relock</title>
+    <link rel="icon" href="../../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../../pages.css" />
+    <link rel="stylesheet" href="../../legal.css" />
+  </head>
+  <body class="rl-page legal-page">
+    <a class="rl-skip" href="#main">Aller au contenu</a>
+    <header class="rl-header">
+      <div class="rl-shell rl-header__inner">
+        <details class="rl-menu">
+          <summary class="rl-burger" aria-label="Menu">
+            <span class="rl-burger__bars" aria-hidden="true"></span>
+          </summary>
+          <div class="rl-menu__backdrop"></div>
+          <nav class="rl-menu__panel" aria-label="Navigation mobile">
+            <a href="../">Accueil</a>
+            <a href="./" aria-current="page">Centre d’aide</a>
+            <a href="../privacy/">Confidentialité</a>
+            <a href="../terms/">Conditions</a>
+            <hr class="rl-menu__sep" />
+            <p class="rl-menu__label">Langue</p>
+            <a href="../../help/" lang="en" hreflang="en">English</a>
+            <a href="./" lang="fr" hreflang="fr" aria-current="page">Français</a>
+          </nav>
+        </details>
+        <a class="rl-brand" href="../" aria-label="Accueil Relock"><span>Relock</span></a>
+        <nav class="rl-nav" aria-label="Navigation assistance"><a href="../">Accueil</a><a href="../privacy/">Confidentialité</a><a href="../terms/">Conditions</a></nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="legal-hero">
+        <div class="rl-shell">
+          <p class="rl-eyebrow">Assistance</p>
+          <h1>Centre d’aide</h1>
+          <div class="legal-hero__meta">
+            <span>Relock pour iPhone</span>
+            <span>Écrit pour la version publiée</span>
+            <span>Réponse sous quelques jours</span>
+          </div>
+          <p class="legal-notice">
+            Rien ici n’est un moyen de contourner les blocages que vous avez posés. Si vous cherchez à tout lever
+            maintenant, allez directement au <a href="#urgence">déblocage d’urgence</a> : il existe, il est
+            volontaire, et il a un prix.
+          </p>
+        </div>
+      </section>
+
+      <div class="rl-shell legal-layout">
+        <nav class="legal-toc" aria-label="Sections d’aide">
+          <strong>Sur cette page</strong>
+          <a href="#demarrer">1. Avant de commencer</a><a href="#regles">2. Les trois types de blocage</a>
+          <a href="#pause">3. La pause</a><a href="#strict">4. Le mode strict</a>
+          <a href="#ne-marche-pas">5. Un blocage ne s’applique pas</a><a href="#urgence">6. Déblocage d’urgence</a>
+          <a href="#desinstallation">7. Protection anti-désinstallation</a><a href="#score">8. Score et série</a>
+          <a href="#notifications">9. Notifications</a><a href="#abonnement">10. Abonnement</a>
+          <a href="#donnees">11. Vos données</a><a href="#contact">12. Toujours bloqué</a>
+        </nav>
+
+        <article class="legal-content">
+          <section id="demarrer">
+            <h2>1. Avant de commencer</h2>
+            <p>
+              Relock fonctionne <strong>uniquement sur iPhone</strong>. Le blocage lui-même est assuré par le
+              framework Family Controls d’Apple, qui n’existe que sur iOS et dont Relock n’a pas d’équivalent
+              ailleurs.
+            </p>
+            <p>
+              Une seule autorisation fait tout le travail : l’<strong>accès au Temps d’écran</strong>. Sans elle,
+              Relock affiche vos règles mais n’en applique aucune. Elle vous est demandée pendant l’intégration, et
+              vous pouvez la vérifier à tout moment dans <em>Réglages → Protection → Accès au Temps d’écran</em>. Si
+              autre chose que <em>Accordé</em> s’affiche, touchez la ligne et acceptez la demande iOS.
+            </p>
+            <div class="legal-callout">
+              <p>
+                Apple ne présente la fenêtre d’autorisation qu’un nombre limité de fois. Si toucher la ligne
+                n’ouvre plus rien, accordez l’accès depuis l’app Réglages de l’iPhone, rubrique <em>Temps
+                d’écran</em>, puis rouvrez Relock.
+              </p>
+            </div>
+          </section>
+
+          <section id="regles">
+            <h2>2. Les trois types de blocage</h2>
+            <p>
+              Une règle associe les apps que vous choisissez à l’un des trois mécanismes. Vous choisissez le
+              mécanisme à la création — c’est ce qui fait de Relock un outil de friction plutôt qu’un interrupteur.
+            </p>
+            <div class="legal-table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Type</th><th>Ce qu’il fait</th><th>Idéal pour</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Délai progressif</td>
+                    <td>Un écran d’attente précède l’ouverture, et il s’allonge à chaque ouverture sur la même période.</td>
+                    <td>L’ouverture réflexe — celle que vous n’avez pas décidée.</td>
+                  </tr>
+                  <tr>
+                    <td>Plages horaires</td>
+                    <td>Les apps sont indisponibles pendant les heures que vous fixez, par exemple 22 h – 8 h.</td>
+                    <td>Protéger le sommeil, les matins ou les heures de travail.</td>
+                  </tr>
+                  <tr>
+                    <td>Limite d’ouvertures</td>
+                    <td>Un nombre maximum d’ouvertures par jour. Passé la limite, l’app ne s’ouvre plus jusqu’au lendemain.</td>
+                    <td>Garder une app dans sa vie sans lui laisser la journée.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Les règles se trouvent dans <em>Réglages → Protection → Mes blocages</em> et dans l’onglet Blocages.
+              Plusieurs peuvent tourner en même temps : la plus stricte applicable à l’instant l’emporte.
+            </p>
+          </section>
+
+          <section id="pause">
+            <h2>3. La pause</h2>
+            <p>
+              Quand un délai progressif se déclenche, Relock ne refuse pas sèchement. Il demande
+              <strong>« Qu’est-ce que vous cherchez vraiment ? »</strong> et décompte. À la fin, vous pouvez toujours
+              choisir <em>Ouvrir quand même</em> — c’est le principe. La pause est là pour transformer un geste
+              automatique en décision, pas pour gagner un bras de fer contre vous.
+            </p>
+            <p>
+              Le son d’ambiance de cet écran se coupe dans <em>Réglages → Personnalisation → Son du rituel de
+              pause</em>, et les vibrations dans <em>Vibration</em>.
+            </p>
+          </section>
+
+          <section id="strict">
+            <h2>4. Le mode strict</h2>
+            <p>
+              Une règle en mode strict ne peut pas être arrêtée avant son terme. Pas de pause, pas d’<em>Ouvrir quand
+              même</em>, pas de modification pour l’écourter. Relock vous le dira sans détour : <em>ce blocage ne
+              peut pas être arrêté avant la fin ; c’est exactement ce que vous avez choisi en l’activant.</em>
+            </p>
+            <p>
+              Ne l’activez que si vous voulez retirer toute marge à votre futur vous. La seule porte qui reste est le
+              <a href="#urgence">déblocage d’urgence</a>, et elle vous coûte la règle elle-même.
+            </p>
+          </section>
+
+          <section id="ne-marche-pas">
+            <h2>5. Un blocage ne s’applique pas</h2>
+            <p>La quasi-totalité des signalements se ramène à l’un de ces cas.</p>
+            <div class="legal-table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Ce que vous voyez</th><th>Pourquoi</th><th>Solution</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>L’onglet Blocages annonce que toutes les apps sont disponibles, alors que vous avez créé des règles.</td>
+                    <td>L’accès au Temps d’écran a été refusé ou révoqué : iOS n’applique donc rien.</td>
+                    <td><em>Réglages → Protection → Accès au Temps d’écran</em>, puis accordez-le. Redémarrez Relock ensuite.</td>
+                  </tr>
+                  <tr>
+                    <td>Une app s’ouvre normalement alors que les autres sont bloquées.</td>
+                    <td>Cette app n’est pas dans la sélection de la règle. Apple ne transmet à Relock que des jetons opaques, jamais des noms d’apps : une catégorie peut ne pas contenir l’app que vous y imaginiez.</td>
+                    <td>Modifiez la règle et ajoutez l’app explicitement, plutôt que de compter sur sa catégorie.</td>
+                  </tr>
+                  <tr>
+                    <td>La règle indique un démarrage dans le futur.</td>
+                    <td>Rien d’anormal : une règle à plages horaires ne s’applique que dans sa fenêtre.</td>
+                    <td>Lisez la ligne d’état sous la règle, elle indique quand elle démarre.</td>
+                  </tr>
+                  <tr>
+                    <td>Le blocage a cessé après une réinstallation ou un changement d’iPhone.</td>
+                    <td>L’autorisation Temps d’écran est propre à l’appareil et ne suit pas votre compte.</td>
+                    <td>Accordez de nouveau l’accès sur le nouvel appareil ; vos règles reviennent avec votre compte.</td>
+                  </tr>
+                  <tr>
+                    <td>Le blocage fonctionne, mais l’app reste figée sur l’écran de blocage.</td>
+                    <td>L’écran de blocage iOS est une extension système distincte : elle peut rester affichée un instant après la fin d’une règle.</td>
+                    <td>Fermez l’app depuis le sélecteur d’apps et rouvrez-la.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Si aucun cas ne correspond, envoyez-nous la version de l’app depuis <em>Réglages → À propos</em> — la
+              ligne <em>Signaler un bug</em> la remplit pour vous.
+            </p>
+          </section>
+
+          <section id="urgence">
+            <h2>6. Déblocage d’urgence</h2>
+            <p>
+              <em>Réglages → Zone sensible → Déblocage d’urgence</em> lève tout immédiatement : pas de respiration,
+              pas d’attente, pas de mode strict. Il existe pour les vraies urgences — un entretien, un déplacement,
+              un imprévu médical.
+            </p>
+            <div class="legal-callout">
+              <p>
+                Il <strong>supprime vos règles</strong>, il ne les suspend pas. Vous devrez les reconstruire ensuite.
+                Ce prix est volontaire : c’est lui qui empêche l’issue de secours de devenir l’habitude, et c’est
+                aussi notre garantie que Relock ne prend jamais votre téléphone en otage.
+              </p>
+            </div>
+          </section>
+
+          <section id="desinstallation">
+            <h2>7. Protection anti-désinstallation</h2>
+            <p>
+              Quand elle est active et qu’un blocage tourne, iOS refuse la suppression d’apps — y compris celle de
+              Relock. Cela ferme le contournement le plus évident : désinstaller l’arbitre en plein match.
+            </p>
+            <p>
+              Pour supprimer Relock, terminez ou supprimez d’abord vos blocages actifs, ou utilisez le
+              <a href="#urgence">déblocage d’urgence</a>, puis supprimez l’app normalement.
+            </p>
+          </section>
+
+          <section id="score">
+            <h2>8. Score et série</h2>
+            <p>
+              Votre score global est calculé <strong>sur votre iPhone</strong>, à partir de mesures qu’Apple ne
+              transmet jamais à Relock. S’il affiche <em>Calcul en cours</em> ou signale un manque de données, c’est
+              qu’un score exige au moins une journée complète mesurée : créez un blocage, il arrive le lendemain.
+            </p>
+            <p>
+              La série compte les jours consécutifs aux commandes. C’est un miroir, pas un tableau de chasse : la
+              perdre ne vous coûte rien d’autre que le chiffre.
+            </p>
+          </section>
+
+          <section id="notifications">
+            <h2>9. Notifications</h2>
+            <p>
+              Relock en envoie de deux sortes : les <strong>rappels</strong> (série en danger, retour après une
+              absence) et la <strong>progression</strong> (bilan hebdomadaire et étapes franchies). Chacune se coupe
+              séparément dans <em>Réglages → Notifications</em>.
+            </p>
+            <p>
+              Nous n’envoyons jamais de notification promotionnelle. À noter : une fois les notifications refusées au
+              niveau d’iOS, seule l’app Réglages de l’iPhone peut les rétablir — Relock ne peut plus les redemander.
+            </p>
+          </section>
+
+          <section id="abonnement">
+            <h2>10. Abonnement et facturation</h2>
+            <p>
+              Relock Pro est facturé par Apple via votre compte App Store. <em>Réglages → Abonnement → Gérer mon
+              abonnement</em> ouvre l’espace client pour changer de formule ou résilier.
+            </p>
+            <p>
+              Changement de téléphone, réinstallation ou nouvelle connexion, et Pro a disparu ? Utilisez
+              <em>Restaurer mes achats</em> dans la même rubrique. Si rien n’est trouvé, vérifiez que vous êtes
+              connecté au compte Apple qui a payé.
+            </p>
+            <div class="legal-callout">
+              <p>
+                <strong>La résiliation se fait obligatoirement chez Apple.</strong> Supprimer l’app, supprimer votre
+                compte Relock ou vous déconnecter n’arrête pas le prélèvement : seuls les réglages de votre compte
+                App Store le peuvent. Faites-le d’abord, sinon vous continuerez à être facturé.
+              </p>
+            </div>
+          </section>
+
+          <section id="donnees">
+            <h2>11. Vos données</h2>
+            <p>
+              <em>Réglages → Confidentialité → Exporter mes données</em> produit un fichier JSON contenant votre
+              profil, vos règles et votre historique. <em>Réglages → Compte → Supprimer mon compte</em> efface votre
+              profil, vos règles et tout votre historique, sur nos serveurs comme sur cet iPhone, sans retour
+              possible.
+            </p>
+            <p>
+              Vos mesures d’usage ne quittent jamais votre iPhone : Apple ne les transmet pas à Relock, et seul un
+              score agrégé est calculé sur l’appareil. Les rapports de plantage portent votre identifiant de compte
+              Relock, pour distinguer le plantage d’une personne de celui d’une autre, mais jamais votre adresse
+              e-mail. Lorsqu’un enregistrement de l’écran accompagne un plantage, chaque texte, chaque image et chaque
+              icône est remplacé par une forme grise sur votre iPhone avant tout envoi. Vous pouvez désactiver
+              complètement les rapports dans <em>Réglages → Confidentialité → Rapports de plantage</em>. La <a href="../privacy/">politique de confidentialité</a>
+              fait foi.
+            </p>
+            <p>Supprimer votre compte ne résilie pas votre abonnement — voir la <a href="#abonnement">section 10</a>.</p>
+          </section>
+
+          <section id="contact">
+            <h2>12. Toujours bloqué</h2>
+            <p>
+              Écrivez à <a href="mailto:contact@getrelock.com">contact@getrelock.com</a>. Depuis l’app,
+              <em>Réglages → Assistance → Signaler un bug</em> pré-remplit votre version, votre build et votre
+              langue, ce qui évite un aller-retour.
+            </p>
+            <p>
+              Éléments utiles à joindre : ce que vous attendiez, ce qui s’est passé à la place, le type de règle
+              concerné, et si l’accès au Temps d’écran affiche bien <em>Accordé</em>.
+            </p>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="rl-footer">
+      <div class="rl-shell">
+        <div class="rl-footer__grid">
+          <div><a class="rl-brand" href="../"><span>Relock</span></a><p>Faites de la place à ce que vous vouliez vraiment faire.</p></div>
+          <div><h2>Mentions juridiques</h2><a href="../privacy/">Politique de confidentialité</a><a href="../terms/">Conditions d’utilisation</a></div>
+          <div><h2>Entreprise</h2><a href="./">Centre d’aide</a><a href="mailto:contact@getrelock.com">Assistance</a><details class="rl-language"><summary>Langue</summary><div class="rl-language__options"><a href="../../help/" lang="en" hreflang="en">English</a><a href="./" lang="fr" hreflang="fr" aria-current="page">Français</a></div></details></div>
+        </div>
+        <div class="rl-footer__bottom"><span>© 2026 YATECH. Tous droits réservés.</span><span>1187C, rue Jogues, Drummondville (Québec) J2B 4X8, Canada</span></div>
+      </div>
+    </footer>
+    <script src="../../menu.js" defer></script>
+  </body>
+</html>

@@ -70,7 +70,7 @@ describe('Home score detail window', () => {
     })
     expect(texts()).toEqual(
       expect.arrayContaining([
-        'home.score_how_title',
+        'home.score_trend_title',
         'home.score_today',
         'home.score_improve_title',
         'home.score_lowers_title',
@@ -94,33 +94,41 @@ describe('Home score detail window', () => {
       .filter(node =>
         [
           'home.score_trend_title',
-          'home.score_how_title',
           'home.score_today',
           'home.score_improve_title',
           'home.score_lowers_title',
         ].includes(node.props.children),
       )
-    expect(titles).toHaveLength(5)
+    expect(titles).toHaveLength(4)
     for (const title of titles) {
       expect(title.props.numberOfLines).toBe(1)
       expect(title.props.adjustsFontSizeToFit).toBe(true)
     }
   })
 
-  it('shows the raw measure behind each score, not a paragraph about it', () => {
+  it('names the two rings and says one true thing about today', () => {
     act(() => {
       renderer = create(
         <HomeScoreDetail visible snapshot={snapshot()} onClose={jest.fn()} />,
       )
     })
     const rendered = texts()
-    // La mesure recomptable reste — c'est elle qui rend le score vérifiable.
-    expect(rendered).toContain('home.score_signal_pressure_measure')
-    expect(rendered).toContain('home.score_signal_pressure_label')
-    // Les gloses qui noyaient la feuille ont disparu.
-    expect(rendered).not.toContain('home.score_signal_pressure_body')
-    expect(rendered).not.toContain('home.score_note')
-    expect(rendered).not.toContain('home.score_detail_formula')
+    // La rosace porte deux arcs : ils doivent être nommés, sinon ils décorent.
+    expect(rendered).toEqual(
+      expect.arrayContaining(['home.focus_score', 'home.rest_score', 68, 7]),
+    )
+    // Une seule phrase sur la journée, choisie d'après la mesure qui pèse le
+    // plus — le calcul qui la produit ne s'affiche plus.
+    expect(rendered).toContain('home.score_weak_pressure')
+    for (const gone of [
+      'home.score_formula',
+      'home.score_how_title',
+      'home.score_signal_pressure_label',
+      'home.score_signal_pressure_measure',
+      'home.score_confidence_ready',
+    ]) {
+      expect(rendered).not.toContain(gone)
+    }
   })
 
   it('closes from its own control', () => {

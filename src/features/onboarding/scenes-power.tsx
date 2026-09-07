@@ -20,7 +20,7 @@ import type {
 import { useT } from '@/i18n/useT'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { GhostLink, GuideCard, Pill, RedAlert } from './bits'
+import { GhostLink, GuideCard, RedAlert } from './bits'
 import { Reveal } from './motion'
 import {
   hasRelockProEntitlement,
@@ -158,6 +158,14 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
 
 // ─── Acte 4 · Notifications (refusables) ────────────────────────────────
 
+/**
+ * Même grammaire que Temps d'écran : « Autoriser » DANS la carte est le
+ * seul bouton, et c'est lui qui ouvre la fenêtre système. Il y avait ici
+ * un « Continuer » sous la carte pendant que la flèche pointait
+ * « Autoriser » — deux cibles pour une seule action, donc une hésitation.
+ * Le refus reste possible (dans la fenêtre iOS, pas ici) : les rappels
+ * sont un plus, jamais une condition, et on avance dans les deux cas.
+ */
 export function SceneNotifs({ onNext }: { onNext: () => void }) {
   const [busy, setBusy] = useState(false)
   const [dimmed, setDimmed] = useState(false)
@@ -192,21 +200,13 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
             leftLabel="Ne pas autoriser"
             rightLabel="Autoriser"
             activeSide="right"
-            interactive={false}
+            onActivePress={request}
+            activeBusy={busy}
             dimmed={dimmed}
             frameVariant="notifications"
           />
         </Reveal>
       </View>
-      <Reveal index={2} style={styles.guideBottom}>
-        <Pill
-          label="Continuer"
-          kind="ghost"
-          onPress={request}
-          disabled={busy}
-          glow
-        />
-      </Reveal>
     </View>
   )
 }

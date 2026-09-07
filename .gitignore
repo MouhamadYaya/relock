@@ -33,6 +33,14 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+# Le keystore de publication et les certificats iOS ne sont couverts par AUCUNE
+# des règles ci-dessus : `.jks` est l'extension par défaut de `keytool` depuis
+# Java 9, et un profil de provisionnement ou un `.p12` exporté du trousseau
+# porte la clé privée de signature. Un seul `git add -A` suffirait à publier
+# l'identité de l'app — irréversible une fois poussé.
+*.jks
+*.p12
+*.mobileprovision
 .kotlin/
 
 # Environment variables

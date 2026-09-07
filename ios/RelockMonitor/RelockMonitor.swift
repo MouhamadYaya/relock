@@ -359,9 +359,14 @@ final class RelockMonitor: DeviceActivityMonitor {
     heartbeat("eventDidReachThreshold \(activity.rawValue) \(event.rawValue)")
     guard let id = ruleId(from: activity.rawValue) else { return }
 
-    // Palier intermédiaire : on informe l'app de l'avancement, RIEN DE PLUS.
-    // Bloquer ici viderait le quota à 25 % — le contraire de la promesse.
-    if let pct = ["p25": 25, "p50": 50, "p75": 75][event.rawValue] {
+    // Palier intermédiaire (« p10 » … « p90 ») : on informe l'app de
+    // l'avancement, RIEN DE PLUS. Bloquer ici viderait le quota à 10 % — le
+    // contraire de la promesse. Le nombre porté par le nom est le pourcentage
+    // ABSOLU de la limite : après un ré-armement en cours de journée, le seuil
+    // iOS est décalé du temps déjà consommé, pas le jalon qu'il représente.
+    if event.rawValue.hasPrefix("p"),
+      let pct = Int(event.rawValue.dropFirst()), pct > 0, pct < 100
+    {
       Self.log.info(
         "palier \(pct, privacy: .public) % — \(activity.rawValue, privacy: .public)"
       )

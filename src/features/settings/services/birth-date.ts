@@ -32,6 +32,26 @@ export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`
 }
 
+/**
+ * Où poser les molettes du sélecteur quand aucune date n'est encore choisie.
+ *
+ * Volontairement PAS « aujourd'hui » : personne n'est né ce matin, et faire
+ * défiler quarante ans de molette pour atteindre une année plausible est un
+ * travail qu'on peut épargner. Ce n'est jamais AFFICHÉ comme une valeur — le
+ * champ reste vide tant que rien n'a été choisi ; ce n'est que le point de
+ * départ du sélecteur, après un appui explicite.
+ */
+const DEFAULT_ANCHOR_YEARS_AGO = 25
+
+export function birthDateAnchor(now: Date = new Date()): Date {
+  return new Date(
+    now.getFullYear() - DEFAULT_ANCHOR_YEARS_AGO,
+    now.getMonth(),
+    now.getDate(),
+    12,
+  )
+}
+
 /** Bornes du sélecteur : de 1900 à aujourd'hui. Pas de naissance future. */
 export function birthDateBounds(now: Date = new Date()): {
   min: Date

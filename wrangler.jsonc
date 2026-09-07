@@ -15,6 +15,18 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none"
   },
+  // Garde l'URL *.workers.dev vivante en filet de sécurité : déclarer `routes`
+  // la désactive silencieusement par défaut, ce qui met le site hors ligne.
+  "workers_dev": true,
+  // Domaine public, en routes plutôt qu'en `custom_domain` : la zone a hérité
+  // d'enregistrements A proxifiés de l'ancien registrar, et Cloudflare refuse un
+  // custom domain sur un hostname qui en possède déjà (erreur 100117). Une route
+  // s'y greffe au contraire — elle intercepte la requête avant l'origine, qui
+  // n'est donc jamais jointe. Universal SSL couvre l'apex et www.
+  "routes": [
+    { "pattern": "getrelock.com/*", "zone_name": "getrelock.com" },
+    { "pattern": "www.getrelock.com/*", "zone_name": "getrelock.com" }
+  ],
   "observability": {
     "enabled": true
   }

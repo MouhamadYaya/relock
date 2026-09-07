@@ -19,8 +19,9 @@ import {
   type RuleTypeGlyphKind,
 } from '@/features/blocking/components/BlockingGlyphs'
 import { BlockingRuleCard } from '@/features/blocking/components/BlockingRuleCard'
-import { BreathingPauseModal } from '@/features/blocking/components/BreathingPauseModal'
+import { PauseRitualModal } from '@/features/blocking/components/PauseRitualModal'
 import { ReblockAppSheet } from '@/features/blocking/components/ReblockAppSheet'
+import { ResumeRuleSheet } from '@/features/blocking/components/ResumeRuleSheet'
 import { RuleTemplateCard } from '@/features/blocking/components/RuleTemplateCard'
 import { StrictBlockSheet } from '@/features/blocking/components/StrictBlockSheet'
 import { UnlockDurationSheet } from '@/features/blocking/components/UnlockDurationSheet'
@@ -29,6 +30,7 @@ import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery
 import { useLimitSteps } from '@/features/blocking/hooks/useLimitSteps'
 import { useRuleAutoCleanup } from '@/features/blocking/hooks/useRuleAutoCleanup'
 import { useRuleReconciler } from '@/features/blocking/hooks/useRuleReconciler'
+import { useResumeRuleMutation } from '@/features/blocking/hooks/useSuspendRuleMutation'
 import {
   buildRuleTemplates,
   pickRandomRuleTemplates,
@@ -265,8 +267,12 @@ export default function BlocagesV2Screen() {
   const [unlockPending, setUnlockPending] = useState(false)
   const [reblockPending, setReblockPending] = useState(false)
   const [reloading, setReloading] = useState(false)
+  // Règle suspendue qu'on vient de toucher : sa feuille de reprise est ouverte.
+  const [resuming, setResuming] = useState<string | null>(null)
+  const [resumePending, setResumePending] = useState(false)
   const { rules, isPending, refetch } = useBlockRulesQuery()
   const limitSteps = useLimitSteps()
+  const resumeRule = useResumeRuleMutation()
 
   useRuleAutoCleanup(rules)
   useRuleReconciler(rules, !isPending)
@@ -286,6 +292,8 @@ export default function BlocagesV2Screen() {
   const runningSessions = sessions.filter(
     session => session.state === 'running',
   )
+  const resumingSession =
+    sessions.find(session => session.rule.id === resuming) ?? null
   // Une tuile par APP réellement couverte (jamais un compteur deviné) : c'est
   // le natif qui dédoublonne. Le hook se stabilise lui-même sur la liste
   // d'ids — inutile de mémoïser ici.
@@ -500,10 +508,18 @@ export default function BlocagesV2Screen() {
    * Ouvrir la fiche d'un blocage STRICT n'aurait aucun sens : elle ne
    * proposerait que des sorties éteintes. On répond directement la seule
    * chose vraie — c'est verrouillé, et voici jusqu'à quand.
+   *
+   * Une règle EN PAUSE n'a pas non plus de fiche à montrer : ses deux sorties
+   * (ouvrir une app, quitter en avance) ne s'appliquent à rien tant qu'elle ne
+   * protège rien. Le tap ouvre donc la seule action qui reste — la reprendre.
    */
   const openRule = (rule: BlockRuleView) => {
+    const session = sessions.find(item => item.rule.id === rule.id)
+    if (session?.state === 'suspended') {
+      setResuming(rule.id)
+      return
+    }
     if (isSessionLocked(rule, now)) {
-      const session = sessions.find(item => item.rule.id === rule.id)
       setStrictNotice({
         scope: 'rule',
         title: session?.title ?? '',
@@ -512,6 +528,30 @@ export default function BlocagesV2Screen() {
       return
     }
     router.push({ pathname: '/block-detail', params: { id: rule.id } })
+  }
+
+  /**
+   * Fin de la pause : le natif ré-arme la mécanique, la ligne DB redevient
+   * active. La règle repart de là où elle s'était arrêtée — une reprise n'est
+   * jamais une nouvelle règle.
+   */
+  const confirmResume = () => {
+    if (!resumingSession || resumePending) return
+    setResumePending(true)
+    resumeRule.mutate(
+      { rule: resumingSession.rule },
+      {
+        onError: error => {
+          setResumePending(false)
+          showErrorToast(error)
+        },
+        onSuccess: async () => {
+          setResuming(null)
+          await refreshBlockedApps()
+          setResumePending(false)
+        },
+      },
+    )
   }
 
   const gridPlan = rulesGridPlan(sessions.length, isPending)
@@ -591,36 +631,48 @@ export default function BlocagesV2Screen() {
                   style={styles.blockedTilesViewport}
                   contentContainerStyle={styles.blockedTilesContent}
                 >
-                  {blockedApps.map(app => (
-                    <BlockedAppTileView
-                      key={app.key}
-                      tokenKey={app.key}
-                      unlocked={app.unlocked}
-                      reprievedUntil={app.reprievedUntil}
-                      label={
-                        app.unlocked
-                          ? t('blocking.reblock_app.action')
-                          : t('blocking.unlock')
-                      }
-                      disabled={unlockPending || reblockPending}
-                      onPress={() => {
-                        if (app.unlocked) {
-                          setReblocking(app.key)
-                          return
+                  {blockedApps.map(app => {
+                    // Le verrou strict se lit AVANT le tap : anneau rouge, et
+                    // « Bloqué » là où les autres tuiles disent « Débloquer ».
+                    // Deux tuiles identiques sous lesquelles un même mot promet
+                    // la même chose, alors qu'une seule l'accorde, se lisaient
+                    // comme une panne.
+                    const strict = app.unlocked
+                      ? null
+                      : strictSessionForApp(app)
+                    return (
+                      <BlockedAppTileView
+                        key={app.key}
+                        tokenKey={app.key}
+                        unlocked={app.unlocked}
+                        reprievedUntil={app.reprievedUntil}
+                        strict={strict != null}
+                        label={
+                          strict
+                            ? t('blocking.locked')
+                            : app.unlocked
+                              ? t('blocking.reblock_app.action')
+                              : t('blocking.unlock')
                         }
-                        const strict = strictSessionForApp(app)
-                        if (strict) {
-                          setStrictNotice({
-                            scope: 'app',
-                            title: strict.title,
-                            endsAt: strict.sessionEndsAt,
-                          })
-                          return
-                        }
-                        setBreathing(app.key)
-                      }}
-                    />
-                  ))}
+                        disabled={unlockPending || reblockPending}
+                        onPress={() => {
+                          if (app.unlocked) {
+                            setReblocking(app.key)
+                            return
+                          }
+                          if (strict) {
+                            setStrictNotice({
+                              scope: 'app',
+                              title: strict.title,
+                              endsAt: strict.sessionEndsAt,
+                            })
+                            return
+                          }
+                          setBreathing(app.key)
+                        }}
+                      />
+                    )
+                  })}
                 </ScrollView>
               </View>
             </>
@@ -657,27 +709,18 @@ export default function BlocagesV2Screen() {
               d'entrée, pas un résultat. La placer derrière le chargement des
               règles la faisait attendre la session Supabase puis l'aller-retour
               réseau — plusieurs secondes sans rien, et indéfiniment hors ligne.
-              Elle s'affiche donc immédiatement dès qu'il n'y a aucune règle à
-              dessiner, et seul ce qui vient vraiment du réseau attend.
+              Elle ne disparaît jamais non plus : elle passe simplement en
+              queue de grille dès qu'une règle existe (cf. `rulesGridPlan`).
             */}
-            {!gridPlan.showsRules ? (
-              <>
-                {gridPlan.showsNewRuleCard && (
-                  <NewRuleSuggestionCard
-                    label={t('blocking.add_rule')}
-                    style={styles.suggestionCardSlot}
-                  />
-                )}
-                {gridPlan.showsLoader && (
-                  <ActivityIndicator
-                    accessibilityLabel={t('common.loading')}
-                    color={colors.blockingAccentLight}
-                    style={styles.loader}
-                  />
-                )}
-                {gridPlan.showsSuggestions && renderSuggestionCards()}
-              </>
-            ) : (
+            {gridPlan.showsNewRuleCard &&
+              gridPlan.newRuleCardPosition === 'first' && (
+                <NewRuleSuggestionCard
+                  label={t('blocking.add_rule')}
+                  style={styles.suggestionCardSlot}
+                />
+              )}
+
+            {gridPlan.showsRules ? (
               <>
                 {sessions.map(session => {
                   const badges = appBadges(session.rule)
@@ -702,11 +745,30 @@ export default function BlocagesV2Screen() {
                     créées — jamais cachés après la première protection. */}
                 {renderSuggestionCards()}
               </>
+            ) : (
+              <>
+                {gridPlan.showsLoader && (
+                  <ActivityIndicator
+                    accessibilityLabel={t('common.loading')}
+                    color={colors.blockingAccentLight}
+                    style={styles.loader}
+                  />
+                )}
+                {gridPlan.showsSuggestions && renderSuggestionCards()}
+              </>
             )}
+
+            {gridPlan.showsNewRuleCard &&
+              gridPlan.newRuleCardPosition === 'last' && (
+                <NewRuleSuggestionCard
+                  label={t('blocking.add_rule')}
+                  style={styles.suggestionCardSlot}
+                />
+              )}
           </View>
         </ScrollView>
 
-        <BreathingPauseModal
+        <PauseRitualModal
           visible={breathing !== null}
           tokenKey={breathing === 'all' ? undefined : (breathing ?? undefined)}
           allApps={breathing === 'all'}
@@ -729,6 +791,17 @@ export default function BlocagesV2Screen() {
           ruleTitle={strictNotice?.title}
           endsAt={strictNotice?.endsAt}
           onClose={() => setStrictNotice(null)}
+        />
+
+        <ResumeRuleSheet
+          visible={resumingSession != null}
+          session={resumingSession}
+          status={
+            resumingSession ? sessionStatus(resumingSession, now) : undefined
+          }
+          pending={resumePending}
+          onCancel={() => setResuming(null)}
+          onConfirm={confirmResume}
         />
 
         <ReblockAppSheet

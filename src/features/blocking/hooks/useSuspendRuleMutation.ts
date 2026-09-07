@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BLOCKING_TAGS, blockingKeys } from '@/features/blocking/api/keys'
-import { armRule } from '@/features/blocking/services/arm'
+import { armRuleIfNeeded } from '@/features/blocking/services/arm'
 import { BlockRulesService } from '@/features/blocking/services/block-rules/block-rules.service'
 import type { BlockRuleView } from '@/features/blocking/types'
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -44,7 +44,10 @@ export function useResumeRuleMutation() {
     mutationFn: async (vars: { rule: BlockRuleView }) => {
       try {
         if (ScreenTime.isAvailable) {
-          await armRule(vars.rule)
+          // `armRuleIfNeeded`, jamais `armRule` : une pause n'ARRÊTE pas la
+          // surveillance, elle masque le bouclier. Ré-armer serait donc inutile
+          // — et rendrait son quota du jour à une limite de temps.
+          await armRuleIfNeeded(vars.rule)
           await ScreenTime.resumeRule(vars.rule.id)
         }
         return await BlockRulesService.resume(vars.rule.id)

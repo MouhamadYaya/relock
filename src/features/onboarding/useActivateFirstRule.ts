@@ -32,8 +32,6 @@ export interface ActivateFirstRuleInput {
   presetIds: string[]
   /** Nombre d'éléments retournés par le sélecteur d'Apple. */
   count: number
-  /** Hard Mode : la valeur du bouton de l'écran d'engagement. */
-  strict: boolean
 }
 
 export function useActivateFirstRule() {
@@ -45,10 +43,12 @@ export function useActivateFirstRule() {
         const preset = findPreset(presetId)
         if (!preset) throw new Error('Préréglage introuvable')
 
-        const config: Record<string, unknown> = {
-          ...preset.config,
-          strict: input.strict,
-        }
+        // Aucun `strict` posé ici : les premières règles naissent SOUPLES.
+        // L'écran « Hard Mode » du tutoriel est une vitrine (voir
+        // `SceneHardMode`) — il annonce la fonctionnalité, il ne l'arme pas.
+        // Le verrou se demande dans l'app, blocage par blocage, derrière
+        // `StrictCommitmentSheet`.
+        const config: Record<string, unknown> = { ...preset.config }
         const id = genUUID()
         let armed = false
 

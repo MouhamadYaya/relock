@@ -4,7 +4,6 @@ import { router } from 'expo-router'
 import React, { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
-  AppState,
   DeviceEventEmitter,
   Linking,
   Pressable,
@@ -150,7 +149,6 @@ export default function ActivityScreen() {
   const isFocused = useIsFocused()
   const [dayOffset, setDayOffset] = useState(0)
   const [reloadKey, setReloadKey] = useState(0)
-  const [dateEpoch, setDateEpoch] = useState(0)
   const [reportLoading, setReportLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -160,15 +158,9 @@ export default function ActivityScreen() {
     refresh,
   } = useScreenTimeAuthorization()
 
-  useEffect(() => {
-    if (!isFocused) return
-    const sub = AppState.addEventListener('change', state => {
-      if (state === 'active') setDateEpoch(epoch => epoch + 1)
-    })
-    return () => sub.remove()
-  }, [isFocused])
-
-  const reportIdentity = `${dayOffset}-${dateEpoch}-${reloadKey}`
+  // Native UIKit owns foreground recovery for both Home and Activity. An
+  // AppState listener here also fired after alerts and raced the native mount.
+  const reportIdentity = `${dayOffset}-${reloadKey}`
   // biome-ignore lint/correctness/useExhaustiveDependencies: reportIdentity n'est pas lu, c'est son changement (jour, rechargement) qui remet l'écran d'attente
   useEffect(() => {
     if (authorized && isFocused) setReportLoading(true)
@@ -211,6 +203,10 @@ export default function ActivityScreen() {
     ({ nativeEvent: { command } }: NativeCommandEvent) => {
       if (command === 'ready') {
         setReportLoading(false)
+        return
+      }
+      if (command === 'reloading') {
+        setReportLoading(true)
         return
       }
       if (command === 'refresh') {
@@ -260,7 +256,7 @@ export default function ActivityScreen() {
               style={styles.report}
               mode="usage"
               offset={dayOffset}
-              reloadToken={dateEpoch + reloadKey}
+              reloadToken={reloadKey}
               onCommand={handleNativeCommand}
               fallback={
                 <StateCard

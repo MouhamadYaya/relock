@@ -21,7 +21,8 @@
  *
  * Usage : node scripts/dev-run.cjs --platform ios [-- <args passés à expo run>]
  */
-const { spawn } = require('node:child_process')
+const { execFileSync, spawn } = require('node:child_process')
+const path = require('node:path')
 const {
   openDevClient,
   resolveMetroUrl,
@@ -40,6 +41,40 @@ const passthrough = argv.includes('--')
 const platform = argOf('platform') === 'android' ? 'android' : 'ios'
 const port = argOf('port') ?? process.env.RCT_METRO_PORT ?? '8081'
 
+/**
+ * Un build en cours détient `DerivedData/…/XCBuildData/build.db` en exclusif.
+ * En lancer un second sur la même base ne se contente pas d'échouer : llbuild
+ * met en cache le système de build dont l'initialisation a raté, puis répond
+ * `error: invalid reuse after initialization failure` à TOUS les builds
+ * suivants de la session Xcode — sans plus jamais nommer la cause. Le premier
+ * message, lui, est explicite : `unable to attach DB: … database is locked`.
+ *
+ * Mieux vaut donc refuser tout de suite. Un `xcodebuild` concurrent est
+ * détectable ; un build lancé depuis l'IDE ne l'est pas (Xcode ne passe pas
+ * par cet exécutable) — d'où le `-derivedDataPath` du harnais de test.
+ * Voir docs/TESTS-IPHONE.md, piège n°6.
+ */
+const concurrentXcodeBuilds = () => {
+  let listing
+  try {
+    listing = execFileSync('/bin/ps', ['-Ao', 'pid=,command='], {
+      encoding: 'utf8',
+    })
+  } catch {
+    return [] // `ps` indisponible : ne jamais bloquer un build pour si peu.
+  }
+  return listing
+    .split('\n')
+    .map(line => line.trim().match(/^(\d+)\s+(\S+)\s*(.*)$/))
+    .filter(
+      match =>
+        match &&
+        path.basename(match[2]) === 'xcodebuild' &&
+        /Relock\.(xcworkspace|xcodeproj)/.test(match[3]),
+    )
+    .map(match => match[1])
+}
+
 const spawnStep = (args, extraEnv) =>
   spawn('npx', ['expo', ...args], {
     stdio: 'inherit',
@@ -50,6 +85,29 @@ const waitForExit = child =>
   new Promise(resolve => child.on('exit', code => resolve(code ?? 0)))
 
 async function main() {
+  const rivals = platform === 'ios' ? concurrentXcodeBuilds() : []
+  if (rivals.length > 0) {
+    console.error(
+      `[dev-run] Un build Xcode tourne déjà sur ce projet (pid ${rivals.join(', ')}).`,
+    )
+    console.error(
+      '[dev-run] Deux builds sur le même DerivedData se disputent `build.db` :',
+    )
+    console.error(
+      '[dev-run] le perdant échoue, et la session Xcode répond ensuite',
+    )
+    console.error(
+      '[dev-run] « invalid reuse after initialization failure » à chaque build.',
+    )
+    console.error(
+      "[dev-run] Attendre la fin de ce build, ou donner à l'autre sa propre",
+    )
+    console.error(
+      '[dev-run] base : `-derivedDataPath` (cf. docs/TESTS-IPHONE.md, piège n°6).',
+    )
+    process.exit(1)
+  }
+
   const metroUrl = resolveMetroUrl({ port })
   const metroAlreadyRunning = metroUrl
     ? await waitForMetro(metroUrl, { timeoutMs: 0 })

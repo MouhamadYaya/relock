@@ -435,6 +435,30 @@ describe('blockStatusLine', () => {
     expect(blockStatusLine(scheduleRule(22, 0, 8, 0))).toContain('22h → 8h')
     expect(blockStatusLine(limitRule(60))).toContain('limite 1 h / jour')
   })
+
+  // Le jour de sa création, une limite ignore le temps passé AVANT elle : son
+  // compteur part de l'activation. Dire « / jour » ce jour-là ferait croire que
+  // la matinée compte déjà — et la bascule de demain passerait pour une panne.
+  it('limite créée aujourd’hui → la ligne dit d’où part le compteur', () => {
+    const created = new Date()
+    created.setHours(18, 30, 0, 0)
+    const line = blockStatusLine(
+      { ...limitRule(120), createdAt: created.toISOString() },
+      created,
+    )
+    expect(line).toContain('limite 2 h')
+    expect(line).toContain('démarrée à 18h30')
+    expect(line).not.toContain('/ jour')
+  })
+
+  it('limite créée un jour passé → retour au libellé « / jour »', () => {
+    const now = new Date('2026-09-07T10:00:00')
+    const line = blockStatusLine(
+      { ...limitRule(120), createdAt: '2026-09-05T18:30:00' },
+      now,
+    )
+    expect(line).toContain('limite 2 h / jour')
+  })
 })
 
 // ── Simulation longue durée : 6 mois d’usage réaliste ────────────────────

@@ -1,6 +1,5 @@
-import { useIsFocused } from '@react-navigation/native'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -63,10 +62,7 @@ export function HomeDashboardSurface({
   blockedAppsCard,
 }: Props) {
   const [reportReady, setReportReady] = useState(false)
-  const [reloadToken, setReloadToken] = useState(0)
   const [heroExpanded, setHeroExpanded] = useState(false)
-  const isFocused = useIsFocused()
-  const wasFocused = useRef(isFocused)
   const reduceMotion = useReducedMotion()
   const heroProgress = useSharedValue(0)
   const reportAvailable = isScreenTimeReportAvailable
@@ -75,47 +71,6 @@ export function HomeDashboardSurface({
   const canRenderReport = authorization === 'approved' && reportAvailable
   const showsBlockedCard = blockedAppsCard != null
   const metrics = homeSurfaceMetrics(showsBlockedCard)
-
-  /*
-    Le rapport est rendu par une extension, DANS UN AUTRE PROCESSUS. Dès que
-    l'Accueil quitte la fenêtre — un autre onglet, Réglages, l'app en
-    arrière-plan — iOS est libre de tuer ce processus. Au retour, la surface
-    distante revient VIDE et le reste : le héro Temps d'écran et le classement
-    des apps disparaissent sans erreur ni événement, et une carte vide se lit
-    comme une journée sans usage. Le pic de `ready` peut lui aussi être avalé
-    par la sortie de fenêtre (`ScreenTimeReportView.swift` ne l'émet que si la
-    vue est encore affichée), laissant l'écran d'attente à demeure.
-
-    Rien de tout cela ne se voit sur simulateur : Family Controls n'y tourne
-    pas, la vue native y est un mock SwiftUI local qui ne meurt jamais.
-
-    On redemande donc une connexion NEUVE à chaque retour à l'écran, sans
-    démonter la vue native (bien plus coûteux) : `reloadToken` suffit, le côté
-    natif recrée son contrôleur d'hébergement. Le squelette réapparaît le
-    temps de l'agrégation — un chargement visible vaut mieux qu'un vide muet.
-  */
-  const reconnectReport = useCallback(() => {
-    setReportReady(false)
-    setReloadToken(token => token + 1)
-  }, [])
-
-  useEffect(() => {
-    // Uniquement sur la transition flou → focus : au montage, la vue native
-    // se construit déjà, la relancer ne ferait que rallonger le premier rendu.
-    if (wasFocused.current === isFocused) return
-    wasFocused.current = isFocused
-    if (isFocused) reconnectReport()
-  }, [isFocused, reconnectReport])
-
-  useEffect(() => {
-    // Retour au premier plan sans changement d'onglet : la fenêtre a bien été
-    // perdue, l'extension a pu mourir avec elle.
-    if (!isFocused) return
-    const sub = AppState.addEventListener('change', state => {
-      if (state === 'active') reconnectReport()
-    })
-    return () => sub.remove()
-  }, [isFocused, reconnectReport])
 
   const open = (action: () => void) => {
     haptics.selectionTick()
@@ -139,17 +94,25 @@ export function HomeDashboardSurface({
   }
 
   return (
-    <View style={[styles.surface, { height: metrics.surfaceHeight }]}>
+    <View
+      collapsable={false}
+      style={[styles.surface, { height: metrics.surfaceHeight }]}
+    >
       {canRenderReport && (
         <ScreenTimeReport
           mode="home"
-          reloadToken={reloadToken}
           showsBlockedCard={showsBlockedCard}
           pointerEvents="auto"
           onCommand={event => {
             switch (event.nativeEvent.command) {
               case 'ready':
                 setReportReady(true)
+                break
+              // UIKit preserves the Home surface through tab and stack
+              // transitions. Only a real native configuration replacement
+              // announces reloading; navigation must never reset this state.
+              case 'reloading':
+                setReportReady(false)
                 break
               case 'home.hero':
                 pressHero()

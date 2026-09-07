@@ -5,6 +5,7 @@ import { PaywallSparkle } from '@/features/onboarding/components/paywall/Paywall
 import {
   PaywallButton,
   PaywallEyebrow,
+  PaywallLegalLinks,
   PaywallOutlineButton,
   PaywallPrice,
   PaywallRibbon,
@@ -172,6 +173,7 @@ export function PaywallExitOffer({
         </View>
 
         <Text style={styles.footer}>{t('paywall_reference.exit_footer')}</Text>
+        <PaywallLegalLinks />
       </View>
     </View>
   )

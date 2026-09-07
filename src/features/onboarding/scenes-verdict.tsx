@@ -132,19 +132,26 @@ export function SceneMirror({
     transform: [{ scale: pulse.value }],
   }))
 
+  const label = `${n} ${n === 1 ? 'jour' : 'jours'}`
+
   return (
     <View className="flex-1 px-5">
       <View className="flex-1 justify-center">
         <Reveal index={0}>
-          <Text style={styles.mirrorLabel}>À ton rythme, environ</Text>
+          <Text style={styles.mirrorLabel}>Ton téléphone te prend environ</Text>
         </Reveal>
-        <Animated.View className="items-center mt-3.5" style={pulseStyle}>
-          <GradientLine text={`${n} jours`} size={76} />
+        <Animated.View
+          className="items-center mt-3.5"
+          style={pulseStyle}
+          accessibilityRole="text"
+          accessibilityLabel={`Ton téléphone te prend environ ${label} par an`}
+        >
+          <GradientLine text={label} size={76} />
           <Text style={styles.mirrorPerYear}>par an</Text>
         </Animated.View>
         <Reveal index={1}>
           <Text style={styles.mirrorBody}>
-            Des journées entières, les yeux baissés. Chaque année.
+            Des journées entières, passées les yeux baissés.
           </Text>
         </Reveal>
       </View>
@@ -213,25 +220,32 @@ function ProjectionBar({ w }: { w: number }) {
  * possibles. « Par an » ouvre la projection, les autres mots évoquent
  * des usages possibles de ce temps, sans promettre un résultat.
  */
-const GOOD_WORDS = [
-  'par an',
-  'de Présence',
-  'de Sommeil',
-  'de Calme',
-  'de Liberté',
-  'de Vie',
-] as const
+/**
+ * Repli quand la question de l'objectif n'a pas été posée (saut de DEV) : le
+ * parcours normal fait défiler les mots que l'utilisateur a lui-même choisis,
+ * poussés ici par `personalizedPlan.aspirationWords`.
+ */
+const GOOD_WORDS = ['de Présence', 'de Sommeil', 'de Calme', 'de Liberté']
 const GOOD_WORD_MS = 1600
 
 export function SceneGoodNews({
   hours,
+  words,
   onNext,
 }: {
   hours: number
+  /** Ce que la personne a dit vouloir récupérer — « de Sommeil », « de Sport ». */
+  words?: string[]
   onNext: () => void
 }) {
   const { width } = useWindowDimensions()
   const goal = useMemo(() => recoveryGoal(hours), [hours])
+  // « par an » ouvre toujours le défilé : c'est l'unité du chiffre, pas un
+  // objectif. Les mots suivants, eux, sont ceux de l'utilisateur.
+  const cycle = useMemo(
+    () => ['par an', ...(words?.length ? words : GOOD_WORDS)],
+    [words],
+  )
   const days = goal.days
   const barCount = Math.max(1, Math.min(PROJECTION_MAX_BARS, days))
   const [shown, setShown] = useState(0)
@@ -278,10 +292,10 @@ export function SceneGoodNews({
     if (!done) return
     const id = setInterval(() => {
       haptic.select()
-      setWord(w => (w + 1) % GOOD_WORDS.length)
+      setWord(w => (w + 1) % cycle.length)
     }, GOOD_WORD_MS)
     return () => clearInterval(id)
-  }, [done])
+  }, [done, cycle.length])
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
@@ -291,7 +305,7 @@ export function SceneGoodNews({
     (Math.min(shown, barCount) / barCount) * days,
   )
   const label = `${displayedDays} ${displayedDays === 1 ? 'jour' : 'jours'}`
-  const suffix = GOOD_WORDS[word]
+  const suffix = cycle[word]
 
   return (
     <View className="flex-1 px-5">

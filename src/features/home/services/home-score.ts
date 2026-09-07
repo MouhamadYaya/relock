@@ -42,7 +42,7 @@ const WEAK_KEYS = {
 type BandKey = (typeof BAND_KEYS)[number] | 'home.score_calculating'
 type FooterKey =
   | (typeof WEAK_KEYS)[HomeScoreSignal]
-  | 'home.score_footer_pending'
+  | 'home.score_calculating'
   | 'home.score_footer_provisional'
   | 'home.score_footer_excellent'
 
@@ -78,7 +78,7 @@ export function weakestComponent(
  * l'est pas.
  */
 export function scoreFooterKey(snapshot: HomeScoreSnapshot): FooterKey {
-  if (snapshot.global === null) return 'home.score_footer_pending'
+  if (snapshot.global === null) return 'home.score_calculating'
   if (snapshot.status === 'provisional') return 'home.score_footer_provisional'
   const weakest = weakestComponent(snapshot)
   if (!weakest || snapshot.global >= 80) return 'home.score_footer_excellent'

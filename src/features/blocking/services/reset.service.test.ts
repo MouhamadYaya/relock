@@ -5,6 +5,10 @@ import type { BlockRuleView } from '@/features/blocking/types'
 import { getSessionQueryClient } from '@/session/session-bridge'
 import { offlineQueue } from '@/shared/services/api/offline/offline-queue'
 import { cacheEngine } from '@/shared/services/storage/cache-engine'
+import {
+  getAuthToken,
+  setAuthToken,
+} from '@/shared/services/storage/credentials'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 import { supabase } from '@/shared/services/supabase/client'
 
@@ -62,7 +66,7 @@ describe('resetAllData', () => {
     })
     ;(getSessionQueryClient as jest.Mock).mockReturnValue(queryClient)
     kvStorage.setString(constants.RQ_CACHE, 'vieilles données')
-    kvStorage.setString(constants.AUTH_TOKEN, 'jeton')
+    setAuthToken('jeton')
   })
 
   it('libère l’iPhone avant d’effacer quoi que ce soit', async () => {
@@ -91,9 +95,10 @@ describe('resetAllData', () => {
 
   it('NE déconnecte PAS : la session survit à une remise à zéro', async () => {
     await resetAllData(RULES)
-    // La session Supabase vit dans le même magasin MMKV. Effacer tout le
-    // magasin déconnecterait quelqu'un qui a seulement demandé un ménage.
-    expect(kvStorage.getString(constants.AUTH_TOKEN)).toBe('jeton')
+    // Les identifiants vivent dans le trousseau, les caches dans MMKV. La
+    // remise à zéro doit viser les seconds sans emporter les premiers : un
+    // ménage n'est pas une déconnexion.
+    expect(getAuthToken()).toBe('jeton')
   })
 
   it('signale l’échec de la purge côté compte', async () => {

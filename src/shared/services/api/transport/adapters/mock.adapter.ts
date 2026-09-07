@@ -16,6 +16,11 @@
 import { constants } from '@/config/constants'
 import { OPS, type Operation } from '@/shared/services/api/transport/operations'
 import type { Transport } from '@/shared/services/api/transport/transport.types'
+import {
+  getAuthToken,
+  setAuthToken,
+  setRefreshToken,
+} from '@/shared/services/storage/credentials'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 type User = {
@@ -48,7 +53,7 @@ function sleep(ms: number) {
 }
 
 function requireAuth() {
-  const t = kvStorage.getString(constants.AUTH_TOKEN)
+  const t = getAuthToken()
   if (!t) {
     const err: any = new Error('Unauthorized')
     err.code = 'AUTH_UNAUTHORIZED'
@@ -127,8 +132,8 @@ export const mockAdapter: Transport = {
         const refreshToken = `mock_refresh_${Date.now()}`
 
         // store so USER_ME works even if service doesn’t store (safety)
-        kvStorage.setString(constants.AUTH_TOKEN, accessToken)
-        kvStorage.setString(constants.REFRESH_TOKEN, refreshToken)
+        setAuthToken(accessToken)
+        setRefreshToken(refreshToken)
 
         const res: LoginResponse = {
           accessToken,
@@ -149,7 +154,7 @@ export const mockAdapter: Transport = {
         }
 
         const token = `mock_access_${Date.now()}`
-        kvStorage.setString(constants.AUTH_TOKEN, token)
+        setAuthToken(token)
 
         const res: RefreshResponse = { token }
         return res as any as TResponse

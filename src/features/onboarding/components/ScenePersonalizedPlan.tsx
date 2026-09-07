@@ -1,29 +1,34 @@
 import { IconName } from '@assets/icons'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   AppState,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native'
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { Pill } from '@/features/onboarding/bits'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { GradientLine, Pill } from '@/features/onboarding/bits'
 import { ANTI_SCROLL_PLAN } from '@/features/onboarding/services/antiScrollPlan'
 import { recoveryGoal } from '@/features/onboarding/services/recoveryGoal'
-import { OB, PERSONALIZED_PLAN as PLAN } from '@/features/onboarding/tokens'
+import {
+  haptic,
+  OB,
+  PERSONALIZED_PLAN as PLAN,
+  PLAN_SUMMARY as SUM,
+} from '@/features/onboarding/tokens'
 import type { PersonalizedPlan } from '@/features/onboarding/types/personalizedPlan'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { relockMaterial } from '@/shared/theme/tokens/relock-material'
-import { spacing } from '@/shared/theme/tokens/spacing'
 
 const ACTION_ICONS = {
   block: IconName.LOCK,
@@ -31,6 +36,32 @@ const ACTION_ICONS = {
   progress: IconName.CHART,
 }
 
+/** Un temps de lecture par bloc — c'est lui qui déverrouille le CTA. */
+const BEATS = PLAN.readingDelays.length
+
+/** Ce que le CTA engage vraiment : rien n'est encore bloqué à cette étape. */
+const NEXT_STEP = 'Tu choisiras tes apps et tes blocages ensuite.'
+
+/**
+ * « Ton plan est prêt » — la récompense du diagnostic.
+ *
+ * Deux règles de conception, non négociables :
+ *
+ * 1. AUCUN SCROLL. Tout tient dans un écran, sur tous les iPhone supportés :
+ *    la composition est dessinée pour la référence de `PLAN_SUMMARY` puis
+ *    remise à l'échelle de la hauteur réellement disponible, et chaque texte
+ *    de longueur variable (l'écho des réponses, la note finale) est borné en
+ *    nombre de lignes. Un écran qui demande de faire défiler pour découvrir sa
+ *    propre conclusion se lit comme un formulaire, pas comme un verdict.
+ * 2. LE CTA EST VISIBLE DÈS LA PREMIÈRE SECONDE, désactivé, avec sa jauge de
+ *    remplissage : le temps d'attente est ainsi expliqué. Un bouton éteint
+ *    sans explication se lit comme une panne — et un bouton qui apparaît d'un
+ *    coup à la fin fait sursauter.
+ *
+ * La hiérarchie suit l'arc du diagnostic : ce que tu as dit (tes mots, au
+ * liseré) → ce que tu récupères (le chiffre, en dégradé signature) → comment
+ * (trois réflexes) → pourquoi ça tient cette fois.
+ */
 export function ScenePersonalizedPlan({
   plan,
   onNext,
@@ -40,20 +71,20 @@ export function ScenePersonalizedPlan({
 }) {
   const goal = recoveryGoal(plan.hours)
   const { height } = useWindowDimensions()
-  const compact = height < PLAN.compactHeight
+  const insets = useSafeAreaInsets()
+  // La scène ne reçoit pas l'écran, mais l'écran MOINS les encoches et les
+  // marges posées par `OnboardingFlow` : c'est cette hauteur-là qui décide de
+  // la densité. La mesurer par `onLayout` provoquerait un ressaut à la
+  // première image ; ici le calcul est exact dès le premier rendu.
+  const layout = usePlanLayout(height - insets.top - insets.bottom - SUM.chrome)
+  const styles = layout.styles
   const [stage, setStage] = useState(0)
   const [active, setActive] = useState(
     AppState.currentState !== 'background' &&
       AppState.currentState !== 'inactive',
   )
-  const [viewport, setViewport] = useState(0)
-  const [content, setContent] = useState(0)
-  const [offset, setOffset] = useState(0)
-  const [readToEnd, setReadToEnd] = useState(false)
-  const revealed = stage === PLAN.readingDelays.length
-  const atEnd =
-    viewport > 0 && content > 0 && offset + viewport >= content - spacing.xs
-  const ready = revealed && readToEnd
+  const revealed = stage === BEATS
+  const progress = useSharedValue(0)
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', state =>
@@ -69,106 +100,179 @@ export function ScenePersonalizedPlan({
     )
     return () => clearTimeout(timer)
   }, [active, revealed, stage])
+  // La jauge du CTA avance bloc par bloc, exactement au rythme des textes :
+  // elle s'arrête donc d'elle-même quand l'app passe en arrière-plan, comme
+  // la révélation. Sans ce gel, on revenait sur une jauge pleine et un bouton
+  // toujours verrouillé.
   useEffect(() => {
-    if (revealed && atEnd) setReadToEnd(true)
-  }, [revealed, atEnd])
+    if (revealed) {
+      progress.value = 1
+      return
+    }
+    if (!active) {
+      cancelAnimation(progress)
+      return
+    }
+    progress.value = withTiming((stage + 1) / BEATS, {
+      duration: PLAN.readingDelays[stage],
+      easing: Easing.linear,
+    })
+  }, [active, revealed, stage, progress])
+  useEffect(() => {
+    if (revealed) haptic.success()
+  }, [revealed])
 
   return (
     <View style={styles.screen} testID="onboarding-personalized-plan">
-      <ScrollView
-        testID="plan-scroll"
-        contentContainerStyle={[
-          styles.content,
-          compact && styles.contentCompact,
-        ]}
-        showsVerticalScrollIndicator={false}
-        onLayout={event => setViewport(event.nativeEvent.layout.height)}
-        onContentSizeChange={(_width, size) => setContent(size)}
-        onScroll={event => setOffset(event.nativeEvent.contentOffset.y)}
-        scrollEventThrottle={16}
-      >
-        <PlanBeat visible={stage >= 1} testID="plan-title">
-          <View style={styles.heading}>
-            <View
-              style={[styles.success, compact && styles.successCompact]}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              <IconSvg
-                name={IconName.CHECK}
-                size={PLAN.iconSize}
-                color={OB.ink}
-              />
-            </View>
-            <Text
-              accessibilityRole="header"
-              style={[styles.title, compact && styles.titleCompact]}
-            >
-              Ton plan anti-scroll{'\n'}est prêt.
-            </Text>
-          </View>
-        </PlanBeat>
-
-        <PlanBeat visible={stage >= 2} testID="plan-goal">
-          <View style={styles.goal}>
-            <Text style={styles.eyebrow}>Objectif annuel</Text>
-            <View style={[styles.goalPill, compact && styles.goalPillCompact]}>
-              <Text style={styles.goalNumber}>{goal.days} jours pour toi</Text>
-            </View>
-            <Text style={styles.goalNote}>
-              ≈ {goal.dailyTime} en moins par jour.{'\n'}
-              {goal.exceedsUsage
-                ? 'Cap non personnalisé, à adapter à ton usage.'
-                : 'Un objectif, pas un gain garanti.'}
-            </Text>
-          </View>
-        </PlanBeat>
-
-        <PlanBeat visible={stage >= 3} testID="plan-actions">
-          <View style={[styles.actions, compact && styles.actionsCompact]}>
-            <Text style={styles.sectionTitle}>
-              Moins de scroll. En 3 réflexes.
-            </Text>
-            {ANTI_SCROLL_PLAN.map(action => (
-              <View key={action.id} style={styles.action}>
-                <View
-                  style={styles.icon}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                >
-                  <IconSvg
-                    name={ACTION_ICONS[action.id]}
-                    size={PLAN.iconSize}
-                    color={OB.accent}
-                  />
-                </View>
-                <View style={styles.actionCopy}>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.caption}>{action.detail}</Text>
-                </View>
+      <View style={styles.column}>
+        <View style={styles.stack}>
+          <PlanBeat visible={stage >= 1} testID="plan-title">
+            <View style={styles.heading}>
+              <View
+                style={styles.badge}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <IconSvg
+                  name={IconName.CHECK}
+                  size={layout.badgeIcon}
+                  color={OB.accent}
+                />
               </View>
-            ))}
-          </View>
-        </PlanBeat>
-      </ScrollView>
+              <Text
+                accessibilityRole="header"
+                style={styles.title}
+                maxFontSizeMultiplier={SUM.maxFontScale}
+              >
+                Ton plan anti-scroll{'\n'}est prêt.
+              </Text>
+            </View>
+          </PlanBeat>
 
-      <View style={styles.footer}>
-        <PlanBeat visible={stage >= 4} testID="plan-note">
-          <Text style={styles.footerNote}>
-            {revealed && !readToEnd
-              ? 'Découvre la suite de ton plan en faisant défiler.'
-              : 'Tu choisiras tes apps et tes blocages ensuite.'}
-          </Text>
-        </PlanBeat>
-        <PlanBeat visible={revealed} testID="plan-continue">
+          {/* Le plan ne se contente pas d'être personnalisé : il le PROUVE, en
+              rendant à l'utilisateur ses propres réponses avant d'annoncer quoi
+              que ce soit. Une seule coulée de texte au liseré, et non trois
+              lignes empilées dans une carte : les phrases s'enchaînent sans
+              gaspiller de demi-lignes, et l'alignement à gauche — seul de
+              l'écran — signale que c'est SA voix, pas celle de l'app. */}
+          <PlanBeat visible={stage >= 2} testID="plan-echo">
+            <View style={styles.quote}>
+              <View style={styles.quoteRule} />
+              <View style={styles.quoteBody}>
+                <Text
+                  style={styles.eyebrow}
+                  maxFontSizeMultiplier={SUM.maxFontScale}
+                >
+                  Ce que tu as dit
+                </Text>
+                <Text
+                  style={styles.echo}
+                  numberOfLines={SUM.echoLines}
+                  maxFontSizeMultiplier={SUM.maxFontScale}
+                >
+                  {plan.recap}
+                  {plan.feeling ? ` ${plan.feeling}` : ''}
+                  {plan.loss ? (
+                    <Text style={styles.echoLoss}> {plan.loss}</Text>
+                  ) : null}
+                </Text>
+              </View>
+            </View>
+          </PlanBeat>
+
+          <PlanBeat visible={stage >= 3} testID="plan-goal">
+            <View style={styles.card}>
+              <Text
+                style={styles.cardEyebrow}
+                maxFontSizeMultiplier={SUM.maxFontScale}
+              >
+                Objectif annuel
+              </Text>
+              {/* Le dégradé signature est réservé aux héros : sur cet écran,
+                  le héros est ce chiffre-là. */}
+              <View style={styles.hero}>
+                <GradientLine
+                  text={`${goal.days} jours`}
+                  size={layout.goalSize}
+                />
+              </View>
+              <Text
+                style={styles.goalSummary}
+                numberOfLines={SUM.goalSummaryLines}
+                maxFontSizeMultiplier={SUM.maxFontScale}
+              >
+                pour {plan.aspirationSummary ?? 'toi'}
+              </Text>
+              <Text
+                style={styles.cardNote}
+                maxFontSizeMultiplier={SUM.maxFontScale}
+              >
+                ≈ {goal.dailyTime} en moins par jour.{'\n'}
+                {goal.exceedsUsage
+                  ? 'Cap non personnalisé, à adapter à ton usage.'
+                  : 'Un objectif, pas un gain garanti.'}
+              </Text>
+            </View>
+          </PlanBeat>
+
+          <PlanBeat visible={stage >= 4} testID="plan-method">
+            <View style={styles.methods}>
+              {ANTI_SCROLL_PLAN.map(action => (
+                <View
+                  key={action.id}
+                  style={styles.method}
+                  accessible
+                  accessibilityLabel={action.title}
+                >
+                  <View
+                    style={styles.tile}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                  >
+                    <IconSvg
+                      name={ACTION_ICONS[action.id]}
+                      size={layout.tileIcon}
+                      color={OB.accent}
+                    />
+                  </View>
+                  <Text
+                    style={styles.methodLabel}
+                    numberOfLines={2}
+                    maxFontSizeMultiplier={SUM.maxFontScale}
+                  >
+                    {action.title}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </PlanBeat>
+
+          <PlanBeat visible={stage >= 5} testID="plan-note">
+            <Text
+              style={styles.footnote}
+              numberOfLines={SUM.footnoteLines}
+              maxFontSizeMultiplier={SUM.maxFontScale}
+            >
+              {plan.defense ? `${plan.defense} ` : ''}
+              {NEXT_STEP}
+            </Text>
+          </PlanBeat>
+        </View>
+
+        <View style={styles.footer}>
           <Pill
             label="C’est parti"
-            disabled={!ready}
+            disabled={!revealed}
+            glow={revealed}
+            progress={progress}
+            // Garde explicite en plus du `disabled` de la pilule : le verrou
+            // du CTA est une règle de cet écran, pas un effet de bord du
+            // composant de bouton.
             onPress={() => {
-              if (ready) onNext()
+              if (revealed) onNext()
             }}
           />
-        </PlanBeat>
+        </View>
       </View>
     </View>
   )
@@ -194,7 +298,7 @@ function PlanBeat({
   const style = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [
-      { translateY: reducedMotion ? 0 : (1 - progress.value) * spacing.sm },
+      { translateY: reducedMotion ? 0 : (1 - progress.value) * REVEAL_RISE },
     ],
   }))
   return (
@@ -210,98 +314,146 @@ function PlanBeat({
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xl,
-    gap: spacing.xxl,
-  },
-  contentCompact: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.md,
-  },
-  heading: { alignItems: 'center', gap: spacing.sm },
-  successCompact: { width: spacing.xxl, height: spacing.xxl },
-  success: {
-    width: PLAN.successSize,
-    height: PLAN.successSize,
-    borderRadius: relockMaterial.radius.capsule,
-    backgroundColor: OB.accentDim,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    ...fonts.bold,
-    fontSize: PLAN.titleSize,
-    lineHeight: PLAN.titleLineHeight,
-    color: OB.ink,
-    textAlign: 'center',
-  },
-  titleCompact: {
-    fontSize: PLAN.compactTitleSize,
-    lineHeight: PLAN.compactTitleLineHeight,
-  },
-  eyebrow: {
-    ...fonts.medium,
-    fontSize: PLAN.bodySize,
-    color: OB.ink70,
-    textAlign: 'center',
-  },
-  goal: { alignItems: 'center', gap: spacing.xs },
-  goalPillCompact: { paddingVertical: spacing.sm },
-  goalPill: {
-    alignSelf: 'stretch',
-    borderRadius: relockMaterial.radius.capsule,
-    backgroundColor: OB.accentDim,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-  },
-  goalNumber: {
-    ...fonts.bold,
-    fontSize: PLAN.goalSize,
-    color: OB.ink,
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
-  goalNote: {
-    ...fonts.regular,
-    fontSize: PLAN.captionSize,
-    lineHeight: PLAN.captionLineHeight,
-    color: OB.ink70,
-    textAlign: 'center',
-  },
-  actions: {
-    padding: spacing.lg,
-    borderRadius: relockMaterial.radius.panel,
-    backgroundColor: OB.card,
-    gap: spacing.md,
-  },
-  actionsCompact: { padding: spacing.md, gap: spacing.sm },
-  sectionTitle: { ...fonts.semiBold, fontSize: PLAN.bodySize, color: OB.ink },
-  action: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  icon: { width: spacing.xxl, alignItems: 'center' },
-  actionCopy: { flex: 1, gap: spacing.xxs },
-  actionTitle: { ...fonts.semiBold, fontSize: PLAN.bodySize, color: OB.ink },
-  caption: {
-    ...fonts.regular,
-    fontSize: PLAN.captionSize,
-    lineHeight: PLAN.captionLineHeight,
-    color: OB.ink70,
-  },
-  footer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  footerNote: {
-    ...fonts.regular,
-    fontSize: PLAN.captionSize,
-    lineHeight: PLAN.captionLineHeight,
-    color: OB.ink70,
-    textAlign: 'center',
-  },
-})
+/** Le bloc monte de si peu qu'il ne déplace jamais ses voisins. */
+const REVEAL_RISE = 12
+
+/**
+ * La maquette de `PLAN_SUMMARY`, remise à l'échelle de la hauteur réellement
+ * offerte à la scène. Tous les blocs sont montés dès le premier rendu (seule
+ * leur opacité est animée) : la mise en page est donc figée d'emblée, et
+ * connaître la hauteur disponible suffit à garantir qu'elle tient.
+ */
+function usePlanLayout(available: number) {
+  return useMemo(() => {
+    const scale = Math.min(
+      SUM.maxScale,
+      Math.max(SUM.minScale, available / SUM.referenceHeight),
+    )
+    /** Arrondi au demi-point : le rendu reste net sur les écrans @2x et @3x. */
+    const v = (n: number) => Math.round(n * scale * 2) / 2
+    return {
+      badgeIcon: v(SUM.badgeIconSize),
+      tileIcon: v(SUM.tileIconSize),
+      goalSize: v(SUM.goalSize),
+      styles: StyleSheet.create({
+        screen: {
+          flex: 1,
+          paddingHorizontal: v(SUM.screenPaddingH),
+          paddingTop: v(SUM.screenPaddingTop),
+        },
+        column: {
+          flex: 1,
+          width: '100%',
+          maxWidth: SUM.maxWidth,
+          alignSelf: 'center',
+        },
+        // Le surplus de hauteur d'un grand écran se répartit au-dessus et
+        // au-dessous du bloc, jamais entre les sections : les écarts internes
+        // portent le rythme de la composition et restent constants.
+        stack: { flex: 1, justifyContent: 'center', gap: v(SUM.gap) },
+        heading: { alignItems: 'center', gap: v(SUM.headingGap) },
+        badge: {
+          width: v(SUM.badgeSize),
+          height: v(SUM.badgeSize),
+          borderRadius: relockMaterial.radius.capsule,
+          backgroundColor: OB.accentDim,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        title: {
+          ...fonts.bold,
+          fontSize: v(SUM.titleSize),
+          lineHeight: v(SUM.titleLineHeight),
+          letterSpacing: -0.4,
+          color: OB.ink,
+          textAlign: 'center',
+        },
+        quote: { flexDirection: 'row', gap: v(SUM.quoteGap) },
+        quoteRule: {
+          width: v(SUM.quoteRuleWidth),
+          borderRadius: v(SUM.quoteRuleWidth) / 2,
+          backgroundColor: OB.accent,
+          opacity: 0.7,
+        },
+        quoteBody: { flex: 1, gap: v(SUM.echoGap) },
+        eyebrow: {
+          ...fonts.semiBold,
+          fontSize: v(SUM.eyebrowSize),
+          lineHeight: v(SUM.eyebrowLineHeight),
+          letterSpacing: SUM.eyebrowTracking,
+          textTransform: 'uppercase',
+          color: OB.ink40,
+        },
+        echo: {
+          ...fonts.regular,
+          fontSize: v(SUM.echoSize),
+          lineHeight: v(SUM.echoLineHeight),
+          color: OB.ink70,
+        },
+        // Imbriqué dans la même coulée : la perte reste dans le fil de la
+        // phrase, elle ne redémarre pas une ligne pour elle seule.
+        echoLoss: { ...fonts.semiBold, color: OB.accent },
+        card: {
+          padding: v(SUM.cardPadding),
+          gap: v(SUM.cardGap),
+          borderRadius: relockMaterial.radius.panel,
+          backgroundColor: OB.card,
+          borderWidth: 1,
+          borderColor: OB.hairline,
+          alignItems: 'center',
+        },
+        cardEyebrow: {
+          ...fonts.semiBold,
+          fontSize: v(SUM.eyebrowSize),
+          lineHeight: v(SUM.eyebrowLineHeight),
+          letterSpacing: SUM.eyebrowTracking,
+          textTransform: 'uppercase',
+          color: OB.ink55,
+          textAlign: 'center',
+        },
+        // `GradientLine` est un SVG en largeur relative : sans conteneur
+        // étiré, le centrage de la carte le réduirait à une largeur nulle.
+        hero: { alignSelf: 'stretch' },
+        goalSummary: {
+          ...fonts.semiBold,
+          fontSize: v(SUM.goalSummarySize),
+          lineHeight: v(SUM.goalSummaryLineHeight),
+          color: OB.ink,
+          textAlign: 'center',
+        },
+        cardNote: {
+          ...fonts.regular,
+          fontSize: v(SUM.noteSize),
+          lineHeight: v(SUM.noteLineHeight),
+          color: OB.ink55,
+          textAlign: 'center',
+        },
+        methods: { flexDirection: 'row', alignItems: 'flex-start' },
+        method: { flex: 1, alignItems: 'center', gap: v(SUM.tileGap) },
+        tile: {
+          width: v(SUM.tileSize),
+          height: v(SUM.tileSize),
+          borderRadius: relockMaterial.radius.compact,
+          backgroundColor: OB.accentDim,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        methodLabel: {
+          ...fonts.semiBold,
+          fontSize: v(SUM.tileLabelSize),
+          lineHeight: v(SUM.tileLabelLineHeight),
+          color: OB.ink,
+          textAlign: 'center',
+        },
+        footnote: {
+          ...fonts.regular,
+          fontSize: v(SUM.noteSize),
+          lineHeight: v(SUM.noteLineHeight),
+          color: OB.ink55,
+          textAlign: 'center',
+        },
+        footer: { marginTop: v(SUM.footerGap) },
+      }),
+    }
+  }, [available])
+}
