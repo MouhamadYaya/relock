@@ -87,4 +87,4 @@ biome check .         # lint/format
 ## Identité
 
 - Bundle iOS : `com.yaya.relock` · scheme deep link : `relock://`
-- Branche de travail : `blocus-v1-build`
+- Branche de travail : `main` (anciennement `blocus-v1-build`, renommée le 2026-09-06)

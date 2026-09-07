@@ -42,6 +42,34 @@ jobs:
       - name: Seed .env for build
         run: cp .env.example .env
 
+      # Sentry : écrit les identifiants sentry-cli AVANT le build.
+      #
+      # L'upload lui-même n'a PAS lieu ici : il est fait pendant le build, par
+      # la phase Xcode « Upload Debug Symbols to Sentry » et par sentry.gradle.
+      # C'est indispensable — eux seuls connaissent le nom de release déduit du
+      # binaire (`com.yaya.relock@<versionName>+<versionCode>`), qui doit être
+      # IDENTIQUE à celui que le SDK enverra à l'exécution. Un upload
+      # a posteriori sous le nom du tag git ne correspondrait à rien et les
+      # stacks resteraient illisibles.
+      #
+      # Secrets à créer : SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN
+      # (scopes project:releases + org:read).
+      - name: Configure Sentry (source maps + symboles)
+        env:
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::warning::SENTRY_AUTH_TOKEN absent - upload desactive. Les stacks de ce build ne seront pas symbolisees."
+            exit 0
+          fi
+          for dir in ios android; do
+            printf 'defaults.url=https://sentry.io/\ndefaults.org=%s\ndefaults.project=%s\nauth.token=%s\n' \
+              "$SENTRY_ORG" "$SENTRY_PROJECT" "$SENTRY_AUTH_TOKEN" > "$dir/sentry.properties"
+          done
+          echo "Sentry configure pour ios/ et android/."
+
       # Simulator / CI build (no signing required).
       # For a real device/TestFlight build, switch to -configuration Release,
       # add code signing setup (e.g. Fastlane match or manual cert import),
@@ -57,15 +85,6 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
             build
-
-      # Upload Sentry source maps if DSN is configured.
-      # Uncomment and set SENTRY_AUTH_TOKEN + SENTRY_ORG + SENTRY_PROJECT secrets.
-      # - name: Upload Sentry source maps
-      #   env:
-      #     SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      #     SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      #     SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      #   run: npx @sentry/cli releases files "${{ github.ref_name }}" upload-sourcemaps ios/build
 
       - name: Upload Simulator app
         uses: actions/upload-artifact@v4
