@@ -2,12 +2,18 @@ import { router } from 'expo-router'
 import React from 'react'
 import { Alert, AppState, Linking, Share, Switch } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
+import { constants } from '@/config/constants'
+import {
+  emergencyAvailability,
+  markEmergencyUnlockUsed,
+} from '@/features/blocking/services/emergency-quota'
 import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
 import { NotificationService } from '@/features/notifications/notification.service'
 import { getNotifPrefs, setNotifPrefs } from '@/features/notifications/prefs'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { Notif } from '@/shared/native/notifications'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { applyCrashReportsPreference } from '@/shared/services/monitoring/sentry'
 import {
   DEFAULT_REMINDER_MINUTES,
   getPreference,
@@ -15,6 +21,7 @@ import {
   setPreference,
   setReminderMinutes,
 } from '@/shared/services/storage/app-preferences'
+import { kvStorage } from '@/shared/services/storage/mmkv'
 import { usePreferences } from '@/shared/stores/preferences.store'
 import { showToast } from '@/shared/utils/toast'
 
@@ -27,6 +34,11 @@ jest.mock('expo-router', () => {
     useFocusEffect: (cb: () => void) => useEffect(cb, [cb]),
   }
 })
+
+jest.mock('@/shared/services/monitoring/sentry', () => ({
+  ...jest.requireActual('@/shared/services/monitoring/sentry'),
+  applyCrashReportsPreference: jest.fn(),
+}))
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
@@ -120,13 +132,6 @@ jest.mock('@/features/blocking/services/emergency-unlock', () => ({
   emergencyUnlock: jest.fn().mockResolvedValue({ removed: 2, failed: 0 }),
 }))
 
-const mockSetDailyLimit = jest.fn().mockResolvedValue(1)
-jest.mock('@/features/blocking/services/daily-screen-time', () => ({
-  DAILY_LIMIT_CHOICES: [30, 60, 120],
-  currentDailyLimit: jest.fn(),
-  setDailyLimit: (...args: unknown[]) => mockSetDailyLimit(...args),
-}))
-
 jest.mock('@/features/settings/services/data-export', () => ({
   buildDataExport: jest.fn().mockResolvedValue({ rules: [] }),
   serializeDataExport: () => '{}',
@@ -140,9 +145,6 @@ jest.mock('@/features/blocking/hooks/useBlockRulesQuery', () => ({
 const { useBlockRulesQuery } = jest.requireMock(
   '@/features/blocking/hooks/useBlockRulesQuery',
 ) as { useBlockRulesQuery: jest.Mock }
-const { currentDailyLimit } = jest.requireMock(
-  '@/features/blocking/services/daily-screen-time',
-) as { currentDailyLimit: jest.Mock }
 
 const RULES = [
   { id: 'r1', type: 'schedule', appIds: [], isActive: true },
@@ -244,6 +246,7 @@ describe('SettingsScreen', () => {
     }
     setReminderMinutes(DEFAULT_REMINDER_MINUTES)
     setNotifPrefs({ master: true, reminders: true, progression: true })
+    kvStorage.delete(constants.EMERGENCY_UNLOCK_AT)
     usePreferences.setState({
       haptics: true,
       pauseSound: true,
@@ -256,7 +259,6 @@ describe('SettingsScreen', () => {
       isRefetching: false,
       refetch: refetchRules,
     })
-    currentDailyLimit.mockReturnValue(120)
     ;(ScreenTime.authorizationStatus as jest.Mock).mockResolvedValue(
       'notDetermined',
     )
@@ -320,16 +322,6 @@ describe('SettingsScreen', () => {
     const tree = await render()
     act(() => rowFor(tree, 'settings.profile.open').props.onPress())
     expect(router.push).toHaveBeenCalledWith('/profile')
-  })
-
-  it('persiste chaque préférence basculée', async () => {
-    const tree = await render()
-    act(() => switchFor(tree, 'settings.haptics').props.onValueChange(false))
-
-    expect(usePreferences.getState().haptics).toBe(false)
-    // La bascule doit survivre au démontage de l'écran : c'est MMKV qui
-    // tranche, pas l'état React.
-    expect(getPreference('haptics')).toBe(false)
   })
 
   it('demande l’autorisation Temps d’écran quand elle manque', async () => {
@@ -446,6 +438,59 @@ describe('SettingsScreen', () => {
     })
   })
 
+  describe('quota hebdomadaire du déblocage d’urgence', () => {
+    it('annonce le quota dans la demande de confirmation', async () => {
+      const tree = await render()
+      act(() => rowFor(tree, 'settings.emergency').props.onPress())
+
+      const [, body] = (Alert.alert as unknown as jest.Mock).mock.calls.at(-1)
+      // La règle se lit AVANT de confirmer, pas après avoir consommé sa
+      // semaine.
+      expect(body).toContain('settings.emergency_quota')
+    })
+
+    it('consomme le quota une fois la libération faite', async () => {
+      const tree = await render()
+      act(() => rowFor(tree, 'settings.emergency').props.onPress())
+      await act(async () => {
+        pressAlertButton('settings.emergency_cta')
+      })
+
+      expect(emergencyUnlock).toHaveBeenCalled()
+      // C'est MMKV qui tranche : le quota survit à la fermeture de l'app.
+      expect(emergencyAvailability().allowed).toBe(false)
+    })
+
+    it('refuse un second déblocage la même semaine, sans rien demander', async () => {
+      markEmergencyUnlockUsed()
+      const tree = await render()
+      act(() => rowFor(tree, 'settings.emergency').props.onPress())
+
+      const [title, , buttons] = (
+        Alert.alert as unknown as jest.Mock
+      ).mock.calls.at(-1)
+      expect(title).toBe('settings.emergency_locked_title')
+      // Pas de bouton d'action : proposer « tu es sûr ? » pour répondre
+      // ensuite « en fait non » serait une porte qui ouvre sur un mur.
+      expect(buttons).toBeUndefined()
+      expect(emergencyUnlock).not.toHaveBeenCalled()
+    })
+
+    it('ne consomme rien quand il n’y a aucun blocage à lever', async () => {
+      useBlockRulesQuery.mockReturnValue({
+        rules: [],
+        isPending: false,
+        isError: false,
+        isRefetching: false,
+        refetch: refetchRules,
+      })
+      const tree = await render()
+      act(() => rowFor(tree, 'settings.emergency').props.onPress())
+
+      expect(emergencyAvailability().allowed).toBe(true)
+    })
+  })
+
   describe('protection contre la désinstallation', () => {
     it('explique la restriction AVANT de l’activer', async () => {
       const tree = await render()
@@ -485,30 +530,6 @@ describe('SettingsScreen', () => {
     })
   })
 
-  describe('temps d’écran par jour', () => {
-    it('applique le plafond choisi dans la feuille', async () => {
-      const tree = await render()
-      act(() => rowFor(tree, 'settings.daily_limit').props.onPress())
-
-      await act(async () => {
-        // Les libellés de la feuille sont produits par `formatDuration`.
-        rowFor(tree, 'settings.duration_minutes').props.onPress()
-      })
-      expect(mockSetDailyLimit).toHaveBeenCalledWith(RULES, 30)
-      expect(refetchRules).toHaveBeenCalled()
-    })
-
-    it('propose de créer une règle quand aucune limite n’existe', async () => {
-      currentDailyLimit.mockReturnValue(null)
-      const tree = await render()
-      act(() => rowFor(tree, 'settings.daily_limit').props.onPress())
-
-      expect(Alert.alert).toHaveBeenCalled()
-      act(() => pressAlertButton('settings.daily_limit_missing_cta'))
-      expect(router.push).toHaveBeenCalledWith('/add-block')
-    })
-  })
-
   it('replanifie les notifications quand l’heure des rappels change', async () => {
     const tree = await render()
     const picker = pickerFor(tree, 'settings.reminder_time')
@@ -520,6 +541,46 @@ describe('SettingsScreen', () => {
     expect(getReminderMinutes()).toBe(21 * 60 + 15)
     // Le rappel de ce soir doit déjà tomber à la nouvelle heure.
     expect(NotificationService.reconcileFromLast).toHaveBeenCalled()
+  })
+
+  /**
+   * La politique de confidentialité PUBLIÉE promet « disable or enable crash
+   * reporting in Settings ». Cet interrupteur est donc un engagement, pas un
+   * confort : il a déjà disparu une fois d'une refonte de l'écran, et rien ne
+   * l'avait signalé.
+   */
+  describe('rapports d’anomalie', () => {
+    it('offre l’interrupteur promis par la politique de confidentialité', async () => {
+      const tree = await render()
+      expect(switchFor(tree, 'settings.crash_reports')).toBeTruthy()
+    })
+
+    it('coupe le SDK, et pas seulement nos appels', async () => {
+      const tree = await render()
+
+      act(() =>
+        switchFor(tree, 'settings.crash_reports').props.onValueChange(false),
+      )
+
+      // La préférence survit au démontage — c'est MMKV qui tranche.
+      expect(getPreference('crashReports')).toBe(false)
+      // Et le SDK est réellement fermé : sinon crashs natifs, sessions,
+      // traces et replay continueraient d'émettre tout seuls.
+      expect(applyCrashReportsPreference).toHaveBeenCalledWith(false)
+    })
+
+    it('relance le SDK à la réactivation', async () => {
+      setPreference('crashReports', false)
+      usePreferences.setState({ crashReports: false })
+      const tree = await render()
+
+      act(() =>
+        switchFor(tree, 'settings.crash_reports').props.onValueChange(true),
+      )
+
+      expect(getPreference('crashReports')).toBe(true)
+      expect(applyCrashReportsPreference).toHaveBeenCalledWith(true)
+    })
   })
 
   it('partage un export des données personnelles', async () => {

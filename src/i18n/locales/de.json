@@ -728,7 +728,10 @@
     "reset_keeps": "Was bleibt: dein Konto (du bleibst angemeldet), dein Abonnement, deine Sprache, dein Design und deine Mitteilungseinstellungen.",
     "reset_cta": "Zurücksetzen",
     "reset_done": "App zurückgesetzt",
-    "reset_partial": "Sperren aufgehoben, aber das Löschen im Konto ist fehlgeschlagen. Versuch es online erneut."
+    "reset_partial": "Sperren aufgehoben, aber das Löschen im Konto ist fehlgeschlagen. Versuch es online erneut.",
+    "emergency_quota": "Du hast eine Notfall-Entsperrung pro Woche.",
+    "emergency_locked_title": "Diese Woche schon genutzt",
+    "emergency_locked_body": "Du hast eine Notfall-Entsperrung pro Woche. Die nächste ist am {{date}} verfügbar."
   },
   "onboarding": {
     "headline": "Alles, was du brauchst,\nan einem Ort.",

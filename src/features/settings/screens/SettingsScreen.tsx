@@ -20,10 +20,10 @@ import { appBuild, appConfig, appVersion, links } from '@/config/app-config'
 import { AuthService } from '@/features/auth/services/auth/auth.service'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import {
-  currentDailyLimit,
-  DAILY_LIMIT_CHOICES,
-  setDailyLimit,
-} from '@/features/blocking/services/daily-screen-time'
+  emergencyAvailability,
+  formatNextEmergency,
+  markEmergencyUnlockUsed,
+} from '@/features/blocking/services/emergency-quota'
 import { emergencyUnlock } from '@/features/blocking/services/emergency-unlock'
 import { NotificationService } from '@/features/notifications/notification.service'
 import {
@@ -40,7 +40,6 @@ import { ProfileCard } from '@/features/settings/components/ProfileCard'
 import { SettingsHeader } from '@/features/settings/components/SettingsHeader'
 import { SettingsRow } from '@/features/settings/components/SettingsRow'
 import { SettingsSection } from '@/features/settings/components/SettingsSection'
-import { SettingsSheet } from '@/features/settings/components/SettingsSheet'
 import {
   buildDataExport,
   serializeDataExport,
@@ -48,7 +47,7 @@ import {
 import { useProfile } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
 import { useT } from '@/i18n/useT'
-import { resetOnboarding, syncEntitlement } from '@/session/bootstrap'
+import { syncEntitlement } from '@/session/bootstrap'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { Notif, type NotifPermission } from '@/shared/native/notifications'
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -68,12 +67,6 @@ import { settingsTheme } from '@/shared/theme'
 import { showErrorToast, showToast } from '@/shared/utils/toast'
 
 const { colors, spacing, type } = settingsTheme
-
-const THEME_KEY = {
-  light: 'settings.theme_light',
-  dark: 'settings.theme_dark',
-  system: 'settings.theme_system',
-} as const
 
 /**
  * Les langues, écrites dans leur propre langue — même convention que le
@@ -95,48 +88,6 @@ function minutesToDate(minutes: number): Date {
   return date
 }
 
-/**
- * Bilan de santé natif (build, journal, vie des extensions). Réservé au
- * développement : c'est le seul endroit d'où l'on voit ce qu'iOS a VRAIMENT
- * armé, par opposition à ce que la base de données croit.
- */
-function showNativeDiagnostics(title: string, unavailable: string) {
-  if (!ScreenTime.isAvailable) {
-    Alert.alert(title, unavailable)
-    return
-  }
-  ScreenTime.getDiagnostics()
-    .then(d => {
-      const lines = [
-        `Build natif : ${d.nativeBuiltAt}`,
-        `Autorisation : ${d.authorized ? 'accordée' : 'ABSENTE'}`,
-        `App Group : ${d.appGroupOK ? 'OK' : 'INACCESSIBLE'}`,
-        `Transport Shield : ${d.shieldStateTransport}`,
-        `Journal : ${d.eventLogCount} événement(s)`,
-        `Résistances (total) : ${d.totalResisted}`,
-        `Fenêtres actives : ${d.activeWindows.join(', ') || 'aucune'}`,
-        // La vérité d'iOS, pas la nôtre : une règle absente d'ici ne
-        // bloquera jamais rien, quoi qu'en dise la DB.
-        `Armées côté iOS : ${d.armedActivities?.join(', ') || 'AUCUNE'}`,
-        `Moniteur réveillé : ${d.monitorLastWakeAt}`,
-        `  → ${d.monitorLastWakeWhat}`,
-        `Bouclier affiché : ${d.shieldShownTotal ?? 0}× (dernier : ${d.shieldLastShownAt ?? 'jamais'})`,
-        `Bouclier tapé : ${d.shieldLastActionAt}`,
-        `  → ${d.shieldLastOpenRequestStatus} / ${d.shieldLastActionResponse}`,
-        `Contexte en attente : ${d.pendingShieldRequest?.applicationName ?? 'aucun'}`,
-        `Quotas du jour : ${
-          Object.entries(d.limitProgress ?? {})
-            .map(([k, v]) => `${k.slice(14, 22)}…=${v}`)
-            .join(', ') || 'aucun palier franchi'
-        }`,
-        '',
-        ...d.eventLogTail.map(e => `· ${e.kind} (${e.at})`),
-      ]
-      Alert.alert(title, lines.join('\n'))
-    })
-    .catch(e => showErrorToast(e))
-}
-
 export default function SettingsScreen() {
   const t = useT()
   const insets = useSafeAreaInsets()
@@ -145,15 +96,15 @@ export default function SettingsScreen() {
   const revenueCatEnabled = isRevenueCatEnabled()
   const { rules, refetch: refetchRules } = useBlockRulesQuery()
 
-  const haptics = usePreferences(s => s.haptics)
-  const pauseSound = usePreferences(s => s.pauseSound)
-  const crashReports = usePreferences(s => s.crashReports)
-  const setPreference = usePreferences(s => s.setPreference)
+  // Rapports d'anomalie : la politique de confidentialité publiée promet
+  // « disable or enable crash reporting in Settings ». L'interrupteur est donc
+  // un engagement, pas un confort — il ne peut pas disparaître de l'écran.
+  const crashReports = usePreferences(state => state.crashReports)
+  const setPreference = usePreferences(state => state.setPreference)
 
   const [restoring, setRestoring] = React.useState(false)
   const [unlocking, setUnlocking] = React.useState(false)
   const [exporting, setExporting] = React.useState(false)
-  const [limitSheet, setLimitSheet] = React.useState(false)
   const [reminder, setReminder] = React.useState(getReminderMinutes)
 
   // Notifications : préférences persistées, appliquées IMMÉDIATEMENT.
@@ -344,9 +295,26 @@ export default function SettingsScreen() {
       showToast(t('settings.emergency_none'))
       return
     }
+
+    // Le quota se vérifie AVANT de proposer quoi que ce soit : demander
+    // « tu es sûr ? » pour ensuite répondre « en fait non » serait une porte
+    // qui s'ouvre sur un mur.
+    const availability = emergencyAvailability()
+    if (!availability.allowed) {
+      Alert.alert(
+        t('settings.emergency_locked_title'),
+        t('settings.emergency_locked_body', {
+          date: formatNextEmergency(availability.nextAt, i18n.language),
+        }),
+      )
+      return
+    }
+
     Alert.alert(
       t('settings.emergency_title'),
-      t('settings.emergency_body', { count: activeRules.length }),
+      `${t('settings.emergency_body', { count: activeRules.length })}\n\n${t(
+        'settings.emergency_quota',
+      )}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -361,6 +329,12 @@ export default function SettingsScreen() {
                 // iOS (arrêt hors ligne, plantage). La sortie de secours doit
                 // ne rien laisser derrière elle.
                 const result = await emergencyUnlock(rules)
+                // Le quota se consomme ici, et pas plus tôt : la libération
+                // a EU LIEU côté iPhone, même si l'effacement des règles
+                // côté compte a partiellement échoué. Le débiter avant
+                // l'appel ferait perdre sa semaine à quelqu'un dont le
+                // déblocage n'a pas abouti.
+                markEmergencyUnlockUsed()
                 await refetchRules()
                 await ScreenTime.uninstallProtection()
                   .then(setUninstallGuard)
@@ -383,52 +357,6 @@ export default function SettingsScreen() {
         },
       ],
     )
-  }
-
-  // ─── Temps d'écran par jour ─────────────────────────────────────────────
-  const dailyLimit = currentDailyLimit(rules)
-
-  const formatDuration = (minutes: number): string => {
-    if (minutes < 60) return t('settings.duration_minutes', { minutes })
-    const hours = Math.floor(minutes / 60)
-    const rest = minutes % 60
-    return rest === 0
-      ? t('settings.duration_hours', { hours })
-      : t('settings.duration_hours_minutes', { hours, minutes: rest })
-  }
-
-  const openDailyLimit = () => {
-    if (dailyLimit === null) {
-      // Ce réglage ajuste une règle existante ; il n'en crée pas. Créer un
-      // blocage demande de choisir des apps dans le sélecteur d'Apple, ce qui
-      // n'a pas sa place dans une liste de réglages.
-      Alert.alert(
-        t('settings.daily_limit_missing_title'),
-        t('settings.daily_limit_missing_body'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('settings.daily_limit_missing_cta'),
-            onPress: () => router.push('/add-block'),
-          },
-        ],
-      )
-      return
-    }
-    setLimitSheet(true)
-  }
-
-  const chooseDailyLimit = (minutes: number) => {
-    setLimitSheet(false)
-    void (async () => {
-      try {
-        await setDailyLimit(rules, minutes)
-        await refetchRules()
-        showToast(t('settings.daily_limit_updated'))
-      } catch (e) {
-        showErrorToast(e)
-      }
-    })()
   }
 
   // ─── Heure des rappels ──────────────────────────────────────────────────
@@ -566,30 +494,10 @@ export default function SettingsScreen() {
 
         <SettingsSection title={t('settings.sections.personalization')}>
           <SettingsRow
-            icon={IconName.MOON}
-            label={t('settings.appearance')}
-            value={t(THEME_KEY.dark)}
-            onPress={() => router.push('/theme-picker')}
-          />
-          <SettingsRow
             icon={IconName.GLOBE}
             label={t('settings.language.label')}
             value={LANGUAGE_NAME[i18n.language] ?? i18n.language.toUpperCase()}
             onPress={() => router.push('/language-picker')}
-          />
-          <SettingsRow
-            icon={IconName.PULSE}
-            label={t('settings.haptics')}
-            hint={t('settings.haptics_hint')}
-            switchValue={haptics}
-            onSwitchChange={v => setPreference('haptics', v)}
-          />
-          <SettingsRow
-            icon={IconName.HEADPHONES}
-            label={t('settings.pause_sound')}
-            hint={t('settings.pause_sound_hint')}
-            switchValue={pauseSound}
-            onSwitchChange={v => setPreference('pauseSound', v)}
           />
         </SettingsSection>
 
@@ -689,17 +597,6 @@ export default function SettingsScreen() {
             onPress={requestScreenTime}
           />
           <SettingsRow
-            icon={IconName.CLOCK}
-            label={t('settings.daily_limit')}
-            hint={t('settings.daily_limit_hint')}
-            value={
-              dailyLimit === null
-                ? t('settings.daily_limit_none')
-                : formatDuration(dailyLimit)
-            }
-            onPress={openDailyLimit}
-          />
-          <SettingsRow
             icon={IconName.SHIELD}
             label={t('settings.blocks')}
             hint={t('settings.blocks_hint')}
@@ -730,6 +627,9 @@ export default function SettingsScreen() {
               // taire que les appels de NOTRE code : crashs natifs, sessions,
               // traces et replay continueraient de partir seuls.
               applyCrashReportsPreference(value)
+              // Les étiquettes de session ont été posées au démarrage, quand
+              // l'envoi pouvait être coupé : on les repose, sinon les
+              // événements repris seraient orphelins de leur contexte.
               if (value) setSentryTags({ crash_reports: 'opt-in' })
             }}
           />
@@ -814,26 +714,6 @@ export default function SettingsScreen() {
           />
         </SettingsSection>
 
-        {__DEV__ ? (
-          <SettingsSection title={t('settings.sections.developer')}>
-            <SettingsRow
-              icon={IconName.MONITOR}
-              label={t('settings.diagnostics')}
-              onPress={() =>
-                showNativeDiagnostics(
-                  t('settings.diagnostics_title'),
-                  t('settings.diagnostics_unavailable'),
-                )
-              }
-            />
-            <SettingsRow
-              icon={IconName.COMPASS}
-              label={t('settings.replay_onboarding')}
-              onPress={resetOnboarding}
-            />
-          </SettingsSection>
-        ) : null}
-
         {/*
           La zone sensible ferme l'écran, dans l'ordre de gravité croissante :
           se déconnecter (on revient quand on veut), lever tous les blocages,
@@ -885,35 +765,6 @@ export default function SettingsScreen() {
             : t('settings.version', { version })}
         </Text>
       </ScrollView>
-
-      <Modal
-        visible={limitSheet}
-        transparent
-        animationType="slide"
-        statusBarTranslucent
-        onRequestClose={() => setLimitSheet(false)}
-      >
-        <SettingsSheet
-          title={t('settings.daily_limit_sheet_title')}
-          closeLabel={t('common.close')}
-          onClose={() => setLimitSheet(false)}
-        >
-          <View>
-            {DAILY_LIMIT_CHOICES.map(minutes => (
-              <React.Fragment key={minutes}>
-                {minutes !== DAILY_LIMIT_CHOICES[0] ? (
-                  <View style={styles.sheetDivider} />
-                ) : null}
-                <SettingsRow
-                  label={formatDuration(minutes)}
-                  selected={dailyLimit === minutes}
-                  onPress={() => chooseDailyLimit(minutes)}
-                />
-              </React.Fragment>
-            ))}
-          </View>
-        </SettingsSheet>
-      </Modal>
     </ScreenWrapper>
   )
 }
@@ -928,11 +779,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.sectionGap,
     // Cible tactile de l'appui long : le texte seul est trop fin au doigt.
     paddingVertical: 8,
-  },
-  sheetDivider: {
-    height: settingsTheme.size.hairline,
-    backgroundColor: colors.divider,
-    marginLeft: spacing.rowH + spacing.iconGutter + spacing.iconGap,
-    marginRight: spacing.rowH,
   },
 })

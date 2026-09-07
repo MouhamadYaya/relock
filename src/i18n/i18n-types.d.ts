@@ -784,6 +784,9 @@ declare module 'i18next' {
           "reset_cta": string;
           "reset_done": string;
           "reset_partial": string;
+          "emergency_quota": string;
+          "emergency_locked_title": string;
+          "emergency_locked_body": string;
         };
         "onboarding": {
           "headline": string;

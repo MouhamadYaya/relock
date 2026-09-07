@@ -45,6 +45,13 @@ export const constants = {
   PREF_HAPTICS: 'pref.haptics.v1',
   PREF_PAUSE_SOUND: 'pref.pauseSound.v1',
   PREF_CRASH_REPORTS: 'pref.crashReports.v1',
+  /**
+   * Dernier déblocage d'urgence (timestamp ms). Le quota hebdomadaire s'en
+   * déduit — on ne stocke pas un compteur, qui se désynchroniserait du temps
+   * qui passe.
+   */
+  EMERGENCY_UNLOCK_AT: 'emergency.unlockAt.v1',
+
   /** Heure des rappels du soir, en minutes depuis minuit. */
   PREF_REMINDER_MINUTES: 'pref.reminderMinutes.v1',
 

@@ -775,7 +775,10 @@
     "reset_keeps": "What you keep: your account (you stay signed in), your subscription, your language, your theme and your notification preferences.",
     "reset_cta": "Reset",
     "reset_done": "App reset",
-    "reset_partial": "Blocks lifted, but clearing your account failed. Try again once online."
+    "reset_partial": "Blocks lifted, but clearing your account failed. Try again once online.",
+    "emergency_quota": "You get one emergency unlock per week.",
+    "emergency_locked_title": "Already used this week",
+    "emergency_locked_body": "You get one emergency unlock per week. The next one will be available on {{date}}."
   },
   "onboarding": {
     "headline": "Everything you need,\nin one place.",
