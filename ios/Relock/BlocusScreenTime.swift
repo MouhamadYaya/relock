@@ -1310,6 +1310,37 @@ final class BlocusScreenTime: NSObject {
     resolve(true)
   }
 
+  // MARK: - Télémétrie des extensions
+
+  /// Vide le journal partagé écrit par les 5 extensions et le renvoie à JS,
+  /// qui le transmet à Sentry.
+  ///
+  /// C'est le SEUL canal de remontée pour `RelockActivityReport` (aucun accès
+  /// réseau, par décision d'Apple) et `RelockShield` (appelée de façon
+  /// synchrone à chaque bouclier, où démarrer un SDK coûterait trop cher).
+  /// Voir `ios/Shared/ExtensionLog.swift`.
+  @objc(drainExtensionLog:rejecter:)
+  func drainExtensionLog(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    resolve(ExtensionLog.drain())
+  }
+
+  /// Dépose le DSN Sentry dans le groupe d'app, pour les extensions qui, elles,
+  /// hébergent un vrai SDK (`RelockMonitor`, `RelockShieldAction`,
+  /// `RelockWidgets`). Une extension ne peut pas lire `.env` :
+  /// `react-native-config` n'y existe pas.
+  @objc(publishSentryDSN:resolver:rejecter:)
+  func publishSentryDSN(
+    _ dsn: NSString,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    ExtensionLog.publishSentryDSN(dsn as String)
+    resolve(true)
+  }
+
   /// Au 1er lancement après (ré)installation : enlève tout blocage résiduel
   /// laissé au niveau système (le bouclier/surveillance survivent à la
   /// suppression de l'app). Renvoie `true` si c'était une install fraîche

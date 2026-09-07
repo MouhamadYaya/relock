@@ -6,9 +6,13 @@
 #
 #   defaults.org      = le slug de l'organisation (URL Sentry)
 #   defaults.project  = le slug du projet
-#   auth.token        = jeton d'auth Sentry, scopes: project:releases + org:read
-#                       (Sentry → Settings → Auth Tokens → Create New Token)
-defaults.url=https://sentry.io/
+#   auth.token        = jeton d'ORGANISATION (Settings → Developer Settings →
+#                       Organization Tokens → Create New Token). Périmètre
+#                       `org:ci`, calibré pour les builds. Ne PAS utiliser un
+#                       jeton personnel : il meurt avec le compte qui l'a créé.
+# Un jeton d'ORGANISATION (sntrys_…) embarque lui-même l'URL du serveur et
+# celle de la région : ne pas ajouter de `defaults.url`, sentry-cli avertirait
+# d'un conflit et pourrait viser la mauvaise région.
 defaults.org=REMPLACER-slug-organisation
 defaults.project=REMPLACER-slug-projet
 auth.token=REMPLACER-jeton

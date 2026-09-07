@@ -145,6 +145,15 @@ RCT_EXTERN_METHOD(ackEvents
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(drainExtensionLog
+                  : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(publishSentryDSN
+                  : (nonnull NSString *)dsn
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(resetIfFreshInstall
                   : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)

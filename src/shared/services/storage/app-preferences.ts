@@ -1,0 +1,73 @@
+/**
+ * Préférences d'app réglables par l'utilisateur — lecture/écriture PURES.
+ *
+ * Aucune dépendance à React ni à Zustand, volontairement : `haptics` et le
+ * module Sentry les consultent hors de tout rendu, parfois avant qu'un seul
+ * composant ne soit monté. Le store réactif qui pilote l'UI
+ * (`src/shared/stores/preferences.store.ts`) s'appuie sur ces fonctions ; il
+ * n'en est jamais la source de vérité.
+ *
+ * Convention d'écriture : `'1'` / `'0'`, jamais l'absence de clé pour dire
+ * « faux ». Une clé absente signifie « l'utilisateur n'a jamais tranché »,
+ * ce qui laisse la valeur par défaut libre d'évoluer.
+ */
+import { constants } from '@/config/constants'
+import { kvStorage } from '@/shared/services/storage/mmkv'
+
+export interface AppPreferences {
+  /** Retours haptiques dans toute l'app. */
+  haptics: boolean
+  /** Nappe sonore du rituel de respiration, à l'ouverture de la pause. */
+  pauseSound: boolean
+  /** Envoi des rapports d'anomalie (Sentry). */
+  crashReports: boolean
+}
+
+export const DEFAULT_PREFERENCES: AppPreferences = {
+  haptics: true,
+  pauseSound: true,
+  crashReports: true,
+}
+
+const KEYS: Record<keyof AppPreferences, string> = {
+  haptics: constants.PREF_HAPTICS,
+  pauseSound: constants.PREF_PAUSE_SOUND,
+  crashReports: constants.PREF_CRASH_REPORTS,
+}
+
+function readFlag(key: keyof AppPreferences): boolean {
+  const raw = kvStorage.getString(KEYS[key])
+  if (raw !== '0' && raw !== '1') return DEFAULT_PREFERENCES[key]
+  return raw === '1'
+}
+
+/** Une préférence, lue à la source. Sûr à appeler à n'importe quel instant. */
+export function getPreference(key: keyof AppPreferences): boolean {
+  try {
+    return readFlag(key)
+  } catch {
+    // MMKV indisponible (tests, tout premier démarrage) : la valeur par
+    // défaut vaut mieux qu'une exception dans un chemin décoratif.
+    return DEFAULT_PREFERENCES[key]
+  }
+}
+
+/** L'état complet, pour amorcer le store réactif. */
+export function getPreferences(): AppPreferences {
+  return {
+    haptics: getPreference('haptics'),
+    pauseSound: getPreference('pauseSound'),
+    crashReports: getPreference('crashReports'),
+  }
+}
+
+export function setPreference(
+  key: keyof AppPreferences,
+  value: boolean,
+): void {
+  try {
+    kvStorage.setString(KEYS[key], value ? '1' : '0')
+  } catch {
+    // Idem : ne jamais faire échouer une bascule d'interrupteur.
+  }
+}

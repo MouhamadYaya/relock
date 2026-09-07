@@ -20,6 +20,7 @@ import {
   isBlockedAppIconsAvailable,
 } from '@/shared/native/BlockedAppIcons'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { getPreference } from '@/shared/services/storage/app-preferences'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -89,11 +90,16 @@ export function BreathingPauseModal({
       easing: Easing.linear,
     })
 
-    ScreenTime.playCalmSound()
-      .then(started => {
-        if (active) setSoundOn(started)
-      })
-      .catch(() => {})
+    // La nappe sonore ne démarre d'elle-même que si l'utilisateur l'a laissée
+    // active dans les Réglages. Le bouton de l'écran reste disponible dans les
+    // deux cas : la préférence règle le DÉFAUT, pas la permission.
+    if (getPreference('pauseSound')) {
+      ScreenTime.playCalmSound()
+        .then(started => {
+          if (active) setSoundOn(started)
+        })
+        .catch(() => {})
+    }
 
     const tick = () => {
       const now = Date.now()

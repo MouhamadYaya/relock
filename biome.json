@@ -1,7 +1,17 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignoreUnknown": false },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!supabase/functions/**"
+    ]
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -47,7 +57,9 @@
         "useParseIntRadix": "warn",
         "useValidTypeof": "warn"
       },
-      "security": { "noGlobalEval": "error" },
+      "security": {
+        "noGlobalEval": "error"
+      },
       "style": {
         "noImplicitBoolean": "off",
         "noNestedTernary": "off",
@@ -136,7 +148,10 @@
   },
   "overrides": [
     {
-      "includes": ["*.ts", "*.tsx"],
+      "includes": [
+        "*.ts",
+        "*.tsx"
+      ],
       "linter": {
         "rules": {
           "correctness": {
@@ -153,13 +168,19 @@
       ],
       "linter": {
         "rules": {
-          "suspicious": { "noConsole": "off" }
+          "suspicious": {
+            "noConsole": "off"
+          }
         }
       }
     }
   ],
   "assist": {
     "enabled": true,
-    "actions": { "source": { "organizeImports": "on" } }
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   }
 }

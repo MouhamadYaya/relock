@@ -55,6 +55,7 @@ export function PaywallPlans({
   onSelect,
   onPurchase,
   onWindow,
+  onDevSkip,
   busy = false,
 }: {
   plans: readonly PaywallPlan[]
@@ -62,6 +63,12 @@ export function PaywallPlans({
   onSelect: (plan: PaywallPlan) => void
   onPurchase: () => void
   onWindow?: () => void
+  /**
+   * DEV uniquement : ouvre la porte sans passer par le store. Fourni par
+   * `PaywallScreen`, jamais en release — le rendu est de toute façon gardé
+   * par `__DEV__`, que Metro élimine du bundle de production.
+   */
+  onDevSkip?: () => void
   /** Un achat OU une restauration est en cours : l'écran se verrouille. */
   busy?: boolean
 }) {
@@ -213,6 +220,20 @@ export function PaywallPlans({
           disabled={locked}
           compact={compact}
         />
+        {/*
+          Le raccourci de développement : il franchit la porte dure sans
+          rien facturer, pour travailler l'app sans repasser par le store à
+          chaque lancement. `__DEV__` est une constante que Metro remplace
+          par `false` en release — ce bloc n'existe pas dans le binaire livré.
+        */}
+        {__DEV__ && onDevSkip ? (
+          <PaywallTextButton
+            testID="paywall-dev-skip"
+            label={t('paywall_reference.dev_skip')}
+            onPress={onDevSkip}
+            disabled={locked}
+          />
+        ) : null}
       </View>
     </View>
   )

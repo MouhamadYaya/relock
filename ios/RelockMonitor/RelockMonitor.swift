@@ -19,6 +19,15 @@ import os
 /// ⚠️ Helpers miroir de ceux de `BlocusScreenTime.swift` — garder en phase.
 final class RelockMonitor: DeviceActivityMonitor {
 
+  /// Démarre sentry-cocoa dès l'instanciation par iOS : c'est le premier
+  /// instant où ce processus existe, et donc le seul endroit d'où un crash
+  /// survenant plus loin puisse être capté. Muet tant que l'app n'a pas
+  /// publié le DSN dans le groupe d'app (voir `ExtensionSentry`).
+  override init() {
+    super.init()
+    ExtensionSentry.startIfNeeded(source: "monitor")
+  }
+
   private static let suite = "group.com.yaya.relock"
   private static let storeName = "blocus.default"
   private static let log = Logger(
@@ -172,6 +181,14 @@ final class RelockMonitor: DeviceActivityMonitor {
       // annule donc et le bouclier revient tout de suite : un blocage qui
       // revient trop tôt se corrige d'un geste, un blocage qui ne revient
       // jamais, non.
+      //
+      // Ce repli est correct mais il MASQUE la cause. Sans la trace, on ne
+      // verrait qu'un symptôme incompréhensible côté utilisateur : « mon
+      // déblocage de 5 minutes s'est arrêté au bout de 10 secondes ».
+      ExtensionLog.error(
+        "monitor",
+        "startMonitoring a échoué : sursis annulés et bouclier rétabli",
+        error)
       Self.withGroupLock { defaults?.removeObject(forKey: "reprieves") }
       recomputeShield()
     }

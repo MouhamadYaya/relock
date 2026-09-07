@@ -36,7 +36,20 @@ import UIKit
 /// app précise. Ce qui reste possible sur le mur, et qu'on fait : nommer
 /// l'app par son **vrai nom** (`localizedDisplayName`).
 final class RelockShield: ShieldConfigurationDataSource {
-  private let attempts = ShieldAttemptStore.production()
+  /// Panne silencieuse la plus grave de cette extension : sans le groupe
+  /// d'app, le mur s'affiche toujours mais AUCUNE tentative n'est comptée —
+  /// les statistiques de résistance restent à zéro sans que rien ne le
+  /// signale. On la journalise (cf. `ExtensionLog`) : cette extension étant
+  /// appelée de façon synchrone à chaque bouclier, elle n'héberge pas de SDK.
+  private let attempts: ShieldAttemptStore? = {
+    let store = ShieldAttemptStore.production()
+    if store == nil {
+      ExtensionLog.error(
+        "shield",
+        "groupe d'app inaccessible : aucune tentative ne sera enregistrée")
+    }
+    return store
+  }()
 
   // Jetons repris de `src/shared/theme/tokens/relock-material.ts` — le mur
   // doit appartenir au même monde que l'app, pas ressembler à un écran système.

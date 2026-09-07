@@ -72,6 +72,8 @@
 	<string>Cela nous permet de te proposer des contenus plus pertinents et de mesurer l’efficacité de nos campagnes.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Relock se connecte au serveur de développement sur ton réseau local. Le blocage d’apps n’en dépend pas.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choisis une photo dans ta galerie pour l’utiliser comme photo de profil. Relock n’accède à aucune autre image.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>RCTNewArchEnabled</key>

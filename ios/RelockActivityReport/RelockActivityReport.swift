@@ -943,7 +943,16 @@ struct HomeReport: DeviceActivityReportScene {
 /// que React Native puisse afficher la meme chose dans la feuille de detail
 /// sans jamais toucher aux donnees brutes.
 private func publishHomeScore(_ score: HomeScoreModel) {
-  guard let defaults = UserDefaults(suiteName: "group.com.yaya.relock") else { return }
+  // Cette extension n'a AUCUN accès réseau (Apple l'interdit aux
+  // DeviceActivityReportExtension) : le journal partagé est son unique moyen
+  // de signaler quoi que ce soit. Sans le conteneur, l'Accueil garde
+  // indéfiniment un score périmé, sans le moindre indice.
+  guard let defaults = UserDefaults(suiteName: "group.com.yaya.relock") else {
+    ExtensionLog.error(
+      "report",
+      "groupe d'app inaccessible : le score d'accueil ne sera pas publié")
+    return
+  }
   var payload: [String: Any] = [
     "status": score.status.rawValue,
     "weakestAxis": score.weakestAxis.rawValue,

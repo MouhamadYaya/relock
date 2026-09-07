@@ -66,4 +66,16 @@ export const env = {
   REVENUECAT_DISCOUNT_OFFERING_ID: (
     Config.REVENUECAT_DISCOUNT_OFFERING_ID ?? 'discount'
   ).trim(),
+  /**
+   * ImageKit — CDN média + transformations d'images par URL.
+   * Ces deux valeurs ne sont PAS des secrets : l'endpoint apparaît dans chaque
+   * URL d'image servie, et la public key n'autorise qu'un upload DÉJÀ signé.
+   * La Private Key, elle, ne doit jamais entrer dans le binaire : elle vit
+   * uniquement dans la Edge Function Supabase `imagekit-auth`.
+   * Vide = intégration inerte (aucun appel réseau, fallback sur l'UI locale).
+   */
+  IMAGEKIT_URL_ENDPOINT: (Config.IMAGEKIT_URL_ENDPOINT ?? '')
+    .trim()
+    .replace(/\/+$/, ''),
+  IMAGEKIT_PUBLIC_KEY: (Config.IMAGEKIT_PUBLIC_KEY ?? '').trim(),
 } as const

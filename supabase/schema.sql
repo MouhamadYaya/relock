@@ -9,11 +9,18 @@ create table if not exists public.profiles (
   id           uuid primary key references auth.users (id) on delete cascade,
   display_name text,
   avatar_url   text,
+  -- Date de naissance : une DATE, jamais un timestamp. Un anniversaire n'a
+  -- pas d'heure, et le faire transiter en UTC le décale d'un jour pour la
+  -- moitié de la planète.
+  birth_date   date,
   locale       text        not null default 'fr',
   timezone     text,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- Ajout après coup sur une base déjà déployée (2026-09-07).
+alter table public.profiles add column if not exists birth_date date;
 
 -- ─────────────────────────────────────────────────────────────
 -- block_rules : une règle de blocage (type + apps + config)

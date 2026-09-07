@@ -11,13 +11,17 @@
  *
  * Si un Metro tourne déjà sur le port (typiquement `npm start` dans un autre
  * terminal), on n'en démarre pas un second : on build, on connecte, et on sort.
- * Le build utilise alors un port libre, car `expo run` démarre malgré tout un
- * serveur headless éphémère qui entrerait en conflit avec celui déjà en place.
+ *
+ * ⚠️ Ne PAS ajouter `--port` à l'étape de build : Expo CLI rejette désormais
+ * `--port` et `--no-bundler` ensemble (« mutually exclusive arguments »), et
+ * `npm run ios` échoue alors avant même de compiler. C'est cohérent —
+ * `--no-bundler` signifie précisément qu'aucun serveur n'est démarré, donc
+ * aucun port à réserver. (Le code réservait auparavant un port libre pour un
+ * « serveur headless éphémère » qui n'existe pas.)
  *
  * Usage : node scripts/dev-run.cjs --platform ios [-- <args passés à expo run>]
  */
 const { spawn } = require('node:child_process')
-const net = require('node:net')
 const {
   openDevClient,
   resolveMetroUrl,
@@ -36,20 +40,14 @@ const passthrough = argv.includes('--')
 const platform = argOf('platform') === 'android' ? 'android' : 'ios'
 const port = argOf('port') ?? process.env.RCT_METRO_PORT ?? '8081'
 
-const spawnStep = args =>
-  spawn('npx', ['expo', ...args], { stdio: 'inherit', env: process.env })
+const spawnStep = (args, extraEnv) =>
+  spawn('npx', ['expo', ...args], {
+    stdio: 'inherit',
+    env: { ...process.env, ...extraEnv },
+  })
 
 const waitForExit = child =>
   new Promise(resolve => child.on('exit', code => resolve(code ?? 0)))
-
-const freePort = () =>
-  new Promise(resolve => {
-    const server = net.createServer()
-    server.listen(0, () => {
-      const { port: assigned } = server.address()
-      server.close(() => resolve(String(assigned)))
-    })
-  })
 
 async function main() {
   const metroUrl = resolveMetroUrl({ port })
@@ -57,15 +55,17 @@ async function main() {
     ? await waitForMetro(metroUrl, { timeoutMs: 0 })
     : false
 
-  const buildPort = metroAlreadyRunning ? await freePort() : port
+  // Quand un Metro occupe déjà le port, `expo run` — bien qu'en `--no-bundler`
+  // — demande « Use port 8082 instead? » et BLOQUE le terminal en attendant
+  // une réponse. La question n'a pourtant aucun sens ici : `--no-bundler` dit
+  // justement qu'on ne veut aucun serveur. `CI=1` la fait trancher toute
+  // seule (« Skipping dev server »), sans toucher au cas normal où aucun
+  // Metro ne tourne et où l'interactivité reste utile.
   const buildCode = await waitForExit(
-    spawnStep([
-      `run:${platform}`,
-      '--no-bundler',
-      '--port',
-      buildPort,
-      ...passthrough,
-    ]),
+    spawnStep(
+      [`run:${platform}`, '--no-bundler', ...passthrough],
+      metroAlreadyRunning ? { CI: '1' } : undefined,
+    ),
   )
   if (buildCode !== 0) {
     console.error(

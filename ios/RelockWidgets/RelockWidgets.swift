@@ -11,6 +11,13 @@ import WidgetKit
 /// jour n'est nécessaire pendant toute la durée du blocage.
 @main
 struct RelockWidgetsBundle: WidgetBundle {
+  /// Point d'entrée du processus widget : premier (et seul) endroit d'où
+  /// armer la capture des crashs de cette extension. Muet tant que l'app n'a
+  /// pas publié le DSN dans le groupe d'app (voir `ExtensionSentry`).
+  init() {
+    ExtensionSentry.startIfNeeded(source: "widgets")
+  }
+
   var body: some Widget {
     if #available(iOS 16.2, *) {
       RelockBlockLiveActivity()

@@ -37,6 +37,15 @@ export const constants = {
   ACCOUNTS_KEY: 'user.accounts',
   CONTACTS_KEY: 'user.contacts',
 
+  /**
+   * Préférences réglables depuis l'écran Réglages. Une clé par préférence
+   * (et non un blob JSON) : chacune se lit isolément, tôt, sans parser quoi
+   * que ce soit — `haptics` et Sentry les consultent hors de React.
+   */
+  PREF_HAPTICS: 'pref.haptics.v1',
+  PREF_PAUSE_SOUND: 'pref.pauseSound.v1',
+  PREF_CRASH_REPORTS: 'pref.crashReports.v1',
+
   /** MMKV key (`navigationStorage`) for persisted React Navigation root state. */
   NAVIGATION_STATE_V1: 'navigation.state.v1',
 }

@@ -12,6 +12,29 @@
  */
 import { NativeModules, Platform } from 'react-native'
 
+/**
+ * Une ligne du journal partagé des extensions.
+ *
+ * Les extensions Family Controls sont des processus séparés : leurs erreurs
+ * n'apparaissent PAS dans le rapport de crash de l'app. Deux d'entre elles ne
+ * peuvent même pas héberger de SDK — `RelockActivityReport` n'a aucun accès
+ * réseau (Apple), et `RelockShield` est trop sensible à la latence. Elles
+ * écrivent donc ici, et l'app draine au démarrage suivant.
+ */
+export type ExtensionLogEntry = {
+  /** Secondes depuis epoch. */
+  ts: number
+  /** Cible émettrice : `shield`, `monitor`, `report`, `widgets`, `action`. */
+  source: string
+  /** `error` ou `info`. */
+  kind: string
+  /** Message stable, sans identifiant — sert d'empreinte de regroupement. */
+  message: string
+  data?: Record<string, string>
+  /** Présent sur la 1re entrée quand le tampon a débordé. */
+  droppedBefore?: number
+}
+
 export type AuthStatus = 'approved' | 'denied' | 'notDetermined' | 'unsupported'
 
 /**
@@ -175,6 +198,10 @@ interface BlocusScreenTimeNative {
   ackEvents(count: number): Promise<boolean>
   /** 1er lancement après (ré)install : purge le blocage système. true si frais. */
   resetIfFreshInstall(): Promise<boolean>
+  /** Vide le journal partagé écrit par les 5 extensions (voir ExtensionLog.swift). */
+  drainExtensionLog?(): Promise<ExtensionLogEntry[]>
+  /** Dépose le DSN Sentry dans le groupe d'app, pour les extensions. */
+  publishSentryDSN?(dsn: string): Promise<boolean>
   /** Bilan de santé natif : build, autorisation, journal, vie des extensions. */
   getDiagnostics(): Promise<ScreenTimeDiagnostics>
   /** DEBUG uniquement, et uniquement après `-HomeReferenceFixture YES`. */
@@ -332,6 +359,18 @@ export const ScreenTime = {
       ? native.resetIfFreshInstall()
       : Promise.resolve(false),
   getDiagnostics: () => ensure().getDiagnostics(),
+  /**
+   * Résout `[]` quand le module natif est absent (simulateur sans le module,
+   * Android) : la télémétrie ne doit jamais faire échouer un démarrage.
+   */
+  drainExtensionLog: (): Promise<ExtensionLogEntry[]> =>
+    native?.drainExtensionLog
+      ? native.drainExtensionLog()
+      : Promise.resolve([]),
+  publishSentryDSN: (dsn: string): Promise<boolean> =>
+    native?.publishSentryDSN
+      ? native.publishSentryDSN(dsn)
+      : Promise.resolve(false),
   homeReferenceFixture: () =>
     __DEV__ && native?.homeReferenceFixture
       ? native.homeReferenceFixture()

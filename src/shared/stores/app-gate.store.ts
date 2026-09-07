@@ -38,6 +38,12 @@ type AppGateStore = {
   setSurveyDone: () => void
   setEntitled: (entitled: boolean) => void
   setSetupDone: () => void
+  /**
+   * Rouvre la porte d'activation SANS toucher au récit ni à l'abonnement.
+   * Utilisé à la déconnexion et à la suppression de compte : l'utilisateur
+   * repart à l'étape « compte » du parcours, pas au premier écran du récit.
+   */
+  clearSetupDone: () => void
   /** Dev only (`src/session/dev-test-bridge.ts`) : rejoue tout le parcours. */
   resetOnboardingGates: () => void
 }
@@ -76,6 +82,7 @@ export const useAppGateStore = create<AppGateStore>(set => {
     setSurveyDone: () => set({ surveyDone: true }),
     setEntitled: entitled => set({ entitled }),
     setSetupDone: () => set({ setupDone: true }),
+    clearSetupDone: () => set({ setupDone: false }),
     resetOnboardingGates: () => set({ surveyDone: false, setupDone: false }),
   }
 })

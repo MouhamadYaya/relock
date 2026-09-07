@@ -48,6 +48,7 @@ export function PaywallFlow({
   initialScreen = 'benefits',
   escapable = true,
   onSignIn,
+  onDevSkip,
 }: {
   /** Les formules du store, prix compris. Rien ne s'affiche sans elles. */
   plans: readonly PaywallPlan[]
@@ -77,6 +78,12 @@ export function PaywallFlow({
   escapable?: boolean
   /** « J'ai déjà un compte » : la seule issue d'un abonné qui a réinstallé. */
   onSignIn?: () => void
+  /**
+   * DEV uniquement : franchit la porte dure sans rien facturer. Le bouton
+   * qui l'appelle vit sous `__DEV__` dans `PaywallPlans` — il n'existe pas
+   * dans le bundle de production.
+   */
+  onDevSkip?: () => void
   /**
    * Rend la main sur `false` quand le store n'a rendu aucun achat à
    * restaurer — l'écran le dit alors, plutôt que de laisser un silence.
@@ -409,6 +416,7 @@ export function PaywallFlow({
                   }
                 : undefined
             }
+            onDevSkip={onDevSkip}
           />
         )}
       </View>

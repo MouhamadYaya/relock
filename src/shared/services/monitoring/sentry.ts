@@ -23,6 +23,7 @@ import * as Sentry from '@sentry/react-native'
 import type { ErrorInfo } from 'react'
 
 import { env } from '@/config/env'
+import { getPreference } from '@/shared/services/storage/app-preferences'
 import { scrubBreadcrumb, scrubEvent } from './scrub'
 
 /**
@@ -49,9 +50,15 @@ const IGNORED_ERRORS: readonly (string | RegExp)[] = [
 let didInit = false
 let active = false
 
-/** Vrai quand les événements partent réellement. */
+/**
+ * Vrai quand les événements partent réellement : le DSN est configuré ET
+ * l'utilisateur n'a pas coupé l'envoi depuis les Réglages.
+ *
+ * L'opt-out est relu à chaque appel plutôt que mémorisé : couper l'envoi doit
+ * prendre effet à la seconde, pas au prochain lancement.
+ */
 export function isSentryEnabled(): boolean {
-  return active
+  return active && getPreference('crashReports')
 }
 
 function shouldEnable(): boolean {
@@ -147,13 +154,13 @@ export function initSentry(): void {
  * fil d'Ariane : on voit la dernière table interrogée avant un crash.
  */
 export function attachSupabaseTelemetry(supabaseClient: unknown): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.addIntegration(Sentry.supabaseIntegration({ supabaseClient }))
 }
 
 /** Signale les échecs d'`ErrorBoundary` (pas de PII, stack de composants). */
 export function captureBoundaryError(error: Error, errorInfo: ErrorInfo): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.captureException(error, {
     contexts: {
       react: { componentStack: errorInfo.componentStack ?? undefined },
@@ -179,7 +186,7 @@ type CaptureOptions = {
  * personne ne s'en plaindra. C'est ce que les `catch` muets avalaient.
  */
 export function captureError(error: unknown, options?: CaptureOptions): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   const err = error instanceof Error ? error : new Error(safeStringify(error))
   Sentry.captureException(err, {
     tags: options?.tags,
@@ -194,7 +201,7 @@ export function captureMessage(
   message: string,
   options?: CaptureOptions,
 ): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.captureMessage(message, {
     tags: options?.tags,
     extra: options?.extra,
@@ -214,7 +221,7 @@ export function addAppBreadcrumb(breadcrumb: {
   level?: 'debug' | 'info' | 'warning' | 'error'
   data?: Record<string, unknown>
 }): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.addBreadcrumb({
     category: breadcrumb.category,
     message: breadcrumb.message,
@@ -230,13 +237,13 @@ export function addAppBreadcrumb(breadcrumb: {
  * au précédent).
  */
 export function setSentryUser(userId: string | null): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.setUser(userId ? { id: userId } : null)
 }
 
 /** Étiquettes filtrables dans le dashboard (env, abonnement, langue…). */
 export function setSentryTags(tags: Record<string, string>): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.setTags(tags)
 }
 
@@ -245,7 +252,7 @@ export function setSentryContext(
   key: string,
   context: Record<string, unknown> | null,
 ): void {
-  if (!active) return
+  if (!isSentryEnabled()) return
   Sentry.setContext(key, context)
 }
 
@@ -256,7 +263,7 @@ export function setSentryContext(
  * en argument, contrairement au SDK web.)
  */
 export function flushSentry(): Promise<boolean> {
-  if (!active) return Promise.resolve(true)
+  if (!isSentryEnabled()) return Promise.resolve(true)
   return Sentry.flush()
 }
 

@@ -102,3 +102,6 @@ artifacts/
 ios/sentry.properties
 android/sentry.properties
 .env.sentry-build-plugin
+
+# Supabase CLI — état local de liaison au projet (pas de secret, mais spécifique à la machine)
+supabase/.temp/

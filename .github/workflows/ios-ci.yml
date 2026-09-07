@@ -65,7 +65,7 @@ jobs:
             exit 0
           fi
           for dir in ios android; do
-            printf 'defaults.url=https://sentry.io/\ndefaults.org=%s\ndefaults.project=%s\nauth.token=%s\n' \
+            printf 'defaults.org=%s\ndefaults.project=%s\nauth.token=%s\n' \
               "$SENTRY_ORG" "$SENTRY_PROJECT" "$SENTRY_AUTH_TOKEN" > "$dir/sentry.properties"
           done
           echo "Sentry configure pour ios/ et android/."

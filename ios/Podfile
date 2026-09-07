@@ -160,3 +160,39 @@ target 'Relock' do
     end
   end
 end
+
+# --- Sentry dans les extensions ---------------------------------------------
+#
+# Trois des cinq extensions peuvent héberger sentry-cocoa et remonter leurs
+# CRASHS DURS (ceux qui tuent le processus avant toute écriture) :
+#
+#   RelockMonitor       réveillé par iOS sur événement, a le temps et le réseau
+#   RelockShieldAction  déclenché par un tap utilisateur
+#   RelockWidgets       extension de widget ordinaire
+#
+# Les deux autres en sont EXCLUES, et ce n'est pas un oubli :
+#   RelockActivityReport  Apple lui refuse tout accès réseau ;
+#   RelockShield          appelée de façon synchrone pour dessiner chaque
+#                         bouclier — y démarrer un SDK se paierait sur le
+#                         geste central du produit.
+# Elles passent par `ios/Shared/ExtensionLog.swift`, relu par l'app.
+#
+# La version est LUE dans le podspec de RNSentry plutôt qu'écrite en dur : les
+# deux doivent rester identiques, sinon deux copies de sentry-cocoa cohabitent
+# dans le même bundle. Mettre à jour `@sentry/react-native` suffit donc.
+sentry_rn_root = File.dirname(
+  `node --print "require.resolve('@sentry/react-native/package.json')"`.strip)
+sentry_cocoa_version =
+  File.read(File.join(sentry_rn_root, 'RNSentry.podspec'))[
+    /s\.dependency\s+'Sentry',\s*'([^']+)'/, 1]
+raise "Version de sentry-cocoa introuvable dans RNSentry.podspec" if sentry_cocoa_version.nil?
+
+%w[RelockMonitor RelockShieldAction RelockWidgets].each do |extension_target|
+  target extension_target do
+    # Même préférence que la cible `Relock` : CocoaPods refuse deux réglages
+    # différents pour un pod partagé et retomberait sur celui de la racine en
+    # le signalant à chaque `pod install`.
+    inhibit_all_warnings!
+    pod 'Sentry', sentry_cocoa_version
+  end
+end

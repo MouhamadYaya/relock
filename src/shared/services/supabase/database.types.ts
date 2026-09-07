@@ -8,6 +8,8 @@ export type Profile = {
   id: string
   display_name: string | null
   avatar_url: string | null
+  /** `YYYY-MM-DD` — une date civile, sans heure ni fuseau. */
+  birth_date: string | null
   locale: string
   timezone: string | null
   created_at: string

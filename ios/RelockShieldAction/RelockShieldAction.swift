@@ -7,6 +7,15 @@ import os
 /// contexte exact, ou fermer l'app bloquée sans modifier les protections.
 final class RelockShieldAction: ShieldActionDelegate {
 
+  /// Démarre sentry-cocoa dès l'instanciation par iOS : c'est le premier
+  /// instant où ce processus existe, et donc le seul endroit d'où un crash
+  /// survenant plus loin puisse être capté. Muet tant que l'app n'a pas
+  /// publié le DSN dans le groupe d'app (voir `ExtensionSentry`).
+  override init() {
+    super.init()
+    ExtensionSentry.startIfNeeded(source: "action")
+  }
+
   private static let suite = "group.com.yaya.relock"
   private static let log = Logger(
     subsystem: "com.yaya.relock", category: "shieldaction")
@@ -103,6 +112,20 @@ final class RelockShieldAction: ShieldActionDelegate {
     default:
       requestStatus = "other"
       responseName = "close"
+    }
+
+    // L'utilisateur a appuyé sur « ouvrir Relock » et la demande n'a PAS pu
+    // être écrite : l'app va démarrer sans savoir quelle app débloquer, donc
+    // la feuille de déblocage n'apparaîtra jamais. Du point de vue de
+    // l'utilisateur, le bouton « ne marche pas » — au hasard, sans message.
+    // Cette extension embarque aussi sentry-cocoa (crashs durs) ; ceci en est
+    // le pendant pour les échecs ATTRAPÉS.
+    if requestStatus == "write-failed" {
+      ExtensionLog.error(
+        "action",
+        "demande d'ouverture non écrite : la feuille de déblocage ne s'ouvrira pas",
+        data: ["hasApplication": String(hasApplication),
+               "hasCategory": String(hasCategory)])
     }
 
     let resisted = action == .secondaryButtonPressed
