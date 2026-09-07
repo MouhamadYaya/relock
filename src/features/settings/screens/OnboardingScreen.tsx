@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Line, Polygon, Polyline } from 'react-native-svg'
 import { useT } from '@/i18n/useT'
-import { completeOnboarding } from '@/session/bootstrap'
+import { completeSetup } from '@/session/bootstrap'
 import { Button } from '@/shared/components/ui/Button'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { Text } from '@/shared/components/ui/Text'
@@ -219,7 +219,7 @@ export default function OnboardingScreen() {
   )
 
   const handleContinue = () => {
-    completeOnboarding()
+    completeSetup()
   }
 
   return (

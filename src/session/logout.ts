@@ -13,6 +13,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { constants } from '@/config/constants'
 import { clearNavigationPersistence } from '@/navigation/persistence/navigation-persistence'
+import { detachBillingIdentity } from '@/session/billing-identity'
 import { getSessionQueryClient } from '@/session/session-bridge'
 import { offlineQueue } from '@/shared/services/api/offline/offline-queue'
 import { cacheEngine } from '@/shared/services/storage/cache-engine'
@@ -49,6 +50,11 @@ async function runLogout(qc?: QueryClient): Promise<void> {
     // 3) Clear offline queue + in-memory snapshot cache
     offlineQueue.clear()
     cacheEngine.clear()
+
+    // 3b) Detach purchases from the account (back to an anonymous RevenueCat
+    // id). Deliberately does NOT re-check the entitlement — see
+    // `detachBillingIdentity`.
+    void detachBillingIdentity()
 
     // 4) Clear React Query in-memory cache (if available)
     if (client) {

@@ -43,8 +43,9 @@ export function PaywallWordmark() {
  *
  * Deux tons, parce qu'il y a deux fonds : `accent` pose la lavande de
  * l'onboarding avec une encre sombre (la variante qui existe déjà dans
- * `Pill`), `deep` pose un violet profond avec du blanc — le seul qui tienne
- * sur une surface claire, où la lavande disparaîtrait.
+ * `Pill`), `deep` pose un violet profond avec du blanc — c'est le ton des
+ * panneaux promotionnels (`paper`), où la lavande, déjà prise par le titre
+ * et le chiffre, ne peut plus servir de fond d'action sans tout aplatir.
  */
 export function PaywallButton({
   label,
@@ -141,14 +142,21 @@ export function PaywallTextButton({
   onPress,
   disabled = false,
   tone = 'muted',
+  testID,
 }: {
   label: string
   onPress: () => void
   disabled?: boolean
-  tone?: 'muted' | 'paper'
+  /**
+   * `bright` est réservé aux commandes posées SUR une illustration : à 72 %
+   * d'opacité (`muted`), un libellé se perd dans les cartes de la mosaïque.
+   */
+  tone?: 'muted' | 'paper' | 'bright'
+  testID?: string
 }) {
   return (
     <PressableScale
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
@@ -160,6 +168,7 @@ export function PaywallTextButton({
         style={[
           styles.textButtonLabel,
           tone === 'paper' && styles.textButtonPaper,
+          tone === 'bright' && styles.textButtonBright,
         ]}
       >
         {label}
@@ -171,14 +180,18 @@ export function PaywallTextButton({
 export function PaywallClose({
   onPress,
   tone = 'dark',
+  testID = 'paywall-close',
 }: {
   onPress: () => void
-  tone?: 'dark' | 'paper'
+  tone?: 'dark' | 'paper' | 'bright'
+  /** Deux croix coexistent (l'écran des formules, la feuille d'offre) : les
+   * tests doivent pouvoir viser l'une sans attraper l'autre. */
+  testID?: string
 }) {
   const t = useT()
   return (
     <PressableScale
-      testID="paywall-close"
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={t('paywall.close')}
       onPress={onPress}
@@ -187,7 +200,13 @@ export function PaywallClose({
       <IconSvg
         name={IconName.CLOSE}
         size={PW.layout.icon}
-        color={tone === 'paper' ? PW.color.paperMuted : PW.color.ink}
+        color={
+          tone === 'paper'
+            ? PW.color.paperMuted
+            : tone === 'bright'
+              ? PW.color.onViolet
+              : PW.color.ink
+        }
       />
     </PressableScale>
   )
@@ -230,7 +249,7 @@ export function PaywallStars({
         <Svg key={index} width={size} height={size} viewBox="0 0 24 24">
           <Path
             d={STAR}
-            fill={tone === 'paper' ? PW.color.violetDeep : PW.color.accent}
+            fill={tone === 'paper' ? PW.color.paperAccent : PW.color.accent}
           />
         </Svg>
       ))}
@@ -407,6 +426,18 @@ const styles = StyleSheet.create({
     fontSize: PW.text.caption,
     lineHeight: PW.text.captionLine,
     color: PW.color.inkMuted,
+  },
+  /**
+   * Blanc pur, plus une ombre portée courte. L'ombre n'est pas un effet : la
+   * mosaïque fait défiler sous ces commandes des cartes sombres ET des cartes
+   * lavande claires, et sans elle le libellé blanc disparaît sur les
+   * secondes.
+   */
+  textButtonBright: {
+    color: PW.color.onViolet,
+    textShadowColor: PW.color.scrim,
+    textShadowRadius: 6,
+    textShadowOffset: { width: 0, height: 1 },
   },
   textButtonPaper: { color: PW.color.paperMuted },
   close: {

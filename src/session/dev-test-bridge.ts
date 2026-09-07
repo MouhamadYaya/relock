@@ -7,7 +7,11 @@ import {
   NativeModules,
 } from 'react-native'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
-import { completeOnboarding, resetOnboarding } from '@/session/bootstrap'
+import {
+  applyEntitlement,
+  completeSetup,
+  resetOnboarding,
+} from '@/session/bootstrap'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { genUUID } from '@/shared/utils/uuid'
 
@@ -237,11 +241,22 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} onboarding réinitialisé`)
       return
     case 'onboarding-complete':
-      // Symétrique de `onboarding-reset` : `completeOnboarding()` fait déjà
-      // le flip + le `replace` explicite (voir son commentaire pour le
-      // pourquoi du `replace`).
-      completeOnboarding()
+      // Symétrique de `onboarding-reset` : `completeSetup()` fait déjà le
+      // flip + le `replace` explicite (voir son commentaire pour le pourquoi
+      // du `replace`).
+      completeSetup()
       console.log(`${TAG} onboarding marqué terminé`)
+      return
+    // La porte dure ne se teste pas sans pouvoir la refermer : `onboarding-reset`
+    // ne touche PAS à l'abonnement (c'est un achat réel). Ces deux commandes
+    // simulent l'abonné et l'expiré, replace explicite compris.
+    case 'entitlement-lock':
+      applyEntitlement(false)
+      console.log(`${TAG} abonnement retiré (paywall)`)
+      return
+    case 'entitlement-unlock':
+      applyEntitlement(true)
+      console.log(`${TAG} abonnement accordé`)
       return
     case 'dev-session': {
       // Déconnecte le compte courant (souvent restauré depuis le Keychain,
@@ -309,7 +324,12 @@ async function run(cmd: string): Promise<void> {
               : 'progressive_delay'
         if (kind === 'schedule') {
           await ScreenTime.startSchedule(
-            id, value, 0, (value + 2) % 24, 0, [1, 2, 3, 4, 5],
+            id,
+            value,
+            0,
+            (value + 2) % 24,
+            0,
+            [1, 2, 3, 4, 5],
           )
         } else if (kind === 'daily_limit') {
           await ScreenTime.startDailyLimit(id, value)
@@ -327,11 +347,7 @@ async function run(cmd: string): Promise<void> {
         const diag = await ScreenTime.getDiagnostics().catch(() => null)
         await report(
           'mkrule',
-          JSON.stringify(
-            { id, type, config, seeded, armed, diag },
-            null,
-            2,
-          ),
+          JSON.stringify({ id, type, config, seeded, armed, diag }, null, 2),
         )
         return
       }
@@ -401,18 +417,15 @@ async function run(cmd: string): Promise<void> {
         )
         for (const rule of targets) {
           await BlockRulesService.remove(rule.id)
-          await ScreenTime.clearRuleData(rule.id, nativeKindOf(rule.type)).catch(
-            () => {},
-          )
+          await ScreenTime.clearRuleData(
+            rule.id,
+            nativeKindOf(rule.type),
+          ).catch(() => {})
         }
         const diag = await ScreenTime.getDiagnostics().catch(() => null)
         await report(
           'rmtest',
-          JSON.stringify(
-            { supprimées: targets.map(r => r.id), diag },
-            null,
-            2,
-          ),
+          JSON.stringify({ supprimées: targets.map(r => r.id), diag }, null, 2),
         )
         return
       }
@@ -578,7 +591,9 @@ function pollCommands(): void {
     } catch {
       misses += 1
       if (misses === MISSES_BEFORE_SLOWDOWN) {
-        console.log(`${TAG} serveur injoignable — cadence réduite à ${SLOW_MS}ms`)
+        console.log(
+          `${TAG} serveur injoignable — cadence réduite à ${SLOW_MS}ms`,
+        )
       }
       delay = misses >= MISSES_BEFORE_SLOWDOWN ? SLOW_MS : FAST_MS
     }

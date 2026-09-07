@@ -18,12 +18,33 @@ Les scripts npm passent désormais par Expo :
 | Commande | Fait quoi |
 |---|---|
 | `npm start` | `expo start --dev-client` — Metro + QR code du dev launcher |
-| `npm run ios` | `expo run:ios` — build + install + lance le dev client (simulateur/device iOS) |
-| `npm run android` | `expo run:android` |
+| `npm run ios` | build + install + démarre Metro + **connecte l'app au serveur automatiquement** (`scripts/dev-run.cjs`) |
+| `npm run android` | idem côté Android |
+| `npm run dev:open` | connecte l'app déjà installée au Metro en cours, sans rebuild |
+| `npm run ios:raw` / `android:raw` | `expo run:*` brut, sans l'automatisation ci-dessus |
+
+### Connexion automatique au serveur Metro (plus de saisie d'URL)
+
+Le dev-launcher relance seul le dernier bundle ouvert, mais cette mémoire vit dans
+les données de l'app : une désinstallation la vide. Et sur iPhone **physique**,
+`expo run:ios` se contente d'installer le binaire — il ne transmet jamais l'URL du
+serveur (cf. `@expo/cli` `run/ios/launchApp.js`, qui `return` avant le launch
+lorsque la cible n'est pas un simulateur). D'où l'écran « Enter URL manually ».
+
+`scripts/dev-open.cjs` relance l'app avec l'argument `--initialUrl <url>`, que le
+dev-launcher lit au démarrage avant d'afficher son UI
+(`EXDevLauncherController.initialUrlFromProcessInfo`) ; sur Android il passe par le
+deep link `relock://expo-development-client/?url=…` après un `adb reverse`.
+L'IP LAN est recalculée à chaque lancement, donc un changement DHCP est sans effet.
+
+`scripts/dev-run.cjs` orchestre le tout : `expo run:* --no-bundler` (indispensable,
+sinon `expo run` garde Metro au premier plan et rien ne peut s'enchaîner), puis
+`expo start`, puis la connexion dès que Metro répond. Si un Metro tourne déjà, il
+n'en démarre pas un second.
 
 **Recette :**
 1. **Première fois / après un changement natif ou de pods** : `npm run ios` (build complet, installe, lance, démarre Metro).
-2. **Ensuite, changements JS uniquement** : `npm start`, puis ouvrir l'app Relock déjà installée (le simulateur se connecte seul ; sur iPhone physique avec le build dev, scanner le QR affiché par Metro).
+2. **Ensuite, changements JS uniquement** : `npm start`, puis `npm run dev:open` dans un second terminal — l'app installée se rouvre directement sur le bon serveur (aucune URL à saisir, aucun QR à scanner).
 
 ### Expo Go vs expo-dev-client (piège fréquent)
 

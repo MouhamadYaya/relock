@@ -23,6 +23,8 @@ jest.mock('@assets/icons', () => ({
     CLOCK: 'CLOCK',
     FOCUS: 'FOCUS',
     SUN: 'SUN',
+    CALENDAR: 'CALENDAR',
+    USER: 'USER',
   },
 }))
 jest.mock('@/shared/components/ui/IconSvg', () => ({ IconSvg: 'IconSvg' }))
@@ -30,13 +32,17 @@ jest.mock('@/shared/components/ui/PressableScale', () => ({
   PressableScale: 'PressableScale',
 }))
 jest.mock('@/features/onboarding/bits', () => ({ Moon: 'Moon' }))
+jest.mock('@/features/onboarding/components/paywall/PaywallUsageChart', () => ({
+  PaywallUsageChart: 'PaywallUsageChart',
+}))
+jest.mock('@/features/onboarding/components/paywall/PaywallMarquee', () => ({
+  PaywallMarquee: 'PaywallMarquee',
+}))
 jest.mock('@/features/onboarding/components/paywall/PaywallArtwork', () => ({
   PaywallBackdrop: 'PaywallBackdrop',
   PaywallField: 'PaywallField',
-  PaywallTiles: 'PaywallTiles',
   PaywallSparkle: 'PaywallSparkle',
-  PaywallComparisonPhoto: 'PaywallComparisonPhoto',
-  PaywallBenefitThumb: 'PaywallBenefitThumb',
+  PaywallTrustLogos: 'PaywallTrustLogos',
 }))
 jest.mock('@/features/onboarding/components/paywall/PaywallPrimitives', () => ({
   PaywallBanner: 'PaywallBanner',
@@ -69,6 +75,7 @@ describe('Reference paywall and strictly separated offers', () => {
   let renderer: ReactTestRenderer
   const skip = jest.fn()
   const success = jest.fn()
+  const signIn = jest.fn()
   const originalDev = __DEV__
   const mount = (
     purchase?: PaywallPurchase,
@@ -89,6 +96,22 @@ describe('Reference paywall and strictly separated offers', () => {
     act(() => renderer.root.findByType(PaywallBenefits).props.onNext())
   const press = (label: string) =>
     act(() => renderer.root.findByProps({ label }).props.onPress())
+  /**
+   * La sortie de l'écran des formules est désormais une croix posée sur le
+   * bandeau, plus un bouton « Passer ». Deux croix coexistent à l'écran (la
+   * feuille d'offre a la sienne), d'où le testID.
+   */
+  /** Le bouton « Restaurer » de la barre, désormais hors de `PaywallPlans`. */
+  const restoreButton = () =>
+    renderer.root
+      .findByProps({ testID: 'paywall-restore' })
+      .findByType('PaywallTextButton' as never)
+  const dismiss = () =>
+    act(() =>
+      renderer.root
+        .findByProps({ testID: 'paywall-plans-close' })
+        .props.onPress(),
+    )
   const sheetVisible = () => renderer.root.findByType(Modal).props.visible
   const buy = () =>
     act(async () => {
@@ -99,6 +122,7 @@ describe('Reference paywall and strictly separated offers', () => {
   beforeEach(() => {
     skip.mockClear()
     success.mockClear()
+    signIn.mockClear()
     jest.spyOn(Alert, 'alert').mockImplementation(() => {})
   })
   afterEach(() => {
@@ -124,9 +148,9 @@ describe('Reference paywall and strictly separated offers', () => {
     expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(0)
   })
 
-  it('shows the exit offer on Passer in a production build too', () => {
+  it('shows the exit offer on dismiss in a production build too', () => {
     // Le garde-fou d'origine réservait cet écran à `__DEV__` : en production,
-    // « Passer » sortait directement et l'offre de rattrapage n'existait pas.
+    // la croix sortait directement et l'offre de rattrapage n'existait pas.
     Object.defineProperty(global, '__DEV__', {
       value: false,
       configurable: true,
@@ -145,7 +169,7 @@ describe('Reference paywall and strictly separated offers', () => {
       )
     })
     openPlans()
-    press('Passer')
+    dismiss()
     expect(renderer.root.findByType(PaywallExitOffer)).toBeDefined()
     expect(skip).not.toHaveBeenCalled()
   })
@@ -153,7 +177,7 @@ describe('Reference paywall and strictly separated offers', () => {
   it('leaves straight away when the store has no discounted product', () => {
     mount(jest.fn(), null)
     openPlans()
-    press('Passer')
+    dismiss()
     expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(0)
     expect(skip).toHaveBeenCalledTimes(1)
   })
@@ -168,16 +192,30 @@ describe('Reference paywall and strictly separated offers', () => {
     expect(sheetVisible()).toBe(false)
   })
 
-  it('shows the full 80% reference only on Passer; declining leaves exactly once', () => {
+  it('shows the full 80% reference only on dismiss; declining returns to the plans', () => {
     mount(jest.fn())
     openPlans()
-    press('Passer')
+    dismiss()
     expect(sheetVisible()).toBe(false)
     const offer = renderer.root.findByType(PaywallExitOffer)
     act(() => {
       offer.props.onClose()
       offer.props.onClose()
     })
+    // Fermer l'offre ne fait pas sauter le paywall : on retombe sur les
+    // formules, et personne n'est sorti de l'onboarding.
+    expect(skip).not.toHaveBeenCalled()
+    expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(0)
+    expect(renderer.root.findByType(PaywallPlans)).toBeDefined()
+  })
+
+  it('leaves on the second dismiss, without replaying the offer', () => {
+    mount(jest.fn())
+    openPlans()
+    dismiss()
+    act(() => renderer.root.findByType(PaywallExitOffer).props.onClose())
+    dismiss()
+    expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(0)
     expect(skip).toHaveBeenCalledTimes(1)
   })
 
@@ -241,8 +279,120 @@ describe('Reference paywall and strictly separated offers', () => {
       await renderer.root.findByProps({ label: 'Restaurer' }).props.onPress()
     })
     expect(Alert.alert).toHaveBeenLastCalledWith(
-      'Aperçu du paywall',
-      expect.stringContaining('Aucun achat'),
+      'Relock',
+      expect.stringContaining('La restauration n’est pas disponible'),
+      expect.any(Array),
+    )
+  })
+
+  it('keeps the restore action visible in a production build', () => {
+    // La restauration vivait dans le bloc de preuve `__DEV__` : en production
+    // elle disparaissait, alors que le store en exige une. Les témoignages et
+    // l'aperçu d'offre, eux, restent réservés au développement.
+    Object.defineProperty(global, '__DEV__', {
+      value: false,
+      configurable: true,
+      writable: true,
+    })
+    act(() => {
+      renderer = create(
+        <PaywallFlow
+          plans={PREVIEW_PLANS}
+          offer={PREVIEW_OFFER}
+          onSkip={skip}
+          purchase={jest.fn()}
+          onRestore={jest.fn()}
+          allowPurchases
+        />,
+      )
+    })
+    openPlans()
+
+    expect(
+      renderer.root.findByProps({ testID: 'paywall-restore' }),
+    ).toBeDefined()
+    expect(renderer.root.findByProps({ label: 'Restaurer' })).toBeDefined()
+    expect(
+      renderer.root.findAllByProps({ testID: 'paywall-more-proof' }),
+    ).toHaveLength(0)
+    expect(
+      renderer.root.findAllByProps({ label: 'Aperçu de l’offre' }),
+    ).toHaveLength(0)
+  })
+
+  it('never runs a purchase while a restore is in flight, and says what came back', async () => {
+    let release: (restored: boolean) => void = () => {}
+    const restore = jest.fn(
+      () =>
+        new Promise<boolean>(resolve => {
+          release = resolve
+        }),
+    )
+    const purchase = jest.fn()
+    act(() => {
+      renderer = create(
+        <PaywallFlow
+          plans={PREVIEW_PLANS}
+          offer={PREVIEW_OFFER}
+          onSkip={skip}
+          purchase={purchase}
+          onRestore={restore}
+          allowPurchases
+        />,
+      )
+    })
+    openPlans()
+
+    act(() => {
+      restoreButton().props.onPress()
+    })
+    expect(restoreButton().props.disabled).toBe(true)
+    expect(restoreButton().props.label).toBe('Traitement…')
+
+    // Pendant la restauration : ni achat, ni seconde restauration.
+    await act(async () => {
+      await renderer.root.findByType(PaywallPlans).props.onPurchase()
+      restoreButton().props.onPress()
+    })
+    expect(purchase).not.toHaveBeenCalled()
+    expect(restore).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      release(false)
+      await Promise.resolve()
+    })
+    expect(restoreButton().props.disabled).toBe(false)
+    expect(Alert.alert).toHaveBeenLastCalledWith(
+      'Relock',
+      expect.stringContaining('Aucun achat à restaurer'),
+      expect.any(Array),
+    )
+  })
+
+  it('reports a failed restore without leaving the screen stuck', async () => {
+    const restore = jest.fn().mockRejectedValue(new Error('store down'))
+    act(() => {
+      renderer = create(
+        <PaywallFlow
+          plans={PREVIEW_PLANS}
+          offer={PREVIEW_OFFER}
+          onSkip={skip}
+          purchase={jest.fn()}
+          onRestore={restore}
+          allowPurchases
+        />,
+      )
+    })
+    openPlans()
+
+    await act(async () => {
+      await restoreButton().props.onPress()
+    })
+
+    expect(restoreButton().props.disabled).toBe(false)
+    expect(Alert.alert).toHaveBeenLastCalledWith(
+      'Relock',
+      expect.stringContaining('paiement'),
       expect.any(Array),
     )
   })
@@ -304,7 +454,7 @@ describe('Reference paywall and strictly separated offers', () => {
       .mockResolvedValue({ status: 'cancelled', storeSheetPresented: true })
     mount(purchase)
     openPlans()
-    press('Passer')
+    dismiss()
     await act(async () => {
       await renderer.root.findByType(PaywallExitOffer).props.onPurchase()
       await Promise.resolve()
@@ -349,7 +499,7 @@ describe('Reference paywall and strictly separated offers', () => {
       renderer.root.findByType(PaywallPlans).props.onPurchase()
       renderer.root.findByType(PaywallPlans).props.onPurchase()
     })
-    press('Passer')
+    dismiss()
     expect(purchase).toHaveBeenCalledTimes(1)
     expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(0)
     await act(async () => {
@@ -374,5 +524,91 @@ describe('Reference paywall and strictly separated offers', () => {
     ).toBeDefined()
     press('Continuer')
     expect(skip).toHaveBeenCalledTimes(1)
+  })
+
+  /**
+   * La porte dure. « Passer » et la croix restent à l'écran — c'est une
+   * technique de conversion assumée : ils mènent à l'offre de rattrapage,
+   * jamais dehors. Seuls un achat, une restauration ou la connexion à un
+   * compte abonné ouvrent, et c'est le gate de `app/_layout.tsx` qui le fait.
+   */
+  describe('porte dure (escapable={false})', () => {
+    const mountLocked = (initialScreen: 'benefits' | 'plans' = 'benefits') =>
+      act(() => {
+        renderer = create(
+          <PaywallFlow
+            plans={PREVIEW_PLANS}
+            offer={PREVIEW_OFFER}
+            onSkip={skip}
+            purchase={jest.fn()}
+            onPurchaseSuccess={success}
+            onSignIn={signIn}
+            initialScreen={initialScreen}
+            escapable={false}
+          />,
+        )
+      })
+
+    it('ne laisse jamais sortir : « Passer » boucle sur l’offre puis le pitch', () => {
+      mountLocked()
+      openPlans()
+      // 1er « Passer » → l'offre de rattrapage.
+      dismiss()
+      expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(1)
+      // Refus → retour aux tarifs.
+      act(() => renderer.root.findByType(PaywallExitOffer).props.onClose())
+      expect(renderer.root.findAllByType(PaywallPlans)).toHaveLength(1)
+      // 2e « Passer » → le pitch, PAS la sortie.
+      dismiss()
+      expect(renderer.root.findAllByType(PaywallBenefits)).toHaveLength(1)
+      expect(skip).not.toHaveBeenCalled()
+
+      // …et l'offre redevient disponible au tour suivant : sinon « Passer »
+      // ne mènerait plus nulle part et l'illusion tomberait.
+      openPlans()
+      dismiss()
+      expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(1)
+      expect(skip).not.toHaveBeenCalled()
+    })
+
+    it('ouvre directement sur les tarifs à partir de la 2ᵉ présentation', () => {
+      mountLocked('plans')
+      expect(renderer.root.findAllByType(PaywallBenefits)).toHaveLength(0)
+      expect(renderer.root.findAllByType(PaywallPlans)).toHaveLength(1)
+    })
+
+    it('offre une porte de sortie à l’abonné qui a réinstallé', () => {
+      // Le lien vit sur l'écran « indisponible », pas dans la barre du
+      // paywall : là-bas « Restaurer » couvre déjà ce besoin, et l'écran
+      // sans catalogue est le seul vrai cul-de-sac du parcours.
+      act(() => {
+        renderer = create(
+          <PaywallFlow
+            plans={PREVIEW_PLANS}
+            offer={PREVIEW_OFFER}
+            onSkip={skip}
+            onRestore={jest.fn()}
+            onSignIn={signIn}
+            escapable={false}
+          />,
+        )
+      })
+      expect(
+        renderer.root.findByProps({ testID: 'paywall-unavailable' }),
+      ).toBeDefined()
+      act(() =>
+        renderer.root
+          .findByProps({ testID: 'paywall-sign-in' })
+          .props.onPress(),
+      )
+      expect(signIn).toHaveBeenCalledTimes(1)
+    })
+
+    it('ne met aucun lien « J’ai déjà un compte » dans la barre du paywall', () => {
+      mountLocked('plans')
+      expect(
+        renderer.root.findAllByProps({ testID: 'paywall-sign-in' }),
+      ).toHaveLength(0)
+    })
   })
 })

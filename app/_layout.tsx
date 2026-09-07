@@ -12,16 +12,17 @@ import '../global.css'
 import { flags } from '@/config/constants'
 import { usePendingShieldRequest } from '@/features/blocking/hooks/usePendingShieldRequest'
 import { runInstallReset } from '@/features/blocking/services/reset.service'
+import { initializeRevenueCat } from '@/features/onboarding/services/revenuecat'
 import { userKeys } from '@/features/user/api/keys'
 import { useT } from '@/i18n/useT'
 import { useBackButtonHandler } from '@/navigation/helpers/use-back-handler'
 import { useNavigationTheme } from '@/navigation/helpers/use-navigation-theme'
-import { initializeRevenueCat } from '@/features/onboarding/services/revenuecat'
 import {
   clearNavigationPersistence,
   usePersistLastPath,
   useRestoreLastPath,
 } from '@/navigation/persistence/navigation-persistence'
+import { syncEntitlement, watchEntitlement } from '@/session/bootstrap'
 import { ensureDevSession } from '@/session/dev-auth'
 import { initDevTestBridge } from '@/session/dev-test-bridge'
 import { ErrorBoundary } from '@/shared/components/ui/ErrorBoundary'
@@ -35,7 +36,7 @@ import {
   captureBoundaryError,
   initSentry,
 } from '@/shared/services/monitoring/sentry'
-import { useAppGateStore } from '@/shared/stores/app-gate.store'
+import { resolveAppRoot, useAppGateStore } from '@/shared/stores/app-gate.store'
 import { ThemeProvider } from '@/shared/theme/ThemeProvider'
 
 initSentry()
@@ -50,10 +51,17 @@ function AppShell() {
   const t = useT()
   const navigationTheme = useNavigationTheme({ forceDark: true })
 
-  const onboardingDone = useAppGateStore(s => s.onboardingDone)
-  usePendingShieldRequest(onboardingDone)
+  const surveyDone = useAppGateStore(s => s.surveyDone)
+  const entitled = useAppGateStore(s => s.entitled)
+  const setupDone = useAppGateStore(s => s.setupDone)
+  const root = resolveAppRoot({ surveyDone, entitled, setupDone })
+  // L'app elle-même : parcours terminé ET abonnement actif. Un abonnement qui
+  // expire referme donc la porte, exactement comme il l'avait ouverte.
+  const appUnlocked = root === 'app'
+  usePendingShieldRequest(appUnlocked)
 
   useEffect(() => {
+    let stopEntitlementWatch: (() => void) | undefined
     setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
     // Dev : session Supabase automatique quand le login est désactivé.
     ensureDevSession().catch(() => undefined)
@@ -61,7 +69,18 @@ function AppShell() {
     initDevTestBridge()
     // (Ré)installation : purge le blocage résiduel au niveau système.
     runInstallReset().catch(() => undefined)
-    initializeRevenueCat().catch(() => undefined)
+    initializeRevenueCat()
+      .then(() => {
+        // Vérité serveur de l'abonnement, au démarrage puis à chaque
+        // changement (expiration, remboursement, renouvellement, achat fait
+        // depuis les Réglages iOS). Sans le second, la porte ne serait
+        // réévaluée qu'au prochain démarrage à froid.
+        void syncEntitlement()
+        stopEntitlementWatch = watchEntitlement()
+      })
+      .catch(() => undefined)
+
+    return () => stopEntitlementWatch?.()
   }, [])
 
   useEffect(() => {
@@ -78,17 +97,39 @@ function AppShell() {
   )
 
   usePersistLastPath()
-  useRestoreLastPath(onboardingDone)
+  useRestoreLastPath(appUnlocked)
 
   return (
     <NavThemeProvider value={navigationTheme}>
       <ThemedStatusBar />
       <OfflineBanner message={t('common.offline_banner')} />
+      {/*
+        Les trois portes de Relock, dans l'ordre où on les franchit. Aucune ne
+        mémorise « où l'utilisateur en était » : la racine se DÉDUIT de l'état,
+        ce qui reste juste après une fermeture d'app, une réinstallation, un
+        changement d'appareil ou une expiration d'abonnement.
+
+          récit      tant que le questionnaire n'a pas été fait — et, une fois
+                     l'abonnement en poche, pour le parcours d'activation qui
+                     suit l'offre (compte, tutoriel, permission, règles) ;
+          paywall    quoi que l'utilisateur ait déjà fait, dès que
+                     l'abonnement manque. Porte dure : la seule sortie est un
+                     achat, une restauration ou la connexion à un compte déjà
+                     abonné ;
+          app        parcours terminé ET abonnement actif.
+
+        `resolveAppRoot` tranche pour tout le monde (ici et dans
+        `app/index.tsx`) : exclusivité et exhaustivité sont structurelles, pas
+        une propriété qu'il faudrait redémontrer à chaque relecture.
+      */}
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={!onboardingDone}>
+        <Stack.Protected guard={root === 'onboarding'}>
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
-        <Stack.Protected guard={onboardingDone}>
+        <Stack.Protected guard={root === 'paywall'}>
+          <Stack.Screen name="paywall" />
+        </Stack.Protected>
+        <Stack.Protected guard={root === 'app'}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add-block" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="block-editor" options={HALF_SHEET_OPTIONS} />

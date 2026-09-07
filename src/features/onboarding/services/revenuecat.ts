@@ -1,5 +1,6 @@
 import { Platform } from 'react-native'
 import Purchases, {
+  type CustomerInfo,
   LOG_LEVEL,
   PACKAGE_TYPE,
   PURCHASES_ERROR_CODE,
@@ -195,7 +196,18 @@ export async function initializeRevenueCat(): Promise<boolean> {
   }
 
   try {
-    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.INFO)
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN)
+    // Le SDK journalise une annulation d'achat via `console.error`, ce que
+    // LogBox transforme en écran rouge — alors qu'une annulation est un
+    // parcours NORMAL, et même celui qui déclenche l'offre de rattrapage. On
+    // détourne donc ses journaux vers `console.log` : l'information reste
+    // lisible dans Metro, sans alarme visuelle pour un geste attendu.
+    Purchases.setLogHandler((_logLevel, message) => {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(`[RevenueCat] ${message}`)
+      }
+    })
     Purchases.configure({ apiKey: apiKeyForCurrentPlatform() })
     isInitialized = true
     return true
@@ -204,16 +216,137 @@ export async function initializeRevenueCat(): Promise<boolean> {
   }
 }
 
-export async function hasRelockProEntitlement(): Promise<boolean> {
+/**
+ * Le contrôle d'abonnement, avec la distinction qui fait tout : `unknown`.
+ *
+ * `inactive` veut dire « le store a répondu, cet utilisateur ne paie pas ».
+ * `unknown` veut dire « on n'a pas pu savoir » — réseau coupé, SDK muet,
+ * délai dépassé. Les deux ne doivent JAMAIS être traités pareil : avec une
+ * porte dure, confondre les deux revient à mettre un mur de prix devant un
+ * abonné dès que le réseau tousse. C'est l'appelant
+ * (`applyEntitlement` dans `src/session/bootstrap.ts`) qui garde alors la
+ * dernière valeur connue.
+ *
+ * Cas particulier, volontairement asymétrique : une build SANS facturation
+ * (clé RevenueCat absente, `REVENUECAT_ENABLED` à false). En production, elle
+ * répond `active` — un build incapable d'encaisser ne doit pas rendre l'app
+ * inutilisable, une erreur de configuration ne se paie pas d'une app morte.
+ * En développement elle répond `inactive`, pour que le paywall reste
+ * accessible et travaillable sans clés.
+ */
+export type EntitlementCheck = 'active' | 'inactive' | 'unknown'
+
+/** Au-delà, on n'attend plus : la valeur en cache prend le relais. */
+const ENTITLEMENT_TIMEOUT_MS = 2500
+
+export async function checkRelockProEntitlement(): Promise<EntitlementCheck> {
+  if (!isConfigured()) {
+    return __DEV__ ? 'inactive' : 'active'
+  }
   if (!(await initializeRevenueCat())) {
-    return false
+    return 'unknown'
   }
 
   try {
-    const customerInfo = await Purchases.getCustomerInfo()
+    const customerInfo = await withTimeout(Purchases.getCustomerInfo())
+    if (!customerInfo) return 'unknown'
     return hasRelockProEntitlementFromCustomerInfo(customerInfo)
+      ? 'active'
+      : 'inactive'
   } catch {
-    return false
+    return 'unknown'
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>(resolve =>
+      setTimeout(() => resolve(null), ENTITLEMENT_TIMEOUT_MS),
+    ),
+  ])
+}
+
+export async function hasRelockProEntitlement(): Promise<boolean> {
+  return (await checkRelockProEntitlement()) === 'active'
+}
+
+/**
+ * Prévient à chaque changement d'abonnement pendant que l'app tourne :
+ * expiration, remboursement, renouvellement, achat fait depuis les Réglages
+ * iOS. Sans cet abonnement, la porte ne se réévaluerait qu'au démarrage à
+ * froid — un abonnement expiré laisserait l'app ouverte des jours.
+ */
+export function onEntitlementChange(
+  listener: (active: boolean) => void,
+): () => void {
+  if (!isConfigured() || !isInitialized) return () => {}
+  const forward = (info: CustomerInfo) => {
+    listener(hasRelockProEntitlementFromCustomerInfo(info))
+  }
+  try {
+    Purchases.addCustomerInfoUpdateListener(forward)
+    return () => {
+      Purchases.removeCustomerInfoUpdateListener(forward)
+    }
+  } catch {
+    return () => {}
+  }
+}
+
+/**
+ * Rattache les achats au compte Supabase.
+ *
+ * Sans ça, un achat fait avant la création du compte reste sur un identifiant
+ * anonyme : réinstaller ou changer d'appareil oblige à passer par
+ * « Restaurer », qui ne fonctionne que sur le MÊME compte Apple. Avec le
+ * rattachement, l'abonnement suit le compte, partout.
+ */
+export async function linkRevenueCatUser(userId: string): Promise<void> {
+  if (!(await initializeRevenueCat())) return
+  try {
+    await Purchases.logIn(userId)
+  } catch {
+    // Le rattachement est un confort : jamais un blocage du parcours.
+  }
+}
+
+/** Déconnexion : on repasse sur un identifiant anonyme. */
+export async function unlinkRevenueCatUser(): Promise<void> {
+  if (!isConfigured() || !isInitialized) return
+  try {
+    await Purchases.logOut()
+  } catch {
+    // idem
+  }
+}
+
+/**
+ * Les réponses du questionnaire, poussées en attributs RevenueCat.
+ *
+ * Elles remontent telles quelles dans le tableau de bord RevenueCat, où l'on
+ * peut alors lire quel profil convertit (le « je scrolle au lit » à 6 h/jour
+ * achète-t-il plus que le « je veux me concentrer » à 2 h ?). Aucune donnée
+ * personnelle : ni prénom, ni identifiant, ni e-mail.
+ */
+export async function setOnboardingAttributes(attributes: {
+  trigger: string | null
+  moment: string | null
+  hours: number
+  apps: string[]
+  feelings: string[]
+}): Promise<void> {
+  if (!(await initializeRevenueCat())) return
+  try {
+    Purchases.setAttributes({
+      ob_trigger: attributes.trigger ?? '',
+      ob_moment: attributes.moment ?? '',
+      ob_hours: String(attributes.hours),
+      ob_apps: attributes.apps.join(','),
+      ob_feelings: attributes.feelings.join(','),
+    })
+  } catch {
+    // Analytique : jamais bloquant.
   }
 }
 

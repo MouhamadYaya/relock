@@ -182,51 +182,84 @@ final class ShieldAttemptStore {
     self.dedupeInterval = dedupeInterval
   }
 
+  /// Enregistre la tentative et renvoie ce que le mur doit afficher.
+  ///
+  /// La persistance est sérialisée ; l'AFFICHAGE, lui, ne peut pas attendre un
+  /// autre processus. Si le verrou n'est pas obtenu dans le budget interactif,
+  /// on recalcule la même présentation sur une simple lecture et on la renvoie
+  /// SANS rien écrire : jamais de lecture-modification-écriture hors verrou.
   func recordAttempt(
     applicationKey: String,
     applicationName: String,
     categoryKey: String? = nil,
     now: Date = Date()
   ) -> ShieldPresentation {
-    withLock {
+    let persisted = withLock { () -> ShieldPresentation in
       var state = loadState()
-      let stamp = dayStamp(for: now)
-      state.records = state.records.filter { $0.value.dayStamp == stamp }
-
-      let timestamp = now.timeIntervalSince1970
-      let existing = state.records[applicationKey]
-      let elapsed = existing.map { timestamp - $0.lastPresentedAt }
-      let isDuplicate = existing?.dayStamp == stamp
-        && elapsed.map { $0 >= 0 && $0 < dedupeInterval } == true
-      let count = isDuplicate ? max(1, existing?.count ?? 1) : (existing?.count ?? 0) + 1
-
-      state.records[applicationKey] = ShieldAttemptRecord(
-        applicationName: applicationName,
-        dayStamp: stamp,
-        count: count,
-        lastPresentedAt: timestamp)
-      let presentation = ShieldPresentation(
+      let presentation = applyAttempt(
+        to: &state,
         applicationKey: applicationKey,
         applicationName: applicationName,
-        count: count,
-        presentedAt: timestamp)
-      state.latestPresentation = presentation
-      if let categoryKey {
-        state.categoryPresentations[categoryKey] = presentation
-      }
-      if !isDuplicate {
-        state.shownTotal += 1
-        state.lastShownAt = timestamp
-        state.events.append(
-          ShieldEventRecord(
-            kind: "shield_shown",
-            activity: "shield",
-            at: ISO8601DateFormatter().string(from: now)))
-        trimEvents(&state.events)
-      }
+        categoryKey: categoryKey,
+        now: now)
       saveState(state)
       return presentation
     }
+    if let persisted { return persisted }
+
+    var snapshot = loadState()
+    return applyAttempt(
+      to: &snapshot,
+      applicationKey: applicationKey,
+      applicationName: applicationName,
+      categoryKey: categoryKey,
+      now: now)
+  }
+
+  /// Le calcul de la tentative, sans aucune écriture. Appelé sous verrou pour
+  /// être persisté, ou à vide pour répondre au mur quand le verrou manque.
+  private func applyAttempt(
+    to state: inout ShieldAttemptState,
+    applicationKey: String,
+    applicationName: String,
+    categoryKey: String?,
+    now: Date
+  ) -> ShieldPresentation {
+    let stamp = dayStamp(for: now)
+    state.records = state.records.filter { $0.value.dayStamp == stamp }
+
+    let timestamp = now.timeIntervalSince1970
+    let existing = state.records[applicationKey]
+    let elapsed = existing.map { timestamp - $0.lastPresentedAt }
+    let isDuplicate = existing?.dayStamp == stamp
+      && elapsed.map { $0 >= 0 && $0 < dedupeInterval } == true
+    let count = isDuplicate ? max(1, existing?.count ?? 1) : (existing?.count ?? 0) + 1
+
+    state.records[applicationKey] = ShieldAttemptRecord(
+      applicationName: applicationName,
+      dayStamp: stamp,
+      count: count,
+      lastPresentedAt: timestamp)
+    let presentation = ShieldPresentation(
+      applicationKey: applicationKey,
+      applicationName: applicationName,
+      count: count,
+      presentedAt: timestamp)
+    state.latestPresentation = presentation
+    if let categoryKey {
+      state.categoryPresentations[categoryKey] = presentation
+    }
+    if !isDuplicate {
+      state.shownTotal += 1
+      state.lastShownAt = timestamp
+      state.events.append(
+        ShieldEventRecord(
+          kind: "shield_shown",
+          activity: "shield",
+          at: ISO8601DateFormatter().string(from: now)))
+      trimEvents(&state.events)
+    }
+    return presentation
   }
 
   /// Dépose le signal de navigation avant que `.openParentalControlsApp`
@@ -264,14 +297,16 @@ final class ShieldAttemptStore {
       state.pendingRequest = request
       guard saveState(state) else { return nil }
       return request
-    }
+    } ?? nil
   }
 
+  /// Côté app : rien ne dépend d'une réponse en 50 ms, et perdre la requête
+  /// coûterait la redirection vers Blocages. On attend donc le budget long.
   func consumeOpenRequest(
     now: Date = Date(),
     maximumAge: TimeInterval = ShieldAttemptStore.defaultContextLifetime
   ) -> PendingShieldRequest? {
-    withLock {
+    withLock(budget: .patient) { () -> PendingShieldRequest? in
       var state = loadState()
       let request = state.pendingRequest
       state.pendingRequest = nil
@@ -280,44 +315,51 @@ final class ShieldAttemptStore {
       let age = now.timeIntervalSince1970 - request.requestedAt
       guard age >= 0, age <= maximumAge else { return nil }
       return request
-    }
+    } ?? nil
   }
 
+  /// Lecture seule : aucun verrou. `saveState` écrit de façon atomique
+  /// (fichier temporaire puis renommage), donc une lecture concurrente voit
+  /// toujours un état complet — l'ancien ou le nouveau, jamais un mélange.
   func peekOpenRequest(
     now: Date = Date(),
     maximumAge: TimeInterval = ShieldAttemptStore.defaultContextLifetime
   ) -> PendingShieldRequest? {
-    withLock {
-      guard let request = loadState().pendingRequest else { return nil }
-      let age = now.timeIntervalSince1970 - request.requestedAt
-      guard age >= 0, age <= maximumAge else { return nil }
-      return request
-    }
+    guard let request = loadState().pendingRequest else { return nil }
+    let age = now.timeIntervalSince1970 - request.requestedAt
+    guard age >= 0, age <= maximumAge else { return nil }
+    return request
   }
 
+  /// Lecture seule : aucun verrou (voir `peekOpenRequest`).
   func lastPresentation() -> ShieldPresentation? {
-    withLock { loadState().latestPresentation }
+    loadState().latestPresentation
   }
 
-  func recordProbe(_ description: String, now: Date = Date()) {
-    withLock {
+  /// `false` quand la sonde n'a pas pu être écrite faute de verrou : c'est un
+  /// diagnostic, on ne retient pas le mur pour lui.
+  @discardableResult
+  func recordProbe(_ description: String, now: Date = Date()) -> Bool {
+    withLock { () -> Bool in
       var state = loadState()
       state.probeAt = now.timeIntervalSince1970
       state.probeWhat = description
-      saveState(state)
-    }
+      return saveState(state)
+    } ?? false
   }
 
   /// Enregistre l'action après avoir répondu au système. Le retour est le
-  /// compteur total de résistances, utilisé pour les célébrations locales.
+  /// compteur total de résistances, utilisé pour les célébrations locales, ou
+  /// `nil` si le verrou n'a pas été obtenu : rien n'a alors été écrit, et
+  /// l'appelant ne doit pas fêter un palier qu'il n'a pas persisté.
   @discardableResult
   func recordAction(
     requestStatus: String,
     response: String,
     resisted: Bool,
     now: Date = Date()
-  ) -> Int {
-    withLock {
+  ) -> Int? {
+    withLock { () -> Int in
       var state = loadState()
       state.lastActionAt = now.timeIntervalSince1970
       state.lastOpenRequestStatus = requestStatus
@@ -336,38 +378,42 @@ final class ShieldAttemptStore {
     }
   }
 
+  /// Lecture seule : aucun verrou (voir `peekOpenRequest`).
   func eventRecords() -> [ShieldEventRecord] {
-    withLock { loadState().events }
+    loadState().events
   }
 
-  func acknowledgeEvents(_ count: Int) {
-    guard count > 0 else { return }
-    withLock {
+  /// `false` quand le journal n'a pas pu être purgé : les mêmes évènements
+  /// seront relivrés au prochain appel plutôt que perdus.
+  @discardableResult
+  func acknowledgeEvents(_ count: Int) -> Bool {
+    guard count > 0 else { return true }
+    return withLock(budget: .patient) { () -> Bool in
       var state = loadState()
       state.events.removeFirst(min(count, state.events.count))
-      saveState(state)
-    }
+      return saveState(state)
+    } ?? false
   }
 
+  /// Lecture seule : aucun verrou (voir `peekOpenRequest`).
   func diagnostics() -> ShieldDiagnosticSnapshot {
-    withLock {
-      let state = loadState()
-      return ShieldDiagnosticSnapshot(
-        shownTotal: state.shownTotal,
-        lastShownAt: state.lastShownAt,
-        totalResisted: state.totalResisted,
-        probeAt: state.probeAt,
-        probeWhat: state.probeWhat,
-        lastActionAt: state.lastActionAt,
-        lastOpenRequestStatus: state.lastOpenRequestStatus,
-        lastActionResponse: state.lastActionResponse)
-    }
+    let state = loadState()
+    return ShieldDiagnosticSnapshot(
+      shownTotal: state.shownTotal,
+      lastShownAt: state.lastShownAt,
+      totalResisted: state.totalResisted,
+      probeAt: state.probeAt,
+      probeWhat: state.probeWhat,
+      lastActionAt: state.lastActionAt,
+      lastOpenRequestStatus: state.lastOpenRequestStatus,
+      lastActionResponse: state.lastActionResponse)
   }
 
   /// Une vraie nouvelle installation repart à zéro, sauf si elle vient juste
   /// d'être activée par le Shield : cette requête doit survivre au reset.
-  func resetKeepingFreshPendingRequest(now: Date = Date()) {
-    withLock {
+  @discardableResult
+  func resetKeepingFreshPendingRequest(now: Date = Date()) -> Bool {
+    withLock(budget: .patient) { () -> Bool in
       let previous = loadState()
       var fresh = ShieldAttemptState()
       if let request = previous.pendingRequest {
@@ -376,8 +422,8 @@ final class ShieldAttemptStore {
           fresh.pendingRequest = request
         }
       }
-      saveState(fresh)
-    }
+      return saveState(fresh)
+    } ?? false
   }
 
   static func tokenKey<T: Encodable>(_ token: T) -> String? {
@@ -423,26 +469,48 @@ final class ShieldAttemptStore {
     }
   }
 
-  private func withLock<T>(_ body: () -> T) -> T {
+  /// Exécute `body` en exclusion mutuelle entre l'app et les extensions.
+  ///
+  /// Retourne `nil` — SANS jamais exécuter `body` — quand le verrou n'a pas pu
+  /// être pris dans le budget imparti. `body` fait des lectures-modifications-
+  /// écritures sur un unique fichier JSON partagé : l'exécuter sans verrou
+  /// laisserait deux processus s'écraser mutuellement. La latence reste bornée
+  /// par le budget ; les appelants tenant un geste utilisateur répondent alors
+  /// à partir d'une lecture, sans écrire.
+  @discardableResult
+  private func withLock<T>(
+    budget: LockBudget = .interactive,
+    _ body: () -> T
+  ) -> T? {
     let fd = open(lockURL.path, O_CREAT | O_WRONLY, 0o644)
-    guard fd >= 0 else { return body() }
-    var locked = false
-    for _ in 0..<Self.lockAttempts {
+    guard fd >= 0 else { return nil }
+    defer { close(fd) }
+    for attempt in 0..<budget.attempts {
       if flock(fd, LOCK_EX | LOCK_NB) == 0 {
-        locked = true
-        break
+        defer { flock(fd, LOCK_UN) }
+        return body()
       }
-      usleep(Self.lockRetryMicroseconds)
+      if attempt + 1 < budget.attempts { usleep(Self.lockRetryMicroseconds) }
     }
-    defer {
-      if locked { flock(fd, LOCK_UN) }
-      close(fd)
-    }
-    return body()
+    return nil
   }
 
-  /// ~50 ms au total, puis l'opération continue sans verrou plutôt que de
-  /// retenir un geste utilisateur derrière un autre processus.
-  private static let lockAttempts = 25
+  /// Deux budgets d'attente, tous deux bornés.
+  ///
+  /// `interactive` (~50 ms) sert les chemins qui retiennent un geste : le mur
+  /// qui s'affiche, son bouton. `patient` (~1 s) sert l'entretien côté app,
+  /// où perdre l'écriture coûte plus cher que d'attendre.
+  private enum LockBudget {
+    case interactive
+    case patient
+
+    var attempts: Int {
+      switch self {
+      case .interactive: return 25
+      case .patient: return 500
+      }
+    }
+  }
+
   private static let lockRetryMicroseconds: UInt32 = 2_000
 }

@@ -47,7 +47,7 @@ function renderIndex(): string[] {
 beforeEach(() => {
   redirects.length = 0
   setShieldRequest(null)
-  useAppGateStore.setState({ onboardingDone: true })
+  useAppGateStore.setState({ surveyDone: true, entitled: true, setupDone: true })
 })
 
 describe('redirection racine', () => {
@@ -61,8 +61,16 @@ describe('redirection racine', () => {
   })
 
   it('l’onboarding reste prioritaire sur une demande du mur', () => {
-    useAppGateStore.setState({ onboardingDone: false })
+    useAppGateStore.setState({ surveyDone: false, setupDone: false })
     setShieldRequest(shieldRequest)
     expect(renderIndex()).toEqual(['/onboarding'])
+  })
+
+  it('le paywall passe avant tout dès que l’abonnement manque', () => {
+    // Y compris pour un utilisateur qui avait TOUT terminé : un abonnement
+    // expiré referme la porte, et une demande du mur ne l'ouvre pas.
+    useAppGateStore.setState({ entitled: false })
+    setShieldRequest(shieldRequest)
+    expect(renderIndex()).toEqual(['/paywall'])
   })
 })

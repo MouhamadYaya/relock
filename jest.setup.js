@@ -188,6 +188,37 @@ jest.mock('react-native-gesture-handler', () => {
   }
 })
 
+// La facturation ne s'exécute jamais en test : aucun réseau, aucun store, et
+// le paquet RevenueCat est publié en ESM que Jest ne sait pas transformer.
+jest.mock('react-native-purchases', () => ({
+  __esModule: true,
+  default: {
+    setLogLevel: jest.fn(),
+    setLogHandler: jest.fn(),
+    configure: jest.fn(),
+    getCustomerInfo: jest.fn(async () => ({ entitlements: { active: {} } })),
+    getOfferings: jest.fn(async () => ({ current: null, all: {} })),
+    purchasePackage: jest.fn(),
+    restorePurchases: jest.fn(),
+    logIn: jest.fn(async () => ({})),
+    logOut: jest.fn(async () => ({})),
+    setAttributes: jest.fn(),
+    addCustomerInfoUpdateListener: jest.fn(),
+    removeCustomerInfoUpdateListener: jest.fn(),
+  },
+  LOG_LEVEL: { DEBUG: 'DEBUG', WARN: 'WARN' },
+  PACKAGE_TYPE: { ANNUAL: 'ANNUAL', WEEKLY: 'WEEKLY' },
+  PURCHASES_ERROR_CODE: {
+    PURCHASE_CANCELLED_ERROR: '1',
+    PAYMENT_PENDING_ERROR: '2',
+  },
+}))
+
+jest.mock('react-native-purchases-ui', () => ({
+  __esModule: true,
+  default: { presentCustomerCenter: jest.fn(async () => undefined) },
+}))
+
 // Drop i18next's promotional Locize message on init (noisy in every suite that imports i18n)
 const originalConsoleInfo = console.info.bind(console)
 console.info = (...args) => {

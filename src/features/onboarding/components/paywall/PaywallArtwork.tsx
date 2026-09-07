@@ -16,50 +16,20 @@ import Svg, {
   Stop,
 } from 'react-native-svg'
 import { PW } from '@/features/onboarding/components/paywall/paywall-theme'
+import { useT } from '@/i18n/useT'
 
-const TILES = require('@assets/paywall/relock-plan-mosaic-v2.png')
-const BENEFITS = require('@assets/paywall/relock-benefits-v2.png')
 const MOONS = require('@assets/paywall/reference-moons.png')
 const GRAIN = require('@assets/home-grain.png')
 
 /**
- * Découpage des atlas. Chaque entrée est `[x, y, largeur, hauteur]` en
- * fraction du fichier — un décalage casse tous les cadrages, donc régénérer
- * un atlas veut dire garder EXACTEMENT la même grille.
- *
- * `relock-plan-mosaic-v2` : 2 × 2 (bureau+lampe · lit défait · carnet ·
- * appareil photo). `relock-benefits-v2` : 2 cases en haut (nuit au
- * téléphone · dos à la fenêtre), 3 en bas (écriture · casque · petit
- * déjeuner à deux).
+ * Les trois marques, prétraitées en monochrome par
+ * `scripts/build-trust-logos.py` — voir `PaywallTrustLogos` pour le
+ * pourquoi. L'ordre est celui de la rangée, de gauche à droite.
  */
-const CELL = {
-  tileDesk: [0, 0, 0.5, 0.5],
-  tileBed: [0.5, 0, 0.5, 0.5],
-  tileNotebook: [0, 0.5, 0.5, 0.5],
-  tileCamera: [0.5, 0.5, 0.5, 0.5],
-  night: [0, 0, 0.5, 0.5],
-  morning: [2 / 3, 0.5, 1 / 3, 0.5],
-  writing: [0, 0.5, 1 / 3, 0.5],
-  headphones: [1 / 3, 0.5, 1 / 3, 0.5],
-} as const
-
-/** Les quatre visuels de l'écran des formules, dans l'ordre de lecture. */
-const PLAN_TILES = [
-  CELL.tileDesk,
-  CELL.tileNotebook,
-  CELL.tileCamera,
-  CELL.tileBed,
-] as const
-
-/**
- * Les trois vignettes des bénéfices : trois objets de la vie hors écran,
- * pris dans la même direction artistique (nuit, un seul foyer chaud, faible
- * profondeur de champ) — écrire, écouter, se souvenir.
- */
-const BENEFIT_CELLS = [
-  { source: BENEFITS, region: CELL.writing },
-  { source: BENEFITS, region: CELL.headphones },
-  { source: TILES, region: CELL.tileCamera },
+const TRUST_LOGOS = [
+  require('@assets/paywall/trust-oxford.png'),
+  require('@assets/paywall/trust-harvard.png'),
+  require('@assets/paywall/trust-cambridge.png'),
 ] as const
 
 /** Étoile à quatre branches, aux courbes creusées — le geste de la référence. */
@@ -117,44 +87,6 @@ function AtlasImage({
         />
       ) : null}
     </View>
-  )
-}
-
-/**
- * Le voile des photos : il assombrit surtout le pied, là où se pose le
- * texte. `strength` le desserre pour les vignettes, qui sont trop petites
- * pour survivre à un voile de pleine page.
- */
-function PhotoScrim({ strength = 1 }: { strength?: number }) {
-  const shade = useId()
-  return (
-    <Svg
-      pointerEvents="none"
-      style={StyleSheet.absoluteFill}
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-    >
-      <Defs>
-        <LinearGradient id={shade} x1="0%" y1="0%" x2="0%" y2="100%">
-          <Stop
-            offset="0"
-            stopColor={PW.color.canvas}
-            stopOpacity={0.2 * strength}
-          />
-          <Stop
-            offset="0.55"
-            stopColor={PW.color.canvas}
-            stopOpacity={0.3 * strength}
-          />
-          <Stop
-            offset="1"
-            stopColor={PW.color.canvas}
-            stopOpacity={0.78 * strength}
-          />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100" height="100" fill={`url(#${shade})`} />
-    </Svg>
   )
 }
 
@@ -268,68 +200,42 @@ export function PaywallSparkle({
 }
 
 /**
- * Les quatre visuels de l'écran des formules — une grille 2 × 2 qui occupe
- * le premier tiers de la page, comme la référence.
+ * La rangée des marques universitaires, sous la preuve sociale.
  *
- * Ils sont DÉCORATIFS : aucun libellé, aucune zone tactile, aucun état
- * sélectionné. Ce qui se choisit sur cet écran, ce sont les deux formules,
- * plus bas.
+ * Les fichiers sont des marques MONOCHROMES : l'alpha y porte l'obscurité du
+ * trait d'origine, les pixels sont blancs. Deux conséquences, et elles sont
+ * la raison d'être de ce prétraitement :
+ *
+ * 1. Le blason garde son détail intérieur au lieu de s'aplatir en silhouette
+ *    — ce qu'aurait fait un `tintColor` sur les fichiers couleur.
+ * 2. Le fond blanc incrusté du logo de Cambridge a disparu : sur la nuit de
+ *    la page, un `tintColor` l'aurait laissé en rectangle plein.
+ *
+ * Chaque marque occupe un tiers de la rangée et se met à l'échelle dedans
+ * (`contain`) : les trois fichiers n'ont pas le même rapport, et une hauteur
+ * commune imposée aurait fait déborder Cambridge sur les petits écrans.
  */
-export function PaywallTiles() {
+export function PaywallTrustLogos({ compact = false }: { compact?: boolean }) {
+  const t = useT()
+  const height = compact ? PW.layout.compactTrustLogo : PW.layout.trustLogo
   return (
-    <View style={styles.tiles} testID="paywall-tiles">
-      {[0, 1].map(row => (
-        <View key={row} style={styles.tileRow}>
-          {[0, 1].map(column => (
-            <View key={column} style={styles.tile}>
-              <AtlasImage
-                source={TILES}
-                aspect={1}
-                region={PLAN_TILES[row * 2 + column]}
-                style={StyleSheet.absoluteFill}
-              />
-              <PhotoScrim strength={0.42} />
-            </View>
-          ))}
-        </View>
+    <View
+      testID="paywall-trust-logos"
+      style={styles.trustRow}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={t('paywall_reference.trust')}
+    >
+      {TRUST_LOGOS.map((source, index) => (
+        <Image
+          key={index}
+          source={source}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+          style={[styles.trustLogo, { height }]}
+        />
       ))}
     </View>
-  )
-}
-
-/**
- * Une moitié du diptyque.
- *
- * « Avant » : la nuit, seul, le visage éclairé par l'écran. « Après » : le
- * MÊME homme, le matin, en train de parler à quelqu'un. La transformation
- * doit se comprendre sans lire les libellés, donc le voile de l'« après »
- * est allégé — l'assombrir à égalité annulerait la seule chose que le
- * diptyque doit démontrer.
- */
-export function PaywallComparisonPhoto({ after = false }: { after?: boolean }) {
-  return (
-    <>
-      <AtlasImage
-        source={BENEFITS}
-        aspect={1}
-        region={after ? CELL.morning : CELL.night}
-        style={StyleSheet.absoluteFill}
-      />
-      <PhotoScrim strength={after ? 0.45 : 1} />
-    </>
-  )
-}
-
-/** La vignette d'un bénéfice : une vraie photo, pas un pictogramme. */
-export function PaywallBenefitThumb({ index }: { index: number }) {
-  const cell = BENEFIT_CELLS[index % BENEFIT_CELLS.length]
-  return (
-    <AtlasImage
-      source={cell.source}
-      aspect={1}
-      region={cell.region}
-      style={StyleSheet.absoluteFill}
-    />
   )
 }
 
@@ -353,14 +259,15 @@ const styles = StyleSheet.create({
     opacity: PW.opacity.motif,
     backgroundColor: PW.color.transparent,
   },
-  // La grille remplit son emplacement : c'est l'emplacement qui cède de la
-  // hauteur quand l'écran est court, jamais le prix.
-  tiles: { flex: 1, gap: PW.layout.tileGap },
-  tileRow: { flex: 1, flexDirection: 'row', gap: PW.layout.tileGap },
-  tile: {
-    flex: 1,
-    overflow: 'hidden',
-    borderRadius: PW.radius.md,
-    backgroundColor: PW.color.surface,
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // Sans écart, les trois marques se touchent et se lisent comme un seul
+    // bloc gris. L'espace est ce qui en refait trois signatures distinctes.
+    gap: PW.space.md,
+    // Les marques ne sont pas la promesse : elles se lisent en dernier,
+    // donc elles s'éteignent au lieu de rivaliser avec le CTA.
+    opacity: PW.opacity.trust,
   },
+  trustLogo: { flex: 1 },
 })
