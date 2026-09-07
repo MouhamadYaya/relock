@@ -178,7 +178,8 @@
     "react-native-nitro-modules": "0.35.0",
     "joi": "^17.13.4",
     "brace-expansion@2": "^2.1.4",
-    "postcss": "^8.5.23"
+    "postcss": "^8.5.23",
+    "brace-expansion@1": "^1.1.18"
   },
   "engines": {
     "node": ">=20"
