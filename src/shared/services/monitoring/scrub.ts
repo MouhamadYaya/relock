@@ -99,7 +99,9 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
     event.request.cookies = undefined
     if (event.request.url) event.request.url = redactUrl(event.request.url)
     if (event.request.data)
-      event.request.data = redactDeep(event.request.data) as typeof event.request.data
+      event.request.data = redactDeep(
+        event.request.data,
+      ) as typeof event.request.data
   }
 
   // Messages et valeurs d'exception : du texte libre écrit par notre code.

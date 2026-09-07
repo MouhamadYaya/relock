@@ -16,6 +16,10 @@ import { clearNavigationPersistence } from '@/navigation/persistence/navigation-
 import { detachBillingIdentity } from '@/session/billing-identity'
 import { getSessionQueryClient } from '@/session/session-bridge'
 import { offlineQueue } from '@/shared/services/api/offline/offline-queue'
+import {
+  addAppBreadcrumb,
+  setSentryUser,
+} from '@/shared/services/monitoring/sentry'
 import { cacheEngine } from '@/shared/services/storage/cache-engine'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
@@ -40,6 +44,13 @@ async function runLogout(qc?: QueryClient): Promise<void> {
   const client = qc ?? getSessionQueryClient() ?? undefined
 
   try {
+    // 0) Detach the Sentry identity FIRST. `useSessionUser` le fait déjà sur
+    // l'événement SIGNED_OUT de Supabase, mais un logout déclenché par un 401
+    // ou par un échec de refresh n'en produit pas : sans ceci, les erreurs
+    // suivantes resteraient attribuées au compte qu'on vient de quitter.
+    addAppBreadcrumb({ category: 'session', message: 'logout' })
+    setSentryUser(null)
+
     // 1) Remove sensitive credentials
     kvStorage.delete(constants.AUTH_TOKEN)
     kvStorage.delete(constants.REFRESH_TOKEN)

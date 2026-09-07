@@ -59,7 +59,9 @@ export const env = {
   REVENUECAT_ENABLED: parseEnvBool(Config.REVENUECAT_ENABLED),
   REVENUECAT_IOS_API_KEY: (Config.REVENUECAT_IOS_API_KEY ?? '').trim(),
   REVENUECAT_ANDROID_API_KEY: (Config.REVENUECAT_ANDROID_API_KEY ?? '').trim(),
-  REVENUECAT_ENTITLEMENT_ID: (Config.REVENUECAT_ENTITLEMENT_ID ?? 'relock_pro').trim(),
+  REVENUECAT_ENTITLEMENT_ID: (
+    Config.REVENUECAT_ENTITLEMENT_ID ?? 'relock_pro'
+  ).trim(),
   /** Offering RevenueCat contenant le produit remisé de l'écran de rattrapage. */
   REVENUECAT_DISCOUNT_OFFERING_ID: (
     Config.REVENUECAT_DISCOUNT_OFFERING_ID ?? 'discount'

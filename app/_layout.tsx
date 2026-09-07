@@ -1,5 +1,6 @@
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native'
-import { Stack } from 'expo-router'
+import * as Sentry from '@sentry/react-native'
+import { Stack, useNavigationContainerRef } from 'expo-router'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import BootSplash from 'react-native-bootsplash'
@@ -10,6 +11,7 @@ import '@/i18n/i18n'
 import '../global.css'
 
 import { flags } from '@/config/constants'
+import { env } from '@/config/env'
 import { usePendingShieldRequest } from '@/features/blocking/hooks/usePendingShieldRequest'
 import { runInstallReset } from '@/features/blocking/services/reset.service'
 import { initializeRevenueCat } from '@/features/onboarding/services/revenuecat'
@@ -33,13 +35,22 @@ import { mockAdapter } from '@/shared/services/api/transport/adapters/mock.adapt
 import { restAdapter } from '@/shared/services/api/transport/adapters/rest.adapter'
 import { setTransport } from '@/shared/services/api/transport/transport'
 import {
+  addAppBreadcrumb,
+  attachSupabaseTelemetry,
   captureBoundaryError,
+  captureError,
   initSentry,
+  navigationIntegration,
+  setSentryTags,
 } from '@/shared/services/monitoring/sentry'
+import { supabase } from '@/shared/services/supabase/client'
 import { resolveAppRoot, useAppGateStore } from '@/shared/stores/app-gate.store'
 import { ThemeProvider } from '@/shared/theme/ThemeProvider'
 
 initSentry()
+// Étiquettes vraies pour toute la vie du processus : filtrables dans le
+// dashboard (« montre-moi les crashs de la version staging seulement »).
+setSentryTags({ env: env.ENV, mock_api: String(flags.USE_MOCK) })
 
 const HALF_SHEET_OPTIONS = {
   presentation: 'transparentModal',
@@ -50,6 +61,7 @@ const HALF_SHEET_OPTIONS = {
 function AppShell() {
   const t = useT()
   const navigationTheme = useNavigationTheme({ forceDark: true })
+  const navigationRef = useNavigationContainerRef()
 
   const surveyDone = useAppGateStore(s => s.surveyDone)
   const entitled = useAppGateStore(s => s.entitled)
@@ -60,15 +72,37 @@ function AppShell() {
   const appUnlocked = root === 'app'
   usePendingShieldRequest(appUnlocked)
 
+  // L'instrumentation de navigation a besoin du conteneur pour nommer les
+  // transactions et rattacher un écran à chaque événement. Sans ce
+  // rattachement, un crash arrive sans indication de l'écran où il s'est
+  // produit — l'information la plus utile du rapport.
+  useEffect(() => {
+    if (navigationRef) {
+      navigationIntegration.registerNavigationContainer(navigationRef)
+    }
+  }, [navigationRef])
+
   useEffect(() => {
     let stopEntitlementWatch: (() => void) | undefined
     setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
+    // Chaque requête Supabase devient une miette du fil d'Ariane : on voit la
+    // dernière table interrogée avant un crash.
+    attachSupabaseTelemetry(supabase)
     // Dev : session Supabase automatique quand le login est désactivé.
-    ensureDevSession().catch(() => undefined)
+    ensureDevSession().catch(error =>
+      captureError(error, { tags: { boot: 'dev-session' }, level: 'warning' }),
+    )
     // Dev : pilotage par deep link (tests scriptés sur simulateur).
     initDevTestBridge()
     // (Ré)installation : purge le blocage résiduel au niveau système.
-    runInstallReset().catch(() => undefined)
+    //
+    // Un échec ici laisse un blocage fantôme actif au niveau SYSTÈME, que
+    // l'utilisateur ne peut plus lever depuis l'app : c'est exactement le
+    // genre de panne dont personne ne fait de rapport et qui provoque une
+    // désinstallation. D'où le niveau `error`.
+    runInstallReset().catch(error =>
+      captureError(error, { tags: { boot: 'install-reset' } }),
+    )
     initializeRevenueCat()
       .then(() => {
         // Vérité serveur de l'abonnement, au démarrage puis à chaque
@@ -78,10 +112,26 @@ function AppShell() {
         void syncEntitlement()
         stopEntitlementWatch = watchEntitlement()
       })
-      .catch(() => undefined)
+      // RevenueCat muet = la porte dure du paywall ne peut plus s'ouvrir,
+      // même pour un abonné en règle. Panne commercialement critique, et
+      // parfaitement silencieuse jusqu'ici.
+      .catch(error =>
+        captureError(error, { tags: { boot: 'revenuecat' }, level: 'fatal' }),
+      )
 
     return () => stopEntitlementWatch?.()
   }, [])
+
+  // La porte franchie fait partie du contexte de tout crash ultérieur :
+  // « ça plante au paywall » et « ça plante dans l'app » ne sont pas le même
+  // bug, même avec la même stack.
+  useEffect(() => {
+    setSentryTags({ app_root: root })
+    addAppBreadcrumb({
+      category: 'navigation.gate',
+      message: `racine de l'app : ${root}`,
+    })
+  }, [root])
 
   useEffect(() => {
     BootSplash.hide({ fade: true })
@@ -166,7 +216,7 @@ function AppRoot() {
   )
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
@@ -177,5 +227,12 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
+/**
+ * `Sentry.wrap` enveloppe la racine — c'est lui qui mesure le démarrage à
+ * froid, relie le contexte natif au contexte JS et arme le suivi des
+ * interactions tactiles. Il est neutre quand le DSN est absent.
+ */
+export default Sentry.wrap(RootLayout)
 
 const styles = StyleSheet.create({ flex: { flex: 1 } })

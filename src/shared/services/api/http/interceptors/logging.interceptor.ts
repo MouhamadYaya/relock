@@ -12,6 +12,7 @@ import type {
   ApiResponse,
   RequestConfig,
 } from '@/shared/services/api/http/http.types'
+import { addAppBreadcrumb } from '@/shared/services/monitoring/sentry'
 
 const SENSITIVE_KEYS = new Set(
   ['authorization', 'auth', 'token', 'password', 'secret', 'apiKey'].map(s =>
@@ -57,6 +58,44 @@ function maskData(data: unknown, depth = 2): unknown {
 }
 
 type RequestConfigWithTs = RequestConfig & { __ts?: number }
+
+/**
+ * Fil d'Ariane réseau, EN PRODUCTION AUSSI.
+ *
+ * Ce n'est pas du log : rien ne part tant qu'aucun événement ne survient.
+ * Mais quand un crash arrive, le rapport porte alors les dernières requêtes
+ * qui y ont mené — le seul moyen de distinguer « l'app plante » de « le
+ * backend a renvoyé un 500 et l'app n'a pas su quoi en faire ».
+ *
+ * Aucun corps de requête, aucun en-tête : juste méthode, chemin, statut,
+ * durée. Le `beforeBreadcrumb` de Sentry coupe encore la query string.
+ */
+export function attachSentryBreadcrumbs(api: ReturnType<typeof create>): void {
+  // Horodatage de départ. `attachLogging` pose déjà `__ts`, mais seulement en
+  // __DEV__ : sans ce transform, la durée manquerait précisément là où elle
+  // sert, en production.
+  api.addRequestTransform((config: RequestConfig) => {
+    if (!config) return
+    const c = config as RequestConfigWithTs
+    if (c.__ts == null) c.__ts = Date.now()
+  })
+
+  api.addMonitor((res: ApiResponse) => {
+    const config = res.config as RequestConfigWithTs | undefined
+    addAppBreadcrumb({
+      category: 'http',
+      message: `${(config?.method ?? 'GET').toUpperCase()} ${config?.url ?? ''}`,
+      level: res.ok ? 'info' : 'warning',
+      data: {
+        url: config?.url,
+        status: res.status ?? undefined,
+        problem: res.problem ?? undefined,
+        duration_ms:
+          config?.__ts != null ? Date.now() - config.__ts : undefined,
+      },
+    })
+  })
+}
 
 export function attachLogging(api: ReturnType<typeof create>): void {
   if (__DEV__ !== true) return

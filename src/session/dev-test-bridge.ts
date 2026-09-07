@@ -13,6 +13,11 @@ import {
   resetOnboarding,
 } from '@/session/bootstrap'
 import { ScreenTime } from '@/shared/native/screen-time'
+import {
+  captureError,
+  isSentryEnabled,
+  triggerNativeCrashForTesting,
+} from '@/shared/services/monitoring/sentry'
 import { genUUID } from '@/shared/utils/uuid'
 
 /** Événement interne (dev) : force le jour affiché par l'écran Activité. */
@@ -27,7 +32,8 @@ export const DEV_EVENT_ONBOARDING_JUMP = 'relock-dev-onboarding-jump'
  *   xcrun simctl openurl booted "relock://dev/diag"
  *
  * Commandes : `diag` (bilan natif), `pull` (journal brut), `sync` (synchro
- * stats + ligne du jour), `home` / `activity` / `settings` (navigation).
+ * stats + ligne du jour), `home` / `activity` / `settings` (navigation),
+ * `sentry-status` / `sentry-js` / `sentry-native` (vérification Sentry).
  * Résultats dans la console Metro, préfixés `[DEV-BRIDGE]`.
  * Inactif en release (jamais enregistré).
  */
@@ -218,6 +224,33 @@ async function run(cmd: string): Promise<void> {
       // sans avoir à toucher l'écran.
       const status = await ScreenTime.requestAuthorization()
       console.log(`${TAG} authorization → ${status}`)
+      return
+    }
+    // --- Sentry : vérification de bout en bout ---------------------------
+    case 'sentry-status': {
+      // Répond à la seule question qui compte au départ : « est-ce que les
+      // événements partent, oui ou non ? » Un DSN vide ou un
+      // SENTRY_ENABLE_IN_DEV oublié rendent tout le reste invisible, et rien
+      // dans l'app ne le signale autrement.
+      const payload = JSON.stringify({ enabled: isSentryEnabled() }, null, 2)
+      console.log(`${TAG} sentry-status`, payload)
+      await report('sentry-status', payload)
+      return
+    }
+    case 'sentry-js': {
+      // Erreur JS NON FATALE : vérifie DSN, scrubbing, contexte utilisateur
+      // et — en build release — la symbolication par les source maps.
+      captureError(new Error('[TEST] erreur JS déclenchée par le dev-bridge'), {
+        tags: { test: 'dev-bridge' },
+      })
+      console.log(`${TAG} sentry-js envoyé`)
+      return
+    }
+    case 'sentry-native': {
+      // Crash NATIF volontaire : l'app se ferme. C'est le seul test qui
+      // prouve que les dSYM sont bien téléversés (symboles Swift/ObjC).
+      console.log(`${TAG} sentry-native → crash volontaire`)
+      triggerNativeCrashForTesting()
       return
     }
     case 'home':

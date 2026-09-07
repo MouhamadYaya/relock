@@ -2,6 +2,26 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+/**
+ * Sentry — téléversement des source maps et des symboles natifs (NDK).
+ *
+ * `sentry.gradle` accroche la tâche de bundle des variantes release et
+ * envoie la source map Hermes composée à Sentry, avec le MÊME nom de release
+ * que celui déduit du binaire à l'exécution (`applicationId@versionName+versionCode`).
+ * C'est cette égalité, et elle seule, qui fait qu'une stack de production est
+ * lisible.
+ *
+ * Le garde : tant que `android/sentry.properties` n'est pas rempli (jeton
+ * d'organisation, donc gitignoré), on n'applique rien du tout — sinon un
+ * clone frais du dépôt ne pourrait plus produire de build release.
+ */
+def sentryPropertiesFile = file("$rootDir/sentry.properties")
+if (sentryPropertiesFile.exists() && !sentryPropertiesFile.text.contains("REMPLACER")) {
+    apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute(null, rootDir).text.trim(), "../sentry.gradle")
+} else {
+    logger.warn("warning: [Sentry] android/sentry.properties absent ou non rempli - upload desactive. Les stacks de production ne seront PAS symbolisees.")
+}
+
 // ✅ react-native-config MUST be applied AFTER com.android.application plugin
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 

@@ -180,8 +180,7 @@ type CaptureOptions = {
  */
 export function captureError(error: unknown, options?: CaptureOptions): void {
   if (!active) return
-  const err =
-    error instanceof Error ? error : new Error(safeStringify(error))
+  const err = error instanceof Error ? error : new Error(safeStringify(error))
   Sentry.captureException(err, {
     tags: options?.tags,
     extra: options?.extra,

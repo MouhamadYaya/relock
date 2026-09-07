@@ -1,8 +1,28 @@
 // Mock worklets completely FIRST
 
+// Sentry est chargé au module scope de `app/_layout.tsx` (init + wrap +
+// intégration navigation) : le mock doit couvrir cette surface, sinon les
+// tests plantent à l'import et non sur une assertion.
 jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),
+  wrap: jest.fn(component => component),
   captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  addIntegration: jest.fn(),
+  setUser: jest.fn(),
+  setTag: jest.fn(),
+  setTags: jest.fn(),
+  setContext: jest.fn(),
+  flush: jest.fn().mockResolvedValue(true),
+  nativeCrash: jest.fn(),
+  reactNavigationIntegration: jest.fn(() => ({
+    name: 'ReactNavigation',
+    registerNavigationContainer: jest.fn(),
+  })),
+  mobileReplayIntegration: jest.fn(() => ({ name: 'MobileReplay' })),
+  hermesProfilingIntegration: jest.fn(() => ({ name: 'HermesProfiling' })),
+  supabaseIntegration: jest.fn(() => ({ name: 'Supabase' })),
 }))
 
 jest.mock('react-native-config', () => ({
