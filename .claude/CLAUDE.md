@@ -151,6 +151,7 @@ Same **topic-to-doc** matrix as [AGENTS.md#documentation-map](../AGENTS.md#docum
 | [docs/development.md](../docs/development.md) | Hooks, architecture, icons, i18n, npm scripts |
 | [.claude/rules/](rules/) | Scoped agent rules: assets, navigation, state, react-query, performance, security, i18n, testing, features, shared-components, shared-services, config, styling |
 | [docs/OPERATIONS.md](../docs/OPERATIONS.md) | Sentry, Maestro, CI, OTA, publishing |
+| [docs/SITE-PUBLIC.md](../docs/SITE-PUBLIC.md) | Site getrelock.com : contenu, générateurs SEO/GEO, déploiement Cloudflare |
 | [docs/OFFLINE.md](../docs/OFFLINE.md) | Offline stack |
 | [docs/permissions-bare-rn.md](../docs/permissions-bare-rn.md) | Permission catalog |
 | [docs/TODO.md](../docs/TODO.md) | Roadmap / backlog |

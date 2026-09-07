@@ -99,6 +99,7 @@ Before modifying any Relock UI, read [`docs/RELOCK_VISUAL_SYSTEM.md`](docs/RELOC
 | [docs/HOME_V2_VISUAL_AUDIT.md](docs/HOME_V2_VISUAL_AUDIT.md) | Home V2 reference comparison, fidelity checklist, device validation, and remaining gaps |
 | [.claude/rules/](../.claude/rules/) | Scoped agent rules: assets, navigation, state, react-query, performance, security, i18n, testing, features, shared-components, shared-services, config |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Sentry, Maestro, GitHub Actions, OTA policy, publishing checklist |
+| [docs/SITE-PUBLIC.md](docs/SITE-PUBLIC.md) | Site getrelock.com : contenu, générateurs SEO/GEO, déploiement Cloudflare, actions manuelles |
 | [docs/OFFLINE.md](docs/OFFLINE.md) | Offline stack (NetInfo, transport, mutation queue, Query + MMKV persistence) |
 | [docs/TESTS-IPHONE.md](docs/TESTS-IPHONE.md) | Tester sur iPhone physique : XCUITest + pont de dev, pièges réseau, commandes de vérification du blocage |
 | [docs/permissions-bare-rn.md](docs/permissions-bare-rn.md) | Android / iOS permission catalog |
