@@ -79,6 +79,17 @@ create table if not exists public.settings (
 );
 
 -- ─────────────────────────────────────────────────────────────
+-- onboarding_answers : les réponses du questionnaire d'accueil
+-- (déclencheur, apps, moment, ressentis, heures/jour…). Elles nourrissent
+-- le plan personnalisé et survivent ainsi à une réinstallation.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.onboarding_answers (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  answers    jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+-- ─────────────────────────────────────────────────────────────
 -- Row Level Security
 -- ─────────────────────────────────────────────────────────────
 alter table public.profiles     enable row level security;
@@ -86,6 +97,7 @@ alter table public.block_rules  enable row level security;
 alter table public.block_events enable row level security;
 alter table public.daily_stats  enable row level security;
 alter table public.settings     enable row level security;
+alter table public.onboarding_answers enable row level security;
 
 -- Politique générique : l'utilisateur gère uniquement ses propres lignes.
 create policy "own_profile"  on public.profiles     for all using (auth.uid() = id)      with check (auth.uid() = id);
@@ -93,6 +105,7 @@ create policy "own_rules"    on public.block_rules  for all using (auth.uid() = 
 create policy "own_events"   on public.block_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "own_stats"    on public.daily_stats  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "own_settings" on public.settings     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "own_onboarding_answers" on public.onboarding_answers for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Crée automatiquement profile + settings à l'inscription.
 create or replace function public.handle_new_user()

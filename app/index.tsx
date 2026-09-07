@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router'
-import { useAppGateStore } from '@/shared/stores/app-gate.store'
+import { resolveAppRoot, useAppGateStore } from '@/shared/stores/app-gate.store'
 import { useShieldRequestStore } from '@/shared/stores/shield-request.store'
 
 /**
@@ -16,13 +16,25 @@ import { useShieldRequestStore } from '@/shared/stores/shield-request.store'
  * laissait l'app bloquée sur un écran vide (aucune route résolue).
  */
 export default function Index() {
-  const onboardingDone = useAppGateStore(s => s.onboardingDone)
+  const surveyDone = useAppGateStore(s => s.surveyDone)
+  const entitled = useAppGateStore(s => s.entitled)
+  const setupDone = useAppGateStore(s => s.setupDone)
   // Ouverture depuis le mur système : la destination est l'onglet Blocages,
   // sans ouvrir automatiquement le rituel de déblocage. Sans ce test, ce
   // `<Redirect>` renvoyait vers l'accueil et écrasait cette destination.
   const shieldRequest = useShieldRequestStore(s => s.request)
-  if (onboardingDone && shieldRequest) {
+
+  // La MÊME décision que les gardes de `app/_layout.tsx`, par construction :
+  // viser une racine non montée laisserait un écran vide.
+  const root = resolveAppRoot({ surveyDone, entitled, setupDone })
+  if (root === 'paywall') {
+    return <Redirect href="/paywall" />
+  }
+  if (root === 'onboarding') {
+    return <Redirect href="/onboarding" />
+  }
+  if (shieldRequest) {
     return <Redirect href="/(tabs)/blocks" />
   }
-  return <Redirect href={onboardingDone ? '/(tabs)/home' : '/onboarding'} />
+  return <Redirect href="/(tabs)/home" />
 }

@@ -9,7 +9,8 @@ export function parseEnvBool(raw: string | undefined): boolean {
   return s === '1' || s === 'true' || s === 'yes' || s === 'on'
 }
 
-function parseTracesSampleRate(raw: string | undefined): number {
+/** Taux d'échantillonnage Sentry : un réel de 0 à 1, 0 pour toute saisie invalide. */
+export function parseSampleRate(raw: string | undefined): number {
   const n = Number.parseFloat(String(raw ?? '0'))
   if (!Number.isFinite(n) || n < 0 || n > 1) {
     return 0
@@ -31,16 +32,36 @@ export const env = {
   DEV_LOGIN_PASSWORD: (Config.DEV_LOGIN_PASSWORD ?? '').trim(),
   WS_URL: (Config.WS_URL ?? '').trim(),
   ENV: (Config.ENV ?? (__DEV__ ? 'development' : 'production')).trim(),
+  /**
+   * Sentry. Le DSN n'est pas un secret (il part dans le binaire), mais il
+   * reste dans `.env` pour rester muet tant qu'il n'est pas renseigné.
+   * `release` / `dist` ne sont volontairement PAS ici : le SDK natif les lit
+   * du binaire (`CFBundleShortVersionString` / `versionName`), exactement
+   * comme sentry-cli les calcule à l'upload des source maps. Les fixer à la
+   * main en JS désaligne les deux et casse la symbolication.
+   */
   SENTRY_DSN: (Config.SENTRY_DSN ?? '').trim(),
   SENTRY_ENABLE_IN_DEV: (Config.SENTRY_ENABLE_IN_DEV ?? '0').trim(),
-  SENTRY_TRACES_SAMPLE_RATE: parseTracesSampleRate(
-    Config.SENTRY_TRACES_SAMPLE_RATE,
+  SENTRY_TRACES_SAMPLE_RATE: parseSampleRate(Config.SENTRY_TRACES_SAMPLE_RATE),
+  /** Profilage Hermes — n'échantillonne QUE des traces déjà échantillonnées. */
+  SENTRY_PROFILES_SAMPLE_RATE: parseSampleRate(
+    Config.SENTRY_PROFILES_SAMPLE_RATE,
+  ),
+  /** Replay : part des sessions enregistrées de bout en bout (coûteux). */
+  SENTRY_REPLAYS_SESSION_SAMPLE_RATE: parseSampleRate(
+    Config.SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+  ),
+  /** Replay : part des sessions AVEC erreur dont on garde les 30 s précédentes. */
+  SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE: parseSampleRate(
+    Config.SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE,
   ),
   /** RevenueCat app keys (for paywall + subscription checks). */
   REVENUECAT_ENABLED: parseEnvBool(Config.REVENUECAT_ENABLED),
   REVENUECAT_IOS_API_KEY: (Config.REVENUECAT_IOS_API_KEY ?? '').trim(),
   REVENUECAT_ANDROID_API_KEY: (Config.REVENUECAT_ANDROID_API_KEY ?? '').trim(),
-  REVENUECAT_ENTITLEMENT_ID: (Config.REVENUECAT_ENTITLEMENT_ID ?? 'relock_pro').trim(),
+  REVENUECAT_ENTITLEMENT_ID: (
+    Config.REVENUECAT_ENTITLEMENT_ID ?? 'relock_pro'
+  ).trim(),
   /** Offering RevenueCat contenant le produit remisé de l'écran de rattrapage. */
   REVENUECAT_DISCOUNT_OFFERING_ID: (
     Config.REVENUECAT_DISCOUNT_OFFERING_ID ?? 'discount'

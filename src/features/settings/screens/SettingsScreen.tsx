@@ -27,9 +27,13 @@ import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
+import {
+  captureError,
+  isSentryEnabled,
+} from '@/shared/services/monitoring/sentry'
 import { useTheme } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
-import { showErrorToast } from '@/shared/utils/toast'
+import { showErrorToast, showToast } from '@/shared/utils/toast'
 
 const THEME_LABEL: Record<string, string> = {
   dark: 'Sombre',
@@ -45,6 +49,27 @@ const LANGUAGE_LABEL: Record<string, string> = {
 }
 
 /** Dev : bilan de santé natif (build, journal, vie des extensions). */
+/**
+ * Envoie une erreur de TEST à Sentry, et dit franchement quand rien ne part.
+ *
+ * Le silence est le pire mode de défaillance d'un outil de monitoring : sans
+ * ce retour, un DSN absent ressemble exactement à un DSN qui marche.
+ */
+function sendSentryTestEvent() {
+  if (!isSentryEnabled()) {
+    Alert.alert(
+      'Sentry inactif',
+      'Aucun événement ne part. Vérifier SENTRY_DSN dans .env (et SENTRY_ENABLE_IN_DEV=1 pour un build de développement), puis reconstruire — react-native-config lit .env AU BUILD.',
+    )
+    return
+  }
+  captureError(new Error('[TEST] événement déclenché depuis les Réglages'), {
+    tags: { test: 'settings-longpress' },
+    level: 'warning',
+  })
+  showToast('Événement de test envoyé à Sentry')
+}
+
 function showNativeDiagnostics() {
   if (!ScreenTime.isAvailable) {
     Alert.alert('Diagnostic natif', 'Module natif indisponible (simulateur ?).')
@@ -360,7 +385,7 @@ export default function SettingsScreen() {
               icon={IconName.MONITOR}
               label="Permissions · Temps d'écran"
               onPress={requestScreenTime}
-                right={
+              right={
                 <View style={styles.statusOn}>
                   <View
                     style={[
@@ -377,7 +402,7 @@ export default function SettingsScreen() {
                     {authorized ? 'Activé' : 'À activer'}
                   </Text>
                 </View>
-                }
+              }
               last={__DEV__ || !showCustomerCenter}
             />
             {showCustomerCenter ? (
@@ -400,9 +425,28 @@ export default function SettingsScreen() {
 
           <View style={styles.signature}>
             <RelockWordmark height={22} />
-            <Text style={[f(400), styles.footer]}>
-              version {appConfig.version}
-            </Text>
+            {/*
+              Appui long discret sur le numéro de version : envoie une erreur
+              de TEST à Sentry.
+
+              Pourquoi ici et pas seulement dans le pont de dev ? Parce que le
+              pont ne tourne qu'en __DEV__, alors que la seule vérification
+              qui compte vraiment — « ma stack de PRODUCTION est-elle
+              lisible ? » — exige un build release. C'est le seul déclencheur
+              qui traverse cette frontière.
+
+              Sans risque pour un utilisateur qui tomberait dessus : un
+              événement non fatal, aucun crash, aucune donnée.
+            */}
+            <Pressable
+              onLongPress={sendSentryTestEvent}
+              delayLongPress={1200}
+              accessibilityRole="text"
+            >
+              <Text style={[f(400), styles.footer]}>
+                version {appConfig.version}
+              </Text>
+            </Pressable>
           </View>
 
           <View style={{ height: 32 }} />

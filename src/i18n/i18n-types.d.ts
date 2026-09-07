@@ -11,7 +11,6 @@ declare module 'i18next' {
           brand: string
           skip: string
           plans_title: string
-          plans_subtitle: string
           annual: string
           weekly: string
           lowest: string
@@ -36,6 +35,7 @@ declare module 'i18next' {
           daily: string
           before_time: string
           after_time: string
+          chart_days: string
           benefits_title: string
           benefits_accent: string
           benefits_end: string
@@ -45,8 +45,10 @@ declare module 'i18next' {
           benefit_time_body: string
           benefit_presence_title: string
           benefit_presence_body: string
+          benefits_cta: string
           reviews: string
           users: string
+          trust: string
           offer_title: string
           offer_billed: string
           offer_cta: string
@@ -60,6 +62,20 @@ declare module 'i18next' {
           exit_footer: string
           payment_failed: string
           payment_pending: string
+          plans_title_accent: string
+          intent_sleep: string
+          intent_focus: string
+          intent_time: string
+          intent_breathe: string
+          intent_present: string
+          intent_create: string
+          intent_reconnect: string
+          intent_move: string
+          intent_learn: string
+          intent_wake: string
+          intent_out: string
+          plans_subtitle: string
+          intent_write: string
         }
         paywall: {
           brand: string
@@ -119,6 +135,7 @@ declare module 'i18next' {
           preview_label: string
           purchase_unavailable: string
           restore_unavailable: string
+          restore_none: string
           legal_unavailable: string
           understood: string
           dev_benefits: string
@@ -128,6 +145,11 @@ declare module 'i18next' {
           coming_soon: string
           coming_soon_body: string
           continue: string
+          notice_title: string
+          sign_in: string
+          no_subscription_found: string
+          retry: string
+          unavailable_body: string
         }
         common: {
           error_title: string

@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import XCTest
 
@@ -253,6 +254,53 @@ final class ShieldAttemptStoreTests: XCTestCase {
 
     store.acknowledgeEvents(1)
     XCTAssertEqual(store.eventRecords().map(\.kind), ["resisted"])
+  }
+
+  // ── Verrou indisponible ─────────────────────────────────────────────
+  //
+  // Régression évitée : après l'échec de toutes les tentatives, `withLock`
+  // exécutait quand même le corps. Deux processus faisaient alors leur
+  // lecture-modification-écriture sur le même fichier et s'écrasaient l'un
+  // l'autre. Le mur doit continuer de s'afficher, mais rien ne doit être
+  // écrit hors verrou.
+
+  private func holdingLock(_ body: () -> Void) {
+    let fd = open(lockURL.path, O_CREAT | O_WRONLY, 0o644)
+    XCTAssertGreaterThanOrEqual(fd, 0)
+    XCTAssertEqual(flock(fd, LOCK_EX), 0)
+    body()
+    flock(fd, LOCK_UN)
+    close(fd)
+  }
+
+  func testShieldStillGetsItsCountWhileAnotherProcessHoldsTheLock() {
+    let store = makeStore()
+    holdingLock {
+      let presentation = store.recordAttempt(
+        applicationKey: "facebook", applicationName: "Facebook", now: morning)
+      XCTAssertEqual(presentation.count, 1)
+      XCTAssertEqual(presentation.applicationName, "Facebook")
+    }
+    // Répondu sans écrire : l'état partagé est resté intact.
+    XCTAssertEqual(store.diagnostics().shownTotal, 0)
+    XCTAssertNil(store.lastPresentation())
+  }
+
+  func testWritesReportAFailureRatherThanRunningUnlocked() {
+    let store = makeStore()
+    _ = store.recordAttempt(
+      applicationKey: "facebook", applicationName: "Facebook", now: morning)
+
+    holdingLock {
+      XCTAssertNil(store.enqueueOpenRequest(applicationKey: "facebook", now: morning))
+      XCTAssertNil(
+        store.recordAction(
+          requestStatus: "ignored", response: "close", resisted: true, now: morning))
+    }
+
+    XCTAssertNil(store.peekOpenRequest(now: morning))
+    XCTAssertEqual(store.diagnostics().totalResisted, 0)
+    XCTAssertEqual(store.eventRecords().map(\.kind), ["shield_shown"])
   }
 
   func testFreshResetPreservesOnlyANonExpiredPendingRequest() {

@@ -220,9 +220,12 @@ function WelcomeGlow({
 export function SceneWelcome({
   onNext,
   onSkipDev,
+  onPaywallDev,
 }: {
   onNext: () => void
   onSkipDev?: () => void
+  /** DEV : saut direct à l'entrée du chapitre de l'offre (QA visuelle). */
+  onPaywallDev?: () => void
 }) {
   const { width: windowW, height: windowH } = useWindowDimensions()
   const insets = useSafeAreaInsets()
@@ -318,9 +321,14 @@ export function SceneWelcome({
 
         <Reveal index={3} style={{ paddingBottom: 10 }}>
           <Pill label="Commencer" onPress={onNext} />
-          {__DEV__ && onSkipDev ? (
-            <View className="items-center pt-3">
-              <GhostLink label="Passer (dev)" onPress={onSkipDev} dim />
+          {__DEV__ && (onSkipDev || onPaywallDev) ? (
+            <View className="flex-row items-center justify-center gap-6 pt-3">
+              {onSkipDev ? (
+                <GhostLink label="Passer (dev)" onPress={onSkipDev} dim />
+              ) : null}
+              {onPaywallDev ? (
+                <GhostLink label="Paywall (dev)" onPress={onPaywallDev} dim />
+              ) : null}
             </View>
           ) : null}
         </Reveal>

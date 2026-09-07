@@ -1,0 +1,14 @@
+# Modèle des identifiants sentry-cli. NE PAS METTRE DE JETON ICI.
+#
+# Copier vers ios/sentry.properties ET android/sentry.properties (les deux
+# sont gitignorés), puis remplir. Ces valeurs ne servent QU'AU BUILD, pour
+# téléverser les source maps et les dSYM : elles ne partent jamais dans l'app.
+#
+#   defaults.org      = le slug de l'organisation (URL Sentry)
+#   defaults.project  = le slug du projet
+#   auth.token        = jeton d'auth Sentry, scopes: project:releases + org:read
+#                       (Sentry → Settings → Auth Tokens → Create New Token)
+defaults.url=https://sentry.io/
+defaults.org=REMPLACER-slug-organisation
+defaults.project=REMPLACER-slug-projet
+auth.token=REMPLACER-jeton

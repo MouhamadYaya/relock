@@ -22,7 +22,10 @@ import { create } from 'apisauce'
 import { env } from '@/config/env'
 import { attachAuth } from '@/shared/services/api/http/interceptors/auth.interceptor'
 import { attachNormalizeError } from '@/shared/services/api/http/interceptors/error.interceptor'
-import { attachLogging } from '@/shared/services/api/http/interceptors/logging.interceptor'
+import {
+  attachLogging,
+  attachSentryBreadcrumbs,
+} from '@/shared/services/api/http/interceptors/logging.interceptor'
 import { attachRefreshOn401 } from '@/shared/services/api/http/interceptors/refresh.interceptor'
 
 const BASE_URL = env.API_URL?.trim() ?? ''
@@ -38,6 +41,8 @@ export const httpClient = create({
 
 attachAuth(httpClient)
 attachLogging(httpClient)
+// Après le log de dev : le fil d'Ariane, lui, sert en production.
+attachSentryBreadcrumbs(httpClient)
 attachNormalizeError(httpClient)
 attachRefreshOn401(httpClient)
 

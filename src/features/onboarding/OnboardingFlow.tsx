@@ -9,11 +9,23 @@ import { SceneRecognition } from '@/features/onboarding/components/SceneRecognit
 import { SceneRitual } from '@/features/onboarding/components/SceneRitual'
 import { SceneVictory } from '@/features/onboarding/components/SceneVictory'
 import { SCREEN_TIME_ESTIMATES } from '@/features/onboarding/services/annualProjection'
+import { saveOnboardingAnswers } from '@/features/onboarding/services/onboarding-answers.service'
+import {
+  type OnboardingCheckpoint,
+  readOnboardingCheckpoint,
+  saveOnboardingCheckpoint,
+} from '@/features/onboarding/services/onboarding-checkpoint'
 import { buildPersonalizedPlan } from '@/features/onboarding/services/personalizedPlan'
-import { completeOnboarding } from '@/session/bootstrap'
+import { setOnboardingAttributes } from '@/features/onboarding/services/revenuecat'
+import {
+  applyEntitlement,
+  completeSetup,
+  completeSurvey,
+} from '@/session/bootstrap'
 import { DEV_EVENT_ONBOARDING_JUMP } from '@/session/dev-test-bridge'
 import { useSocialSignIn } from '@/session/useSocialSignIn'
 import { useTrackingPrompt } from '@/shared/native/useTrackingPrompt'
+import { useAppGateStore } from '@/shared/stores/app-gate.store'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
 import {
@@ -29,7 +41,7 @@ import {
 import { enterBack, enterFwd, exitBack, exitFwd, Reveal } from './motion'
 import { SceneAuth } from './scenes-auth'
 import { SceneIgnition, SceneName, SceneWelcome } from './scenes-intro'
-import { SceneNotifs, ScenePaywall, ScenePermission } from './scenes-power'
+import { SceneNotifs, ScenePermission } from './scenes-power'
 import {
   DEFAULT_RULE_PRESET_IDS,
   SceneGroundRules,
@@ -50,11 +62,18 @@ import { useActivateFirstRule } from './useActivateFirstRule'
 /**
  * Onboarding « Reprends tes nuits » — la refonte validée écran par écran.
  *
- * Arc : miroir → diagnostic → verdict → plan → rituel → offre → compte
+ * Arc : miroir → diagnostic → verdict → plan → rituel ┊ offre ┊ compte
  * → tutoriel → accès Temps d'écran → apps → règles → notifications.
  *
- * Une seule route ; les étapes vivent ici. Textes français locaux :
- * exception i18n assumée de cet espace narratif (comme sa palette).
+ * ┊ L'OFFRE N'EST PLUS UNE ÉTAPE D'ICI. C'est une route à part
+ * (`app/paywall.tsx`), montée par `app/_layout.tsx` tant que l'abonnement
+ * manque. Le rituel referme donc le récit (`completeSurvey`) et le parcours
+ * ne reprend qu'au compte, une fois l'abonnement en poche. Raison : un
+ * abonnement est un ÉTAT qu'on revérifie à chaque démarrage — pas une case
+ * franchie une fois, qu'une fermeture d'app ou une expiration rendrait fausse.
+ *
+ * Textes français locaux : exception i18n assumée de cet espace narratif
+ * (comme sa palette).
  */
 
 type StepId =
@@ -77,7 +96,6 @@ type StepId =
   | 'permission'
   | 'notifs'
   | 'auth'
-  | 'paywall'
   | 'tutoGround'
   | 'tutoLock'
   | 'tutoHard'
@@ -102,7 +120,6 @@ const STEPS: StepId[] = [
   'loading',
   'plan',
   'ritual',
-  'paywall',
   'auth',
   'tutoGround',
   'tutoLock',
@@ -132,6 +149,31 @@ const BACKABLE: StepId[] = [
   'feelings',
   'screenTime',
 ]
+
+/** Première étape d'APRÈS l'offre : le parcours d'activation du produit. */
+const SETUP_START: StepId = 'auth'
+
+/**
+ * Où reprendre à l'ouverture de l'app.
+ *
+ * On revient à l'étape mémorisée, avec une règle qui prime sur elle : un
+ * ABONNÉ ne repasse jamais par le récit. Il a payé — lui rejouer le
+ * diagnostic et le plan serait une punition. Il reprend au parcours
+ * d'activation, le seul endroit où une position a encore du sens (l'offre,
+ * elle, n'est plus une étape mais un état, cf. l'en-tête).
+ *
+ * Une étape inconnue (parcours remanié depuis la sauvegarde) fait repartir
+ * du début, seul état sûr.
+ */
+function resumeIndex(
+  checkpoint: OnboardingCheckpoint | null,
+  { entitled, surveyDone }: { entitled: boolean; surveyDone: boolean },
+): number {
+  const saved = checkpoint ? STEPS.indexOf(checkpoint.step as StepId) : -1
+  const start = saved > 0 ? saved : 0
+  if (!(entitled && surveyDone)) return start
+  return Math.max(start, STEPS.indexOf(SETUP_START))
+}
 
 const TRIGGERS = [
   { id: 'time', emoji: '⏳', label: 'Je perds trop de temps' },
@@ -178,17 +220,30 @@ const SCREEN_TIME = SCREEN_TIME_ESTIMATES
 
 export default function OnboardingFlow() {
   const insets = useSafeAreaInsets()
-  const [index, setIndex] = useState(0)
+  // Lu une seule fois au montage : l'onboarding entamé puis abandonné
+  // reprend où il s'était arrêté, même des semaines plus tard.
+  const [checkpoint] = useState(readOnboardingCheckpoint)
+  const saved = checkpoint?.answers
+  const entitled = useAppGateStore(s => s.entitled)
+  const surveyDone = useAppGateStore(s => s.surveyDone)
+  const [index, setIndex] = useState(() =>
+    // Lu une fois : la reprise se décide au montage, jamais en cours de route
+    // (une bascule d'abonnement pendant le parcours ne doit pas téléporter
+    // l'utilisateur — `app/_layout.tsx` s'en charge au niveau de la racine).
+    resumeIndex(checkpoint, { entitled, surveyDone }),
+  )
   const dirRef = useRef<'fwd' | 'back'>('fwd')
 
   // Réponses (elles nourrissent la projection et le plan).
-  const [name, setName] = useState('')
-  const [trigger, setTrigger] = useState<string | null>(null)
-  const [apps, setApps] = useState<string[]>([])
-  const [moment, setMoment] = useState<string | null>(null)
-  const [feelings, setFeelings] = useState<string[]>([])
-  const [screenTime, setScreenTime] = useState<string | null>(null)
-  const [hours, setHours] = useState(4)
+  const [name, setName] = useState(saved?.name ?? '')
+  const [trigger, setTrigger] = useState<string | null>(saved?.trigger ?? null)
+  const [apps, setApps] = useState<string[]>(saved?.apps ?? [])
+  const [moment, setMoment] = useState<string | null>(saved?.moment ?? null)
+  const [feelings, setFeelings] = useState<string[]>(saved?.feelings ?? [])
+  const [screenTime, setScreenTime] = useState<string | null>(
+    saved?.screenTime ?? null,
+  )
+  const [hours, setHours] = useState(saved?.hours ?? 4)
   const personalizedPlan = useMemo(
     () =>
       buildPersonalizedPlan({ name, apps, moment, trigger, feelings, hours }),
@@ -197,15 +252,53 @@ export default function OnboardingFlow() {
 
   // Tutoriel post-paywall : ces trois réponses produisent la règle réellement
   // armée à la sortie de l'onboarding.
-  const [hardMode, setHardMode] = useState(true)
-  const [appCount, setAppCount] = useState(0)
+  const [hardMode, setHardMode] = useState(saved?.hardMode ?? true)
+  const [appCount, setAppCount] = useState(saved?.appCount ?? 0)
   const [rulePresetIds, setRulePresetIds] = useState<string[]>(
-    DEFAULT_RULE_PRESET_IDS,
+    saved?.rulePresetIds ?? DEFAULT_RULE_PRESET_IDS,
   )
   const [activating, setActivating] = useState(false)
   const activationStarted = useRef(false)
+  const activationFailures = useRef(0)
 
   const step = STEPS[index]
+
+  /**
+   * Sauvegarde continue de l'avancement. `ignition` (index 0) est exclue :
+   * elle prolonge le splash et s'enchaîne seule, il n'y a rien à reprendre
+   * tant qu'on ne l'a pas dépassée.
+   */
+  useEffect(() => {
+    if (index === 0) return
+    saveOnboardingCheckpoint({
+      step,
+      answers: {
+        name,
+        trigger,
+        apps,
+        moment,
+        feelings,
+        screenTime,
+        hours,
+        hardMode,
+        appCount,
+        rulePresetIds,
+      },
+    })
+  }, [
+    step,
+    index,
+    name,
+    trigger,
+    apps,
+    moment,
+    feelings,
+    screenTime,
+    hours,
+    hardMode,
+    appCount,
+    rulePresetIds,
+  ])
 
   // Autorisation de suivi (ATT) : à la toute première page tenue à l'écran.
   // Pas sur `ignition`, qui prolonge le splash et s'enchaîne tout seul —
@@ -239,23 +332,56 @@ export default function OnboardingFlow() {
     pending: authPending,
   } = useSocialSignIn()
 
+  /**
+   * Le compte vient d'exister : c'est le premier instant où les réponses du
+   * questionnaire ont un endroit où vivre autre que le MMKV de cet appareil.
+   * Écriture en arrière-plan — une ligne non écrite n'arrête pas le parcours.
+   */
+  const persistAnswers = useCallback(() => {
+    void saveOnboardingAnswers({
+      name,
+      trigger,
+      apps,
+      moment,
+      feelings,
+      screenTime,
+      hours,
+      hardMode,
+      appCount,
+      rulePresetIds,
+    })
+  }, [
+    name,
+    trigger,
+    apps,
+    moment,
+    feelings,
+    screenTime,
+    hours,
+    hardMode,
+    appCount,
+    rulePresetIds,
+  ])
+
   const handleAppleSignIn = useCallback(async () => {
     const result = await signInWithApple()
     if (result.ok) {
+      persistAnswers()
       goNext()
     } else if (!result.canceled) {
       showErrorToast(result.error)
     }
-  }, [signInWithApple, goNext])
+  }, [signInWithApple, goNext, persistAnswers])
 
   const handleGoogleSignIn = useCallback(async () => {
     const result = await signInWithGoogle()
     if (result.ok) {
+      persistAnswers()
       goNext()
     } else if (!result.canceled) {
       showErrorToast(result.error)
     }
-  }, [signInWithGoogle, goNext])
+  }, [signInWithGoogle, goNext, persistAnswers])
 
   // DEV uniquement : saut direct à une étape (QA visuelle scriptée via
   // `relock://dev/onboarding/<step>`) sans rejouer tout le parcours.
@@ -275,19 +401,55 @@ export default function OnboardingFlow() {
   }, [])
 
   const finish = useCallback(() => {
-    // Stack.Protected (app/_layout.tsx) redirects to the app on its own
-    // once onboardingDone flips — matches the previous getPostOnboardingRoute().
-    completeOnboarding()
+    // `completeSetup` écrit la porte, bascule le store et remplace la route
+    // lui-même (cf. `src/session/bootstrap.ts` pour le pourquoi du replace).
+    completeSetup()
   }, [])
 
+  /**
+   * Fin du récit. Le parcours s'arrête ICI tant que l'abonnement manque :
+   * `completeSurvey` remplace la route par le paywall, et ces 13 écrans ne
+   * se rejoueront jamais. Les réponses partent en attributs RevenueCat au
+   * passage — c'est le seul moment où l'on sait qui est cette personne et
+   * ce qu'elle vient chercher.
+   */
+  const finishSurvey = useCallback(() => {
+    void setOnboardingAttributes({ trigger, moment, hours, apps, feelings })
+    if (!completeSurvey()) goNext()
+  }, [trigger, moment, hours, apps, feelings, goNext])
+
   const skipOnboardingDev = useCallback(() => {
-    if (__DEV__) finish()
+    if (!__DEV__) return
+    // Le « passer » de développement doit atterrir DANS l'app : terminer le
+    // parcours sans abonnement laisserait le gate ouvrir le paywall, ce que
+    // ce bouton n'a jamais promis. L'abonnement simulé est corrigé au
+    // prochain démarrage par `syncEntitlement` (et `dev-test-bridge` expose
+    // `entitlement-lock` pour retester la porte dure).
+    applyEntitlement(true)
+    finish()
   }, [finish])
 
   /**
+   * DEV uniquement : atterrir sur le dernier écran du récit. Le paywall
+   * étant une route gardée, on ne peut pas y sauter directement — mais
+   * terminer le rituel y mène en un tap, sans rejouer tout le diagnostic.
+   */
+  const jumpToPaywallDev = useCallback(() => {
+    if (!__DEV__) return
+    goStep('ritual')
+  }, [goStep])
+
+  /**
    * Demander les notifications après la création et l'armement des règles.
-   * Un échec conserve la sortie existante vers l'app, sans demander une
-   * permission pour une activation qui n'a pas abouti.
+   * Un échec ne demande pas de permission pour une activation qui n'a pas
+   * abouti — et surtout, il ne fait plus entrer dans l'app en silence.
+   *
+   * Avant, le moindre échec appelait `finish()` : l'utilisateur se retrouvait
+   * ABONNÉ, dans l'app, avec ZÉRO blocage armé — le pire état possible du
+   * produit, et invisible pour lui. Désormais le premier échec est
+   * réessayable sur place ; le second le laisse entrer quand même, parce
+   * qu'il a payé et qu'on ne le retiendra pas en otage d'un armement qui ne
+   * veut pas se faire (l'onglet Blocages lui permet de créer sa règle).
    */
   const activateAndContinue = useCallback(async () => {
     if (rulePresetIds.length === 0 || activationStarted.current) return
@@ -303,7 +465,11 @@ export default function OnboardingFlow() {
       goStep('notifs')
     } catch (e) {
       showErrorToast(e)
-      finish()
+      activationFailures.current += 1
+      // On rouvre la porte au réessai : sans ce reset, `activationStarted`
+      // restait armé et le bouton ne répondait plus jamais.
+      activationStarted.current = false
+      if (activationFailures.current >= 2) finish()
     } finally {
       setActivating(false)
     }
@@ -338,6 +504,7 @@ export default function OnboardingFlow() {
           <SceneWelcome
             onNext={goNext}
             onSkipDev={__DEV__ ? skipOnboardingDev : undefined}
+            onPaywallDev={__DEV__ ? jumpToPaywallDev : undefined}
           />
         )
       case 'recognition':
@@ -467,7 +634,7 @@ export default function OnboardingFlow() {
       case 'loading':
         return <ScenePlanPreparation onDone={goNext} />
       case 'ritual':
-        return <SceneRitual onDone={goNext} />
+        return <SceneRitual onDone={finishSurvey} />
       case 'permission':
         return <ScenePermission onNext={goNext} />
       case 'notifs':
@@ -482,8 +649,6 @@ export default function OnboardingFlow() {
             busy={authPending}
           />
         )
-      case 'paywall':
-        return <ScenePaywall onNext={goNext} />
       case 'tutoGround':
         return <SceneGroundRules onNext={goNext} />
       case 'tutoLock':
@@ -524,7 +689,7 @@ export default function OnboardingFlow() {
   // `auth` peint son propre fond jusque sous la status bar (voir SceneAuth) :
   // avec le paddingTop du conteneur, le dégradé s'arrêtait sous l'encoche et
   // laissait une bande noire à coins carrés en haut de l'écran.
-  const ownsSafeArea = isIgnition || step === 'paywall' || step === 'auth'
+  const ownsSafeArea = isIgnition || step === 'auth'
 
   return (
     <View className="flex-1" style={{ backgroundColor: OB.bg }}>
