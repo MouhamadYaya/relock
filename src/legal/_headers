@@ -42,3 +42,80 @@
   # des navigateurs est difficilement réversible et engagerait tout getrelock.com,
   # y compris de futurs sous-domaines encore inexistants.
   Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+# ---------------------------------------------------------------------------
+# CACHE
+#
+# Cloudflare ne pose aucune règle de cache sur les assets statiques : le défaut
+# observé en production est `max-age=0, must-revalidate`, donc un aller-retour
+# conditionnel par fichier et par visite, y compris pour des polices de 400 Ko
+# qui n'ont pas changé depuis des mois.
+#
+# Les URLs de ce site ne portent pas d'empreinte de contenu : une durée d'un an
+# rendrait toute correction invisible pendant un an. Les valeurs ci-dessous sont
+# donc calées sur la fréquence réelle de changement de chaque famille de
+# fichiers, et `stale-while-revalidate` sert la version connue pendant que la
+# nouvelle arrive.
+#
+# Le HTML garde volontairement le défaut (revalidation à chaque visite) : une
+# politique de confidentialité corrigée doit être lue corrigée, immédiatement.
+#
+# Une nouvelle image servie par le site a besoin de sa ligne ici : la syntaxe
+# `_headers` de Cloudflare ne reconnaît pas les motifs de type `/*.webp`.
+
+/assets/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=604800
+
+/relock-home-activity.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/relock-app-selection-rules.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/relock-rule-creation-pause.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/og-cover.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/favicon.svg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/icon-192.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/icon-512.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+
+/styles.css
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/pages.css
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/landing.css
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/legal.css
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/blog.css
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/menu.js
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# Les flux sont servis en `application/xml` par défaut, ce que la plupart des
+# lecteurs acceptent mais qu'aucun n'annonce comme un flux. Le type explicite
+# évite qu'un navigateur propose de télécharger le fichier.
+
+/feed.xml
+  Content-Type: application/rss+xml; charset=utf-8
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/fr/feed.xml
+  Content-Type: application/rss+xml; charset=utf-8
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400

@@ -1,3 +1,14 @@
 # Fichiers présents dans src/legal/ mais qui ne doivent PAS être publiés.
 privacy-audit.md
 .DS_Store
+
+# Captures sources 1920x1440 (3,73 Mo à elles trois). Elles restent dans le dépôt
+# comme source de `scripts/build-legal-assets.cjs`, mais le site sert les WebP
+# générés à côté : les publier ferait vivre deux URLs pour la même image.
+ecranAcceuilETActivite.png
+EcranConfigurationBlocage.png
+EcranCreationDeRegledeBlocageEtEcranDEblocage.png
+
+# Manifestes internes des générateurs, sans usage côté visiteur.
+.generated-assets.json
+.seo-lastmod.json

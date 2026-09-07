@@ -13,7 +13,10 @@
     "directory": "./src/legal",
     // `./privacy/` → `privacy/index.html`, et redirection depuis `./privacy`.
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "none"
+    // Sert `404.html` avec un vrai code 404 : sans ça, une URL morte renvoyait
+    // 404 avec un corps vide, donc une page blanche du navigateur et aucun
+    // chemin de retour vers le site.
+    "not_found_handling": "404-page"
   },
   // Garde l'URL *.workers.dev vivante en filet de sécurité : déclarer `routes`
   // la désactive silencieusement par défaut, ce qui met le site hors ligne.

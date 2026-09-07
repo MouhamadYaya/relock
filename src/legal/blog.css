@@ -1,0 +1,216 @@
+/*
+ * Blog : index et articles.
+ *
+ * Réutilise la typographie de `legal.css` (`.legal-content`) pour le corps des
+ * articles — un guide et une politique de confidentialité se lisent de la même
+ * façon, il n'y a aucune raison d'entretenir deux échelles typographiques.
+ * Ce fichier n'ajoute que ce qui n'existe nulle part ailleurs : les cartes de
+ * l'index, le fil d'Ariane, le bloc de réponse directe et le pied d'article.
+ */
+
+.blog-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+  color: var(--ink-muted, #85869a);
+  font-size: 0.8rem;
+}
+
+.blog-breadcrumb a {
+  color: var(--ink-soft, #b6b6c7);
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+
+.blog-breadcrumb a:hover,
+.blog-breadcrumb a:focus-visible {
+  color: var(--ink, #f7f6fc);
+  text-decoration: underline;
+}
+
+.blog-breadcrumb span[aria-hidden='true'] {
+  color: rgb(255 255 255 / 24%);
+}
+
+/* --------------------------------------------------------------- index */
+
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 64px 0 clamp(100px, 14vw, 168px);
+}
+
+.blog-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 30px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 24px;
+  background: rgb(255 255 255 / 3%);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.blog-card:hover,
+.blog-card:focus-within {
+  border-color: rgb(167 139 250 / 30%);
+  background: rgb(255 255 255 / 5%);
+}
+
+.blog-card time {
+  color: var(--ink-muted, #85869a);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.blog-card h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.blog-card h2 a {
+  color: #f5f3fb;
+  text-decoration: none;
+}
+
+.blog-card h2 a:hover,
+.blog-card h2 a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+.blog-card p {
+  margin: 0;
+  color: #b8b6c2;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.blog-card__more {
+  margin-top: auto;
+  padding-top: 6px;
+  color: var(--violet, #a78bfa);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.blog-card__more::after {
+  content: ' →';
+}
+
+.blog-card__more:hover,
+.blog-card__more:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.blog-empty {
+  color: var(--ink-muted, #85869a);
+}
+
+/* -------------------------------------------------------------- article */
+
+/*
+ * Le corps d'article est plus étroit que les pages légales : une ligne de
+ * lecture confortable tourne autour de 70 caractères, et un guide se lit en
+ * continu là où une politique se consulte par sections.
+ */
+.post-layout {
+  max-width: 720px;
+  padding: 56px 0 clamp(100px, 14vw, 168px);
+}
+
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 28px;
+  color: var(--ink-muted, #85869a);
+  font-size: 0.84rem;
+}
+
+.post-lede {
+  margin-top: 26px;
+  color: #cbc9d6;
+  font-size: clamp(1.05rem, 1.9vw, 1.22rem);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+/*
+ * Réponse directe, dans les 80 premiers mots.
+ *
+ * C'est le bloc qu'un moteur génératif reprend tel quel : il doit se suffire
+ * hors de son contexte, donc il est visuellement isolé et écrit sans renvoi au
+ * paragraphe précédent.
+ */
+.post-answer {
+  margin: 0 0 40px;
+  padding: 24px 26px;
+  border: 1px solid rgb(167 139 250 / 24%);
+  border-radius: 20px;
+  background: rgb(115 87 220 / 9%);
+}
+
+.post-answer p {
+  margin: 0;
+  color: #ded9ef;
+  font-size: 1.02rem;
+  line-height: 1.72;
+}
+
+.post-answer p + p {
+  margin-top: 14px;
+}
+
+.post-faq h3 {
+  margin: 28px 0 10px;
+  color: #f0edf8;
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
+}
+
+.post-sources {
+  margin-top: 12px;
+  font-size: 0.86rem;
+}
+
+.post-sources li {
+  color: var(--ink-muted, #85869a);
+}
+
+.post-cta {
+  margin-top: 8px;
+  padding: 32px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 24px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.post-cta h2 {
+  margin-top: 0;
+}
+
+.post-cta p:last-of-type {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 560px) {
+  .blog-card {
+    padding: 24px;
+  }
+
+  .blog-grid {
+    padding-top: 44px;
+  }
+}

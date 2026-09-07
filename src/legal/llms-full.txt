@@ -1,0 +1,1154 @@
+# Relock, full text
+
+> Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.
+
+Every public page of getrelock.com, navigation and footer removed.
+Generated from the site sources. Canonical index: https://getrelock.com/llms.txt
+
+# Relock | Make your attention yours again
+URL: https://getrelock.com/
+Language: en
+Updated: 2026-09-07
+
+Your attention, back in your hands
+
+# Stop opening apps on autopilot.
+
+Relock puts one intentional pause between you and the scroll. Build boundaries around the apps that pull you away, then return to the day you meant to have.
+
+Built around Apple Screen Time controls. Coming to the App Store for iPhone and iPad, in Canada and the United States.
+
+Made for real life
+
+## The moments when five minutes quietly become fifty.
+
+Relock meets the reflex where it happens, without turning attention into another performance.
+
+### Before the day belongs to everyone else.
+
+Keep the first part of your morning for your own thoughts, plans, and pace.
+
+### When focus is finally starting to feel possible.
+
+Protect the fragile stretch of attention that turns effort into meaningful progress.
+
+### When one last check keeps becoming another.
+
+Create a quieter ending to the day and make room for sleep before the next scroll begins.
+
+What does Relock include?
+
+## A boundary you can actually make your own.
+
+Choose what needs protecting, decide when it matters, and let Relock hold the line with you.
+
+### Choose the apps that pull you away
+
+Select apps and categories with Apple Family Controls. Your sensitive selection tokens stay in the iOS App Group used for enforcement.
+
+### Shape a rule around your day
+
+Configure schedules, durations, limits, and rule modes for the moments that matter most.
+
+### Change the boundary when life changes
+
+Edit, suspend, resume, or reset your rules instead of forcing every day into the same plan.
+
+### See progress without turning it into pressure
+
+Review aggregate interventions, estimated time saved, and streaks as information, not judgment.
+
+Why choose Relock?
+
+## Less policing. More agency.
+
+The best boundary is not the harshest one. It is the one that helps you remember what you wanted.
+
+### A pause with a purpose
+
+Turn an invisible reflex into a visible decision before the app takes over the next few minutes.
+
+### Built around your rhythm
+
+Choose your own apps, schedules, and level of friction rather than following a universal detox.
+
+### Calm by design
+
+A focused interface and restrained feedback keep the experience useful without demanding more attention.
+
+The pause is the feature
+
+## Give the reflex somewhere to stop.
+
+When a protected app is restricted, Relock creates a clear interruption. You get a moment to remember the reason behind the rule and decide what deserves your attention next.
+
+- A focused intervention instead of another noisy prompt
+
+- Rule context that brings your intention back into view
+
+- Flexible modes for everyday boundaries and stronger commitments
+
+The idea behind Relock
+
+## Your life does not need more willpower. It needs fewer invisible decisions.
+
+The point is not to win against your phone. It is to notice the moment, look up, and choose the life waiting on the other side of the screen.
+
+Frequently asked questions
+
+## Know what you are choosing.
+
+### What can Relock restrict?
+
+On supported Apple devices, you select apps or categories through Apple Family Controls and use those selections in your Relock rules.
+
+### Does Relock read what I do inside other apps?
+
+The implemented blocking flow does not read messages, photos, page contents, or keystrokes from restricted apps. Apple provides opaque selection tokens that remain local for enforcement.
+
+### What information is synchronized?
+
+Your account and profile, rule configuration, onboarding answers, and aggregate activity statistics may be stored with Relock service providers. See the Privacy Policy for the exact scope.
+
+### How do I cancel a subscription?
+
+Manage or cancel it through the store where you purchased it. Deleting Relock or your Relock account does not itself cancel a store subscription.
+
+### Can I export or delete my data?
+
+Yes. Settings has a JSON export and an account-deletion control you can use yourself, at any time. Data our providers hold for us — your profile photo, your subscription record — is removed within 30 days afterwards. Write to contact@getrelock.com for anything the export leaves out.
+
+## Put one good decision between you and the scroll.
+
+Start with the app that steals five minutes. Build the pause that gives those minutes back.
+
+---
+
+# Help Centre | Relock
+URL: https://getrelock.com/help/
+Language: en
+Updated: 2026-09-07
+
+Support
+
+# Help centre
+
+Nothing here is a workaround for the blocks you set. If you are looking for a way to bypass your own rules right now, jump to Emergency unlock — it exists, it is deliberate, and it has a cost.
+
+## 1. What does Relock need before it can block anything?
+
+Relock runs on iPhone and iPad. The blocking itself is performed by Apple's Family Controls framework, which exists on iOS and iPadOS and has no equivalent Relock can use elsewhere.
+
+One permission does all the work: Screen Time access. Without it Relock can display your rules but cannot enforce a single one. You are asked for it during onboarding, and you can check it at any time in Settings → Protection → Screen Time access. If it reads anything other than Granted, tap it and accept the iOS prompt.
+
+Apple shows the permission sheet only a limited number of times. If tapping it no longer produces a prompt, grant it from the device's own Settings app, under Screen Time, then reopen Relock.
+
+## 2. What are the three kinds of block?
+
+A rule combines the apps you pick with one of three mechanisms. You choose the mechanism when you create the rule, and it is what makes Relock a friction tool rather than an on/off switch.
+
+Rules live in Settings → Protection → My blocks, and on the Blocks tab. You can run several at once; the strictest one applying at that moment wins.
+
+## 3. What happens when the pause appears?
+
+When a progressive delay triggers, Relock does not simply refuse. It asks "What are you really looking for?" and counts down. At the end you can still choose Open anyway — that is the point. The pause is there to turn an automatic gesture into a decision, not to win an argument with you.
+
+The ambient sound during that screen can be turned off in Settings → Personalization → Pause ritual sound, and the vibrations in Vibration.
+
+## 4. What does strict mode change?
+
+A rule marked strict cannot be stopped before it ends. No pause, no Open anyway, no editing the rule to shorten it. Relock will tell you plainly: this block cannot be stopped before it ends; that is exactly what you chose when you turned it on.
+
+Enable it only when you want your future self to have no say. The one door that remains is the emergency unlock, and it costs you the rule itself.
+
+## 5. Why is my block not applying?
+
+Almost every report we get comes down to one of these.
+
+If none of these match, send us the app version from Settings → About — the Report a bug row fills it in for you.
+
+## 6. How do I unlock everything in an emergency?
+
+Settings → Sensitive zone → Emergency unlock lifts everything immediately: no breathing, no waiting, no strict mode. It exists for real emergencies — an interview, a trip, a medical surprise.
+
+It deletes your rules, it does not suspend them. You will have to build them again afterwards. That price is deliberate: it is what keeps the escape hatch from becoming the habit, and it is also our guarantee that Relock never holds your phone hostage.
+
+## 7. What does uninstall protection prevent?
+
+When it is on and a block is active, iOS refuses to delete apps — including Relock. This closes the most obvious bypass: uninstalling the referee mid-match.
+
+To remove Relock, first end or delete your active blocks, or use the emergency unlock, then delete the app normally.
+
+## 8. How are the score and the streak calculated?
+
+Your global score is computed on your device, from measurements Apple never hands to Relock. If it reads Calculating or says there is not enough measured data, it is because a score needs at least one full measured day — create a block and it arrives the next day.
+
+The streak counts consecutive days in control. It is a mirror, not a scoreboard: losing it costs you nothing but the number.
+
+## 9. Which notifications does Relock send?
+
+Relock sends two kinds: reminders (a streak at risk, a return after time away) and progress (weekly report and milestones). Each can be turned off separately in Settings → Notifications.
+
+We never send promotional notifications. Note that once you deny notifications at the iOS level, only the iPhone's own Settings app can restore them — Relock cannot ask again.
+
+## 10. How do I manage or cancel Relock Pro?
+
+Relock Pro is billed by Apple through your App Store account. Settings → Subscription → Manage my subscription opens the customer centre for plan changes and cancellation.
+
+Changed phone, reinstalled, or signed in again and Pro is missing? Use Restore purchases in the same section. If it reports no purchase to restore, check that you are signed in to the same Apple Account that paid.
+
+Cancelling has to happen at Apple. Deleting the app, deleting your Relock account, or signing out does not stop the billing — only your App Store account settings can. Do that first, or you will keep being charged.
+
+## 11. How do I export or delete my data?
+
+Settings → Privacy → Export my data produces a JSON file containing your profile, your rules and your history. Settings → Account → Delete my account erases your profile, your rules and your whole history, on our servers and on this iPhone, with no way back.
+
+Your usage measurements never leave your iPhone: Apple does not hand them to Relock, and only an aggregate score is computed on device. Crash reports carry your Relock account identifier, so that one person’s crash can be told from another’s, but never your email address. When a recording of the screen is attached to a crash, every piece of text, every image and every icon is replaced by a grey shape on your iPhone before anything is sent. You can switch crash reports off entirely in Settings → Privacy → Crash reports. The Privacy Policy is the authoritative description.
+
+Deleting your account does not cancel your subscription — see section 10.
+
+## 12. How do I get help if I am still stuck?
+
+Write to contact@getrelock.com. From inside the app, Settings → Support → Report a bug pre-fills your version, build and language, which saves a round trip.
+
+Useful things to include: what you expected, what happened instead, the rule type involved, and whether Screen Time access reads Granted.
+
+---
+
+# Privacy Policy | Relock
+URL: https://getrelock.com/privacy/
+Language: en
+Updated: 2026-09-07
+
+Legal
+
+# Privacy Policy
+
+This Policy covers the Relock mobile application and the getrelock.com website. Relock is offered to people aged 16 and over in Canada and the United States.
+
+## 1. Who we are
+
+Relock is operated by YATECH, a sole proprietorship registered in Quebec, Canada, with its business address at 1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada ("Relock," "we," "us," or "our"). For applicable privacy laws, YATECH is the controller of — and the enterprise responsible for — the personal data described in this Policy unless stated otherwise. You can reach us at any time at contact@getrelock.com.
+
+## 2. Scope
+
+This Policy explains how Relock handles personal data when you use the Relock mobile application, visit this website, contact us, or use related services. It does not govern Apple, Google, Supabase, RevenueCat, ImageKit, Sentry, or other third parties acting under their own privacy policies.
+
+## 3. Personal data we handle
+
+We do not track you. Relock contains no advertising SDK, never reads Apple’s advertising identifier (IDFA) or Android’s advertising ID, and does not display Apple’s App Tracking Transparency prompt. We do not combine your data with data collected about you in other companies’ apps or websites, and we run no advertising, attribution, or cross-site analytics on this website.
+
+## 4. How we use personal data
+
+We use the data described above to:
+
+- create and authenticate your account and maintain your session;
+
+- provide profiles, onboarding, blocking rules, on-device interventions, activity summaries, reminders, and account synchronization;
+
+- process, validate, restore, and manage subscription access;
+
+- personalize onboarding and understand subscription conversion using the onboarding attributes sent to RevenueCat;
+
+- diagnose crashes, app hangs, failed requests, and performance problems when crash reporting is enabled;
+
+- protect the service, prevent abuse, and comply with legal obligations; and
+
+- respond to support, privacy, and legal requests.
+
+Relock is offered in Canada and the United States. In Canada, and in Quebec in particular, we collect and use personal information with your consent and under the exceptions permitted by the Act respecting the protection of personal information in the private sector and by PIPEDA: information necessary to provide the service you asked for, to bill and support it, to keep it secure, and to meet our legal obligations. Where the law of another jurisdiction applies to you and requires a stated legal basis, we rely on performance of our contract with you, your consent where the product requests it, our legitimate interests in operating and securing Relock where those interests are not overridden by your rights, and compliance with law. We do not use your personal information for automated decisions producing legal or similarly significant effects, and we do not profile you for advertising.
+
+## 5. Service providers and other recipients
+
+Relock’s current implementation sends or makes data available to the following recipients:
+
+We may also disclose data when legally required, to protect rights and safety, or in connection with a corporate transaction, subject to applicable law. Relock contains no advertising SDK and no mechanism for selling personal data. We do not sell your personal information and we do not share it for cross-context behavioural advertising, as those terms are defined by California and other U.S. state privacy laws, and we have not done so in the preceding twelve months. We do not knowingly sell or share the personal information of anyone under 16.
+
+## 6. On-device Screen Time and notification data
+
+Relock uses Apple Family Controls, Managed Settings, and Device Activity capabilities. Apple provides opaque tokens for your app/category selections. The implemented design stores those tokens in the iOS App Group shared by Relock and its extensions rather than in Relock’s backend. Local shield-attempt records can include an application key/name and timestamp; Relock converts them into daily aggregate statistics before backend synchronization.
+
+Reminders are scheduled as local device notifications. Relock does not register for remote push notifications, so no reminder content travels through a push server. Notification permission and individual reminder categories can be changed through the app and system settings.
+
+## 7. Retention
+
+We keep personal information only as long as we need it for the purposes described in this Policy, or for as long as the law requires. The schedule below is the one we apply.
+
+We may keep information longer where a law, a tax or accounting obligation, a security investigation, or a legal claim requires it. When that reason ends, the information is deleted.
+
+## 8. Security
+
+Relock uses authenticated Supabase sessions, row-level database policies scoped by user ID, HTTPS service endpoints, server-side privileged keys for account deletion, and short-lived signed ImageKit upload grants. Diagnostic events are configured to exclude default PII and are scrubbed for common secrets such as authorization values, tokens, email addresses, and phone numbers.
+
+Some authentication tokens, preferences, onboarding progress, query cache data, and app state are stored locally on your device using MMKV, protected by the operating system’s own app sandbox and device encryption. We do not add a separate application-level encryption key on top of it, so this Policy does not claim application-level encryption for that local data. No security measure is absolute, and we cannot guarantee that unauthorized access will never occur.
+
+## 9. Your in-app controls
+
+- Profile: edit your display name, birth date, and profile photo.
+
+- Crash reports: disable or enable crash reporting in Settings. The current default is enabled when Sentry is configured.
+
+- Notifications: change reminder categories in Relock and notification permission in device settings.
+
+- Reset activity: delete server-side blocking rules, daily statistics, and block-event rows while keeping the account and subscription relationship.
+
+- Export: export a JSON file containing your profile, blocking rules, daily statistics, and your most recent 400 block events and 400 daily-statistic rows. For anything the export leaves out — older rows, or data held by a provider on our behalf — write to contact@getrelock.com and we will send it to you.
+
+- Delete account: delete your account and all of its database records from inside Settings, at any time and without contacting us. Your profile photo and your RevenueCat subscription record are removed within 30 days afterwards. Deleting your account does not cancel an App Store or Google Play subscription — Apple and Google reserve cancellation to you — so cancel it in your store account as well if you no longer want to be billed.
+
+## 10. Privacy rights
+
+Depending on where you live, you may have rights to request access, correction, deletion, restriction, portability, withdrawal of consent, or objection, and to complain to a privacy regulator. These rights may be subject to legal limits. To make a request, write to contact@getrelock.com. We may need to verify your identity before we act, and we will not charge you for a request or treat you differently for making one.
+
+If you live in Quebec, you may also ask for your information in a structured, commonly used technological format, ask us to stop disseminating information or to de-index a link where the law allows, and complain to the Commission d’accès à l’information du Québec. If you live elsewhere in Canada, you may complain to the Office of the Privacy Commissioner of Canada. If you live in a U.S. state with a privacy law, you may ask to know, correct, delete, or obtain a copy of your personal information, and appeal a refusal by replying to our decision; California residents may also designate an authorized agent.
+
+How we handle a request. One person handles every request: the owner of YATECH, at contact@getrelock.com. We acknowledge your message, verify that it comes from the account holder, and answer within 30 days in Canada and within 45 days under U.S. state laws, extending only where the law allows and telling you why. The in-app export and deletion controls cover everything in our database; for the data our providers hold on our behalf — a profile photo at ImageKit, a subscriber record at RevenueCat, diagnostic events at Sentry — we issue the deletion in each provider’s console and confirm it to you, within 30 days of verifying your request.
+
+## 11. International transfers
+
+Relock is operated from Quebec, Canada, and every provider we use — Supabase, Sentry, ImageKit, RevenueCat, Cloudflare, Apple, and Google — is established in the United States and runs infrastructure in several countries. Your personal information is therefore stored and may be accessed outside Quebec and outside Canada, primarily in the United States, where laws differ from those of your province, state, or country and where public authorities may in some circumstances obtain access under local law.
+
+Before entrusting personal information to a provider we assess the privacy risk of the transfer, as Quebec law requires, and we rely on written agreements: each provider’s data-processing terms, which bind it to act on our instructions, to apply security measures, to restrict its own sub-processors, and to delete the information at our request — incorporating the European Commission’s standard contractual clauses where that provider’s terms include them. You can ask us which provider holds a given category of information by writing to contact@getrelock.com.
+
+## 12. Children
+
+Relock is intended for people aged 16 and older. It is not directed to children, it is not marketed to them, and we do not knowingly collect personal information from anyone under 16. The birth date in your profile is optional, is used only to personalize the app, and is not an age verification. If you learn that someone under 16 has created an account, write to contact@getrelock.com and we will delete the account and its personal information promptly. Where the law of your jurisdiction sets a higher age for consenting on your own, you may use Relock only with the consent of your parent or guardian.
+
+## 13. Changes to this Policy
+
+We may update this Policy as Relock changes. We will post the revised version at getrelock.com/privacy and update the "Last updated" date above. When a change materially affects how we handle your personal information — a new category of data, a new purpose, a new recipient, or a longer retention period — we will tell you at least 30 days before it takes effect, through a notice inside the app on next launch and, where we have your address and the law requires it, by email. If the change requires your consent, we will ask for it before the new practice begins, and you may refuse without losing access to the features you already have.
+
+## 14. Contact
+
+Privacy questions and requests: YATECH (sole proprietorship) 1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada contact@getrelock.com
+
+Person in charge of the protection of personal information. Under Quebec law this role belongs by default to the person with the highest authority in the enterprise. For YATECH that is its owner, who holds the title of Privacy Officer and can be reached at contact@getrelock.com or at the postal address above. Write to the same address to exercise a right, to raise a concern, or to report a privacy incident; we answer every message ourselves.
+
+---
+
+# Terms of Service | Relock
+URL: https://getrelock.com/terms/
+Language: en
+Updated: 2026-09-07
+
+Legal
+
+# Terms of Service
+
+These Terms govern the Relock mobile application and the getrelock.com website. Relock is offered to people aged 16 and over in Canada and the United States.
+
+## 1. Agreement to these Terms
+
+These Terms of Service ("Terms") are a legal agreement between you and YATECH, a sole proprietorship registered in Quebec, Canada, with its business address at 1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada ("Relock," "we," "us," or "our"), governing your access to the Relock mobile application, website, and related services (the "Service"). By creating an account, purchasing a subscription, or using the Service, you agree to these Terms. If you do not agree, do not use the Service.
+
+## 2. Eligibility
+
+You must be at least 16 years old and legally able to enter this agreement. Relock is built for adults and older teenagers who want to manage their own screen time; it is not directed to children and we do not knowingly allow anyone under 16 to create an account. If the law of your province, state, or country requires a parent’s or guardian’s consent at your age, you may use the Service only with that consent, and that person accepts these Terms with you.
+
+## 3. Your account
+
+Relock supports account access through Sign in with Apple and Google Sign-In. You are responsible for keeping your provider account and device secure, for information submitted through your account, and for promptly notifying us at contact@getrelock.com if you suspect unauthorized access. You must provide accurate information and may not impersonate another person.
+
+## 4. What Relock provides
+
+Relock lets users create app-blocking rules, use supported device controls, receive local reminders, review aggregate activity statistics, and manage related account and subscription features. Features may differ by device, operating-system version, permission status, subscription tier, region, or store.
+
+Relock is offered on iPhone and iPad through the Apple App Store, to people located in Canada and the United States. Its blocking features are built on Apple Screen Time (Family Controls) and are available only on Apple devices that support it. Where an Android version is offered, references in these Terms to Google and Google Play apply to it; until then they do not.
+
+We may improve, add, suspend, or remove Service features, and we may change the countries or platforms where Relock is offered. Where required by law, we will provide notice of material changes.
+
+## 5. Device controls and important limitations
+
+On supported Apple devices, Relock relies on Apple Family Controls, Managed Settings, and Device Activity. The Service therefore depends on device permissions, extension execution, operating-system behavior, and Apple platform availability outside Relock’s control.
+
+Relock is a focus-support tool, not a safety-critical control. Blocking may be delayed, interrupted, bypassed, unavailable, or behave differently after permission changes, restarts, updates, system limits, or third-party changes. Do not rely on Relock to prevent emergencies, unlawful conduct, financial loss, access by children, or any use where failure could cause harm.
+
+Activity counts and estimated minutes saved are informational estimates and may be incomplete or inaccurate. Relock does not provide medical, mental-health, addiction-treatment, or professional advice and does not promise a specific productivity, wellness, or behavior outcome.
+
+## 6. Subscriptions, trials, billing, and cancellation
+
+Paid plans, prices, billing periods, trial or introductory terms, and renewal details are the terms displayed in the applicable app store purchase flow at the time you subscribe. Taxes and currency may vary. Payment is charged by Apple App Store or Google Play, as applicable, and subscription status is managed using RevenueCat.
+
+- Automatic renewal: a subscription renews unless you cancel through the applicable store before the store’s renewal cutoff.
+
+- Cancellation: manage or cancel through your Apple or Google account settings. Deleting the app or your Relock account does not cancel the subscription.
+
+- Trials and promotions: eligibility, duration, conversion, and limits are controlled by the displayed store offer. Relock does not promise a particular trial.
+
+- Refunds: refund requests are handled under the applicable store’s rules and mandatory consumer law.
+
+- Restore purchases: the app provides a restore mechanism; successful restoration depends on the store and RevenueCat records.
+
+## 7. Acceptable use
+
+You may not:
+
+- use the Service unlawfully, fraudulently, or to infringe another person’s rights;
+
+- attempt to access another user’s account or data, probe security, or bypass access controls;
+
+- interfere with the Service, its infrastructure, or other users;
+
+- upload malicious code or content you do not have the right to use;
+
+- reverse engineer, decompile, or circumvent technical restrictions except where applicable law expressly permits it; or
+
+- use automated means to scrape or overload the Service without written permission.
+
+## 8. Ownership and your content
+
+Relock and its licensors own the Service, including its software, interface, designs, text, trademarks, and other materials, except for content you provide and third-party materials. Subject to these Terms, we grant you a limited, personal, non-exclusive, non-transferable, revocable license to use the Service for its intended purpose.
+
+You retain rights in profile photos and other content you submit. You grant us a limited license to host, process, reproduce, and display that content only as needed to operate and support the Service, comply with law, and enforce these Terms.
+
+## 9. Third-party services
+
+The Service relies on third parties including Apple, Google, Supabase, RevenueCat, ImageKit, and Sentry. Their services may be governed by separate terms and privacy policies. We are not responsible for a third party’s independent service, content, availability, or conduct to the extent permitted by law.
+
+## 10. Privacy
+
+Our Privacy Policy explains the personal data handled through the Service and is incorporated into these Terms by reference.
+
+## 11. Suspension, deletion, and termination
+
+You may stop using Relock at any time and may use the in-app account-deletion control. Account deletion is subject to the limitations described in the Privacy Policy and does not cancel a store subscription.
+
+We may suspend or terminate access if you materially breach these Terms, create security or legal risk, fail to pay applicable fees, or if required by law. Where appropriate and legally required, we will give notice and an opportunity to resolve the issue. Provisions intended by their nature to survive will remain in effect, including ownership, disclaimers, liability limits, and dispute terms.
+
+## 12. Disclaimers
+
+To the maximum extent permitted by law, the Service is provided "as is" and "as available." We disclaim implied warranties of merchantability, fitness for a particular purpose, non-infringement, and any warranty that the Service will be uninterrupted, secure, accurate, or error-free. Nothing in these Terms excludes warranties or consumer rights that cannot legally be excluded.
+
+## 13. Limitation of liability
+
+To the maximum extent permitted by law, Relock and its directors, employees, affiliates, and suppliers will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages, or loss of data, profits, goodwill, or opportunity arising from the Service.
+
+Our total liability arising from the Service will not exceed the greater of the amount you paid Relock for the Service during the 12 months before the event giving rise to the claim or CAD $100.
+
+Nothing in these Terms limits liability that cannot be limited by law. In particular, if you are a consumer in Quebec, the Consumer Protection Act and the Civil Code of Québec give you warranties and remedies that no contract can take away, and nothing here excludes our liability for bodily or moral injury, for gross or intentional fault, or for the legal warranty of quality. If you are a consumer elsewhere in Canada or in the United States, some jurisdictions do not allow the exclusion of incidental or consequential damages or of implied warranties, so those exclusions may not apply to you. In every case you keep the rights your local consumer law gives you, and this section applies only to the extent that law allows.
+
+## 14. Indemnity
+
+To the extent permitted by applicable law, you will indemnify and hold Relock harmless from third-party claims, losses, and reasonable costs arising from your unlawful use of the Service, your content, or your material breach of these Terms. This obligation does not apply where prohibited by consumer law.
+
+## 15. Resolving a dispute, governing law, and courts
+
+Let us try to fix it first. Most problems are faster to solve by email than in court. Before starting a legal proceeding, please write to contact@getrelock.com with your account email, what happened, and what outcome you are looking for. We will reply and try in good faith to resolve it with you within 30 days. This step is a courtesy, not a barrier: it does not stop you from going to court, from contacting a consumer-protection authority, or from seeking urgent relief at any time, and it does not suspend any limitation period.
+
+Governing law and courts. These Terms are governed by the laws in force in the Province of Quebec, Canada, and the federal laws of Canada that apply there, without regard to conflict-of-law rules. The courts of the Province of Quebec, Canada have jurisdiction over any dispute arising from these Terms or the Service.
+
+This choice cannot take away a protection that the law of your own province, state, or country gives you as a consumer. If you are a consumer domiciled in Quebec, you keep the right to bring your action before the court of your own domicile. If you are a consumer in the United States or elsewhere in Canada, and the mandatory law of your home jurisdiction gives you the right to sue there, this section does not remove it. We do not require arbitration and these Terms contain no class-action waiver.
+
+## 16. Changes to these Terms
+
+We may update these Terms. We will post the updated version and change the "Last updated" date. If a change materially affects your rights, we will provide any additional notice required by law. Continued use after the effective date means you accept the revised Terms where legally permitted.
+
+## 17. Contact and general terms
+
+Questions about these Terms: YATECH (sole proprietorship) 1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada contact@getrelock.com
+
+If any provision is unenforceable, the remaining provisions stay effective. Our failure to enforce a provision is not a waiver. You may not assign these Terms without our consent; we may assign them as part of a merger, reorganization, asset transfer, or by operation of law. These Terms and the Privacy Policy are the entire agreement about the Service, except for store terms and any additional terms we expressly present for a feature.
+
+---
+
+# Relock | Reprenez possession de votre attention
+URL: https://getrelock.com/fr/
+Language: fr
+Updated: 2026-09-07
+
+Votre attention vous appartient
+
+# N’ouvrez plus vos apps en pilote automatique.
+
+Relock place une pause intentionnelle entre vous et le défilement. Protégez-vous des apps qui vous éloignent, puis revenez à la journée que vous vouliez vraiment vivre.
+
+Conçu autour des contrôles Temps d’écran d’Apple. Bientôt sur l’App Store, pour iPhone et iPad, au Canada et aux États-Unis.
+
+Pensé pour la vraie vie
+
+## Ces moments où cinq minutes deviennent cinquante sans prévenir.
+
+Relock intervient là où le réflexe apparaît, sans transformer votre attention en nouvelle performance.
+
+### Avant que la journée appartienne à tout le monde.
+
+Gardez le début de la matinée pour vos pensées, vos plans et votre propre rythme.
+
+### Quand le calme commence enfin à devenir possible.
+
+Protégez ce fragile élan d’attention qui transforme l’effort en vrai progrès.
+
+### Quand une dernière vérification en appelle une autre.
+
+Terminez la journée plus doucement et laissez une place au sommeil avant le prochain défilement.
+
+Que contient Relock?
+
+## Une limite qui peut vraiment vous ressembler.
+
+Choisissez ce que vous protégez, décidez quand cela compte et laissez Relock tenir la limite avec vous.
+
+### Choisissez les apps qui vous éloignent
+
+Sélectionnez apps et catégories avec Family Controls. Les jetons sensibles restent dans le groupe d’apps iOS utilisé pour appliquer les règles.
+
+### Construisez une règle autour de votre journée
+
+Configurez horaires, durées, limites et modes pour les moments où votre attention compte le plus.
+
+### Faites évoluer la limite avec votre vie
+
+Modifiez, suspendez, reprenez ou réinitialisez vos règles au lieu d’imposer le même plan à chaque journée.
+
+### Voyez vos progrès sans ajouter de pression
+
+Consultez les interventions, le temps estimé récupéré et vos séries comme une information, jamais un jugement.
+
+Pourquoi choisir Relock?
+
+## Moins de contrôle. Plus d’autonomie.
+
+La meilleure limite n’est pas la plus dure. C’est celle qui vous rappelle ce que vous vouliez.
+
+### Une pause qui a un sens
+
+Transformez un réflexe invisible en décision visible avant que l’app prenne les prochaines minutes.
+
+### Construit autour de votre rythme
+
+Choisissez vos apps, horaires et niveau de friction plutôt que de suivre une détox universelle.
+
+### Calme par conception
+
+Une interface ciblée et des retours mesurés restent utiles sans exiger davantage d’attention.
+
+La pause est la fonctionnalité
+
+## Donnez au réflexe un endroit où s’arrêter.
+
+Quand une app protégée est restreinte, Relock crée une interruption claire. Vous retrouvez la raison derrière la règle et pouvez décider de ce qui mérite réellement votre attention.
+
+- Une intervention ciblée plutôt qu’une nouvelle notification bruyante
+
+- Le contexte de la règle pour remettre votre intention au premier plan
+
+- Des modes flexibles pour les limites quotidiennes et les engagements plus forts
+
+L’idée derrière Relock
+
+## Votre vie n’a pas besoin de plus de volonté. Elle a besoin de moins de décisions invisibles.
+
+Le but n’est pas de gagner contre votre téléphone. C’est de remarquer le moment, de lever les yeux et de choisir la vie qui attend de l’autre côté de l’écran.
+
+Questions fréquentes
+
+## Sachez ce que vous choisissez.
+
+### Que peut restreindre Relock?
+
+Sur les appareils Apple pris en charge, vous sélectionnez des apps ou catégories avec Family Controls et les utilisez dans vos règles Relock.
+
+### Relock lit-il ce que je fais dans les autres apps?
+
+Le flux de blocage ne lit pas les messages, photos, pages ou frappes dans les apps restreintes. Apple fournit des jetons opaques conservés localement pour appliquer les règles.
+
+### Quelles informations sont synchronisées?
+
+Votre compte, votre profil, les règles, les réponses d’accueil et des statistiques agrégées peuvent être stockés chez les prestataires Relock. La Politique de confidentialité donne le détail.
+
+### Comment annuler un abonnement?
+
+Gérez ou annulez-le dans la boutique où vous l’avez acheté. Supprimer Relock ou votre compte n’annule pas automatiquement un abonnement en boutique.
+
+### Puis-je exporter ou supprimer mes données?
+
+Oui. Les Réglages offrent un export JSON et une suppression de compte que vous déclenchez vous-même, en tout temps. Les données que nos prestataires détiennent pour nous — photo de profil, dossier d’abonnement — sont retirées dans les 30 jours suivants. Écrivez à contact@getrelock.com pour ce que l’export laisse de côté.
+
+## Placez une bonne décision entre vous et le défilement.
+
+Commencez par l’app qui vole cinq minutes. Construisez la pause qui vous les rend.
+
+---
+
+# Centre d’aide | Relock
+URL: https://getrelock.com/fr/help/
+Language: fr
+Updated: 2026-09-07
+
+Assistance
+
+# Centre d’aide
+
+Rien ici n’est un moyen de contourner les blocages que vous avez posés. Si vous cherchez à tout lever maintenant, allez directement au déblocage d’urgence : il existe, il est volontaire, et il a un prix.
+
+## 1. De quoi Relock a-t-il besoin avant de pouvoir bloquer ?
+
+Relock fonctionne sur iPhone et iPad. Le blocage lui-même est assuré par le framework Family Controls d’Apple, qui n’existe que sur iOS et iPadOS et dont Relock n’a pas d’équivalent ailleurs.
+
+Une seule autorisation fait tout le travail : l’accès au Temps d’écran. Sans elle, Relock affiche vos règles mais n’en applique aucune. Elle vous est demandée pendant l’intégration, et vous pouvez la vérifier à tout moment dans Réglages → Protection → Accès au Temps d’écran. Si autre chose que Accordé s’affiche, touchez la ligne et acceptez la demande iOS.
+
+Apple ne présente la fenêtre d’autorisation qu’un nombre limité de fois. Si toucher la ligne n’ouvre plus rien, accordez l’accès depuis l’app Réglages de l’appareil, rubrique Temps d’écran, puis rouvrez Relock.
+
+## 2. Quels sont les trois types de blocage ?
+
+Une règle associe les apps que vous choisissez à l’un des trois mécanismes. Vous choisissez le mécanisme à la création — c’est ce qui fait de Relock un outil de friction plutôt qu’un interrupteur.
+
+Les règles se trouvent dans Réglages → Protection → Mes blocages et dans l’onglet Blocages. Plusieurs peuvent tourner en même temps : la plus stricte applicable à l’instant l’emporte.
+
+## 3. Que se passe-t-il quand la pause apparaît ?
+
+Quand un délai progressif se déclenche, Relock ne refuse pas sèchement. Il demande « Qu’est-ce que vous cherchez vraiment ? » et décompte. À la fin, vous pouvez toujours choisir Ouvrir quand même — c’est le principe. La pause est là pour transformer un geste automatique en décision, pas pour gagner un bras de fer contre vous.
+
+Le son d’ambiance de cet écran se coupe dans Réglages → Personnalisation → Son du rituel de pause, et les vibrations dans Vibration.
+
+## 4. Qu’est-ce que le mode strict change ?
+
+Une règle en mode strict ne peut pas être arrêtée avant son terme. Pas de pause, pas d’Ouvrir quand même, pas de modification pour l’écourter. Relock vous le dira sans détour : ce blocage ne peut pas être arrêté avant la fin ; c’est exactement ce que vous avez choisi en l’activant.
+
+Ne l’activez que si vous voulez retirer toute marge à votre futur vous. La seule porte qui reste est le déblocage d’urgence, et elle vous coûte la règle elle-même.
+
+## 5. Pourquoi mon blocage ne s’applique-t-il pas ?
+
+La quasi-totalité des signalements se ramène à l’un de ces cas.
+
+Si aucun cas ne correspond, envoyez-nous la version de l’app depuis Réglages → À propos — la ligne Signaler un bug la remplit pour vous.
+
+## 6. Comment tout débloquer en cas d’urgence ?
+
+Réglages → Zone sensible → Déblocage d’urgence lève tout immédiatement : pas de respiration, pas d’attente, pas de mode strict. Il existe pour les vraies urgences — un entretien, un déplacement, un imprévu médical.
+
+Il supprime vos règles, il ne les suspend pas. Vous devrez les reconstruire ensuite. Ce prix est volontaire : c’est lui qui empêche l’issue de secours de devenir l’habitude, et c’est aussi notre garantie que Relock ne prend jamais votre téléphone en otage.
+
+## 7. Qu’empêche la protection anti-désinstallation ?
+
+Quand elle est active et qu’un blocage tourne, iOS refuse la suppression d’apps — y compris celle de Relock. Cela ferme le contournement le plus évident : désinstaller l’arbitre en plein match.
+
+Pour supprimer Relock, terminez ou supprimez d’abord vos blocages actifs, ou utilisez le déblocage d’urgence, puis supprimez l’app normalement.
+
+## 8. Comment le score et la série sont-ils calculés ?
+
+Votre score global est calculé sur votre appareil, à partir de mesures qu’Apple ne transmet jamais à Relock. S’il affiche Calcul en cours ou signale un manque de données, c’est qu’un score exige au moins une journée complète mesurée : créez un blocage, il arrive le lendemain.
+
+La série compte les jours consécutifs aux commandes. C’est un miroir, pas un tableau de chasse : la perdre ne vous coûte rien d’autre que le chiffre.
+
+## 9. Quelles notifications Relock envoie-t-il ?
+
+Relock en envoie de deux sortes : les rappels (série en danger, retour après une absence) et la progression (bilan hebdomadaire et étapes franchies). Chacune se coupe séparément dans Réglages → Notifications.
+
+Nous n’envoyons jamais de notification promotionnelle. À noter : une fois les notifications refusées au niveau d’iOS, seule l’app Réglages de l’iPhone peut les rétablir — Relock ne peut plus les redemander.
+
+## 10. Comment gérer ou résilier Relock Pro ?
+
+Relock Pro est facturé par Apple via votre compte App Store. Réglages → Abonnement → Gérer mon abonnement ouvre l’espace client pour changer de formule ou résilier.
+
+Changement de téléphone, réinstallation ou nouvelle connexion, et Pro a disparu ? Utilisez Restaurer mes achats dans la même rubrique. Si rien n’est trouvé, vérifiez que vous êtes connecté au compte Apple qui a payé.
+
+La résiliation se fait obligatoirement chez Apple. Supprimer l’app, supprimer votre compte Relock ou vous déconnecter n’arrête pas le prélèvement : seuls les réglages de votre compte App Store le peuvent. Faites-le d’abord, sinon vous continuerez à être facturé.
+
+## 11. Comment exporter ou supprimer mes données ?
+
+Réglages → Confidentialité → Exporter mes données produit un fichier JSON contenant votre profil, vos règles et votre historique. Réglages → Compte → Supprimer mon compte efface votre profil, vos règles et tout votre historique, sur nos serveurs comme sur cet iPhone, sans retour possible.
+
+Vos mesures d’usage ne quittent jamais votre iPhone : Apple ne les transmet pas à Relock, et seul un score agrégé est calculé sur l’appareil. Les rapports de plantage portent votre identifiant de compte Relock, pour distinguer le plantage d’une personne de celui d’une autre, mais jamais votre adresse e-mail. Lorsqu’un enregistrement de l’écran accompagne un plantage, chaque texte, chaque image et chaque icône est remplacé par une forme grise sur votre iPhone avant tout envoi. Vous pouvez désactiver complètement les rapports dans Réglages → Confidentialité → Rapports de plantage. La politique de confidentialité fait foi.
+
+Supprimer votre compte ne résilie pas votre abonnement — voir la section 10.
+
+## 12. Comment obtenir de l’aide si je suis toujours bloqué ?
+
+Écrivez à contact@getrelock.com. Depuis l’app, Réglages → Assistance → Signaler un bug pré-remplit votre version, votre build et votre langue, ce qui évite un aller-retour.
+
+Éléments utiles à joindre : ce que vous attendiez, ce qui s’est passé à la place, le type de règle concerné, et si l’accès au Temps d’écran affiche bien Accordé.
+
+---
+
+# Politique de confidentialité | Relock
+URL: https://getrelock.com/fr/privacy/
+Language: fr
+Updated: 2026-09-07
+
+Mentions juridiques
+
+# Politique de confidentialité
+
+La présente Politique vise l’application mobile Relock et le site getrelock.com. Relock est offert aux personnes de 16 ans et plus, au Canada et aux États-Unis.
+
+## 1. Qui sommes-nous?
+
+Relock est exploité par YATECH, entreprise individuelle immatriculée au Québec (Canada), dont l’adresse d’affaires est le 1187C, rue Jogues, Drummondville (Québec) J2B 4X8, Canada (« Relock », « nous », « notre » ou « nos »). Aux fins des lois applicables, YATECH est l’entreprise responsable des renseignements personnels décrits dans la présente Politique, sauf indication contraire. Vous pouvez nous joindre en tout temps à contact@getrelock.com.
+
+## 2. Portée
+
+Cette Politique explique comment Relock traite les renseignements personnels lorsque vous utilisez l’application mobile, visitez ce site, communiquez avec nous ou utilisez les services associés. Elle ne régit pas les traitements indépendants d’Apple, Google, Supabase, RevenueCat, ImageKit, Sentry ou d’autres tiers.
+
+## 3. Renseignements personnels que nous traitons
+
+Nous ne vous suivons pas. Relock ne contient aucun SDK publicitaire, ne lit jamais l’identifiant publicitaire d’Apple (IDFA) ni celui d’Android, et n’affiche pas la demande App Tracking Transparency d’Apple. Nous ne combinons pas vos données avec celles recueillies à votre sujet dans les apps ou les sites d’autres entreprises, et ce site ne fait ni publicité, ni attribution, ni analyse intersites.
+
+## 4. Comment nous utilisons ces renseignements
+
+Nous utilisons les renseignements décrits pour :
+
+- créer et authentifier votre compte et maintenir votre session;
+
+- fournir le profil, l’accueil, les règles, les interventions locales, les résumés, les rappels et la synchronisation;
+
+- traiter, valider, restaurer et gérer l’accès par abonnement;
+
+- personnaliser l’accueil et comprendre la conversion d’abonnement avec les attributs transmis à RevenueCat;
+
+- diagnostiquer plantages, blocages, requêtes échouées et problèmes de performance lorsque les rapports sont activés;
+
+- protéger le service, prévenir les abus et respecter nos obligations légales; et
+
+- répondre aux demandes d’assistance, de confidentialité et juridiques.
+
+Relock est offert au Canada et aux États-Unis. Au Canada, et au Québec en particulier, nous recueillons et utilisons les renseignements personnels avec votre consentement et selon les exceptions permises par la Loi sur la protection des renseignements personnels dans le secteur privé et par la LPRPDE : les renseignements nécessaires pour fournir le service que vous avez demandé, le facturer et le soutenir, en assurer la sécurité et respecter nos obligations légales. Lorsque le droit d’un autre territoire s’applique à vous et exige une base juridique déclarée, nous nous appuyons sur l’exécution de notre contrat avec vous, votre consentement quand il est demandé, nos intérêts légitimes à exploiter et à sécuriser Relock lorsqu’ils ne prévalent pas sur vos droits, et le respect de la loi. Nous n’utilisons pas vos renseignements pour des décisions automatisées produisant des effets juridiques ou comparables, et nous ne vous profilons pas à des fins publicitaires.
+
+## 5. Prestataires et autres destinataires
+
+Nous pouvons aussi communiquer des renseignements lorsque la loi l’exige, pour protéger des droits et la sécurité, ou dans le cadre d’une opération d’entreprise, sous réserve de la loi. Relock ne contient aucun SDK publicitaire ni mécanisme de vente de renseignements. Nous ne vendons pas vos renseignements personnels et nous ne les partageons pas à des fins de publicité comportementale intercontexte, au sens des lois de la Californie et d’autres États américains, et nous ne l’avons pas fait au cours des douze derniers mois. Nous ne vendons ni ne partageons sciemment les renseignements d’une personne de moins de 16 ans.
+
+## 6. Temps d’écran et notifications sur l’appareil
+
+Relock utilise Family Controls, Managed Settings et Device Activity d’Apple. Apple fournit des jetons opaques pour vos sélections. L’implémentation les conserve dans le groupe d’apps iOS partagé par Relock et ses extensions plutôt que dans le serveur Relock. Les événements locaux peuvent inclure une clé ou un nom d’app et une heure; Relock les convertit en statistiques quotidiennes agrégées avant synchronisation.
+
+Les rappels sont planifiés localement sur l’appareil. Relock ne s’inscrit pas aux notifications poussées distantes : aucun contenu de rappel ne transite par un serveur de notification. Vous pouvez modifier l’autorisation et les catégories de rappel dans l’app et les réglages système.
+
+## 7. Conservation
+
+Nous ne conservons les renseignements personnels que le temps nécessaire aux fins décrites dans la présente Politique, ou aussi longtemps que la loi l’exige. Voici le calendrier que nous appliquons.
+
+Nous pouvons conserver des renseignements plus longtemps lorsqu’une loi, une obligation fiscale ou comptable, une enquête de sécurité ou un recours judiciaire l’exige. Dès que ce motif prend fin, les renseignements sont supprimés.
+
+## 8. Sécurité
+
+Relock utilise des sessions Supabase authentifiées, des politiques de base de données par identifiant utilisateur, des services HTTPS, des clés privilégiées côté serveur pour supprimer un compte et des autorisations ImageKit signées de courte durée. Les diagnostics excluent les données personnelles par défaut et épurent notamment autorisations, jetons, adresses courriel et numéros de téléphone.
+
+Certains jetons, préférences, étapes d’accueil, caches de requêtes et états de l’app sont stockés localement sur votre appareil avec MMKV, protégés par le bac à sable applicatif du système et le chiffrement de l’appareil. Nous n’ajoutons pas de clé de chiffrement propre à l’application par-dessus; cette Politique ne prétend donc pas que ces données bénéficient d’un chiffrement au niveau applicatif. Aucune mesure de sécurité n’est absolue et nous ne pouvons pas garantir qu’aucun accès non autorisé ne surviendra jamais.
+
+## 9. Vos contrôles dans l’app
+
+- Profil : modifiez le nom d’affichage, la date de naissance et la photo de profil.
+
+- Rapports de plantage : désactivez-les ou activez-les dans Réglages. Ils sont activés par défaut lorsque Sentry est configuré.
+
+- Notifications : modifiez les catégories dans Relock et l’autorisation dans les réglages de l’appareil.
+
+- Réinitialisation : supprimez les règles, statistiques quotidiennes et événements côté serveur sans supprimer le compte ni le lien d’abonnement.
+
+- Export : exportez un fichier JSON contenant votre profil, vos règles, vos statistiques quotidiennes et vos 400 événements de blocage et 400 lignes quotidiennes les plus récents. Pour ce que l’export laisse de côté — les lignes plus anciennes, ou les données qu’un prestataire détient pour nous — écrivez à contact@getrelock.com et nous vous les transmettrons.
+
+- Suppression : supprimez votre compte et tous ses enregistrements depuis les Réglages, en tout temps et sans nous écrire. Votre photo de profil et votre dossier d’abonnement RevenueCat sont retirés dans les 30 jours suivants. Supprimer votre compte n’annule pas un abonnement App Store ou Google Play — Apple et Google réservent l’annulation à vous seul : annulez-le aussi dans votre compte de boutique si vous ne voulez plus être facturé.
+
+## 10. Vos droits
+
+Selon votre lieu de résidence, vous pouvez demander l’accès, la rectification, la suppression, la limitation, la portabilité, le retrait du consentement ou vous opposer à un traitement, et déposer une plainte auprès d’une autorité. Des limites légales peuvent s’appliquer. Écrivez à contact@getrelock.com. Nous pourrons vérifier votre identité avant d’agir; une demande est gratuite et ne vous vaudra jamais un traitement différent.
+
+Si vous résidez au Québec, vous pouvez aussi demander vos renseignements dans un format technologique structuré et couramment utilisé, demander la cessation de la diffusion ou la désindexation d’un lien lorsque la loi le permet, et porter plainte auprès de la Commission d’accès à l’information du Québec. Ailleurs au Canada, vous pouvez porter plainte auprès du Commissariat à la protection de la vie privée du Canada. Aux États-Unis, dans les États dotés d’une loi sur la vie privée, vous pouvez demander à connaître, corriger, supprimer ou obtenir une copie de vos renseignements, et contester un refus en répondant à notre décision; les résidents de Californie peuvent aussi désigner un agent autorisé.
+
+Comment nous traitons une demande. Une seule personne s’en occupe : le propriétaire de YATECH, à contact@getrelock.com. Nous accusons réception, vérifions que la demande vient bien du titulaire du compte, puis répondons dans les 30 jours au Canada et dans les 45 jours sous les lois des États américains, en ne prolongeant ce délai que là où la loi le permet et en vous disant pourquoi. Les fonctions d’export et de suppression dans l’app couvrent tout ce que contient notre base de données; pour les données qu’un prestataire détient pour nous — une photo chez ImageKit, un dossier d’abonné chez RevenueCat, des événements de diagnostic chez Sentry — nous lançons la suppression dans la console de chaque prestataire et vous la confirmons, dans les 30 jours suivant la vérification de votre demande.
+
+## 11. Transferts internationaux
+
+Relock est exploité depuis le Québec (Canada), et chacun de nos prestataires — Supabase, Sentry, ImageKit, RevenueCat, Cloudflare, Apple et Google — est établi aux États-Unis et exploite des infrastructures dans plusieurs pays. Vos renseignements personnels sont donc conservés à l’extérieur du Québec et du Canada, et peuvent y être consultés, principalement aux États-Unis, où les lois diffèrent de celles de votre province, État ou pays et où des autorités publiques peuvent, dans certaines circonstances, y obtenir accès en vertu du droit local.
+
+Avant de confier des renseignements personnels à un prestataire, nous évaluons le risque du transfert pour la vie privée, comme l’exige la loi québécoise, et nous nous appuyons sur des ententes écrites : les conditions de traitement des données de chaque prestataire, qui l’obligent à agir sur nos instructions, à appliquer des mesures de sécurité, à encadrer ses propres sous-traitants et à supprimer les renseignements à notre demande — en intégrant les clauses contractuelles types de la Commission européenne lorsque ses conditions les prévoient. Vous pouvez nous demander quel prestataire détient une catégorie donnée de renseignements en écrivant à contact@getrelock.com.
+
+## 12. Enfants
+
+Relock s’adresse aux personnes de 16 ans et plus. Il ne vise pas les enfants, ne leur est pas commercialisé, et nous ne recueillons pas sciemment de renseignements personnels auprès d’une personne de moins de 16 ans. La date de naissance du profil est facultative, sert uniquement à personnaliser l’app et ne constitue pas une vérification d’âge. Si vous apprenez qu’une personne de moins de 16 ans a créé un compte, écrivez à contact@getrelock.com : nous supprimerons rapidement le compte et ses renseignements personnels. Lorsque la loi de votre territoire fixe un âge plus élevé pour consentir seul, vous ne pouvez utiliser Relock qu’avec le consentement de votre parent ou tuteur.
+
+## 13. Modifications de la Politique
+
+Nous pouvons mettre cette Politique à jour à mesure que Relock évolue. Nous publierons la version révisée au getrelock.com/fr/privacy et changerons la date de mise à jour ci-dessus. Lorsqu’un changement modifie de façon importante notre traitement de vos renseignements — une nouvelle catégorie de données, une nouvelle finalité, un nouveau destinataire ou une conservation plus longue — nous vous en informerons au moins 30 jours avant son entrée en vigueur, par un avis dans l’app au lancement suivant et, si nous avons votre adresse et que la loi l’exige, par courriel. Si le changement requiert votre consentement, nous vous le demanderons avant que la nouvelle pratique ne débute, et vous pourrez refuser sans perdre l’accès aux fonctions dont vous disposez déjà.
+
+## 14. Nous joindre
+
+Questions et demandes de confidentialité : YATECH (entreprise individuelle) 1187C, rue Jogues, Drummondville (Québec) J2B 4X8, Canada contact@getrelock.com
+
+Personne responsable de la protection des renseignements personnels. Au Québec, cette fonction revient d’office à la personne ayant la plus haute autorité au sein de l’entreprise. Chez YATECH, il s’agit de son propriétaire, qui porte le titre de responsable de la protection des renseignements personnels et que vous pouvez joindre à contact@getrelock.com ou à l’adresse postale ci-dessus. Écrivez à la même adresse pour exercer un droit, soulever une préoccupation ou signaler un incident de confidentialité; nous répondons nous-mêmes à chaque message.
+
+---
+
+# Conditions d’utilisation | Relock
+URL: https://getrelock.com/fr/terms/
+Language: fr
+Updated: 2026-09-07
+
+Mentions juridiques
+
+# Conditions d’utilisation
+
+Les présentes Conditions régissent l’application mobile Relock et le site getrelock.com. Relock est offert aux personnes de 16 ans et plus, au Canada et aux États-Unis.
+
+## 1. Acceptation des Conditions
+
+Les présentes Conditions d’utilisation constituent un accord entre vous et YATECH, entreprise individuelle immatriculée au Québec (Canada), dont l’adresse d’affaires est le 1187C, rue Jogues, Drummondville (Québec) J2B 4X8, Canada (« Relock », « nous », « notre » ou « nos »), concernant l’application mobile, le site et les services associés (le « Service »). En créant un compte, achetant un abonnement ou utilisant le Service, vous acceptez ces Conditions. Sinon, n’utilisez pas le Service.
+
+## 2. Admissibilité
+
+Vous devez avoir au moins 16 ans et être juridiquement capable de conclure cet accord. Relock est conçu pour les adultes et les adolescents plus âgés qui souhaitent gérer leur propre temps d’écran; il ne vise pas les enfants et nous ne permettons pas sciemment à une personne de moins de 16 ans de créer un compte. Si la loi de votre province, État ou pays exige à votre âge le consentement d’un parent ou d’un tuteur, vous ne pouvez utiliser le Service qu’avec ce consentement, et cette personne accepte les présentes Conditions avec vous.
+
+## 3. Votre compte
+
+Relock permet l’accès par Connexion avec Apple et Google. Vous devez protéger votre compte fournisseur et votre appareil, répondre des renseignements transmis par votre compte et nous avertir à contact@getrelock.com en cas d’accès suspect. Vous devez fournir des renseignements exacts et ne pas usurper l’identité d’une autre personne.
+
+## 4. Ce que fournit Relock
+
+Relock permet de créer des règles de blocage, d’utiliser des contrôles compatibles de l’appareil, de recevoir des rappels locaux, de consulter des statistiques agrégées et de gérer le compte et l’abonnement. Les fonctionnalités peuvent varier selon l’appareil, le système, les autorisations, l’offre, la région ou la boutique.
+
+Relock est offert sur iPhone et iPad par l’App Store d’Apple, aux personnes situées au Canada et aux États-Unis. Ses fonctions de blocage reposent sur Temps d’écran d’Apple (Family Controls) et ne sont disponibles que sur les appareils Apple qui les prennent en charge. Si une version Android est offerte, les mentions de Google et de Google Play dans les présentes Conditions s’y appliquent; d’ici là, elles ne s’appliquent pas.
+
+Nous pouvons améliorer, ajouter, suspendre ou retirer des fonctionnalités, et modifier les pays ou les plateformes où Relock est offert. Nous donnerons l’avis exigé par la loi pour les changements importants.
+
+## 5. Contrôles de l’appareil et limites importantes
+
+Sur les appareils Apple pris en charge, Relock dépend de Family Controls, Managed Settings et Device Activity. Son fonctionnement dépend donc d’autorisations, d’extensions, du système et des services Apple hors de notre contrôle.
+
+Relock est un outil de soutien à la concentration, pas un contrôle critique. Le blocage peut être retardé, interrompu, contourné, indisponible ou modifié après un changement d’autorisation, un redémarrage, une mise à jour, une limite système ou une modification d’un tiers. Ne comptez pas sur Relock pour prévenir une urgence, un acte illégal, une perte financière, l’accès par un enfant ou toute situation où une défaillance pourrait causer un préjudice.
+
+Les nombres d’interventions et minutes estimées récupérées sont informatifs et peuvent être incomplets ou inexacts. Relock ne fournit aucun avis médical, psychologique, thérapeutique ou professionnel et ne promet aucun résultat précis.
+
+## 6. Abonnements, essais, facturation et annulation
+
+Les offres payantes, prix, périodes, essais, promotions et renouvellements sont ceux affichés dans le flux d’achat de la boutique au moment de l’abonnement. Les taxes et devises peuvent varier. Le paiement est facturé par l’App Store d’Apple ou Google Play, selon le cas, et le statut est géré avec RevenueCat.
+
+- Renouvellement automatique : l’abonnement se renouvelle sauf annulation dans la boutique avant son délai de renouvellement.
+
+- Annulation : gérez-la dans votre compte Apple ou Google. Supprimer l’app ou le compte Relock n’annule pas l’abonnement.
+
+- Essais et promotions : l’admissibilité, la durée, la conversion et les limites sont celles de l’offre affichée. Relock ne promet aucun essai particulier.
+
+- Remboursements : ils suivent les règles de la boutique et les lois impératives de protection du consommateur.
+
+- Restauration : l’app offre un mécanisme de restauration dont le succès dépend des dossiers de la boutique et de RevenueCat.
+
+## 7. Utilisation acceptable
+
+Vous ne pouvez pas :
+
+- utiliser le Service illégalement, frauduleusement ou en violation des droits d’autrui;
+
+- tenter d’accéder au compte ou aux données d’une autre personne, sonder la sécurité ou contourner les contrôles;
+
+- perturber le Service, son infrastructure ou les autres utilisateurs;
+
+- téléverser un code malveillant ou un contenu que vous n’avez pas le droit d’utiliser;
+
+- faire de l’ingénierie inverse ou contourner les restrictions, sauf autorisation expresse de la loi; ou
+
+- extraire ou surcharger le Service par automatisation sans permission écrite.
+
+## 8. Propriété et votre contenu
+
+Relock et ses concédants détiennent le Service, notamment le logiciel, l’interface, les designs, les textes et les marques, sauf votre contenu et les éléments tiers. Nous vous accordons une licence limitée, personnelle, non exclusive, non transférable et révocable pour utiliser le Service à sa fin prévue.
+
+Vous conservez vos droits sur vos photos de profil et autres contenus. Vous nous accordez une licence limitée pour les héberger, traiter, reproduire et afficher uniquement afin d’exploiter et soutenir le Service, respecter la loi et appliquer ces Conditions.
+
+## 9. Services tiers
+
+Le Service dépend notamment d’Apple, Google, Supabase, RevenueCat, ImageKit et Sentry. Leurs services sont régis par leurs propres conditions et politiques. Dans la mesure permise par la loi, nous ne répondons pas des services, contenus, disponibilités ou actes indépendants d’un tiers.
+
+## 10. Vie privée
+
+Notre Politique de confidentialité explique les renseignements traités par le Service et est intégrée aux présentes Conditions par renvoi.
+
+## 11. Suspension, suppression et résiliation
+
+Vous pouvez cesser d’utiliser Relock et supprimer votre compte dans l’app. La suppression est assujettie aux limites de la Politique de confidentialité et n’annule pas un abonnement en boutique.
+
+Nous pouvons suspendre ou résilier l’accès en cas de violation importante, risque juridique ou de sécurité, défaut de paiement ou obligation légale. Lorsque cela convient et que la loi l’exige, nous donnerons un avis et une possibilité de corriger le problème. Les clauses qui doivent survivre restent en vigueur.
+
+## 12. Exclusions de garantie
+
+Dans la mesure maximale permise, le Service est fourni « tel quel » et « selon disponibilité ». Nous excluons les garanties implicites de qualité marchande, d’adaptation, d’absence de contrefaçon et toute garantie d’un fonctionnement continu, sécurisé, exact ou sans erreur. Rien n’exclut un droit impératif du consommateur.
+
+## 13. Limitation de responsabilité
+
+Dans la mesure maximale permise, Relock, ses dirigeants, employés, sociétés liées et fournisseurs ne répondent pas des dommages indirects, accessoires, spéciaux, consécutifs, exemplaires ou punitifs, ni des pertes de données, profits, réputation ou occasion.
+
+Notre responsabilité totale ne dépassera pas le plus élevé du montant payé à Relock au cours des 12 mois précédant l’événement ou 100 $ CA.
+
+Rien dans les présentes Conditions ne limite une responsabilité que la loi interdit de limiter. En particulier, si vous êtes un consommateur au Québec, la Loi sur la protection du consommateur et le Code civil du Québec vous accordent des garanties et des recours qu’aucun contrat ne peut écarter, et rien ici n’exclut notre responsabilité pour un préjudice corporel ou moral, pour une faute lourde ou intentionnelle, ni la garantie légale de qualité. Si vous êtes un consommateur ailleurs au Canada ou aux États-Unis, certains territoires n’autorisent pas l’exclusion des dommages accessoires ou consécutifs ni des garanties implicites : ces exclusions peuvent alors ne pas s’appliquer à vous. Dans tous les cas, vous conservez les droits que votre droit de la consommation vous accorde, et la présente clause ne s’applique que dans la mesure permise par ce droit.
+
+## 14. Indemnisation
+
+Dans la mesure permise, vous indemniserez Relock pour les réclamations de tiers et coûts raisonnables liés à votre usage illégal, votre contenu ou une violation importante des Conditions. Cette obligation ne s’applique pas là où le droit de la consommation l’interdit.
+
+## 15. Régler un différend, droit applicable et tribunaux
+
+Essayons d’abord de régler la situation. La plupart des problèmes se règlent plus vite par courriel que devant un tribunal. Avant d’entreprendre un recours judiciaire, écrivez-nous à contact@getrelock.com en indiquant le courriel de votre compte, ce qui s’est passé et le résultat que vous recherchez. Nous vous répondrons et tenterons de bonne foi de régler la situation avec vous dans les 30 jours. Cette étape est une courtoisie, pas un obstacle : elle ne vous empêche pas de vous adresser à un tribunal, de saisir un organisme de protection du consommateur ou de demander une mesure urgente en tout temps, et elle ne suspend aucun délai de prescription.
+
+Droit applicable et tribunaux. Les présentes Conditions sont régies par les lois en vigueur dans la province de Québec (Canada) et par les lois fédérales du Canada qui s’y appliquent, sans égard aux règles de conflits de lois. Les tribunaux de la province de Québec (Canada) sont compétents à l’égard de tout différend découlant des présentes Conditions ou du Service.
+
+Ce choix ne peut vous retirer une protection que le droit de votre propre province, État ou pays vous accorde à titre de consommateur. Si vous êtes un consommateur domicilié au Québec, vous conservez le droit de porter votre action devant le tribunal de votre domicile. Si vous êtes un consommateur ailleurs au Canada ou aux États-Unis et que le droit impératif de votre lieu de résidence vous permet d’y intenter un recours, la présente clause ne vous en prive pas. Nous n’imposons aucun arbitrage et les présentes Conditions ne contiennent aucune renonciation aux recours collectifs.
+
+## 16. Modifications des Conditions
+
+Nous pouvons modifier ces Conditions. Nous publierons la nouvelle version et changerons la date de mise à jour. Si un changement touche sensiblement vos droits, nous donnerons tout avis additionnel exigé par la loi. Lorsque permis, l’utilisation après la date d’entrée en vigueur vaut acceptation.
+
+## 17. Contact et dispositions générales
+
+Questions sur ces Conditions : YATECH (entreprise individuelle) 1187C, rue Jogues, Drummondville (Québec) J2B 4X8, Canada contact@getrelock.com
+
+Si une clause est inexécutable, les autres restent valides. Le défaut d’application n’est pas une renonciation. Vous ne pouvez céder ces Conditions sans notre accord; nous pouvons les céder lors d’une fusion, réorganisation, cession d’actifs ou par effet de la loi. Ces Conditions et la Politique de confidentialité forment l’accord complet sur le Service, sous réserve des conditions des boutiques et de toute condition additionnelle expressément présentée.
+
+---
+
+# Guides on blocking apps on iPhone | Relock
+URL: https://getrelock.com/blog/
+Language: en
+Updated: 2026-09-07
+
+Blog
+
+# Blocking apps, without the folklore.
+
+Every guide here comes from something we had to understand to ship Relock: how Apple Family Controls actually behaves, where Screen Time gives way, what a block can and cannot do on iOS. No listicles, no tool round-ups, and no claim we have not checked against Apple's own documentation.
+
+## How to block apps on iPhone, and where each method gives way
+
+Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop.
+
+---
+
+# Guides pour bloquer des applications sur iPhone | Relock
+URL: https://getrelock.com/fr/blog/
+Language: fr
+Updated: 2026-09-07
+
+Blog
+
+# Bloquer des applications, sans le folklore.
+
+Chaque guide vient de quelque chose qu’il a fallu comprendre pour livrer Relock : comment se comporte réellement Family Controls d’Apple, où le Temps d’écran cède, ce qu’un blocage peut et ne peut pas faire sur iOS. Pas de palmarès d’outils, et aucune affirmation que nous n’ayons vérifiée dans la documentation d’Apple.
+
+## Bloquer une application sur iPhone, et l’endroit où chaque méthode cède
+
+Trois façons de bloquer une application sur iPhone, ce que chacune impose vraiment, et le réglage du Temps d’écran qui met fin à la boucle « une minute de plus ».
+
+---
+
+# How to block apps on iPhone: 3 methods | Relock
+URL: https://getrelock.com/blog/how-to-block-apps-on-iphone/
+Language: en
+Updated: 2026-09-07
+
+# How to block apps on iPhone, and where each method gives way
+
+Blocking an app on iPhone takes about ninety seconds. Making the block survive your own next impulse is the part nobody explains. Here are the three mechanisms iOS actually offers, the setting that decides whether a limit holds, and how to pick between them.
+
+You can block an app on iPhone in three ways: an App Limit in Screen Time, which cuts an app off after a daily budget; Downtime, which blocks everything except the apps you allow during set hours; or a third-party app built on Apple Family Controls, which applies its own rule to the apps you pick.
+
+All three are enforced by iOS itself. The difference is not power, it is how easily you can wave the block away when it triggers.
+
+## Which method should you use to block an app?
+
+Start from what you are trying to stop, not from the feature list. A daily budget, a protected time window and a reflex you cannot resist are three different problems.
+
+## How do you set an app limit in Screen Time?
+
+An App Limit cuts an app off after a set amount of use per day. It is free, built in, and takes under a minute to configure.
+
+- Open Settings, then Screen Time.
+
+- Tap App Limits, then Add Limit.
+
+- Pick a category, such as Social, or tap the category name to select individual apps.
+
+- Tap Next, set the daily amount, and use Customize Days if the budget should change with the day.
+
+- Tap Add.
+
+The limit resets at midnight. Selecting a whole category is usually the better move: blocking one social app while its three cousins stay open moves the reflex, it does not stop it.
+
+## How do you block apps at set hours with Downtime?
+
+Downtime protects periods rather than budgets. Everything is blocked during the window except calls and whatever you put on the Always Allowed list.
+
+- Open Settings, then Screen Time, then Downtime.
+
+- Turn it on and choose Every Day or Customize Days.
+
+- Set the start and end times.
+
+- Check Always Allowed so the apps you genuinely need stay reachable.
+
+Use it for the two hours that actually decide your day, usually the first ones and the last ones. A Downtime window that covers your whole waking life gets switched off within a week.
+
+## Why do Screen Time limits stop working?
+
+Because by default they are a suggestion. When a limit triggers, iOS shows a screen with an option to keep going. Take it, force-quit the app, reopen it, and the grace period starts over. That loop is the single most common reason people conclude that Screen Time does not work.
+
+The fix is two settings, in this order:
+
+- Set a Screen Time passcode: Settings → Screen Time → Lock Screen Time Settings. Without it, the extension is one tap away for anyone holding the phone, including you.
+
+- Turn on Block at End of Limit. It removes the extension button, so the app locks until the passcode is entered. The toggle only appears once a passcode exists, which is why most people never see it.
+
+A second, quieter cause: Screen Time authorization belongs to the device, not to your account. Restore a backup or move to a new iPhone and enforcement stops until you grant it again. If a rule you set is not applying, our help centre walks through the usual causes one by one.
+
+## What can a third-party blocking app do that Screen Time cannot?
+
+Since iOS 15, Apple lets third-party apps use the same enforcement engine through the Family Controls framework. The app never learns which apps you selected: Apple hands it opaque tokens, and the actual blocking happens inside iOS.
+
+What that buys you is not more power. It is a different shape of resistance:
+
+- A pause with a countdown before a restricted app opens, instead of a wall or nothing.
+
+- A delay that grows the more you insist, so the reflex meets friction rather than a refusal.
+
+- A strict window that cannot be shortened once started, decided while you were calm.
+
+- Protection against deleting the blocking app itself while a rule is running.
+
+What it does not buy: independence from the permission. Revoke Screen Time access and every third-party blocker on iOS stops enforcing at the same instant. Any app claiming otherwise is describing something iOS does not allow.
+
+## Frequently asked questions
+
+### Can you block an app on iPhone permanently?
+
+No. Every method can be undone by whoever holds the Screen Time passcode, and that is by design: iOS will not let an app lock you out of your own phone. What changes between methods is how much stands between the impulse and the app.
+
+### Do Focus modes block apps?
+
+No. A Focus mode silences notifications and can hide home screen pages, which reduces the number of invitations. It does not stop you from opening an app you decide to open.
+
+### Can I block Safari or the App Store?
+
+Yes. Screen Time's Content and Privacy Restrictions include an Allowed Apps list where built-in apps such as Safari can be turned off entirely, which is stricter than a time limit.
+
+### Does blocking an app delete its data?
+
+No. A block prevents the app from opening. Its account, messages and downloads are untouched, and everything is exactly as you left it when the rule ends.
+
+### Can a third-party blocker see what I do in the apps it blocks?
+
+Not through Family Controls. Apple gives the app opaque tokens rather than app identities, and the restriction is applied by iOS. For Relock specifically, what is stored and where is listed in our privacy policy.
+
+## What to do next
+
+Three things worth keeping: set a Screen Time passcode before anything else, because every other setting depends on it. Turn on Block at End of Limit, or your limits stay negotiable. And if you have already tried both and still tap through, the problem is friction, not scheduling.
+
+That last case is the one Relock was built for: an intentional pause between you and the app, rules you shape yourself, and blocking enforced by Apple Family Controls. It is not on the App Store yet.
+
+## Sources
+
+- Apple, Set schedules with Screen Time on iPhone, for the App Limits and Downtime steps.
+
+- Apple Developer, Family Controls, for what third-party apps receive and what they do not.
+
+- Tech Lockdown, How to fix the Ignore Limit Screen Time bypass, for the passcode and Block at End of Limit behaviour.
+
+---
+
+# Bloquer une application sur iPhone : 3 méthodes | Relock
+URL: https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/
+Language: fr
+Updated: 2026-09-07
+
+# Bloquer une application sur iPhone, et l’endroit où chaque méthode cède
+
+Bloquer une application sur iPhone prend une minute et demie. Faire tenir ce blocage face à votre propre impulsion suivante, personne ne l’explique. Voici les trois mécanismes qu’iOS offre réellement, le réglage qui décide si une limite tient, et comment choisir entre eux.
+
+Trois façons de bloquer une application sur iPhone : une limite d’app dans le Temps d’écran, qui coupe l’app une fois le budget quotidien épuisé ; le temps d’arrêt, qui bloque tout sauf les apps autorisées pendant des heures choisies ; ou une application tierce bâtie sur Family Controls d’Apple, qui applique sa propre règle aux apps que vous désignez.
+
+Les trois sont appliquées par iOS lui-même. La différence n’est pas la puissance, c’est la facilité avec laquelle vous pouvez écarter le blocage au moment où il se déclenche.
+
+## Quelle méthode choisir pour bloquer une application ?
+
+Partez de ce que vous cherchez à arrêter, pas de la liste des fonctionnalités. Un budget quotidien, une plage horaire protégée et un réflexe auquel vous ne résistez pas sont trois problèmes différents.
+
+## Comment définir une limite d’app dans le Temps d’écran ?
+
+Une limite d’app coupe l’application au bout d’une durée d’utilisation par jour. C’est gratuit, intégré, et cela se configure en moins d’une minute.
+
+- Ouvrez Réglages, puis Temps d’écran.
+
+- Touchez Limites d’app, puis Ajouter une limite.
+
+- Choisissez une catégorie, par exemple Réseaux sociaux, ou touchez son nom pour sélectionner des apps précises.
+
+- Touchez Suivant, réglez la durée quotidienne, et utilisez Personnaliser les jours si le budget doit varier.
+
+- Touchez Ajouter.
+
+La limite se réinitialise à minuit. Sélectionner une catégorie entière vaut presque toujours mieux : bloquer un réseau social pendant que ses trois cousins restent ouverts déplace le réflexe, il ne l’arrête pas.
+
+## Comment bloquer des applications à heures fixes avec le temps d’arrêt ?
+
+Le temps d’arrêt protège des périodes plutôt que des budgets. Tout est bloqué pendant la fenêtre, sauf les appels et ce que vous avez placé dans « Toujours autorisées ».
+
+- Ouvrez Réglages, puis Temps d’écran, puis Temps d’arrêt.
+
+- Activez-le et choisissez Tous les jours ou Personnaliser les jours.
+
+- Définissez l’heure de début et l’heure de fin.
+
+- Vérifiez Toujours autorisées pour garder joignables les apps dont vous avez vraiment besoin.
+
+Servez-vous-en pour les deux heures qui décident réellement de votre journée, en général les premières et les dernières. Une fenêtre de temps d’arrêt qui couvre toute la journée est désactivée en une semaine.
+
+## Pourquoi les limites du Temps d’écran cessent-elles de fonctionner ?
+
+Parce que par défaut, ce sont des suggestions. Quand une limite se déclenche, iOS affiche un écran qui propose de continuer. Acceptez, forcez la fermeture de l’app, rouvrez-la, et le délai de grâce recommence. Cette boucle est la première raison pour laquelle on conclut que le Temps d’écran ne fonctionne pas.
+
+Le correctif tient en deux réglages, dans cet ordre :
+
+- Définissez un code Temps d’écran : Réglages → Temps d’écran → Verrouiller les réglages Temps d’écran. Sans lui, la prolongation est à une touche de distance pour quiconque tient le téléphone, vous compris.
+
+- Activez Bloquer à la fin de la limite. Le bouton de prolongation disparaît et l’app reste verrouillée tant que le code n’est pas saisi. L’option n’apparaît qu’une fois le code défini, ce qui explique que la plupart des gens ne la voient jamais.
+
+Deuxième cause, plus discrète : l’autorisation Temps d’écran appartient à l’appareil, pas à votre compte. Restaurez une sauvegarde ou changez d’iPhone, et l’application des règles s’arrête jusqu’à ce que vous l’accordiez de nouveau. Si une règle que vous avez créée ne s’applique pas, notre centre d’aide passe les causes habituelles une par une.
+
+## Qu’est-ce qu’une app tierce fait que le Temps d’écran ne fait pas ?
+
+Depuis iOS 15, Apple laisse les applications tierces utiliser le même moteur d’application des règles, via le framework Family Controls. L’app n’apprend jamais quelles applications vous avez sélectionnées : Apple lui remet des jetons opaques, et le blocage a lieu à l’intérieur d’iOS.
+
+Ce que cela apporte n’est pas plus de puissance, mais une autre forme de résistance :
+
+- Une pause avec décompte avant l’ouverture d’une app restreinte, au lieu d’un mur ou de rien.
+
+- Un délai qui s’allonge à mesure que vous insistez : le réflexe rencontre de la friction, pas un refus.
+
+- Une fenêtre stricte qu’on ne peut pas écourter une fois lancée, décidée pendant que vous étiez calme.
+
+- Une protection contre la suppression de l’app de blocage elle-même pendant qu’une règle tourne.
+
+Ce que cela n’apporte pas : l’indépendance vis-à-vis de l’autorisation. Révoquez l’accès au Temps d’écran et toutes les apps de blocage sur iOS s’arrêtent au même instant. Une app qui prétend le contraire décrit quelque chose qu’iOS n’autorise pas.
+
+## Questions fréquentes
+
+### Peut-on bloquer une application définitivement sur iPhone ?
+
+Non. Toute méthode peut être défaite par la personne qui détient le code Temps d’écran, et c’est volontaire : iOS n’autorise pas une app à vous enfermer hors de votre propre téléphone. Ce qui change d’une méthode à l’autre, c’est ce qui se dresse entre l’impulsion et l’app.
+
+### Les modes de concentration bloquent-ils les applications ?
+
+Non. Un mode de concentration coupe les notifications et peut masquer des pages de l’écran d’accueil, ce qui réduit le nombre d’invitations. Il ne vous empêche pas d’ouvrir une app que vous décidez d’ouvrir.
+
+### Puis-je bloquer Safari ou l’App Store ?
+
+Oui. Les restrictions de contenu et de confidentialité du Temps d’écran comportent une liste d’apps autorisées où des applications intégrées comme Safari peuvent être désactivées entièrement, ce qui est plus strict qu’une limite de durée.
+
+### Bloquer une application supprime-t-il ses données ?
+
+Non. Un blocage empêche l’app de s’ouvrir. Son compte, ses messages et ses téléchargements ne sont pas touchés, et tout est tel que vous l’aviez laissé quand la règle prend fin.
+
+### Une app de blocage tierce voit-elle ce que je fais dans les apps bloquées ?
+
+Pas par Family Controls. Apple lui transmet des jetons opaques plutôt que l’identité des apps, et c’est iOS qui applique la restriction. Pour Relock précisément, ce qui est stocké et où figure dans notre politique de confidentialité.
+
+## Que faire ensuite
+
+Trois choses à retenir : définissez un code Temps d’écran avant tout le reste, puisque tous les autres réglages en dépendent. Activez « Bloquer à la fin de la limite », sans quoi vos limites restent négociables. Et si vous avez déjà fait les deux et que vous passez outre quand même, le problème est la friction, pas l’horaire.
+
+C’est ce dernier cas qui a donné Relock : une pause intentionnelle entre vous et l’app, des règles que vous façonnez vous-même, et un blocage appliqué par Family Controls d’Apple. L’app n’est pas encore sur l’App Store.
+
+## Sources
+
+- Apple, Définir des horaires avec Temps d’écran sur l’iPhone, pour les étapes des limites d’app et du temps d’arrêt.
+
+- Apple Developer, Family Controls, pour ce que reçoivent les apps tierces et ce qu’elles ne reçoivent pas.
+
+- Tech Lockdown, How to fix the Ignore Limit Screen Time bypass, pour le comportement du code et de « Bloquer à la fin de la limite ».

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Généré par scripts/build-legal-seo.cjs, ne pas éditer à la main. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://getrelock.com/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/help/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/help/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/help/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/help/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/privacy/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/privacy/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/privacy/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/privacy/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/terms/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/terms/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/terms/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/terms/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/help/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/help/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/help/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/help/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/privacy/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/privacy/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/privacy/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/privacy/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/terms/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/terms/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/terms/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/terms/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/blog/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/blog/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/blog/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/blog/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/blog/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/blog/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/blog/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/blog/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/blog/how-to-block-apps-on-iphone/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+  </url>
+</urlset>

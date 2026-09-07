@@ -1,0 +1,9 @@
+# Où signaler une faille sur getrelock.com ou dans l'app Relock.
+# Format : RFC 9116. `Expires` est obligatoire et doit rester dans le futur —
+# `scripts/build-legal-seo.cjs --check` échoue si la date est dépassée.
+
+Contact: mailto:contact@getrelock.com
+Expires: 2027-09-07T00:00:00.000Z
+Preferred-Languages: en, fr
+Canonical: https://getrelock.com/.well-known/security.txt
+Policy: https://getrelock.com/terms/

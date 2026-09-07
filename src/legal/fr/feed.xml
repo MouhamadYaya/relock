@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Généré par scripts/build-legal-seo.cjs, ne pas éditer à la main. -->
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Le blog Relock</title>
+    <link>https://getrelock.com/fr/blog/</link>
+    <description>Des guides sur le blocage d’applications, le Temps d’écran d’Apple et l’attention, écrits à partir de ce qu’il a fallu construire.</description>
+    <language>fr-ca</language>
+    <atom:link href="https://getrelock.com/fr/feed.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 07 Sep 2026 12:00:00 GMT</lastBuildDate>
+    <item>
+      <title>Bloquer une application sur iPhone, et l’endroit où chaque méthode cède</title>
+      <link>https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/</link>
+      <guid isPermaLink="true">https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/</guid>
+      <pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Trois façons de bloquer une application sur iPhone, ce que chacune impose vraiment, et le réglage du Temps d’écran qui met fin à la boucle « une minute de plus ».</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,42 @@
+# Relock
+
+> Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.
+
+Relock is published by YATECH, a sole proprietorship registered in Quebec, Canada.
+The app is built on Apple Family Controls, so it runs on iPhone and iPad only; there is no
+Android version and no browser extension. It is in pre-launch: the site collects early access
+requests by email and there is no App Store listing yet.
+
+What Relock does not do: it does not read messages, photos, page contents or keystrokes
+inside the apps it restricts. Apple hands the app opaque selection tokens that stay on the
+device for enforcement.
+
+## English
+- [Relock](https://getrelock.com/) : Relock helps you interrupt automatic app opening, create intentional boundaries, and reclaim time for what matters.
+- [Help centre](https://getrelock.com/help/) : Help centre for Relock: set up Screen Time access, build blocking rules, fix a block that is not applying, manage your subscription and your data.
+- [Blog](https://getrelock.com/blog/) : Guides on blocking apps on iPhone and iPad: how Apple Screen Time works, where its limits give way, and what actually holds. From the team building Relock.
+- [Privacy Policy](https://getrelock.com/privacy/) : Privacy Policy for the Relock mobile application and website.
+- [Terms of Service](https://getrelock.com/terms/) : Terms of Service for the Relock mobile application and website.
+
+### Guides
+- [How to block apps on iPhone, and where each method gives way](https://getrelock.com/blog/how-to-block-apps-on-iphone/) (2026-09-07) : Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop.
+
+## Français
+
+> Relock est une application iPhone et iPad qui place une pause intentionnelle entre vous et les applications que vous ouvrez par réflexe. Elle s’appuie sur Family Controls et le Temps d’écran d’Apple pour bloquer, retarder ou limiter les applications que vous choisissez, selon des règles que vous définissez vous-même.
+
+- [Relock](https://getrelock.com/fr/) : Relock vous aide à interrompre l’ouverture automatique des applications, à créer des limites intentionnelles et à reprendre votre temps.
+- [Centre d’aide](https://getrelock.com/fr/help/) : Centre d’aide Relock : autorisation Temps d’écran, création de règles de blocage, blocage qui ne s’applique pas, abonnement et données personnelles.
+- [Blog](https://getrelock.com/fr/blog/) : Des guides sur le blocage d’applications sur iPhone et iPad : comment fonctionne le Temps d’écran d’Apple, où ses limites cèdent, et ce qui tient vraiment.
+- [Politique de confidentialité](https://getrelock.com/fr/privacy/) : Politique de confidentialité de l’application mobile et du site Relock.
+- [Conditions d’utilisation](https://getrelock.com/fr/terms/) : Conditions d’utilisation de l’application mobile et du site Relock.
+
+### Guides
+- [Bloquer une application sur iPhone, et l’endroit où chaque méthode cède](https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/) (2026-09-07) : Trois façons de bloquer une application sur iPhone, ce que chacune impose vraiment, et le réglage du Temps d’écran qui met fin à la boucle « une minute de plus ».
+
+## Contact
+- contact@getrelock.com
+- YATECH, 1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada
+
+## Full text
+- [llms-full.txt](https://getrelock.com/llms-full.txt) : every page above, concatenated as plain text

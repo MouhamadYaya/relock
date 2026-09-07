@@ -1,0 +1,75 @@
+# robots.txt de getrelock.com
+#
+# POURQUOI CE FICHIER EXISTE
+# Jusqu'ici le dépôt n'en fournissait aucun, et Cloudflare en servait un à sa
+# place : celui de la fonction « managed robots.txt », qui interdisait GPTBot,
+# ClaudeBot, Google-Extended, CCBot, Applebot-Extended et meta-externalagent.
+# Pour une app inconnue, sans backlinks, en pré-lancement, c'était fermer le seul
+# canal de découverte encore accessible : les réponses générées.
+#
+# ⚠️ Ce fichier ne suffit pas seul. Tant que la gestion automatique du robots.txt
+# reste activée dans le tableau de bord Cloudflare (AI Crawl Control), Cloudflare
+# réinjecte ses directives par-dessus. Il faut la désactiver sur la zone
+# getrelock.com, puis vérifier que https://getrelock.com/robots.txt ne contient
+# plus de bloc « Cloudflare Managed content ».
+#
+# Choix assumé : le site est un site de documentation et de présentation produit.
+# Il n'y a rien à protéger d'un moteur, et tout à gagner à être cité correctement
+# plutôt que résumé de travers. On autorise donc la lecture, y compris pour
+# l'entraînement : la formulation exacte de la politique de confidentialité vaut
+# mieux qu'une paraphrase inventée.
+
+User-agent: *
+Allow: /
+
+# Moteurs de recherche générative et assistants. Listés explicitement pour que
+# l'autorisation soit un choix documenté, et pas un silence interprété.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://getrelock.com/sitemap.xml

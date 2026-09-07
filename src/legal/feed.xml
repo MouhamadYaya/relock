@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Généré par scripts/build-legal-seo.cjs, ne pas éditer à la main. -->
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>The Relock blog</title>
+    <link>https://getrelock.com/blog/</link>
+    <description>Guides on blocking apps, Apple Screen Time and attention, written from what we actually had to build.</description>
+    <language>en-ca</language>
+    <atom:link href="https://getrelock.com/feed.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 07 Sep 2026 12:00:00 GMT</lastBuildDate>
+    <item>
+      <title>How to block apps on iPhone, and where each method gives way</title>
+      <link>https://getrelock.com/blog/how-to-block-apps-on-iphone/</link>
+      <guid isPermaLink="true">https://getrelock.com/blog/how-to-block-apps-on-iphone/</guid>
+      <pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop.</description>
+    </item>
+  </channel>
+</rss>

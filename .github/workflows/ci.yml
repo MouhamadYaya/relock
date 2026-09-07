@@ -55,6 +55,13 @@ jobs:
       - name: Check import paths
         run: npm run check:imports
 
+      # Le site public getrelock.com est du HTML statique, mais ses métadonnées
+      # (canonical, hreflang, JSON-LD, sitemap, llms.txt) et ses images sont
+      # générées. Un commit qui touche une page sans régénérer laisserait un
+      # sitemap ou un JSON-LD qui décrit une version disparue.
+      - name: Check legal site SEO artefacts
+        run: npm run legal:check
+
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest

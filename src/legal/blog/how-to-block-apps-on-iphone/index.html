@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05060B" />
+    <meta name="description" content="Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop." />
+    <title>How to block apps on iPhone: 3 methods | Relock</title>
+    <!-- Version française de cet article. Lu par scripts/build-legal-seo.cjs
+         pour générer le hreflang réciproque : sans lui, le build échoue. -->
+    <meta name="rl-alt" content="/fr/blog/bloquer-une-application-sur-iphone/" />
+    <link rel="icon" href="../../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../../pages.css" />
+    <link rel="stylesheet" href="../../legal.css" />
+    <link rel="stylesheet" href="../../blog.css" />
+    <!-- seo:start — généré par scripts/build-legal-seo.cjs, ne pas éditer à la main -->
+    <link rel="canonical" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+    <link rel="alternate" hreflang="en" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+    <link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/blog/bloquer-une-application-sur-iphone/" />
+    <link rel="alternate" hreflang="x-default" href="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+    <link rel="apple-touch-icon" href="https://getrelock.com/apple-touch-icon.png" />
+    <link rel="manifest" href="https://getrelock.com/manifest.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title="The Relock blog" href="https://getrelock.com/feed.xml" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="author" content="YATECH" />
+    <meta property="og:type" content="article" />
+    <meta property="article:published_time" content="2026-09-07" />
+    <meta property="article:modified_time" content="2026-09-07" />
+    <meta property="article:author" content="YATECH" />
+    <meta property="og:site_name" content="Relock" />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:locale:alternate" content="fr_CA" />
+    <meta property="og:url" content="https://getrelock.com/blog/how-to-block-apps-on-iphone/" />
+    <meta property="og:title" content="How to block apps on iPhone: 3 methods | Relock" />
+    <meta property="og:description" content="Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop." />
+    <meta property="og:image" content="https://getrelock.com/og-cover.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Relock, the iPhone activity screen next to the line “Stop opening apps on autopilot”" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How to block apps on iPhone: 3 methods | Relock" />
+    <meta name="twitter:description" content="Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop." />
+    <meta name="twitter:image" content="https://getrelock.com/og-cover.png" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://getrelock.com/#organization",
+          "name": "YATECH",
+          "legalName": "YATECH",
+          "url": "https://getrelock.com/",
+          "email": "contact@getrelock.com",
+          "logo": {
+            "@type": "ImageObject",
+            "@id": "https://getrelock.com/#logo",
+            "url": "https://getrelock.com/icon-512.png",
+            "width": 512,
+            "height": 512,
+            "caption": "Relock"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "1187C rue Jogues",
+            "addressLocality": "Drummondville",
+            "addressRegion": "QC",
+            "postalCode": "J2B 4X8",
+            "addressCountry": "CA"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "contact@getrelock.com",
+            "availableLanguage": [
+              "en",
+              "fr"
+            ]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://getrelock.com/#website",
+          "url": "https://getrelock.com/",
+          "name": "Relock",
+          "description": "Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.",
+          "publisher": {
+            "@id": "https://getrelock.com/#organization"
+          },
+          "inLanguage": [
+            "en-CA",
+            "fr-CA"
+          ]
+        },
+        {
+          "@type": "MobileApplication",
+          "@id": "https://getrelock.com/#app",
+          "name": "Relock",
+          "applicationCategory": "LifestyleApplication",
+          "applicationSubCategory": "Digital wellbeing",
+          "operatingSystem": "iOS, iPadOS",
+          "description": "Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.",
+          "url": "https://getrelock.com/",
+          "image": "https://getrelock.com/og-cover.png",
+          "inLanguage": [
+            "en-CA",
+            "fr-CA"
+          ],
+          "publisher": {
+            "@id": "https://getrelock.com/#organization"
+          },
+          "featureList": [
+            "App and category selection through Apple Family Controls",
+            "Blocking rules by schedule, duration or limit",
+            "An intentional pause before a restricted app opens",
+            "Strict mode and emergency unlock",
+            "Aggregate stats on interventions and time reclaimed"
+          ]
+        },
+        {
+          "@type": "BlogPosting",
+          "@id": "https://getrelock.com/blog/how-to-block-apps-on-iphone/#article",
+          "mainEntityOfPage": "https://getrelock.com/blog/how-to-block-apps-on-iphone/",
+          "url": "https://getrelock.com/blog/how-to-block-apps-on-iphone/",
+          "headline": "How to block apps on iPhone, and where each method gives way",
+          "name": "How to block apps on iPhone: 3 methods | Relock",
+          "description": "Three ways to block an app on iPhone, what each one really enforces, and the one Screen Time setting that stops the endless one more minute loop.",
+          "inLanguage": "en-CA",
+          "datePublished": "2026-09-07",
+          "dateModified": "2026-09-07",
+          "author": {
+            "@id": "https://getrelock.com/#organization"
+          },
+          "publisher": {
+            "@id": "https://getrelock.com/#organization"
+          },
+          "image": "https://getrelock.com/og-cover.png",
+          "isPartOf": {
+            "@id": "https://getrelock.com/blog/#blog"
+          },
+          "about": {
+            "@id": "https://getrelock.com/#app"
+          },
+          "breadcrumb": {
+            "@id": "https://getrelock.com/blog/how-to-block-apps-on-iphone/#breadcrumb"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://getrelock.com/blog/how-to-block-apps-on-iphone/#faq",
+          "url": "https://getrelock.com/blog/how-to-block-apps-on-iphone/",
+          "inLanguage": "en-CA",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Can you block an app on iPhone permanently?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Every method can be undone by whoever holds the Screen Time passcode, and that is by design: iOS will not let an app lock you out of your own phone. What changes between methods is how much stands between the impulse and the app."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Do Focus modes block apps?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. A Focus mode silences notifications and can hide home screen pages, which reduces the number of invitations. It does not stop you from opening an app you decide to open."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I block Safari or the App Store?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Screen Time's Content and Privacy Restrictions include an Allowed Apps list where built-in apps such as Safari can be turned off entirely, which is stricter than a time limit."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does blocking an app delete its data?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. A block prevents the app from opening. Its account, messages and downloads are untouched, and everything is exactly as you left it when the rule ends."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can a third-party blocker see what I do in the apps it blocks?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Not through Family Controls. Apple gives the app opaque tokens rather than app identities, and the restriction is applied by iOS. For Relock specifically, what is stored and where is listed in our privacy policy."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://getrelock.com/blog/how-to-block-apps-on-iphone/#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://getrelock.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Blog",
+              "item": "https://getrelock.com/blog/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "How to block apps on iPhone, and where each method gives way",
+              "item": "https://getrelock.com/blog/how-to-block-apps-on-iphone/"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+    <!-- seo:end -->
+  </head>
+  <body class="rl-page legal-page">
+    <a class="rl-skip" href="#main">Skip to content</a>
+    <header class="rl-header">
+      <div class="rl-shell rl-header__inner">
+        <details class="rl-menu">
+          <summary class="rl-burger" aria-label="Menu">
+            <span class="rl-burger__bars" aria-hidden="true"></span>
+          </summary>
+          <div class="rl-menu__backdrop"></div>
+          <nav class="rl-menu__panel" aria-label="Mobile navigation">
+            <a href="../../">Home</a>
+            <a href="../../help/">Help centre</a>
+            <a href="../">Blog</a>
+            <a href="../../privacy/">Privacy</a>
+            <a href="../../terms/">Terms</a>
+            <hr class="rl-menu__sep" />
+            <p class="rl-menu__label">Language</p>
+            <a href="./" lang="en" hreflang="en" aria-current="page">English</a>
+            <a href="../../fr/blog/bloquer-une-application-sur-iphone/" lang="fr" hreflang="fr">Français</a>
+          </nav>
+        </details>
+        <a class="rl-brand" href="../../" aria-label="Relock home"><span>Relock</span></a>
+        <nav class="rl-nav" aria-label="Blog navigation"><a href="../">Blog</a><a href="../../help/">Help centre</a><a href="../../privacy/">Privacy</a><a href="../../terms/">Terms</a></nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="legal-hero">
+        <div class="rl-shell">
+          <nav class="blog-breadcrumb" aria-label="Breadcrumb">
+            <a href="../../">Home</a>
+            <span aria-hidden="true">/</span>
+            <a href="../">Blog</a>
+            <span aria-hidden="true">/</span>
+            <span>Blocking apps on iPhone</span>
+          </nav>
+          <h1>How to block apps on iPhone, and where each method gives way</h1>
+          <p class="post-lede">
+            Blocking an app on iPhone takes about ninety seconds. Making the block survive your own next impulse is
+            the part nobody explains. Here are the three mechanisms iOS actually offers, the setting that decides
+            whether a limit holds, and how to pick between them.
+          </p>
+          <div class="post-meta">
+            <span>By the Relock team</span>
+            <span>Published <time datetime="2026-09-07">7 September 2026</time></span>
+            <span>6 min read</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="rl-shell">
+        <article class="legal-content post-layout">
+          <div class="post-answer">
+            <p>
+              You can block an app on iPhone in three ways: an <strong>App Limit</strong> in Screen Time, which cuts
+              an app off after a daily budget; <strong>Downtime</strong>, which blocks everything except the apps you
+              allow during set hours; or a <strong>third-party app built on Apple Family Controls</strong>, which
+              applies its own rule to the apps you pick.
+            </p>
+            <p>
+              All three are enforced by iOS itself. The difference is not power, it is how easily you can wave the
+              block away when it triggers.
+            </p>
+          </div>
+
+          <section id="methods">
+            <h2>Which method should you use to block an app?</h2>
+            <p>
+              Start from what you are trying to stop, not from the feature list. A daily budget, a protected time
+              window and a reflex you cannot resist are three different problems.
+            </p>
+            <div class="legal-table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Method</th><th>What it blocks</th><th>Where it gives way</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>App Limits (Screen Time)</td>
+                    <td>One app, several apps, or a whole category, once a daily amount of use is spent</td>
+                    <td>The limit screen offers an extension unless a passcode is set and Block at End of Limit is on</td>
+                  </tr>
+                  <tr>
+                    <td>Downtime (Screen Time)</td>
+                    <td>Everything except the apps on your Always Allowed list, inside a schedule you choose</td>
+                    <td>Same extension path, and the schedule itself can be edited in the moment you want to break it</td>
+                  </tr>
+                  <tr>
+                    <td>Third-party app on Family Controls</td>
+                    <td>The apps and categories you select, with the rule that app implements: delay, pause, strict window</td>
+                    <td>Nothing applies if Screen Time access is refused or revoked, and the authorization is per device</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="app-limits">
+            <h2>How do you set an app limit in Screen Time?</h2>
+            <p>
+              An App Limit cuts an app off after a set amount of use per day. It is free, built in, and takes under a
+              minute to configure.
+            </p>
+            <ol>
+              <li>Open <em>Settings</em>, then <em>Screen Time</em>.</li>
+              <li>Tap <em>App Limits</em>, then <em>Add Limit</em>.</li>
+              <li>Pick a category, such as Social, or tap the category name to select individual apps.</li>
+              <li>Tap <em>Next</em>, set the daily amount, and use <em>Customize Days</em> if the budget should change with the day.</li>
+              <li>Tap <em>Add</em>.</li>
+            </ol>
+            <p>
+              The limit resets at midnight. Selecting a whole category is usually the better move: blocking one social
+              app while its three cousins stay open moves the reflex, it does not stop it.
+            </p>
+          </section>
+
+          <section id="downtime">
+            <h2>How do you block apps at set hours with Downtime?</h2>
+            <p>
+              Downtime protects periods rather than budgets. Everything is blocked during the window except calls and
+              whatever you put on the Always Allowed list.
+            </p>
+            <ol>
+              <li>Open <em>Settings</em>, then <em>Screen Time</em>, then <em>Downtime</em>.</li>
+              <li>Turn it on and choose <em>Every Day</em> or <em>Customize Days</em>.</li>
+              <li>Set the start and end times.</li>
+              <li>Check <em>Always Allowed</em> so the apps you genuinely need stay reachable.</li>
+            </ol>
+            <p>
+              Use it for the two hours that actually decide your day, usually the first ones and the last ones. A
+              Downtime window that covers your whole waking life gets switched off within a week.
+            </p>
+          </section>
+
+          <section id="not-working">
+            <h2>Why do Screen Time limits stop working?</h2>
+            <p>
+              Because by default they are a suggestion. When a limit triggers, iOS shows a screen with an option to
+              keep going. Take it, force-quit the app, reopen it, and the grace period starts over. That loop is the
+              single most common reason people conclude that Screen Time does not work.
+            </p>
+            <p>The fix is two settings, in this order:</p>
+            <ol>
+              <li>
+                Set a Screen Time passcode: <em>Settings → Screen Time → Lock Screen Time Settings</em>. Without it,
+                the extension is one tap away for anyone holding the phone, including you.
+              </li>
+              <li>
+                Turn on <strong>Block at End of Limit</strong>. It removes the extension button, so the app locks
+                until the passcode is entered. The toggle only appears once a passcode exists, which is why most
+                people never see it.
+              </li>
+            </ol>
+            <p>
+              A second, quieter cause: Screen Time authorization belongs to the device, not to your account. Restore
+              a backup or move to a new iPhone and enforcement stops until you grant it again. If a rule you set is
+              not applying, our
+              <a href="../../help/#not-working">help centre walks through the usual causes one by one</a>.
+            </p>
+          </section>
+
+          <section id="third-party">
+            <h2>What can a third-party blocking app do that Screen Time cannot?</h2>
+            <p>
+              Since iOS 15, Apple lets third-party apps use the same enforcement engine through the
+              <a href="https://developer.apple.com/documentation/familycontrols" rel="noopener">Family Controls</a>
+              framework. The app never learns which apps you selected: Apple hands it opaque tokens, and the actual
+              blocking happens inside iOS.
+            </p>
+            <p>What that buys you is not more power. It is a different shape of resistance:</p>
+            <ul>
+              <li>A pause with a countdown before a restricted app opens, instead of a wall or nothing.</li>
+              <li>A delay that grows the more you insist, so the reflex meets friction rather than a refusal.</li>
+              <li>A strict window that cannot be shortened once started, decided while you were calm.</li>
+              <li>Protection against deleting the blocking app itself while a rule is running.</li>
+            </ul>
+            <p>
+              What it does not buy: independence from the permission. Revoke Screen Time access and every third-party
+              blocker on iOS stops enforcing at the same instant. Any app claiming otherwise is describing something
+              iOS does not allow.
+            </p>
+          </section>
+
+          <section class="post-faq" id="faq">
+            <h2>Frequently asked questions</h2>
+
+            <h3>Can you block an app on iPhone permanently?</h3>
+            <p>
+              No. Every method can be undone by whoever holds the Screen Time passcode, and that is by design: iOS
+              will not let an app lock you out of your own phone. What changes between methods is how much stands
+              between the impulse and the app.
+            </p>
+
+            <h3>Do Focus modes block apps?</h3>
+            <p>
+              No. A Focus mode silences notifications and can hide home screen pages, which reduces the number of
+              invitations. It does not stop you from opening an app you decide to open.
+            </p>
+
+            <h3>Can I block Safari or the App Store?</h3>
+            <p>
+              Yes. Screen Time's Content and Privacy Restrictions include an Allowed Apps list where built-in apps
+              such as Safari can be turned off entirely, which is stricter than a time limit.
+            </p>
+
+            <h3>Does blocking an app delete its data?</h3>
+            <p>
+              No. A block prevents the app from opening. Its account, messages and downloads are untouched, and
+              everything is exactly as you left it when the rule ends.
+            </p>
+
+            <h3>Can a third-party blocker see what I do in the apps it blocks?</h3>
+            <p>
+              Not through Family Controls. Apple gives the app opaque tokens rather than app identities, and the
+              restriction is applied by iOS. For Relock specifically, what is stored and where is listed in our
+              <a href="../../privacy/">privacy policy</a>.
+            </p>
+          </section>
+
+          <section class="post-cta" id="next">
+            <h2>What to do next</h2>
+            <p>
+              Three things worth keeping: set a Screen Time passcode before anything else, because every other
+              setting depends on it. Turn on Block at End of Limit, or your limits stay negotiable. And if you have
+              already tried both and still tap through, the problem is friction, not scheduling.
+            </p>
+            <p>
+              That last case is the one <a href="../../">Relock</a> was built for: an intentional pause between you
+              and the app, rules you shape yourself, and blocking enforced by Apple Family Controls. It is not on the
+              App Store yet.
+            </p>
+            <a class="rl-button" href="mailto:contact@getrelock.com?subject=Relock%20early%20access">Request early access</a>
+          </section>
+
+          <section id="sources">
+            <h2>Sources</h2>
+            <ul class="post-sources">
+              <li><a href="https://support.apple.com/guide/iphone/set-schedules-with-screen-time-iphb0c7313c9/ios" rel="noopener">Apple, Set schedules with Screen Time on iPhone</a>, for the App Limits and Downtime steps.</li>
+              <li><a href="https://developer.apple.com/documentation/familycontrols" rel="noopener">Apple Developer, Family Controls</a>, for what third-party apps receive and what they do not.</li>
+              <li><a href="https://www.techlockdown.com/articles/fix-ignore-limit-screen-time" rel="noopener">Tech Lockdown, How to fix the Ignore Limit Screen Time bypass</a>, for the passcode and Block at End of Limit behaviour.</li>
+            </ul>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="rl-footer">
+      <div class="rl-shell">
+        <div class="rl-footer__grid">
+          <div><a class="rl-brand" href="../../"><span>Relock</span></a><p>Make space for what you meant to do.</p></div>
+          <div><h2>Legal</h2><a href="../../privacy/">Privacy Policy</a><a href="../../terms/">Terms of Service</a></div>
+          <div><h2>Company</h2><a href="../../help/">Help centre</a><a href="../">Blog</a><a href="mailto:contact@getrelock.com">Support</a><details class="rl-language"><summary>Language</summary><div class="rl-language__options"><a href="./" lang="en" hreflang="en" aria-current="page">English</a><a href="../../fr/blog/bloquer-une-application-sur-iphone/" lang="fr" hreflang="fr">Français</a></div></details></div>
+        </div>
+        <div class="rl-footer__bottom"><span>© 2026 YATECH. All rights reserved.</span><span>1187C rue Jogues, Drummondville, Quebec J2B 4X8, Canada</span></div>
+      </div>
+    </footer>
+    <script src="../../menu.js" defer></script>
+  </body>
+</html>

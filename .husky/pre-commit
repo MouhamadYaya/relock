@@ -5,3 +5,6 @@ npm run check:icons || exit 1
 
 # import path policy
 npm run check:imports || exit 1
+
+# site public : images générées + métadonnées SEO/GEO à jour
+npm run legal:check || exit 1

@@ -83,8 +83,12 @@
     "check:release-env": "node scripts/check-release-env.cjs",
     "android:rebuild": "node scripts/ensure-env.cjs && rm -rf android/app/build android/app/.cxx android/build android/.gradle && cd android && ./gradlew :app:assembleDebug && cd .. && node scripts/wait-for-android-device.cjs && npx react-native run-android",
     "bootsplash:generate": "node scripts/bootsplash-generate.cjs",
-    "legal:dev": "wrangler dev",
-    "legal:deploy": "wrangler deploy",
+    "legal:assets": "node scripts/build-legal-assets.cjs",
+    "legal:seo": "node scripts/build-legal-seo.cjs",
+    "legal:check": "node scripts/build-legal-assets.cjs --check && node scripts/build-legal-seo.cjs --check",
+    "legal:build": "npm run legal:assets && npm run legal:seo",
+    "legal:dev": "npm run legal:build && wrangler dev",
+    "legal:deploy": "npm run legal:build && wrangler deploy",
     "legal:versions": "wrangler deployments list"
   },
   "dependencies": {
