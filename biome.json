@@ -1,7 +1,21 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignoreUnknown": false },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!.claude/**",
+      "!.github/skills/**",
+      "!assets/icons.ts",
+      "!**/*.xcassets/**",
+      "!docs/home-visual-audit/**"
+    ]
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -47,7 +61,9 @@
         "useParseIntRadix": "warn",
         "useValidTypeof": "warn"
       },
-      "security": { "noGlobalEval": "error" },
+      "security": {
+        "noGlobalEval": "error"
+      },
       "style": {
         "noImplicitBoolean": "off",
         "noNestedTernary": "off",
@@ -153,13 +169,19 @@
       ],
       "linter": {
         "rules": {
-          "suspicious": { "noConsole": "off" }
+          "suspicious": {
+            "noConsole": "off"
+          }
         }
       }
     }
   ],
   "assist": {
     "enabled": true,
-    "actions": { "source": { "organizeImports": "on" } }
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   }
 }
