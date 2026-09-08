@@ -91,7 +91,30 @@ describe('fixture rule store', () => {
     const paused = (await devFixtureRules.list()).find(
       rule => rule.id === 'dev-fixture-timed',
     ) as BlockRuleView
-    expect(paused.createdAt).toBe(running.createdAt)
+    const pausedAgain = (await devFixtureRules.list()).find(
+      rule => rule.id === 'dev-fixture-timed',
+    ) as BlockRuleView
+
+    /*
+      Ce qui est vraiment en jeu : une règle en PAUSE cesse d'être rafraîchie.
+      Deux lectures de suite doivent donc rendre la même date.
+
+      La version précédente comparait `paused.createdAt` à `running.createdAt`
+      avec un `toBe`. C'était intermittent, et pour une raison de fond, pas de
+      bruit : tant que la règle est active, `decorate()` recalcule
+      `minutesAgo(18)` à CHAQUE lecture. Les deux valeurs comparées étaient
+      donc deux échantillons de `Date.now()` pris à des instants différents —
+      égaux seulement quand ils tombaient dans la même milliseconde. Une
+      assertion qui passe la plupart du temps et casse la CI de temps en temps
+      est pire qu'une assertion absente : on apprend à la relancer.
+    */
+    expect(pausedAgain.createdAt).toBe(paused.createdAt)
+    expect(
+      Math.abs(
+        new Date(paused.createdAt ?? 0).getTime() -
+          new Date(running.createdAt ?? 0).getTime(),
+      ),
+    ).toBeLessThan(2000)
   })
 
   it('suspends and resumes without losing the rest of the config', async () => {
