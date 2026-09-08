@@ -9,8 +9,15 @@ import Constants from 'expo-constants'
 
 export const appConfig = {
   appName: 'Relock',
-  /** Repli quand le natif ne répond pas (tests Jest, web). */
-  version: '1.0.2',
+  /**
+   * Repli quand le natif ne répond pas (tests Jest, web).
+   *
+   * DOIT SUIVRE `MARKETING_VERSION` du projet Xcode et `versionName` côté
+   * Android. Il valait `1.0.2` — un numéro hérité du starter dont ce dépôt
+   * est issu, jamais celui de Relock : les Réglages annonçaient donc une
+   * version que personne n'a jamais publiée dès que `Constants` se taisait.
+   */
+  version: '1.0.0',
   build: 1,
   enableLogs: __DEV__,
   bundleId: 'com.yaya.relock',

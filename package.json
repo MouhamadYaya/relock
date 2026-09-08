@@ -1,6 +1,6 @@
 {
   "name": "relock",
-  "version": "1.0.2",
+  "version": "1.0.0",
   "description": "Relock — application mobile de blocage d'applications (React Native bare + Expo SDK 54, extensions natives iOS Family Controls).",
   "keywords": [
     "react-native",
