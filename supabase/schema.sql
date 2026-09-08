@@ -199,3 +199,120 @@ revoke all on function public.claim_upload_grant(uuid, integer, integer) from pu
 revoke all on function public.claim_upload_grant(uuid, integer, integer) from anon;
 revoke all on function public.claim_upload_grant(uuid, integer, integer) from authenticated;
 grant execute on function public.claim_upload_grant(uuid, integer, integer) to service_role;
+
+-- ─────────────────────────────────────────────────────────────
+-- apple_refresh_tokens : de quoi RÉVOQUER un Sign in with Apple
+-- ─────────────────────────────────────────────────────────────
+-- POURQUOI
+-- Guideline 5.1.1(v) : supprimer un compte créé avec Sign in with Apple ne
+-- suffit pas — il faut aussi révoquer le jeton auprès d'Apple
+-- (`appleid.apple.com/auth/revoke`), sans quoi l'app reste listée dans
+-- « Connexion avec Apple » des réglages iOS d'une personne qui n'a plus de
+-- compte chez nous. Apple AUDITE ce point.
+--
+-- Or on ne peut révoquer qu'un jeton qu'on possède, et Apple n'en délivre
+-- qu'en échange du `authorizationCode` — renvoyé UNE SEULE FOIS, à la
+-- connexion, et valable cinq minutes. D'où cette table : `apple-link`
+-- l'échange à chaud contre un refresh token, `delete-account` s'en sert au
+-- moment d'effacer.
+--
+-- AUCUNE POLITIQUE RLS, comme `upload_grants` : ce jeton rouvre la session
+-- Apple de la personne, le client n'a aucune raison de le lire et RLS active
+-- sans politique refuse tout le monde. Seules les Edge Functions y touchent,
+-- via la service role qui contourne RLS.
+--
+-- Le `on delete cascade` fait le ménage : la ligne meurt avec le compte, donc
+-- juste après la révocation.
+create table if not exists public.apple_refresh_tokens (
+  user_id       uuid primary key references auth.users (id) on delete cascade,
+  refresh_token text        not null,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.apple_refresh_tokens enable row level security;
+
+-- ─────────────────────────────────────────────────────────────
+-- apple_revocation_audit : rendre AUDIBLE un échec de révocation
+-- ─────────────────────────────────────────────────────────────
+-- POURQUOI
+-- `delete-account` ne fait jamais échouer une suppression parce qu'Apple a mal
+-- répondu : le droit à l'effacement passe avant l'hygiène qu'on doit à Apple.
+-- Le prix de cet arbitrage, c'est le silence. Une clé `.p8` tournée sans être
+-- repoussée, un Team ID recopié de travers, et la révocation cesse de marcher
+-- sans que RIEN ne le dise : la seule trace est une ligne de journal, écrite
+-- au moment d'une suppression — c'est-à-dire là où personne ne regarde, sur un
+-- compte qui n'existe déjà plus. Les journaux Supabase, eux, expirent.
+--
+-- Cette table est le compteur qui manquait. Elle répond à une seule question,
+-- mais on ne pouvait pas y répondre du tout : « combien de comptes ont été
+-- supprimés sans que le jeton Apple soit révoqué ? »
+--
+-- AUCUN IDENTIFIANT, ET C'EST LE POINT DÉLICAT
+-- Ces lignes survivent au compte qu'elles décrivent. Y poser un `user_id`
+-- reviendrait à garder une trace d'une personne qui vient d'exercer son droit
+-- à l'effacement (RGPD art. 17) — exactement ce qu'on efface par ailleurs.
+-- Un horodatage à la seconde serait presque aussi bavard : recoupé avec autre
+-- chose, il ré-identifie. D'où la forme retenue : un COMPTEUR par jour et par
+-- issue. On sait « 3 échecs `missing_secrets` le 12 mars », jamais qui.
+--
+-- `last_detail` ne contient que le message technique (statut HTTP, code
+-- d'erreur Apple), jamais d'identifiant : voir `recordRevocation` dans
+-- `supabase/functions/delete-account/index.ts`, qui est le seul écrivain.
+--
+-- AUCUNE POLITIQUE RLS, comme `upload_grants` et `apple_refresh_tokens` : le
+-- client n'a aucune raison de lire ce compteur, et RLS active sans politique
+-- refuse tout le monde. Seule l'Edge Function y touche, via la service role.
+create table if not exists public.apple_revocation_audit (
+  day         date        not null,
+  outcome     text        not null,
+  count       integer     not null default 0,
+  last_detail text,
+  updated_at  timestamptz not null default now(),
+  primary key (day, outcome),
+  -- La liste fermée n'est pas décorative : elle interdit qu'une issue nouvelle
+  -- s'ajoute côté Edge Function sans qu'on décide ici de ce qu'elle signifie.
+  -- Une issue inconnue ferait échouer l'écriture — qui est déjà, par
+  -- construction, sans conséquence sur la suppression.
+  constraint apple_revocation_audit_outcome_known check (
+    outcome in (
+      'revoked',          -- Apple a bien révoqué : le cas nominal.
+      'no_token',         -- Rien à révoquer (Google, ou compte pré-`apple-link`).
+      'missing_secrets',  -- Secrets APPLE_* absents : la panne invisible.
+      'apple_refused',    -- Apple a répondu non (client secret, jeton).
+      'read_failed',      -- Lecture du jeton en base impossible.
+      'error'             -- Exception réseau ou autre.
+    )
+  )
+);
+
+alter table public.apple_revocation_audit enable row level security;
+
+-- L'incrément doit être ATOMIQUE : deux suppressions simultanées lisant puis
+-- réécrivant `count` en perdraient une, et un compteur qui sous-estime les
+-- échecs est pire que pas de compteur du tout. D'où l'`on conflict do update`
+-- côté base plutôt qu'un lire-modifier-écrire côté Edge Function.
+create or replace function public.record_apple_revocation(
+  p_outcome text,
+  p_detail  text default null
+) returns void
+-- Chemin de recherche vide, même raison que `claim_upload_grant` ci-dessus.
+language plpgsql security definer set search_path = '' as $$
+begin
+  insert into public.apple_revocation_audit as a (day, outcome, count, last_detail)
+  values (current_date, p_outcome, 1, left(p_detail, 200))
+  on conflict (day, outcome) do update
+    set count       = a.count + 1,
+        -- On garde le dernier message plutôt que le premier : quand une
+        -- configuration se répare, la ligne du jour cesse de mentir.
+        last_detail = coalesce(excluded.last_detail, a.last_detail),
+        updated_at  = now();
+end;
+$$;
+
+-- Appelée UNIQUEMENT par `delete-account`. L'ouvrir à `authenticated`
+-- laisserait n'importe qui fabriquer de faux échecs et noyer les vrais.
+revoke all on function public.record_apple_revocation(text, text) from public;
+revoke all on function public.record_apple_revocation(text, text) from anon;
+revoke all on function public.record_apple_revocation(text, text) from authenticated;
+grant execute on function public.record_apple_revocation(text, text) to service_role;
