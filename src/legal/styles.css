@@ -1,33 +1,49 @@
 @font-face {
   font-family: "Relock Sans";
-  src: url("../../assets/fonts/Inter-Regular.ttf") format("truetype");
+  src: url("../../assets/fonts/Inter-Regular.woff2") format("woff2");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
+  /* Le site n'affiche que du latin (EN/FR). Déclarer la plage évite au
+     navigateur de télécharger la police pour un caractère qu'elle n'a pas. */
+  unicode-range: U+0000-024F, U+2000-206F, U+20A0-20BF, U+2122, U+2190-2199,
+    U+2212, U+2713, U+25CF, U+FEFF, U+FFFD;
 }
 
 @font-face {
   font-family: "Relock Sans";
-  src: url("../../assets/fonts/Inter-Medium.ttf") format("truetype");
+  src: url("../../assets/fonts/Inter-Medium.woff2") format("woff2");
   font-style: normal;
   font-weight: 500;
   font-display: swap;
+  /* Le site n'affiche que du latin (EN/FR). Déclarer la plage évite au
+     navigateur de télécharger la police pour un caractère qu'elle n'a pas. */
+  unicode-range: U+0000-024F, U+2000-206F, U+20A0-20BF, U+2122, U+2190-2199,
+    U+2212, U+2713, U+25CF, U+FEFF, U+FFFD;
 }
 
 @font-face {
   font-family: "Relock Sans";
-  src: url("../../assets/fonts/Inter-SemiBold.ttf") format("truetype");
+  src: url("../../assets/fonts/Inter-SemiBold.woff2") format("woff2");
   font-style: normal;
   font-weight: 600;
   font-display: swap;
+  /* Le site n'affiche que du latin (EN/FR). Déclarer la plage évite au
+     navigateur de télécharger la police pour un caractère qu'elle n'a pas. */
+  unicode-range: U+0000-024F, U+2000-206F, U+20A0-20BF, U+2122, U+2190-2199,
+    U+2212, U+2713, U+25CF, U+FEFF, U+FFFD;
 }
 
 @font-face {
   font-family: "Relock Sans";
-  src: url("../../assets/fonts/Inter-Bold.ttf") format("truetype");
+  src: url("../../assets/fonts/Inter-Bold.woff2") format("woff2");
   font-style: normal;
   font-weight: 700;
   font-display: swap;
+  /* Le site n'affiche que du latin (EN/FR). Déclarer la plage évite au
+     navigateur de télécharger la police pour un caractère qu'elle n'a pas. */
+  unicode-range: U+0000-024F, U+2000-206F, U+20A0-20BF, U+2122, U+2190-2199,
+    U+2212, U+2713, U+25CF, U+FEFF, U+FFFD;
 }
 
 :root {

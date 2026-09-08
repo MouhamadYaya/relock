@@ -1,3 +1,7 @@
 # Fichiers présents dans src/legal/ mais qui ne doivent PAS être publiés.
 privacy-audit.md
 .DS_Store
+
+# Atelier SEO : outils, dépendances Python vendorisées, rapports et sources
+# d'images. Rien là-dedans n'est une page — tout est de l'outillage local.
+seo-relock/

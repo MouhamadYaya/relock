@@ -1,0 +1,15 @@
+# getrelock.com — site public de Relock.
+#
+# Le site est entièrement public : quatre pages produit, trois guides, le
+# centre d'aide et les pages légales. Rien n'a de raison d'être exclu du
+# crawl, et exclure du CSS ou du JavaScript empêcherait Google de rendre les
+# pages telles que les voit un visiteur.
+#
+# Rappel : `Disallow` gouverne le crawl, pas l'indexation. Les seules pages
+# qui ne doivent pas apparaître dans les résultats (les 404) portent une
+# balise meta robots `noindex` — la seule directive qui l'obtienne vraiment.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://getrelock.com/sitemap.xml

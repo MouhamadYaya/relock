@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Généré par seo-relock/tools/build-sitemap.mjs depuis seo-relock/pages.json.
+  Ne pas éditer à la main : ajouter la page dans pages.json et relancer.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://getrelock.com/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/iphone-app-blocker/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/iphone-app-blocker/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/bloqueur-dapplications-iphone/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/iphone-app-blocker/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/bloqueur-dapplications-iphone/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/iphone-app-blocker/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/bloqueur-dapplications-iphone/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/iphone-app-blocker/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/reduce-screen-time/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/reduce-screen-time/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/reduire-son-temps-decran/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/reduce-screen-time/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/reduire-son-temps-decran/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/reduce-screen-time/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/reduire-son-temps-decran/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/reduce-screen-time/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/stop-doomscrolling/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/stop-doomscrolling/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/arreter-le-doomscrolling/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/stop-doomscrolling/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/arreter-le-doomscrolling/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/stop-doomscrolling/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/arreter-le-doomscrolling/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/stop-doomscrolling/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/help/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/help/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/help/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/help/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/help/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/help/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/help/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/help/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/privacy/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/privacy/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/privacy/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/privacy/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/privacy/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/privacy/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/privacy/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/privacy/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/terms/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/terms/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/terms/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/terms/" />
+  </url>
+  <url>
+    <loc>https://getrelock.com/fr/terms/</loc>
+    <lastmod>2026-09-07</lastmod>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getrelock.com/terms/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/terms/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getrelock.com/terms/" />
+  </url>
+</urlset>

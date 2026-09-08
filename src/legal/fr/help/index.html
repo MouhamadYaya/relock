@@ -3,10 +3,61 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#05060B" />
-    <meta name="description" content="Centre d’aide Relock : autorisation Temps d’écran, création de règles de blocage, blocage qui ne s’applique pas, abonnement et données personnelles." />
-    <title>Centre d’aide | Relock</title>
+    <!-- seo:start — généré par seo-relock/tools/sync-head.mjs, ne pas éditer à la main -->
+    <title>Centre d’aide Relock — Temps d’écran, règles et dépannage</title>
+    <meta name="description" content="Autoriser le Temps d’écran, créer une règle de blocage, réparer un blocage qui ne s’applique pas, comprendre le mode strict et le déblocage d’urgence, gérer votre abonnement et vos données." />
+    <link rel="canonical" href="https://getrelock.com/fr/help/" />
+    <link rel="alternate" hreflang="en" href="https://getrelock.com/help/" />
+    <link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/help/" />
+    <link rel="alternate" hreflang="x-default" href="https://getrelock.com/help/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Relock" />
+    <meta property="og:locale" content="fr_CA" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:title" content="Centre d’aide Relock — Temps d’écran, règles et dépannage" />
+    <meta property="og:description" content="Autoriser le Temps d’écran, créer une règle de blocage, réparer un blocage qui ne s’applique pas, comprendre le mode strict et le déblocage d’urgence, gérer votre abonnement et vos données." />
+    <meta property="og:url" content="https://getrelock.com/fr/help/" />
+    <meta property="og:image" content="https://getrelock.com/img/relock-og-fr.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Centre d’aide Relock." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Centre d’aide Relock — Temps d’écran, règles et dépannage" />
+    <meta name="twitter:description" content="Autoriser le Temps d’écran, créer une règle de blocage, réparer un blocage qui ne s’applique pas, comprendre le mode strict et le déblocage d’urgence, gérer votre abonnement et vos données." />
+    <meta name="twitter:image" content="https://getrelock.com/img/relock-og-fr.jpg" />
+    <meta name="twitter:image:alt" content="Centre d’aide Relock." />
+
     <link rel="icon" href="../../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../../img/apple-touch-icon.png" />
+    <link rel="manifest" href="../../site.webmanifest" />
+
+    <script type="application/ld+json">
+    {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": "https://getrelock.com/fr/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Centre d’aide",
+          "item": "https://getrelock.com/fr/help/"
+        }
+      ]
+    }
+  ]
+}
+    </script>
+    <!-- seo:end -->
+    <meta name="theme-color" content="#05060B" />
     <link rel="stylesheet" href="../../styles.css" />
     <link rel="stylesheet" href="../../pages.css" />
     <link rel="stylesheet" href="../../legal.css" />
@@ -32,7 +83,7 @@
           </nav>
         </details>
         <a class="rl-brand" href="../" aria-label="Accueil Relock"><span>Relock</span></a>
-        <nav class="rl-nav" aria-label="Navigation assistance"><a href="../">Accueil</a><a href="../privacy/">Confidentialité</a><a href="../terms/">Conditions</a></nav>
+        <nav class="rl-nav" aria-label="Navigation assistance"><a href="../">Accueil</a><a href="../bloqueur-dapplications-iphone/">Bloqueur d’apps</a><a href="../reduire-son-temps-decran/">Temps d’écran</a><a href="../privacy/">Confidentialité</a><a href="../terms/">Conditions</a></nav>
       </div>
     </header>
 
@@ -42,7 +93,7 @@
           <p class="rl-eyebrow">Assistance</p>
           <h1>Centre d’aide</h1>
           <div class="legal-hero__meta">
-            <span>Relock pour iPhone</span>
+            <span>Relock pour iPhone · iOS 16+</span>
             <span>Écrit pour la version publiée</span>
             <span>Réponse sous quelques jours</span>
           </div>
@@ -69,9 +120,11 @@
           <section id="demarrer">
             <h2>1. Avant de commencer</h2>
             <p>
-              Relock fonctionne <strong>uniquement sur iPhone</strong>. Le blocage lui-même est assuré par le
-              framework Family Controls d’Apple, qui n’existe que sur iOS et dont Relock n’a pas d’équivalent
-              ailleurs.
+              Relock fonctionne <strong>uniquement sur iPhone, sous iOS 16 ou version ultérieure</strong>. Le
+              blocage lui-même est assuré par le framework Family Controls d’Apple, qui n’existe que sur iOS et dont
+              Relock n’a pas d’équivalent ailleurs — il n’y a pas de version iPad, Mac, Android ni web. Pour le
+              détail de ce que ce framework autorise et refuse, voir
+              <a href="../bloqueur-dapplications-iphone/">comment fonctionne un bloqueur d’applications iPhone</a>.
             </p>
             <p>
               Une seule autorisation fait tout le travail : l’<strong>accès au Temps d’écran</strong>. Sans elle,
@@ -199,7 +252,8 @@
             <p>
               <em>Réglages → Zone sensible → Déblocage d’urgence</em> lève tout immédiatement : pas de respiration,
               pas d’attente, pas de mode strict. Il existe pour les vraies urgences — un entretien, un déplacement,
-              un imprévu médical.
+              un imprévu médical. <strong>Vous y avez droit une fois par semaine.</strong> Si vous l’avez déjà
+              utilisé, Relock vous indique la date à laquelle le prochain redevient disponible.
             </p>
             <div class="legal-callout">
               <p>
@@ -308,6 +362,7 @@
       <div class="rl-shell">
         <div class="rl-footer__grid">
           <div><a class="rl-brand" href="../"><span>Relock</span></a><p>Faites de la place à ce que vous vouliez vraiment faire.</p></div>
+          <div><h2>Comprendre</h2><a href="../bloqueur-dapplications-iphone/">Bloqueur d’applications iPhone</a><a href="../reduire-son-temps-decran/">Réduire son temps d’écran</a><a href="../arreter-le-doomscrolling/">Arrêter le doomscrolling</a></div>
           <div><h2>Mentions juridiques</h2><a href="../privacy/">Politique de confidentialité</a><a href="../terms/">Conditions d’utilisation</a></div>
           <div><h2>Entreprise</h2><a href="./">Centre d’aide</a><a href="mailto:contact@getrelock.com">Assistance</a><details class="rl-language"><summary>Langue</summary><div class="rl-language__options"><a href="../../help/" lang="en" hreflang="en">English</a><a href="./" lang="fr" hreflang="fr" aria-current="page">Français</a></div></details></div>
         </div>

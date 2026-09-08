@@ -118,3 +118,9 @@ supabase/.temp/
 .wrangler/
 .dev.vars
 .dev.vars.*
+
+# Dépendances Python vendorisées de l'atelier SEO (fontTools + brotli).
+# Un `.so` compilé pour macOS-arm64 n'a rien à faire dans le dépôt : il est
+# spécifique à la machine et pèse 15 Mo. Réinstallation en une ligne, voir
+# src/legal/seo-relock/README.md.
+src/legal/seo-relock/vendor/

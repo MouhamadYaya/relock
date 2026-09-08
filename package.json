@@ -85,7 +85,15 @@
     "bootsplash:generate": "node scripts/bootsplash-generate.cjs",
     "legal:dev": "wrangler dev",
     "legal:deploy": "wrangler deploy",
-    "legal:versions": "wrangler deployments list"
+    "legal:versions": "wrangler deployments list",
+    "seo:images": "node src/legal/seo-relock/tools/build-images.mjs",
+    "seo:fonts": "python3 src/legal/seo-relock/tools/build-fonts.py",
+    "seo:head": "node src/legal/seo-relock/tools/sync-head.mjs",
+    "seo:sitemap": "node src/legal/seo-relock/tools/build-sitemap.mjs",
+    "seo:verify": "node src/legal/seo-relock/tools/verify.mjs",
+    "seo:mobile": "node src/legal/seo-relock/tools/check-mobile.mjs",
+    "seo:build": "npm run seo:head && npm run seo:sitemap && npm run seo:verify",
+    "seo:indexnow": "node src/legal/seo-relock/tools/indexnow.mjs"
   },
   "dependencies": {
     "@react-native-clipboard/clipboard": "^1.14.1",

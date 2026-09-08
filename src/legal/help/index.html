@@ -3,10 +3,61 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#05060B" />
-    <meta name="description" content="Help centre for Relock: set up Screen Time access, build blocking rules, fix a block that is not applying, manage your subscription and your data." />
-    <title>Help Centre | Relock</title>
+    <!-- seo:start — généré par seo-relock/tools/sync-head.mjs, ne pas éditer à la main -->
+    <title>Relock Help Centre — Screen Time Access, Rules and Troubleshooting</title>
+    <meta name="description" content="Set up Screen Time access, build a blocking rule, fix a block that is not applying, understand strict mode and the emergency unlock, and manage your subscription and your data." />
+    <link rel="canonical" href="https://getrelock.com/help/" />
+    <link rel="alternate" hreflang="en" href="https://getrelock.com/help/" />
+    <link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/help/" />
+    <link rel="alternate" hreflang="x-default" href="https://getrelock.com/help/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Relock" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_CA" />
+    <meta property="og:title" content="Relock Help Centre — Screen Time Access, Rules and Troubleshooting" />
+    <meta property="og:description" content="Set up Screen Time access, build a blocking rule, fix a block that is not applying, understand strict mode and the emergency unlock, and manage your subscription and your data." />
+    <meta property="og:url" content="https://getrelock.com/help/" />
+    <meta property="og:image" content="https://getrelock.com/img/relock-og-en.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Relock help centre." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Relock Help Centre — Screen Time Access, Rules and Troubleshooting" />
+    <meta name="twitter:description" content="Set up Screen Time access, build a blocking rule, fix a block that is not applying, understand strict mode and the emergency unlock, and manage your subscription and your data." />
+    <meta name="twitter:image" content="https://getrelock.com/img/relock-og-en.jpg" />
+    <meta name="twitter:image:alt" content="Relock help centre." />
+
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../img/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+
+    <script type="application/ld+json">
+    {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://getrelock.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Help centre",
+          "item": "https://getrelock.com/help/"
+        }
+      ]
+    }
+  ]
+}
+    </script>
+    <!-- seo:end -->
+    <meta name="theme-color" content="#05060B" />
     <link rel="stylesheet" href="../styles.css" />
     <link rel="stylesheet" href="../pages.css" />
     <link rel="stylesheet" href="../legal.css" />
@@ -32,7 +83,7 @@
           </nav>
         </details>
         <a class="rl-brand" href="../" aria-label="Relock home"><span>Relock</span></a>
-        <nav class="rl-nav" aria-label="Support navigation"><a href="../">Home</a><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a></nav>
+        <nav class="rl-nav" aria-label="Support navigation"><a href="../">Home</a><a href="../iphone-app-blocker/">App blocker</a><a href="../reduce-screen-time/">Screen time</a><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a></nav>
       </div>
     </header>
 
@@ -42,7 +93,7 @@
           <p class="rl-eyebrow">Support</p>
           <h1>Help centre</h1>
           <div class="legal-hero__meta">
-            <span>Relock for iPhone</span>
+            <span>Relock for iPhone · iOS 16+</span>
             <span>Written for the shipping build</span>
             <span>Replies within a few days</span>
           </div>
@@ -69,8 +120,11 @@
           <section id="start">
             <h2>1. Before you begin</h2>
             <p>
-              Relock runs on <strong>iPhone only</strong>. The blocking itself is performed by Apple's Family
-              Controls framework, which exists on iOS and has no equivalent Relock can use elsewhere.
+              Relock runs on <strong>iPhone only, on iOS 16 or later</strong>. The blocking itself is performed by
+              Apple's Family Controls framework, which exists on iOS and has no equivalent Relock can use
+              elsewhere — there is no iPad, Mac, Android or web version. For the longer version of what that
+              framework does and does not allow, see
+              <a href="../iphone-app-blocker/">how an iPhone app blocker works</a>.
             </p>
             <p>
               One permission does all the work: <strong>Screen Time access</strong>. Without it Relock can display
@@ -197,6 +251,8 @@
             <p>
               <em>Settings → Sensitive zone → Emergency unlock</em> lifts everything immediately: no breathing, no
               waiting, no strict mode. It exists for real emergencies — an interview, a trip, a medical surprise.
+              <strong>You get one per week.</strong> If you have already used it, Relock tells you the date the next
+              one becomes available.
             </p>
             <div class="legal-callout">
               <p>
@@ -304,6 +360,7 @@
       <div class="rl-shell">
         <div class="rl-footer__grid">
           <div><a class="rl-brand" href="../"><span>Relock</span></a><p>Make space for what you meant to do.</p></div>
+          <div><h2>Learn</h2><a href="../iphone-app-blocker/">iPhone app blocker</a><a href="../reduce-screen-time/">Reduce screen time on iPhone</a><a href="../stop-doomscrolling/">Stop doomscrolling</a></div>
           <div><h2>Legal</h2><a href="../privacy/">Privacy Policy</a><a href="../terms/">Terms of Service</a></div>
           <div><h2>Company</h2><a href="./">Help centre</a><a href="mailto:contact@getrelock.com">Support</a><details class="rl-language"><summary>Language</summary><div class="rl-language__options"><a href="./" lang="en" hreflang="en" aria-current="page">English</a><a href="../fr/help/" lang="fr" hreflang="fr">Français</a></div></details></div>
         </div>

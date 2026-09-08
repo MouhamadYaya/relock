@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- seo:start — généré par seo-relock/tools/sync-head.mjs, ne pas éditer à la main -->
+    <title>Bloqueur d’applications iPhone : comment Relock bloque les apps distrayantes</title>
+    <meta name="description" content="Ce qu’un bloqueur d’applications iPhone peut et ne peut pas faire, ce que le Temps d’écran d’Apple autorise, et comment les trois types de règles de Relock tiennent une limite." />
+    <link rel="canonical" href="https://getrelock.com/fr/bloqueur-dapplications-iphone/" />
+    <link rel="alternate" hreflang="en" href="https://getrelock.com/iphone-app-blocker/" />
+    <link rel="alternate" hreflang="fr" href="https://getrelock.com/fr/bloqueur-dapplications-iphone/" />
+    <link rel="alternate" hreflang="x-default" href="https://getrelock.com/iphone-app-blocker/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Relock" />
+    <meta property="og:locale" content="fr_CA" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:title" content="Bloqueur d’applications iPhone : comment Relock bloque les apps distrayantes" />
+    <meta property="og:description" content="Ce qu’un bloqueur d’applications iPhone peut et ne peut pas faire, ce que le Temps d’écran d’Apple autorise, et comment les trois types de règles de Relock tiennent une limite." />
+    <meta property="og:url" content="https://getrelock.com/fr/bloqueur-dapplications-iphone/" />
+    <meta property="og:image" content="https://getrelock.com/img/relock-og-fr.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Relock — un bloqueur d’applications iPhone bâti sur le Temps d’écran d’Apple." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Bloqueur d’applications iPhone : comment Relock bloque les apps distrayantes" />
+    <meta name="twitter:description" content="Ce qu’un bloqueur d’applications iPhone peut et ne peut pas faire, ce que le Temps d’écran d’Apple autorise, et comment les trois types de règles de Relock tiennent une limite." />
+    <meta name="twitter:image" content="https://getrelock.com/img/relock-og-fr.jpg" />
+    <meta name="twitter:image:alt" content="Relock — un bloqueur d’applications iPhone bâti sur le Temps d’écran d’Apple." />
+
+    <link rel="icon" href="../../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../../img/apple-touch-icon.png" />
+    <link rel="manifest" href="../../site.webmanifest" />
+
+    <script type="application/ld+json">
+    {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "MobileApplication",
+      "@id": "https://getrelock.com/#app",
+      "name": "Relock",
+      "applicationCategory": "ProductivityApplication",
+      "applicationSubCategory": "App blocker",
+      "operatingSystem": "iOS 16.0 or later",
+      "availableOnDevice": "iPhone",
+      "inLanguage": [
+        "en",
+        "fr"
+      ],
+      "publisher": {
+        "@id": "https://getrelock.com/#organization"
+      },
+      "url": "https://getrelock.com/",
+      "softwareRequirements": "iPhone sous iOS 16 ou version ultérieure, avec l’autorisation Temps d’écran (Family Controls) accordée.",
+      "featureList": [
+        "Délai progressif avant l’ouverture d’une app",
+        "Plages horaires de blocage",
+        "Limite d’ouvertures quotidiennes",
+        "Mode strict, impossible à arrêter avant la fin",
+        "Protection anti-désinstallation",
+        "Déblocage d’urgence, une fois par semaine",
+        "Sélection d’apps et de catégories via Family Controls d’Apple"
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": "https://getrelock.com/fr/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Bloqueur d’applications iPhone",
+          "item": "https://getrelock.com/fr/bloqueur-dapplications-iphone/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Un bloqueur d’applications peut-il vraiment bloquer des apps sur iPhone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui, lorsqu’il utilise le cadre Family Controls d’Apple. iOS refuse lui-même d’ouvrir l’app et affiche un écran de blocage : l’app ne se lance pas. Cela demande iOS 16 ou plus récent et une autorisation, l’accès au Temps d’écran, à accorder sur chaque appareil."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quelle différence avec les limites du Temps d’écran d’Apple?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "C’est bâti sur le même système, mais un bloqueur peut faire ce que les limites intégrées ne font pas : compter des ouvertures plutôt que des minutes, poser un délai croissant devant une app au lieu d’une coupure binaire, et rendre une règle réellement difficile à lever une fois posée. Les limites d’Apple sont gratuites et méritent d’être essayées d’abord."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Relock voit-il quelles apps j’ai bloquées?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. Apple renvoie des jetons de sélection opaques plutôt que des noms d’apps : Relock sait combien d’apps vous avez choisies, jamais lesquelles. Ces jetons restent dans le groupe d’apps iOS utilisé pour appliquer les règles."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Puis-je bloquer des apps uniquement à certaines heures?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui. Une règle à plage horaire rend les apps choisies indisponibles pendant les heures que vous fixez, par exemple 22 h – 8 h. Plusieurs règles peuvent tourner ensemble, et la plus stricte applicable à cet instant l’emporte."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Puis-je arrêter un blocage une fois commencé?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Une règle ordinaire se modifie, se suspend ou se supprime à tout moment. Une règle marquée stricte ne peut pas être arrêtée avant sa fin — c’est précisément ce qu’on choisit en la marquant ainsi. Le déblocage d’urgence lève tout immédiatement, une fois par semaine, et supprime vos règles au passage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Relock fonctionne-t-il sur iPad ou Android?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. Relock fonctionne uniquement sur iPhone, sous iOS 16 ou version ultérieure. Family Controls n’existe que sur les plateformes Apple, et il n’y a pas de version iPad, Mac, Android ni web."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Relock est-il disponible au Canada et aux États-Unis?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Relock arrive sur l’App Store au Canada et aux États-Unis, et n’est pas encore publié. Vous pouvez demander un accès anticipé en écrivant à contact@getrelock.com."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+    <!-- seo:end -->
+    <meta name="theme-color" content="#05060B" />
+    <link rel="preload" as="font" type="font/woff2" href="../../assets/fonts/Inter-Regular.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="../../assets/fonts/Inter-Bold.woff2" crossorigin />
+    <link rel="stylesheet" href="../../styles.css" />
+    <link rel="stylesheet" href="../../pages.css" />
+    <link rel="stylesheet" href="../../legal.css" />
+    <link rel="stylesheet" href="../../article.css" />
+  </head>
+  <body class="rl-page legal-page article-page">
+    <a class="rl-skip" href="#main">Aller au contenu</a>
+    <header class="rl-header">
+      <div class="rl-shell rl-header__inner">
+        <details class="rl-menu">
+          <summary class="rl-burger" aria-label="Menu">
+            <span class="rl-burger__bars" aria-hidden="true"></span>
+          </summary>
+          <div class="rl-menu__backdrop"></div>
+          <nav class="rl-menu__panel" aria-label="Navigation mobile">
+            <a href="../">Accueil</a>
+            <a href="./" aria-current="page">Bloqueur d’applications</a>
+            <a href="../reduire-son-temps-decran/">Réduire le temps d’écran</a>
+            <a href="../arreter-le-doomscrolling/">Arrêter le doomscrolling</a>
+            <a href="../help/">Centre d’aide</a>
+            <a href="../terms/">Conditions</a>
+            <a href="../privacy/">Confidentialité</a>
+            <a class="rl-button" href="mailto:contact@getrelock.com?subject=Acc%C3%A8s%20anticip%C3%A9%20%C3%A0%20Relock">Accès anticipé</a>
+            <hr class="rl-menu__sep" />
+            <p class="rl-menu__label">Langue</p>
+            <a href="../../iphone-app-blocker/" lang="en" hreflang="en">English</a>
+            <a href="./" lang="fr" hreflang="fr" aria-current="page">Français</a>
+          </nav>
+        </details>
+        <a class="rl-brand" href="../" aria-label="Accueil Relock"><span>Relock</span></a>
+        <nav class="rl-nav" aria-label="Navigation principale">
+          <a href="../">Accueil</a>
+          <a href="./" aria-current="page">Bloqueur d’apps</a>
+          <a href="../reduire-son-temps-decran/">Temps d’écran</a>
+          <a href="../arreter-le-doomscrolling/">Doomscrolling</a>
+          <a href="../help/">Centre d’aide</a>
+          <a class="rl-button" href="mailto:contact@getrelock.com?subject=Acc%C3%A8s%20anticip%C3%A9%20%C3%A0%20Relock">Accès anticipé</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="legal-hero">
+        <div class="rl-shell">
+          <p class="rl-eyebrow">Bloqueur d’applications iPhone</p>
+          <h1>Comment un bloqueur d’applications bloque vraiment sur iPhone</h1>
+          <p class="legal-hero__lede">
+            Tous les bloqueurs d’applications de l’App Store reposent sur la même fondation Apple, et c’est elle qui
+            décide de ce qu’ils peuvent faire. Cette page l’explique de l’intérieur : ce qu’Apple confie à un
+            bloqueur, ce qu’elle lui refuse délibérément, et comment Relock en tire trois types de blocage qu’on
+            peut réellement tenir.
+          </p>
+          <div class="legal-hero__meta">
+            <span>Relock pour iPhone</span>
+            <span>iOS 16 ou version ultérieure</span>
+            <span>Bâti sur Family Controls d’Apple</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="rl-shell legal-layout">
+        <nav class="legal-toc" aria-label="Sections">
+          <strong>Sur cette page</strong>
+          <a href="#definition">1. Ce qu’est un bloqueur d’apps</a>
+          <a href="#apple">2. Ce qu’Apple autorise vraiment</a>
+          <a href="#regles">3. Les trois types de blocage</a>
+          <a href="#friction">4. Pourquoi un délai vaut mieux qu’un mur</a>
+          <a href="#strict">5. Mode strict et sortie de secours</a>
+          <a href="#limites">6. Ce qu’aucun bloqueur ne peut faire</a>
+          <a href="#confidentialite">7. Ce que Relock voit, et ne voit pas</a>
+          <a href="#recettes">8. Quatre règles à copier</a>
+          <a href="#faq">9. FAQ</a>
+        </nav>
+
+        <article class="legal-content">
+          <div class="a-answer">
+            <h2>Réponse courte</h2>
+            <p>
+              Un bloqueur d’applications iPhone rend indisponibles — ou plus difficiles à atteindre — les apps que
+              vous choisissez, selon des conditions fixées à l’avance. Sur iPhone, il ne peut le faire qu’à travers
+              Family Controls, le cadre d’Apple derrière le Temps d’écran : une seule autorisation, iOS 16 au
+              minimum, et jamais le nom des apps que vous avez sélectionnées.
+            </p>
+            <p>
+              Relock s’appuie sur cette fondation pour proposer trois types de blocage : un délai qui s’allonge à
+              chaque ouverture, une plage horaire comme 22 h – 8 h, et un plafond du nombre d’ouvertures par jour.
+            </p>
+          </div>
+
+          <section id="definition">
+            <h2>1. Ce qu’est un bloqueur d’applications, et à qui il sert</h2>
+            <p>
+              Un bloqueur d’applications n’est ni un tableau de bord de productivité ni un outil de rapport. Il fait
+              une seule chose : il se place entre vous et une app au moment précis où vous la cherchez. Le reste —
+              graphiques, séries, scores — est du commentaire.
+            </p>
+            <p>
+              Ceux qui en ont besoin manquent rarement de volonté. Leur main arrive sur l’app avant la décision. On
+              déverrouille pour regarder l’heure, et quarante minutes plus tard on est encore dans un fil qu’on n’a
+              jamais choisi d’ouvrir. Ce n’est pas un échec de caractère : c’est un geste répété des milliers de
+              fois, jusqu’à ne plus exiger la moindre décision.
+            </p>
+            <p>
+              Un bloqueur justifie sa place s’il interrompt ce geste-là. S’il se contente de le raconter après coup,
+              il arrive trop tard.
+            </p>
+          </section>
+
+          <section id="apple">
+            <h2>2. Ce qu’Apple autorise vraiment</h2>
+            <p>
+              Sur iPhone, il existe une seule voie légitime : le cadre <strong>Family Controls</strong> d’Apple,
+              accompagné de <em>ManagedSettings</em> et <em>DeviceActivity</em>. C’est la mécanique du Temps
+              d’écran, ouverte aux apps tierces depuis iOS 16. Tout bloqueur qui bloque réellement sur iPhone
+              l’utilise — il n’existe pas d’autre moyen pris en charge, et le reste échouerait en silence ou ne
+              passerait jamais la revue de l’App Store.
+            </p>
+            <p>Cette fondation accorde quatre choses, et en retient une importante.</p>
+            <div class="a-cards">
+              <div class="a-card">
+                <span class="a-card__tag">Accordé</span>
+                <h3>Un bouclier système</h3>
+                <p>iOS refuse lui-même d’ouvrir l’app et affiche un écran de blocage. L’app ne se lance pas, donc elle ne peut pas négocier.</p>
+              </div>
+              <div class="a-card">
+                <span class="a-card__tag">Accordé</span>
+                <h3>Le sélecteur d’Apple</h3>
+                <p>Vous choisissez apps et catégories dans une fenêtre dessinée par iOS, pas par le bloqueur.</p>
+              </div>
+              <div class="a-card">
+                <span class="a-card__tag">Accordé</span>
+                <h3>Horaires et seuils</h3>
+                <p>Le système surveille une plage de temps ou un seuil d’usage et prévient l’app quand il est franchi.</p>
+              </div>
+              <div class="a-card">
+                <span class="a-card__tag">Refusé</span>
+                <h3>Le nom de vos apps</h3>
+                <p>La sélection revient sous forme de jetons opaques. Le bloqueur connaît le nombre d’apps choisies. Jamais lesquelles.</p>
+              </div>
+            </div>
+            <p>
+              C’est le point que presque tout le monde ignore, et il mérite d’être dit franchement :
+              <strong>Relock ne peut pas lire la liste des apps que vous avez bloquées.</strong> Apple remet des
+              références scellées que seul iOS sait résoudre. Elles restent dans le groupe d’apps iOS que lisent les
+              extensions de blocage, et ne vont nulle part ailleurs.
+            </p>
+            <p>
+              Conséquence pratique : l’autorisation compte plus que tout le reste. L’accès au Temps d’écran
+              s’accorde une fois par appareil et ne suit pas votre compte — un nouvel iPhone, ou une
+              réinstallation, oblige à la redonner. Tant qu’elle n’affiche pas <em>Accordé</em>, un bloqueur peut
+              montrer de belles règles et n’en appliquer aucune. Le
+              <a href="../help/#demarrer">centre d’aide explique comment la vérifier et la réparer</a>.
+            </p>
+          </section>
+
+          <section id="regles">
+            <h2>3. Les trois types de blocage, et quand choisir lequel</h2>
+            <p>
+              Une règle Relock, c’est une sélection d’apps plus un mécanisme. Le mécanisme est la partie
+              intéressante : c’est lui qui décide de ce qui se passe dans les deux secondes après le tap.
+            </p>
+            <div class="legal-table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Type</th><th>Ce qu’il fait</th><th>Idéal pour</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Délai progressif</td>
+                    <td>Un écran d’attente précède l’ouverture, et il s’allonge à chaque ouverture sur la même période.</td>
+                    <td>L’ouverture réflexe — celle que vous n’avez pas décidée.</td>
+                  </tr>
+                  <tr>
+                    <td>Plages horaires</td>
+                    <td>Les apps sont indisponibles pendant les heures que vous fixez, par exemple 22 h – 8 h.</td>
+                    <td>Protéger le sommeil, les matins ou les heures de travail.</td>
+                  </tr>
+                  <tr>
+                    <td>Limite d’ouvertures</td>
+                    <td>Un nombre maximal d’ouvertures par jour. Passé la limite, l’app ne s’ouvre plus jusqu’au lendemain.</td>
+                    <td>Garder une app dans sa vie sans lui laisser la journée.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Plusieurs règles peuvent tourner ensemble : la plus stricte applicable à cet instant l’emporte. Une
+              plage horaire pour la nuit et un délai progressif pour la journée forment un duo courant — la nuit ne
+              se négocie pas, la journée si.
+            </p>
+            <h3>Pourquoi le délai grandit</h3>
+            <p>
+              Un délai fixe cesse d’agir au bout d’une semaine : on apprend sa durée, on l’attend, il devient un
+              péage. Un délai qui s’allonge à chaque ouverture de la même période se comporte autrement. La première
+              ouverture de l’après-midi ne coûte presque rien — c’est juste, elle est peut-être celle que vous
+              vouliez. La cinquième coûte assez pour vous faire remarquer que vous en êtes à la cinquième. La règle
+              ne vous punit pas : elle vous montre un chiffre que vous n’auriez jamais vu.
+            </p>
+            <h3>Pourquoi la limite compte des ouvertures, pas des minutes</h3>
+            <p>
+              Les limites du Temps d’écran d’Apple comptent du temps. C’est l’unité évidente, et pour l’ouverture
+              compulsive c’est la mauvaise. Trente minutes passées délibérément dans une app sont un choix. Trente
+              vérifications de quinze secondes sont une habitude, et elles coûtent bien plus de quinze minutes une
+              fois compté ce qu’il faut d’attention pour revenir à chaque fois. Compter les ouvertures mesure ce que
+              vous voulez réellement changer.
+            </p>
+          </section>
+
+          <section id="friction">
+            <h2>4. Pourquoi un délai vaut mieux qu’un mur</h2>
+            <p>
+              Le bloqueur le plus dur n’est pas le plus efficace. Un mur produit une séquence prévisible :
+              frustration, contournement, désinstallation. Les gens désactivent le bloqueur le soir précis où ils en
+              avaient besoin, et l’outil finit par leur apprendre à passer à côté.
+            </p>
+            <p>
+              La friction agit autrement. Quand un délai progressif se déclenche, Relock ne refuse pas simplement.
+              Il demande <strong>« Qu’est-ce que tu cherches vraiment? »</strong> et décompte. À la fin du décompte,
+              vous pouvez toujours choisir <em>Ouvrir quand même</em>.
+            </p>
+            <div class="legal-callout">
+              <p>
+                Ce bouton n’est pas une faiblesse de conception : c’est la conception. Un geste automatique devient
+                une décision à l’instant où quelqu’un doit le poser consciemment — et la réponse honnête à la
+                question est le plus souvent « rien de particulier », ce qui suffit à reposer le téléphone. Un
+                bloqueur qui retire le choix ne vous apprend rien sur votre propre habitude.
+              </p>
+            </div>
+            <p>
+              C’est toute la différence entre bloquer et interrompre. Bloquer gère votre comportement à votre place.
+              Interrompre vous le rend, au seul moment où vous pouvez encore en faire quelque chose.
+            </p>
+          </section>
+
+          <section id="strict">
+            <h2>5. Mode strict, protection anti-désinstallation et sortie de secours</h2>
+            <p>
+              Certains engagements méritent d’être non négociables : c’est le mode strict. Une règle marquée stricte
+              ne peut pas être arrêtée avant sa fin — ni pause, ni <em>Ouvrir quand même</em>, ni modification pour
+              la raccourcir. On l’active quand on veut que son futur soi n’ait pas voix au chapitre.
+            </p>
+            <p>
+              La <strong>protection anti-désinstallation</strong> ferme le contournement le plus évident. Tant
+              qu’elle est active et qu’un blocage tourne, iOS refuse de supprimer des apps — Relock compris. Une
+              limite qu’on retire en gardant le doigt deux secondes sur une icône ne protège rien.
+            </p>
+            <p>
+              Reste la porte qui doit exister. Une protection <em>impossible</em> à lever devient un piège le jour où
+              la vraie vie l’exige : un entretien, une urgence médicale, un vol à prendre avec l’app de la compagnie
+              bloquée par catégorie. Une app qui prend un téléphone en otage n’est plus un outil.
+            </p>
+            <div class="legal-callout">
+              <p>
+                Le <strong>déblocage d’urgence</strong> existe donc, il lève tout immédiatement, et il coûte vos
+                règles : il les supprime au lieu de les suspendre, et vous y avez droit une fois par semaine. Les
+                deux moitiés de ce prix sont délibérées. La suppression empêche un blocage suspendu de se réarmer
+                discrètement une heure plus tard, et la limite hebdomadaire empêche la sortie de secours de devenir
+                le bouton d’arrêt.
+              </p>
+            </div>
+          </section>
+
+          <section id="limites">
+            <h2>6. Ce qu’aucun bloqueur ne peut faire sur iPhone</h2>
+            <p>
+              Des limites honnêtes sont plus utiles qu’une liste de fonctionnalités, et la plupart valent pour tous
+              les bloqueurs iOS, pas seulement pour Relock.
+            </p>
+            <ul>
+              <li><strong>Une catégorie n’est pas une liste.</strong> Bloquer « Réseaux sociaux » bloque ce qu’Apple classe ainsi. Une app que vous croyiez dedans peut ne pas y être. Si une seule app continue de s’ouvrir, ajoutez-la explicitement plutôt que de faire confiance à sa catégorie.</li>
+              <li><strong>Le web est une autre porte.</strong> Bloquer une app ne bloque pas le même service dans un navigateur. Bloquer aussi le navigateur est la solution honnête, avec son propre coût.</li>
+              <li><strong>L’autorisation est par appareil.</strong> L’accès au Temps d’écran ne suit pas votre compte. Nouveau téléphone ou réinstallation : à redonner. Vos règles reviennent, pas l’autorisation.</li>
+              <li><strong>Le bouclier peut traîner.</strong> L’écran de blocage est une extension système distincte et peut rester visible un instant après la fin d’une règle. Fermer l’app depuis le sélecteur d’apps règle le cas.</li>
+              <li><strong>Ce n’est pas un dispositif critique.</strong> Un blocage peut être retardé ou interrompu par un redémarrage, une mise à jour, un changement d’autorisation ou une limite système. Ne construisez rien sur l’hypothèse qu’un blocage tiendra toujours.</li>
+            </ul>
+            <p>
+              Un bloqueur qui ne mentionne aucune de ces réserves n’utilise pas Family Controls, ou ne vous dit pas
+              la vérité sur ce qu’il fait.
+            </p>
+          </section>
+
+          <section id="confidentialite">
+            <h2>7. Ce que Relock voit, et ne voit pas</h2>
+            <p>
+              Bloquer des apps demande une autorisation puissante : il est légitime de demander ce que l’app en
+              fait. En résumé, beaucoup moins qu’on ne l’imagine, parce qu’Apple l’a structuré ainsi.
+            </p>
+            <ul>
+              <li>Votre sélection arrive sous forme de jetons opaques. Relock en connaît le nombre, pas les noms, et les jetons restent dans le groupe d’apps iOS utilisé pour appliquer les règles.</li>
+              <li>Le flux de blocage ne lit ni messages, ni photos, ni contenus de pages, ni frappes dans les apps restreintes.</li>
+              <li>Vos mesures d’usage ne quittent jamais l’iPhone. Apple ne les remet pas à Relock : le score affiché sur l’accueil est calculé sur l’appareil par une extension système, et seul le résultat traverse.</li>
+              <li>Ce qui est stocké chez les prestataires de Relock est le matériel de compte ordinaire : profil, configuration des règles, réponses d’accueil et statistiques agrégées.</li>
+            </ul>
+            <p>
+              La <a href="../privacy/">Politique de confidentialité</a> fait foi, et les Réglages offrent aussi bien
+              un export JSON qu’une suppression de compte que vous déclenchez vous-même.
+            </p>
+          </section>
+
+          <section id="recettes">
+            <h2>8. Quatre règles à copier</h2>
+            <p>
+              La plupart des gens commencent trop strict, cassent la règle en trois jours, et concluent que les
+              bloqueurs ne marchent pas pour eux. Une règle qu’on garde bat une règle qu’on admire. Ces quatre-là
+              sont volontairement modestes.
+            </p>
+            <div class="a-cards">
+              <div class="a-card">
+                <span class="a-card__tag">Sommeil</span>
+                <h3>Plage horaire, 22 h – 8 h</h3>
+                <p>Les fils seulement. Rien dont vous pourriez avoir réellement besoin à 3 h. C’est la règle qui a le plus de chances de survivre un mois.</p>
+              </div>
+              <div class="a-card">
+                <span class="a-card__tag">Concentration</span>
+                <h3>Plage sur les heures de travail</h3>
+                <p>Réglez-la sur les heures où vous travaillez déjà, pas sur celles où vous aimeriez travailler. Une règle qui contredit l’agenda perd.</p>
+              </div>
+              <div class="a-card">
+                <span class="a-card__tag">Quotidien</span>
+                <h3>Délai progressif, toute la journée</h3>
+                <p>Celle du réflexe. Elle ne coûte rien sur les ouvertures voulues et monte sur les autres.</p>
+              </div>
+              <div class="a-card">
+                <span class="a-card__tag">Une app tenace</span>
+                <h3>Limite d’ouvertures</h3>
+                <p>Choisissez l’app qui vous prend le plus et plafonnez les ouvertures. Gardez l’app; plafonnez le geste.</p>
+              </div>
+            </div>
+            <p>
+              Commencez par une seule. N’ajoutez la deuxième qu’une fois que la première a cessé d’être une
+              négociation. Si vous n’êtes pas sûr qu’un bloqueur soit le bon point de départ, le
+              <a href="../reduire-son-temps-decran/">guide pour réduire son temps d’écran sur iPhone</a> détaille
+              ce qu’il faut essayer avant.
+            </p>
+          </section>
+
+          <section id="faq">
+            <h2>9. Questions fréquentes</h2>
+            <div class="p-faq">
+              <details>
+                <summary>Un bloqueur d’applications peut-il vraiment bloquer des apps sur iPhone?</summary>
+                <p>Oui, lorsqu’il utilise le cadre Family Controls d’Apple. iOS refuse lui-même d’ouvrir l’app et affiche un écran de blocage : l’app ne se lance pas. Cela demande iOS 16 ou plus récent et une autorisation, l’accès au Temps d’écran, à accorder sur chaque appareil.</p>
+              </details>
+              <details>
+                <summary>Quelle différence avec les limites du Temps d’écran d’Apple?</summary>
+                <p>C’est bâti sur le même système, mais un bloqueur peut faire ce que les limites intégrées ne font pas : compter des ouvertures plutôt que des minutes, poser un délai croissant devant une app au lieu d’une coupure binaire, et rendre une règle réellement difficile à lever une fois posée. Les limites d’Apple sont gratuites et méritent d’être essayées d’abord.</p>
+              </details>
+              <details>
+                <summary>Relock voit-il quelles apps j’ai bloquées?</summary>
+                <p>Non. Apple renvoie des jetons de sélection opaques plutôt que des noms d’apps : Relock sait combien d’apps vous avez choisies, jamais lesquelles. Ces jetons restent dans le groupe d’apps iOS utilisé pour appliquer les règles.</p>
+              </details>
+              <details>
+                <summary>Puis-je bloquer des apps uniquement à certaines heures?</summary>
+                <p>Oui. Une règle à plage horaire rend les apps choisies indisponibles pendant les heures que vous fixez, par exemple 22 h – 8 h. Plusieurs règles peuvent tourner ensemble, et la plus stricte applicable à cet instant l’emporte.</p>
+              </details>
+              <details>
+                <summary>Puis-je arrêter un blocage une fois commencé?</summary>
+                <p>Une règle ordinaire se modifie, se suspend ou se supprime à tout moment. Une règle marquée stricte ne peut pas être arrêtée avant sa fin — c’est précisément ce qu’on choisit en la marquant ainsi. Le déblocage d’urgence lève tout immédiatement, une fois par semaine, et supprime vos règles au passage.</p>
+              </details>
+              <details>
+                <summary>Relock fonctionne-t-il sur iPad ou Android?</summary>
+                <p>Non. Relock fonctionne uniquement sur iPhone, sous iOS 16 ou version ultérieure. Family Controls n’existe que sur les plateformes Apple, et il n’y a pas de version iPad, Mac, Android ni web.</p>
+              </details>
+              <details>
+                <summary>Relock est-il disponible au Canada et aux États-Unis?</summary>
+                <p>Relock arrive sur l’App Store au Canada et aux États-Unis, et n’est pas encore publié. Vous pouvez demander un accès anticipé en écrivant à contact@getrelock.com.</p>
+              </details>
+            </div>
+          </section>
+
+          <section id="commencer">
+            <div class="a-cta">
+              <h2>Placez la pause là où est le réflexe</h2>
+              <p>
+                Relock est un bloqueur d’applications iPhone bâti sur le Temps d’écran d’Apple, pour les ouvertures
+                que vous n’avez pas décidées. L’app n’est pas encore sur l’App Store : l’accès anticipé se demande
+                par courriel pendant que la première version se termine.
+              </p>
+              <a class="rl-button" href="mailto:contact@getrelock.com?subject=Acc%C3%A8s%20anticip%C3%A9%20%C3%A0%20Relock">Demander un accès anticipé</a>
+              <p class="a-note">iPhone, iOS 16 ou version ultérieure. Canada et États-Unis au lancement.</p>
+            </div>
+
+            <h2>À lire ensuite</h2>
+            <div class="a-related">
+              <a href="../reduire-son-temps-decran/">Réduire son temps d’écran sur iPhone<span>Ce qu’il faut essayer avant d’installer quoi que ce soit, et quand la friction devient la pièce manquante.</span></a>
+              <a href="../arreter-le-doomscrolling/">Arrêter le doomscrolling<span>Pourquoi un fil infini ne propose jamais de point d’arrêt.</span></a>
+              <a href="../help/">Centre d’aide Relock<span>Autorisation Temps d’écran, création de règles, et blocage qui ne s’applique pas.</span></a>
+            </div>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="rl-footer">
+      <div class="rl-shell">
+        <div class="rl-footer__grid">
+          <div><a class="rl-brand" href="../"><span>Relock</span></a><p>Faites de la place à ce que vous vouliez vraiment faire.</p></div>
+          <div><h2>Comprendre</h2><a href="./">Bloqueur d’applications iPhone</a><a href="../reduire-son-temps-decran/">Réduire son temps d’écran</a><a href="../arreter-le-doomscrolling/">Arrêter le doomscrolling</a></div>
+          <div><h2>Mentions juridiques</h2><a href="../privacy/">Politique de confidentialité</a><a href="../terms/">Conditions d’utilisation</a></div>
+          <div><h2>Entreprise</h2><a href="../help/">Centre d’aide</a><a href="mailto:contact@getrelock.com">Assistance</a><details class="rl-language"><summary>Langue</summary><div class="rl-language__options"><a href="../../iphone-app-blocker/" lang="en" hreflang="en">English</a><a href="./" lang="fr" hreflang="fr" aria-current="page">Français</a></div></details></div>
+        </div>
+        <div class="rl-footer__bottom"><span>© 2026 YATECH. Tous droits réservés.</span><span>1187C, rue Jogues, Drummondville (Québec) J2B 4X8, Canada</span></div>
+      </div>
+    </footer>
+    <script src="../../menu.js" defer></script>
+  </body>
+</html>

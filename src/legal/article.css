@@ -1,0 +1,211 @@
+/* Pages éditoriales — le guide central sur le blocage d'apps et les deux
+ * guides pratiques.
+ *
+ * Elles réutilisent volontairement `legal.css` : la mise en page à sommaire
+ * collant y est déjà résolue, testée sur mobile, et donne au site un seul
+ * registre de lecture long. Ce fichier n'ajoute que ce qui manque à un guide
+ * et qu'un document juridique n'a pas : la réponse directe en tête de page,
+ * les cartes de comparaison, la FAQ dépliante et l'appel à l'action final.
+ */
+
+/* Le hero des guides s'aligne à gauche, comme la colonne de lecture en dessous.
+   `styles.css` (l'ancienne feuille, dont il ne reste que la base) impose encore
+   `text-align: center` à `.legal-hero`, ce qui centrait le titre et le chapeau
+   tout en laissant la ligne de méta alignée à gauche — une demi-symétrie qui se
+   voit. On la corrige ici seulement, pour ne pas déplacer les pages légales
+   existantes, qui sortent du périmètre de ce chantier. */
+.article-page .legal-hero {
+  text-align: left;
+}
+
+.article-page .legal-hero h1 {
+  max-width: 20ch;
+  font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+}
+
+.article-page .legal-hero__lede {
+  max-width: 62ch;
+  margin: 26px 0 0;
+  color: #b8b6c2;
+  font-size: 1.06rem;
+  line-height: 1.68;
+  text-wrap: pretty;
+}
+
+/* La réponse directe.
+ *
+ * Une requête « how to … » attend une réponse, pas une introduction. Ce bloc
+ * la donne en trois ou quatre phrases, avant toute mise en contexte : c'est ce
+ * que lit quelqu'un de pressé, et c'est le passage qu'un moteur peut citer
+ * sans avoir à recomposer la page. */
+.a-answer {
+  margin: 0 0 44px;
+  padding: 28px 30px;
+  border: 1px solid rgb(167 139 250 / 24%);
+  border-radius: 22px;
+  background: rgb(115 87 220 / 9%);
+}
+
+.a-answer h2 {
+  margin: 0 0 14px !important;
+  font-size: 1.12rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase;
+  color: #cbc5df !important;
+}
+
+.a-answer p:last-child {
+  margin-bottom: 0;
+}
+
+/* Cartes de comparaison — les trois types de règles, les options natives. */
+.a-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.a-card {
+  padding: 24px 22px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 3%);
+}
+
+.a-card h3 {
+  margin: 0 0 10px !important;
+  font-size: 1.02rem !important;
+}
+
+.a-card p {
+  margin: 0 !important;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.a-card__tag {
+  display: block;
+  margin-bottom: 12px;
+  color: #a78bfa;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* FAQ dépliante. Le conteneur porte la classe `p-faq` sur toutes les pages du
+   site : c'est le point d'ancrage que sync-head.mjs lit pour construire le
+   balisage FAQPage à partir du texte réellement visible. */
+.article-page .p-faq {
+  margin: 8px 0 0;
+}
+
+.article-page .p-faq details {
+  border-bottom: 1px solid rgb(255 255 255 / 9%);
+}
+
+.article-page .p-faq summary {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  color: #f5f3fb;
+  cursor: pointer;
+  font-weight: 650;
+  line-height: 1.4;
+  list-style: none;
+}
+
+.article-page .p-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.article-page .p-faq summary::after {
+  content: "+";
+  flex: none;
+  color: #a78bfa;
+  font-size: 1.2rem;
+  font-weight: 450;
+}
+
+.article-page .p-faq details[open] summary::after {
+  content: "−";
+}
+
+.article-page .p-faq details p {
+  margin: -2px 0 24px;
+}
+
+/* Appel à l'action de fin de page. Un seul, en bas, après la réponse : la page
+   doit rester utile à quelqu'un qui n'installera jamais Relock. */
+.a-cta {
+  margin-top: 8px;
+  padding: 34px;
+  border: 1px solid rgb(167 139 250 / 22%);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 18% 0, rgb(167 139 250 / 14%), transparent 22rem),
+    rgb(255 255 255 / 3%);
+}
+
+.a-cta h2 {
+  margin: 0 0 12px !important;
+  font-size: clamp(1.5rem, 3vw, 2rem) !important;
+}
+
+.a-cta p {
+  max-width: 54ch;
+}
+
+.a-cta .rl-button {
+  margin-top: 6px;
+}
+
+.a-note {
+  color: #9694a4 !important;
+  font-size: 0.88rem;
+}
+
+/* Lecture connexe — le maillage sortant de chaque page. */
+.a-related {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.a-related a {
+  display: block;
+  padding: 20px 22px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 18px;
+  color: #e2dfeb !important;
+  font-weight: 600;
+  line-height: 1.45;
+  text-decoration: none !important;
+  transition-property: border-color, background-color;
+  transition-duration: 170ms;
+}
+
+.a-related a:hover,
+.a-related a:focus-visible {
+  border-color: rgb(167 139 250 / 34%);
+  background: rgb(255 255 255 / 5%);
+}
+
+.a-related span {
+  display: block;
+  margin-top: 7px;
+  color: #9694a4;
+  font-size: 0.86rem;
+  font-weight: 400;
+}
+
+@media (max-width: 560px) {
+  .a-answer,
+  .a-cta {
+    padding: 22px 20px;
+  }
+}

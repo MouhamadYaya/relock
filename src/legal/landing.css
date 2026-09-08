@@ -654,3 +654,48 @@
     padding: 100px 0 54px;
   }
 }
+
+/* Passerelles éditoriales — les trois pages de fond (bloqueur d'apps, temps
+   d'écran, doomscrolling). Volontairement sobres : ce sont des liens de
+   lecture, pas un troisième bouton d'appel à l'action, et le hero doit rester
+   le seul endroit où l'œil trouve une action. */
+.p-explore {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.p-explore a {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 30px 28px;
+  border: 1px solid var(--hairline);
+  border-radius: 24px;
+  background: rgb(255 255 255 / 3%);
+  transition-property: border-color, background-color, transform;
+  transition-duration: 180ms;
+}
+
+.p-explore a:hover,
+.p-explore a:focus-visible {
+  border-color: rgb(167 139 250 / 34%);
+  background: rgb(255 255 255 / 6%);
+  transform: translateY(-2px);
+}
+
+.p-explore h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.12rem;
+  line-height: 1.28;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.p-explore p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.93rem;
+  line-height: 1.62;
+}

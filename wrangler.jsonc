@@ -13,7 +13,12 @@
     "directory": "./src/legal",
     // `./privacy/` → `privacy/index.html`, et redirection depuis `./privacy`.
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "none"
+    // Sert `404.html` avec un vrai statut HTTP 404. Cloudflare remonte
+    // l'arborescence depuis le chemin demandé : une adresse morte sous `/fr/`
+    // reçoit donc `fr/404.html`, en français, et le reste du site `404.html`.
+    // Avec "none", une adresse inconnue renvoyait la page d'erreur brute de
+    // Cloudflare — un cul-de-sac sans lien de retour.
+    "not_found_handling": "404-page"
   },
   // Garde l'URL *.workers.dev vivante en filet de sécurité : déclarer `routes`
   // la désactive silencieusement par défaut, ce qui met le site hors ligne.

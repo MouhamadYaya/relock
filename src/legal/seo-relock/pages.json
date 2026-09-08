@@ -1,0 +1,233 @@
+{
+  "origin": "https://getrelock.com",
+  "siteName": "Relock",
+  "contentDate": "2026-09-07",
+  "_comment": [
+    "Source de vérité unique du SEO du site public.",
+    "Alimente trois outils : sync-head.mjs (balises <head>), build-sitemap.mjs",
+    "(sitemap.xml) et verify.mjs (contrôles). Ajouter une page ICI, pas ailleurs :",
+    "une page absente de ce fichier est signalée comme orpheline par verify.mjs.",
+    "",
+    "`pair` relie les deux versions linguistiques d'une même page — c'est lui qui",
+    "produit les hreflang réciproques. `schema` liste les blocs JSON-LD à générer."
+  ],
+  "pages": [
+    {
+      "pair": "home",
+      "en": {
+        "path": "/",
+        "file": "index.html",
+        "title": "Relock — iPhone App Blocker to Reduce Screen Time",
+        "description": "Relock is an iPhone app blocker built on Apple Screen Time. Block distracting apps, put a pause in front of the reflex, and reduce screen time without deleting the apps you still want.",
+        "ogImageAlt": "Relock — an iPhone app blocker for apps you open without deciding to.",
+        "schema": [
+          "website",
+          "organization",
+          "software",
+          "faq"
+        ],
+        "priority": "1.0"
+      },
+      "fr": {
+        "path": "/fr/",
+        "file": "fr/index.html",
+        "title": "Relock — Bloqueur d’applications iPhone pour réduire le temps d’écran",
+        "description": "Relock est un bloqueur d’applications iPhone bâti sur le Temps d’écran d’Apple. Bloquez les applications distrayantes, placez une pause devant le réflexe et réduisez votre temps d’écran sans supprimer vos apps.",
+        "ogImageAlt": "Relock — un bloqueur d’applications iPhone pour les ouvertures qu’on n’a pas décidées.",
+        "schema": [
+          "website",
+          "organization",
+          "software",
+          "faq"
+        ],
+        "priority": "1.0"
+      }
+    },
+    {
+      "pair": "app-blocker",
+      "en": {
+        "path": "/iphone-app-blocker/",
+        "file": "iphone-app-blocker/index.html",
+        "title": "iPhone App Blocker: How Relock Blocks Distracting Apps",
+        "description": "What an iPhone app blocker can and cannot do, what Apple Screen Time allows, and how Relock's three rule types — progressive delay, time windows and daily open limits — hold a boundary.",
+        "ogImageAlt": "Relock — an iPhone app blocker built on Apple Screen Time.",
+        "schema": [
+          "software",
+          "breadcrumb",
+          "faq"
+        ],
+        "priority": "0.9",
+        "breadcrumb": "iPhone app blocker"
+      },
+      "fr": {
+        "path": "/fr/bloqueur-dapplications-iphone/",
+        "file": "fr/bloqueur-dapplications-iphone/index.html",
+        "title": "Bloqueur d’applications iPhone : comment Relock bloque les apps distrayantes",
+        "description": "Ce qu’un bloqueur d’applications iPhone peut et ne peut pas faire, ce que le Temps d’écran d’Apple autorise, et comment les trois types de règles de Relock tiennent une limite.",
+        "ogImageAlt": "Relock — un bloqueur d’applications iPhone bâti sur le Temps d’écran d’Apple.",
+        "schema": [
+          "software",
+          "breadcrumb",
+          "faq"
+        ],
+        "priority": "0.9",
+        "breadcrumb": "Bloqueur d’applications iPhone"
+      }
+    },
+    {
+      "pair": "reduce-screen-time",
+      "en": {
+        "path": "/reduce-screen-time/",
+        "file": "reduce-screen-time/index.html",
+        "title": "How to Reduce Screen Time on iPhone (Without Relying on Willpower)",
+        "description": "A practical guide to reducing screen time on iPhone: measure what you actually do, remove the triggers, use Apple's own Screen Time limits, and add friction when those limits stop working.",
+        "ogImageAlt": "Relock — reducing iPhone screen time by making app opening deliberate.",
+        "schema": [
+          "article",
+          "breadcrumb",
+          "faq"
+        ],
+        "priority": "0.8",
+        "breadcrumb": "Reduce screen time"
+      },
+      "fr": {
+        "path": "/fr/reduire-son-temps-decran/",
+        "file": "fr/reduire-son-temps-decran/index.html",
+        "title": "Comment réduire son temps d’écran sur iPhone (sans compter sur la volonté)",
+        "description": "Un guide concret pour réduire son temps d’écran sur iPhone : mesurer d’abord, retirer les déclencheurs, utiliser les limites du Temps d’écran d’Apple, puis ajouter de la friction quand elles ne suffisent plus.",
+        "ogImageAlt": "Relock — réduire son temps d’écran iPhone en rendant l’ouverture délibérée.",
+        "schema": [
+          "article",
+          "breadcrumb",
+          "faq"
+        ],
+        "priority": "0.8",
+        "breadcrumb": "Réduire son temps d’écran"
+      }
+    },
+    {
+      "pair": "doomscrolling",
+      "en": {
+        "path": "/stop-doomscrolling/",
+        "file": "stop-doomscrolling/index.html",
+        "title": "How to Stop Doomscrolling on Your iPhone",
+        "description": "Doomscrolling is a habit loop, not a diagnosis. What sets it off, why an infinite feed never gives you a stopping point, and the practical ways to interrupt it on an iPhone.",
+        "ogImageAlt": "Relock — interrupting a scroll before it takes the evening.",
+        "schema": [
+          "article",
+          "breadcrumb",
+          "faq"
+        ],
+        "priority": "0.8",
+        "breadcrumb": "Stop doomscrolling"
+      },
+      "fr": {
+        "path": "/fr/arreter-le-doomscrolling/",
+        "file": "fr/arreter-le-doomscrolling/index.html",
+        "title": "Comment arrêter le doomscrolling sur iPhone",
+        "description": "Le doomscrolling est une boucle d’habitude, pas un diagnostic. Ce qui le déclenche, pourquoi un fil infini ne propose jamais d’arrêt, et les moyens concrets de l’interrompre sur iPhone.",
+        "ogImageAlt": "Relock — interrompre un défilement avant qu’il prenne la soirée.",
+        "schema": [
+          "article",
+          "breadcrumb",
+          "faq"
+        ],
+        "priority": "0.8",
+        "breadcrumb": "Arrêter le doomscrolling"
+      }
+    },
+    {
+      "pair": "help",
+      "en": {
+        "path": "/help/",
+        "file": "help/index.html",
+        "title": "Relock Help Centre — Screen Time Access, Rules and Troubleshooting",
+        "description": "Set up Screen Time access, build a blocking rule, fix a block that is not applying, understand strict mode and the emergency unlock, and manage your subscription and your data.",
+        "ogImageAlt": "Relock help centre.",
+        "schema": [
+          "breadcrumb"
+        ],
+        "priority": "0.7",
+        "breadcrumb": "Help centre"
+      },
+      "fr": {
+        "path": "/fr/help/",
+        "file": "fr/help/index.html",
+        "title": "Centre d’aide Relock — Temps d’écran, règles et dépannage",
+        "description": "Autoriser le Temps d’écran, créer une règle de blocage, réparer un blocage qui ne s’applique pas, comprendre le mode strict et le déblocage d’urgence, gérer votre abonnement et vos données.",
+        "ogImageAlt": "Centre d’aide Relock.",
+        "schema": [
+          "breadcrumb"
+        ],
+        "priority": "0.7",
+        "breadcrumb": "Centre d’aide"
+      }
+    },
+    {
+      "pair": "privacy",
+      "en": {
+        "path": "/privacy/",
+        "file": "privacy/index.html",
+        "title": "Privacy Policy | Relock",
+        "description": "What Relock collects, what never leaves your iPhone, which providers hold data on our behalf, and how to export or delete everything yourself.",
+        "ogImageAlt": "Relock privacy policy.",
+        "schema": [
+          "breadcrumb"
+        ],
+        "priority": "0.4",
+        "breadcrumb": "Privacy Policy"
+      },
+      "fr": {
+        "path": "/fr/privacy/",
+        "file": "fr/privacy/index.html",
+        "title": "Politique de confidentialité | Relock",
+        "description": "Ce que Relock collecte, ce qui ne quitte jamais votre iPhone, quels prestataires détiennent des données pour nous, et comment tout exporter ou supprimer vous-même.",
+        "ogImageAlt": "Politique de confidentialité de Relock.",
+        "schema": [
+          "breadcrumb"
+        ],
+        "priority": "0.4",
+        "breadcrumb": "Politique de confidentialité"
+      }
+    },
+    {
+      "pair": "terms",
+      "en": {
+        "path": "/terms/",
+        "file": "terms/index.html",
+        "title": "Terms of Service | Relock",
+        "description": "The terms that govern your use of the Relock app and this website: eligibility, subscriptions billed by Apple, acceptable use, and the limits of what Relock promises.",
+        "ogImageAlt": "Relock terms of service.",
+        "schema": [
+          "breadcrumb"
+        ],
+        "priority": "0.4",
+        "breadcrumb": "Terms of Service"
+      },
+      "fr": {
+        "path": "/fr/terms/",
+        "file": "fr/terms/index.html",
+        "title": "Conditions d’utilisation | Relock",
+        "description": "Les conditions qui encadrent l’usage de l’application Relock et de ce site : admissibilité, abonnements facturés par Apple, usage acceptable et limites de ce que Relock promet.",
+        "ogImageAlt": "Conditions d’utilisation de Relock.",
+        "schema": [
+          "breadcrumb"
+        ],
+        "priority": "0.4",
+        "breadcrumb": "Conditions d’utilisation"
+      }
+    }
+  ],
+  "noindex": [
+    {
+      "file": "404.html",
+      "lang": "en",
+      "title": "Page not found | Relock"
+    },
+    {
+      "file": "fr/404.html",
+      "lang": "fr",
+      "title": "Page introuvable | Relock"
+    }
+  ]
+}

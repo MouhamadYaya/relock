@@ -1,0 +1,15 @@
+{
+  "name": "Relock",
+  "short_name": "Relock",
+  "description": "An iPhone app blocker built on Apple Screen Time, for the apps you open without deciding to.",
+  "lang": "en",
+  "start_url": "/",
+  "scope": "/",
+  "theme_color": "#05060B",
+  "background_color": "#05060B",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

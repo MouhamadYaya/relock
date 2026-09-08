@@ -42,3 +42,28 @@
   # des navigateurs est difficilement réversible et engagerait tout getrelock.com,
   # y compris de futurs sous-domaines encore inexistants.
   Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+# ---------------------------------------------------------------------------
+# Mise en cache. Par défaut, Cloudflare sert les assets statiques en
+# revalidation systématique : chaque page paie un aller-retour par police et
+# par image, même inchangées. Les règles ci-dessous ne concernent que des
+# fichiers au contenu figé.
+# ---------------------------------------------------------------------------
+
+# Les images publiées portent leur largeur dans leur nom
+# (relock-…-1440.avif) : une image modifiée est un fichier différent, jamais
+# le même octet servi autrement. Un an est donc sûr.
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Idem pour les sous-ensembles WOFF2 : régénérer une police change son nom de
+# fichier seulement si on change de graisse, et son contenu ne bouge pas
+# autrement. `crossorigin` sur le <link rel="preload"> impose le mode CORS,
+# que la même origine satisfait sans en-tête supplémentaire.
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Les feuilles de style n'ont PAS d'empreinte dans leur nom : un cache long
+# figerait le site après un déploiement. Une heure, puis revalidation.
+/*.css
+  Cache-Control: public, max-age=3600, must-revalidate
