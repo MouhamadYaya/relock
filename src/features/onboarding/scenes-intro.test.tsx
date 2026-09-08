@@ -1,18 +1,45 @@
 import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { SceneName, SceneWelcome } from '@/features/onboarding/scenes-intro'
+import { devSkipOnboarding } from '@/session/bootstrap'
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }))
 jest.mock('react-native-gesture-handler', () => ({}))
+// `IconSvg` résout un composant SVG depuis le registre d'assets, que Jest
+// remplace par un stub : c'est le rendu du glyphe qui compte à l'écran, pas
+// dans ces tests de composition.
+jest.mock('@/shared/components/ui/IconSvg', () => {
+  const React = require('react')
+  const { View } = require('react-native')
+  return { IconSvg: (props: object) => React.createElement(View, props) }
+})
 jest.mock('@/features/onboarding/motion', () => ({ Reveal: 'Reveal' }))
 jest.mock('@/features/onboarding/bits', () => ({
   Pill: 'Pill',
   GhostLink: 'GhostLink',
+  StudyLine: 'StudyLine',
+  HaloBackdrop: 'HaloBackdrop',
+}))
+// `@/session/bootstrap` importe `expo-router`, que Jest ne transforme pas.
+jest.mock('@/session/bootstrap', () => ({
+  devSkipOnboarding: jest.fn(),
 }))
 
-describe('Welcome development shortcut', () => {
+/**
+ * Les raccourcis de développement ont été RETIRÉS du parcours (2026-09-07) :
+ * « Passer (dev) » et « Paywall (dev) » vivaient sous `__DEV__`, donc absents
+ * du binaire livré — mais présents dans toute build de dev, y compris celles
+ * qu'on fait essayer autour de soi.
+ *
+ * Un seul est revenu depuis, demandé explicitement : « skip onboarding »,
+ * qui franchit les trois portes d'un coup pour atterrir dans l'app. Ces tests
+ * tiennent les trois bouts qui comptent : il n'existe QUE sous `__DEV__`, il
+ * ne fait PAS avancer le parcours écran par écran (« Continuer » reste la
+ * seule issue normale), et les deux anciens raccourcis restent partis.
+ */
+describe('Welcome step', () => {
   let renderer: ReactTestRenderer | undefined
   const runtime = globalThis as typeof globalThis & { __DEV__: boolean }
   const originalDev = __DEV__
@@ -20,58 +47,130 @@ describe('Welcome development shortcut', () => {
   afterEach(() => {
     act(() => renderer?.unmount())
     runtime.__DEV__ = originalDev
+    jest.clearAllMocks()
   })
 
-  it('skips the whole onboarding without advancing the normal journey', () => {
-    runtime.__DEV__ = true
+  const render = () => {
     const onNext = jest.fn()
-    const onSkipDev = jest.fn()
     act(() => {
-      renderer = create(<SceneWelcome onNext={onNext} onSkipDev={onSkipDev} />)
+      renderer = create(<SceneWelcome onNext={onNext} />)
     })
-    act(() => {
-      renderer!.root.findByProps({ label: 'Passer (dev)' }).props.onPress()
-    })
-    expect(onSkipDev).toHaveBeenCalledTimes(1)
-    expect(onNext).not.toHaveBeenCalled()
-  })
+    return onNext
+  }
 
-  it('jumps to the paywall chapter without advancing the normal journey', () => {
-    runtime.__DEV__ = true
-    const onNext = jest.fn()
-    const onPaywallDev = jest.fn()
-    act(() => {
-      renderer = create(
-        <SceneWelcome onNext={onNext} onPaywallDev={onPaywallDev} />,
-      )
-    })
-    act(() => {
-      renderer!.root.findByProps({ label: 'Paywall (dev)' }).props.onPress()
-    })
-    expect(onPaywallDev).toHaveBeenCalledTimes(1)
-    expect(onNext).not.toHaveBeenCalled()
-  })
-
-  it('never shows the shortcut in production, even with a callback', () => {
-    runtime.__DEV__ = false
-    act(() => {
-      renderer = create(
-        <SceneWelcome
-          onNext={jest.fn()}
-          onSkipDev={jest.fn()}
-          onPaywallDev={jest.fn()}
-        />,
-      )
-    })
-    expect(
-      renderer!.root.findAllByProps({ label: 'Passer (dev)' }),
-    ).toHaveLength(0)
-    expect(
-      renderer!.root.findAllByProps({ label: 'Paywall (dev)' }),
-    ).toHaveLength(0)
-    expect(renderer!.root.findAllByProps({ label: 'Commencer' })).toHaveLength(
+  it('offers a single way forward', () => {
+    const onNext = render()
+    expect(renderer!.root.findAllByProps({ label: 'Continuer' })).toHaveLength(
       1,
     )
+    act(() => {
+      renderer!.root.findByProps({ label: 'Continuer' }).props.onPress()
+    })
+    expect(onNext).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the retired shortcuts out, even in a dev build', () => {
+    runtime.__DEV__ = true
+    render()
+    for (const label of ['Passer (dev)', 'Paywall (dev)']) {
+      expect(renderer!.root.findAllByProps({ label })).toHaveLength(0)
+    }
+  })
+
+  it('offers the onboarding skip in a dev build, without stepping the flow', () => {
+    runtime.__DEV__ = true
+    const onNext = render()
+    const skip = renderer!.root.findAllByProps({
+      testID: 'dev-skip-onboarding',
+    })
+    expect(skip.length).toBeGreaterThan(0)
+    act(() => skip[0].props.onPress())
+    expect(devSkipOnboarding).toHaveBeenCalledTimes(1)
+    expect(onNext).not.toHaveBeenCalled()
+  })
+
+  it('hides the onboarding skip outside a dev build', () => {
+    runtime.__DEV__ = false
+    render()
+    expect(
+      renderer!.root.findAllByProps({ testID: 'dev-skip-onboarding' }),
+    ).toHaveLength(0)
+  })
+
+  /**
+   * La pluie et le lecteur sont posés en ABSOLU sur un cadre déduit de deux
+   * mesures — la scène, puis la cale laissée à l'illustration. Tant que rien
+   * n'est mesuré, ils ne doivent pas exister : dessiner à (0, 0) le temps
+   * d'une image ferait clignoter l'illustration dans le coin de l'écran.
+   */
+  const measure = (scene: number[], stage: number[]) => {
+    // `typeof n.type === 'string'` : sans ce filtre, chaque View compte
+    // DEUX fois (le composant puis l'hôte), et l'index 1 retombe sur la
+    // scène au lieu de la cale.
+    const boxes = () =>
+      renderer!.root.findAll(
+        n =>
+          typeof n.props.onLayout === 'function' && typeof n.type === 'string',
+      )
+    act(() => {
+      boxes()[0].props.onLayout({
+        nativeEvent: {
+          layout: { x: 0, y: 0, width: scene[0], height: scene[1] },
+        },
+      })
+    })
+    act(() => {
+      boxes()[1].props.onLayout({
+        nativeEvent: {
+          layout: { x: 0, y: stage[0], width: scene[0], height: stage[1] },
+        },
+      })
+    })
+  }
+
+  it('opens the science sheet from the badge, and not before', () => {
+    render()
+    const sheet = () =>
+      renderer!.root.findAllByProps({ testID: 'science-backdrop' })
+    // Le badge AFFIRME (« soutenu par la science ») ; la feuille DÉMONTRE.
+    // Tant que personne ne l'a touché, l'écran ne porte que l'affirmation.
+    expect(sheet()).toHaveLength(0)
+    act(() =>
+      renderer!.root.findByProps({ testID: 'science-badge' }).props.onPress(),
+    )
+    expect(sheet().length).toBeGreaterThan(0)
+  })
+
+  it('draws nothing on top until the scene has been measured', () => {
+    render()
+    expect(
+      renderer!.root.findAllByProps({ testID: 'shield-rain' }),
+    ).toHaveLength(0)
+  })
+
+  it('centres the reader in the space the layout left it, without distorting it', () => {
+    render()
+    measure([390, 844], [300, 380])
+
+    expect(
+      renderer!.root.findAllByProps({ testID: 'shield-rain' }).length,
+    ).toBeGreaterThan(0)
+
+    // La `Reveal` qui porte une largeur chiffrée : c'est le cadre absolu
+    // calculé pour l'illustration (le lavis du haut est un View, pas une
+    // Reveal — il ne se révèle pas, il est déjà là).
+    const frame = renderer!.root
+      .findAll(n => String(n.type) === 'Reveal')
+      .map(n => n.props.style)
+      .find(style => typeof style?.width === 'number')
+    // 1130 × 1218 : la boîte opaque de `onboarding-welcome-hero.png`. La
+    // largeur est bornée à 72 % de l'écran (la cale de 380 pt est ici plus
+    // haute que large, c'est donc elle qui décide), la hauteur suit ce
+    // rapport — un écart ici veut dire une illustration étirée.
+    expect(frame.width).toBeCloseTo(390 * 0.72, 3)
+    expect(frame.height).toBeCloseTo((390 * 0.72 * 1218) / 1130, 3)
+    expect(frame.left).toBeCloseTo((390 - frame.width) / 2, 3)
+    expect(frame.top).toBeCloseTo(300 + (380 - frame.height) / 2, 3)
   })
 })
 

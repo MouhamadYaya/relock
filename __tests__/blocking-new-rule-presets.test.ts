@@ -1,7 +1,7 @@
 import {
   findPreset,
   NEW_RULE_PRESET_IDS,
-  NEW_RULE_PRESETS,
+  newRulePresets,
 } from '@/features/blocking/presets'
 import { isBlockingEditorType } from '@/features/blocking/types'
 
@@ -23,7 +23,7 @@ test('les 12 cartes Nouvelle règle ont un preset unique et résolvable', () => 
   const ids = Object.values(NEW_RULE_PRESET_IDS)
   expect(ids).toHaveLength(12)
   expect(new Set(ids).size).toBe(12)
-  expect(NEW_RULE_PRESETS).toHaveLength(12)
+  expect(newRulePresets()).toHaveLength(12)
   for (const id of ids) expect(findPreset(id)?.id).toBe(id)
 })
 

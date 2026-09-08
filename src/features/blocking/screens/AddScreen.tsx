@@ -41,6 +41,8 @@ import {
   hasAskedNotifPermission,
   markNotifPermissionAsked,
 } from '@/features/notifications/prefs/prefs'
+import { nativeLocale } from '@/i18n/native-locale'
+import { translate } from '@/i18n/translate'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import {
@@ -48,6 +50,7 @@ import {
   normalizeDurationMinutes,
 } from '@/shared/native/NativeDurationPicker'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
+import { requireScreenTime } from '@/shared/native/screen-time-gate'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { showErrorToast } from '@/shared/utils/toast'
@@ -128,27 +131,10 @@ const cfgNum = (value: unknown, fallback: number): number =>
 const TYPES: {
   key: TypeKey
   icon: IconName | 'range'
-  title: string
-  desc: string
 }[] = [
-  {
-    key: 'block_now',
-    icon: IconName.CLOCK,
-    title: 'Bloquer maintenant',
-    desc: 'Une fois, pour une durée choisie',
-  },
-  {
-    key: 'schedule',
-    icon: 'range',
-    title: 'Plage horaire',
-    desc: 'Bloqué tous les jours sur un créneau',
-  },
-  {
-    key: 'daily_limit',
-    icon: IconName.CHART,
-    title: 'Limite de temps',
-    desc: 'Un quota par jour, puis bloqué',
-  },
+  { key: 'block_now', icon: IconName.CLOCK },
+  { key: 'schedule', icon: 'range' },
+  { key: 'daily_limit', icon: IconName.CHART },
 ]
 
 const timeToDate = (h: number, m: number) => {
@@ -161,9 +147,12 @@ const hhmm = (d: Date) =>
 function fmtDuration(min: number): string {
   const h = Math.floor(min / 60)
   const m = min % 60
-  if (h === 0) return `${m} min`
-  if (m === 0) return `${h} h`
-  return `${h} h ${m}`
+  if (h === 0) return translate('blocking.duration.minutes', { minutes: m })
+  if (m === 0) return translate('blocking.duration.hours', { hours: h })
+  return translate('blocking.duration.hours_minutes', {
+    hours: h,
+    minutes: m,
+  })
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -210,10 +199,10 @@ function RangeGlyph({ size = 20, color }: { size?: number; color: string }) {
 // Deux questions DISTINCTES (§7) : « quels jours » et « combien de temps ».
 // Surtout pas « est-ce répétitif ? » — une plage l'est par définition, et la
 // question obligerait l'utilisateur à modéliser le système pour y répondre.
-const DAY_PRESETS: { label: string; days: number[] | null }[] = [
-  { label: 'Tous les jours', days: null },
-  { label: 'Lun → Ven', days: [1, 2, 3, 4, 5] },
-  { label: 'Week-end', days: [0, 6] },
+const DAY_PRESETS: { key: string; days: number[] | null }[] = [
+  { key: 'every_day', days: null },
+  { key: 'weekdays', days: [1, 2, 3, 4, 5] },
+  { key: 'weekend', days: [0, 6] },
 ]
 const sameDays = (a: number[] | null, b: number[] | null) =>
   a === null || b === null ? a === b : a.join() === b.join()
@@ -500,8 +489,13 @@ export default function AddScreen() {
       return
     }
     try {
-      const auth = await ScreenTime.requestAuthorization()
-      if (auth !== 'approved') return
+      const gate = await requireScreenTime()
+      if (gate !== 'approved') {
+        // Refus définitif : le sélecteur d'Apple ne s'ouvrira pas, et repartir
+        // sans rien dire donnerait un bouton qui ne fait rien.
+        if (gate === 'blocked') router.push('/screen-time-help')
+        return
+      }
       // Édition : le sélecteur doit s'ouvrir sur les apps DE CETTE RÈGLE,
       // pas sur le dernier brouillon global.
       if (editing && editId) {
@@ -517,9 +511,9 @@ export default function AddScreen() {
 
   const explainStrict = () =>
     Alert.alert(
-      'Mode strict',
-      'Une fois activé, tu ne peux pas arrêter le blocage avant la fin — même en rouvrant Relock. Idéal pour tenir un engagement.',
-      [{ text: 'Compris' }],
+      t('blocking.preset_lines.strict'),
+      t('add_rule.strict_explain'),
+      [{ text: t('blocking.strict_lock.action') }],
     )
 
   // Engagement EXPLICITE avant d'armer un strict. Il n'existe QUE sur
@@ -564,18 +558,30 @@ export default function AddScreen() {
   }
 
   const summary = (): string => {
-    const apps = `${count} app${count > 1 ? 's' : ''}`
+    const apps = t('blocking.app_count', { count })
     if (type === 'block_now')
-      return `${apps} · bloquée${count > 1 ? 's' : ''} ${fmtDuration(durationMin)}${strict ? ' · mode strict' : ''}`
+      return `${t('add_rule.summary_timed', {
+        apps,
+        count,
+        duration: fmtDuration(durationMin),
+      })}${strict ? t('add_rule.summary_strict_suffix') : ''}`
     if (type === 'schedule')
-      return `${apps} · ${daysLabel(days).toLowerCase()} ${hhmm(start)} → ${hhmm(end)}`
-    const line = `${apps} · limite ${fmtDuration(limitMin)} / jour`
+      return t('add_rule.summary_schedule', {
+        apps,
+        days: daysLabel(days).toLowerCase(),
+        start: hhmm(start),
+        end: hhmm(end),
+      })
+    const line = t('add_rule.summary_limit', {
+      apps,
+      limit: fmtDuration(limitMin),
+    })
     // À la création seulement : dire d'où part le compteur. Une limite activée
     // en fin de journée ignore le temps déjà passé — sans cette phrase, elle
     // aurait l'air à moitié consommée d'avance, et la bascule de demain (le
     // décompte repart de minuit) passerait pour une panne.
     if (editing) return line
-    return `${line}\nTon temps déjà passé aujourd'hui n'est pas compté : la limite démarre maintenant, puis dès minuit les jours suivants.`
+    return `${line}\n${t('add_rule.summary_limit_note')}`
   }
 
   const runNative = async (ruleId: string) => {
@@ -626,16 +632,12 @@ export default function AddScreen() {
     const s = start.getHours() * 60 + start.getMinutes()
     const e = end.getHours() * 60 + end.getMinutes()
     if (s === e) {
-      setWarn(
-        'Le début et la fin doivent être différents (sinon la plage dure 24 h).',
-      )
+      setWarn(t('add_rule.warn_same_bounds'))
       return false
     }
     const win = e - s > 0 ? e - s : e - s + 1440
     if (win < 15) {
-      setWarn(
-        'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
-      )
+      setWarn(t('add_rule.warn_too_short'))
       return false
     }
     return true
@@ -668,9 +670,12 @@ export default function AddScreen() {
     let rearmed = false
     try {
       if (ScreenTime.isAvailable) {
-        const auth = await ScreenTime.requestAuthorization()
-        if (auth !== 'approved') {
-          Alert.alert('Autorisation requise', "Active l'accès Temps d'écran.")
+        // L'alerte « Active l'accès Temps d'écran » qui vivait ici ne menait
+        // nulle part : elle nommait une action qu'iOS ne propose plus une fois
+        // l'autorisation refusée. On envoie vers l'écran qui, lui, en connaît
+        // le chemin — et qui redemande tout seul si rien n'a jamais été demandé.
+        if ((await requireScreenTime()) !== 'approved') {
+          router.push('/screen-time-help')
           return
         }
         await ScreenTime.stopRule(editId, nativeKindOf(editedRule.type)).catch(
@@ -696,9 +701,7 @@ export default function AddScreen() {
       }
       const msg = String((e as { message?: string })?.message ?? e ?? '')
       if (/too short|schedule/i.test(msg)) {
-        setWarn(
-          'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
-        )
+        setWarn(t('add_rule.warn_too_short'))
       } else {
         showErrorToast(e)
       }
@@ -725,9 +728,12 @@ export default function AddScreen() {
     let nativeArmed = false
     try {
       if (ScreenTime.isAvailable) {
-        const auth = await ScreenTime.requestAuthorization()
-        if (auth !== 'approved') {
-          Alert.alert('Autorisation requise', "Active l'accès Temps d'écran.")
+        // L'alerte « Active l'accès Temps d'écran » qui vivait ici ne menait
+        // nulle part : elle nommait une action qu'iOS ne propose plus une fois
+        // l'autorisation refusée. On envoie vers l'écran qui, lui, en connaît
+        // le chemin — et qui redemande tout seul si rien n'a jamais été demandé.
+        if ((await requireScreenTime()) !== 'approved') {
+          router.push('/screen-time-help')
           return
         }
         await ScreenTime.bindSelection(ruleId)
@@ -751,9 +757,7 @@ export default function AddScreen() {
       }
       const msg = String((e as { message?: string })?.message ?? e ?? '')
       if (/too short|schedule/i.test(msg)) {
-        setWarn(
-          'Ta plage est trop courte. Choisis un créneau d’au moins 15 minutes.',
-        )
+        setWarn(t('add_rule.warn_too_short'))
       } else {
         showErrorToast(e)
       }
@@ -763,7 +767,9 @@ export default function AddScreen() {
     }
   }
 
-  const typeTitle = TYPES.find(item => item.key === type)?.title ?? ''
+  const typeTitle = TYPES.some(item => item.key === type)
+    ? translate(`add_rule.types.${type}.title`)
+    : ''
 
   return (
     <View style={styles.root}>
@@ -797,15 +803,17 @@ export default function AddScreen() {
           {/* Étape 1 : choix du type */}
           <View style={{ width: SCREEN_W }}>
             <View style={styles.panel} onLayout={measure(0)}>
-              <Text style={[f(700), styles.h1]}>Nouveau blocage</Text>
-              <Text style={[f(400), styles.sub]}>Quel type de blocage ?</Text>
+              <Text style={[f(700), styles.h1]}>{t('add.new_block')}</Text>
+              <Text style={[f(400), styles.sub]}>
+                {t('add_rule.type_question')}
+              </Text>
               <View style={{ gap: 18, marginTop: 28, paddingBottom: 12 }}>
                 {TYPES.map(tp => (
                   <TypeRow
                     key={tp.key}
                     icon={tp.icon}
-                    title={tp.title}
-                    desc={tp.desc}
+                    title={translate(`add_rule.types.${tp.key}.title`)}
+                    desc={translate(`add_rule.types.${tp.key}.desc`)}
                     onPress={() => onSelectType(tp.key)}
                   />
                 ))}
@@ -836,7 +844,7 @@ export default function AddScreen() {
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="Nom (optionnel)"
+                placeholder={t('add_rule.name_placeholder')}
                 placeholderTextColor={C.ink3}
                 maxLength={30}
                 style={[f(500), styles.nameInput]}
@@ -847,7 +855,7 @@ export default function AddScreen() {
                   <View style={styles.card}>
                     <View style={styles.cardHeadRow}>
                       <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                        Durée
+                        {t('blocking.preset_lines.duration')}
                       </Text>
                       <Text style={[f(600), { fontSize: 15, color: C.accent }]}>
                         {fmtDuration(durationMin)}
@@ -856,7 +864,7 @@ export default function AddScreen() {
                     <View style={styles.pickerWrap}>
                       <NativeDurationPicker
                         testID="duration-wheel"
-                        accessibilityLabel="Durée du blocage"
+                        accessibilityLabel={t('add_rule.duration_a11y')}
                         minutes={durationMin}
                         minimumMinutes={BLOCK_DURATION_MIN_MINUTES}
                         maximumMinutes={BLOCK_DURATION_MAX_MINUTES}
@@ -872,9 +880,10 @@ export default function AddScreen() {
                 <View style={styles.card}>
                   <View style={styles.timeRow}>
                     <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                      Début
+                      {t('add_rule.start')}
                     </Text>
                     <DateTimePicker
+                      locale={nativeLocale()}
                       mode="time"
                       display="compact"
                       value={start}
@@ -885,9 +894,10 @@ export default function AddScreen() {
                   <View style={styles.hairline} />
                   <View style={styles.timeRow}>
                     <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                      Fin
+                      {t('add_rule.end')}
                     </Text>
                     <DateTimePicker
+                      locale={nativeLocale()}
                       mode="time"
                       display="compact"
                       value={end}
@@ -905,7 +915,7 @@ export default function AddScreen() {
                 <View style={styles.card}>
                   <View style={styles.cardHeadRow}>
                     <Text style={[f(600), { fontSize: 15, color: C.ink }]}>
-                      Limite / jour
+                      {t('add_rule.limit_per_day')}
                     </Text>
                     <Text style={[f(600), { fontSize: 15, color: C.accent }]}>
                       {fmtDuration(limitMin)}
@@ -914,7 +924,7 @@ export default function AddScreen() {
                   <View style={styles.pickerWrap}>
                     <NativeDurationPicker
                       testID="limit-wheel"
-                      accessibilityLabel="Limite par jour"
+                      accessibilityLabel={t('add_rule.limit_a11y')}
                       minutes={limitMin}
                       minimumMinutes={DAILY_LIMIT_MIN_MINUTES}
                       maximumMinutes={DAILY_LIMIT_MAX_MINUTES}
@@ -929,12 +939,14 @@ export default function AddScreen() {
                   nature, la question ne se pose pas. */}
               {type !== 'block_now' && (
                 <View style={styles.card}>
-                  <Text style={[f(600), styles.cfgLabel]}>Jours</Text>
+                  <Text style={[f(600), styles.cfgLabel]}>
+                    {t('blocking.preset_lines.days')}
+                  </Text>
                   <View style={styles.chips}>
                     {DAY_PRESETS.map(p => (
                       <Chip
-                        key={p.label}
-                        label={p.label}
+                        key={p.key}
+                        label={translate(`add_rule.days.${p.key}`)}
                         on={sameDays(days, p.days)}
                         onPress={() => {
                           tapHaptic()
@@ -953,7 +965,7 @@ export default function AddScreen() {
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <View style={styles.strictTitleRow}>
                       <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
-                        Mode strict
+                        {t('blocking.preset_lines.strict')}
                       </Text>
                       <Pressable onPress={explainStrict} hitSlop={12}>
                         <View style={styles.help}>
@@ -971,7 +983,7 @@ export default function AddScreen() {
                         { fontSize: 13, color: C.ink2, marginTop: 3 },
                       ]}
                     >
-                      Impossible d'arrêter avant la fin, même en fermant Relock.
+                      {t('add_rule.strict_hint')}
                     </Text>
                   </View>
                   <Switch
@@ -997,8 +1009,8 @@ export default function AddScreen() {
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[f(600), { fontSize: 15.5, color: C.ink }]}>
                     {count === 0
-                      ? 'Choisir les apps'
-                      : `${count} app${count > 1 ? 's' : ''}`}
+                      ? t('add_rule.pick_apps')
+                      : t('blocking.app_count', { count })}
                   </Text>
                   <Text
                     style={[
@@ -1006,7 +1018,9 @@ export default function AddScreen() {
                       { fontSize: 13, color: C.ink2, marginTop: 3 },
                     ]}
                   >
-                    {count === 0 ? "Sélecteur d'Apple" : 'Touche pour modifier'}
+                    {count === 0
+                      ? t('add_rule.apple_picker')
+                      : t('add_rule.tap_to_edit')}
                   </Text>
                 </View>
                 <IconSvg name={IconName.PLUS} size={20} color={C.accent} />
@@ -1048,7 +1062,9 @@ export default function AddScreen() {
             <Text
               style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}
             >
-              {editing ? t('blocking.edit_rule.saved') : "C'est activé"}
+              {editing
+                ? t('blocking.edit_rule.saved')
+                : t('add_rule.activated')}
             </Text>
             <Text style={[f(400), styles.successSub]}>{successMsg}</Text>
             <Pressable
@@ -1061,7 +1077,7 @@ export default function AddScreen() {
               style={styles.successBtn}
             >
               <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>
-                Terminé
+                {t('blocking.preset_recap.finish')}
               </Text>
             </Pressable>
           </View>
@@ -1085,12 +1101,12 @@ export default function AddScreen() {
             <Text
               style={[f(700), { fontSize: 20, color: C.ink, marginTop: 16 }]}
             >
-              Plage trop courte
+              {t('add_rule.warn_title')}
             </Text>
             <Text style={[f(400), styles.successSub]}>{warn}</Text>
             <Pressable onPress={() => setWarn(null)} style={styles.successBtn}>
               <Text style={[f(700), { fontSize: 15.5, color: C.bg }]}>
-                Compris
+                {t('blocking.strict_lock.action')}
               </Text>
             </Pressable>
           </View>

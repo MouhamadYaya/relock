@@ -6,12 +6,20 @@ import {
   Linking,
   NativeModules,
 } from 'react-native'
+import {
+  devFixturesEnabled,
+  resetDevFixtures,
+  setDevFixturesEnabled,
+} from '@/features/blocking/dev-fixtures'
 import { StatsService } from '@/features/blocking/services/stats/stats.service'
 import {
   applyEntitlement,
   completeSetup,
+  devSkipOnboarding,
   resetOnboarding,
+  toggleDevPaywallSkip,
 } from '@/session/bootstrap'
+import { isPaywallSkipped, setPaywallSkipped } from '@/session/dev-skip-paywall'
 import { ScreenTime } from '@/shared/native/screen-time'
 import {
   captureError,
@@ -33,7 +41,10 @@ export const DEV_EVENT_ONBOARDING_JUMP = 'relock-dev-onboarding-jump'
  *
  * Commandes : `diag` (bilan natif), `pull` (journal brut), `sync` (synchro
  * stats + ligne du jour), `home` / `activity` / `settings` (navigation),
- * `sentry-status` / `sentry-js` / `sentry-native` (vérification Sentry).
+ * `sentry-status` / `sentry-js` / `sentry-native` (vérification Sentry),
+ * `fixtures` / `fixtures/on` / `fixtures/off` / `fixtures/reset` (jeu de
+ * données fictives du simulateur), `skip-onboarding` (les trois portes d'un
+ * coup), `paywall-skip[/on|/off]` (le mur de prix seul).
  * Résultats dans la console Metro, préfixés `[DEV-BRIDGE]`.
  * Inactif en release (jamais enregistré).
  */
@@ -266,10 +277,11 @@ async function run(cmd: string): Promise<void> {
       console.log(`${TAG} navigate settings`)
       return
     case 'onboarding-reset':
-      // Même chemin que le bouton « restart · dev » de l'Accueil : efface le
+      // Le seul chemin qui rejoue le parcours depuis le pont : efface le
       // drapeau, bascule le store, puis remplace explicitement vers
       // `/onboarding` (voir `resetOnboarding()` pour le pourquoi du
-      // `replace`).
+      // `replace`). L'ancien bouton « restart · dev » de l'Accueil a été
+      // retiré — plus aucun raccourci de dev ne vit dans l'UI.
       resetOnboarding()
       console.log(`${TAG} onboarding réinitialisé`)
       return
@@ -287,6 +299,50 @@ async function run(cmd: string): Promise<void> {
       applyEntitlement(false)
       console.log(`${TAG} abonnement retiré (paywall)`)
       return
+    // Jeu de données FICTIVES du simulateur (série, règles, apps protégées).
+    // Éteint par défaut : une build de dev sur un vrai iPhone continue de
+    // montrer les vraies données tant qu'on ne l'allume pas ici.
+    case 'fixtures/on':
+    case 'fixtures/off': {
+      const on = cmd.endsWith('/on')
+      setDevFixturesEnabled(on)
+      console.log(`${TAG} données de test ${on ? 'activées' : 'désactivées'}`)
+      await report('fixtures', JSON.stringify({ enabled: on }))
+      DevSettings.reload()
+      return
+    }
+    case 'fixtures/reset':
+      resetDevFixtures()
+      console.log(`${TAG} règles de test re-semées`)
+      DevSettings.reload()
+      return
+    case 'fixtures': {
+      const payload = JSON.stringify({
+        fixtures: devFixturesEnabled(),
+        paywallSkipped: isPaywallSkipped(),
+      })
+      console.log(`${TAG} fixtures`, payload)
+      await report('fixtures', payload)
+      return
+    }
+    // Miroir du bouton « skip onboarding » du premier écran du parcours :
+    // les trois portes d'un coup, atterrissage sur l'Accueil.
+    case 'skip-onboarding':
+      devSkipOnboarding()
+      console.log(`${TAG} parcours sauté → Accueil`)
+      return
+    // Le paywall SEUL, pour travailler le mur de prix.
+    case 'paywall-skip':
+      console.log(`${TAG} paywall sauté → ${toggleDevPaywallSkip()}`)
+      return
+    case 'paywall-skip/on':
+    case 'paywall-skip/off': {
+      const on = cmd.endsWith('/on')
+      if (isPaywallSkipped() !== on) toggleDevPaywallSkip()
+      else setPaywallSkipped(on)
+      console.log(`${TAG} paywall sauté = ${isPaywallSkipped()}`)
+      return
+    }
     case 'entitlement-unlock':
       applyEntitlement(true)
       console.log(`${TAG} abonnement accordé`)

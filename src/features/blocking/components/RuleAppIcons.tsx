@@ -22,7 +22,7 @@ const MAX_VISIBLE = 2
  * c'est ce même rang qui sert à dessiner chaque icône. Compter d'un côté et
  * dessiner de l'autre produisait des vignettes vides.
  */
-export function RuleAppIcons({
+export const RuleAppIcons = React.memo(function RuleAppIcons({
   ruleId,
   size = spacing.xl,
 }: {
@@ -80,7 +80,7 @@ export function RuleAppIcons({
       ) : null}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   row: {

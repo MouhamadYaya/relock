@@ -9,11 +9,13 @@ import Animated, {
 } from 'react-native-reanimated'
 import { Moon, Pill } from '@/features/onboarding/bits'
 import { OB, RECOGNITION } from '@/features/onboarding/tokens'
+import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
 
 /** A familiar situation, not a statistic or a measurement of the user's usage. */
 export function SceneRecognition({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const [stage, setStage] = useState(0)
   const [active, setActive] = useState(
     AppState.currentState !== 'background' &&
@@ -47,26 +49,30 @@ export function SceneRecognition({ onNext }: { onNext: () => void }) {
           <Moon size={RECOGNITION.moonSize} glow />
         </View>
         <ReadingBeat visible={stage >= 1} testID="recognition-intro">
-          <Text style={styles.intro}>Tu ouvres TikTok pour deux minutes.</Text>
+          <Text style={styles.intro}>{t('onboarding_recognition.intro')}</Text>
         </ReadingBeat>
         <View style={styles.turn}>
           <ReadingBeat visible={stage >= 2} testID="recognition-look-up">
-            <Text style={styles.intro}>Tu relèves la tête.</Text>
+            <Text style={styles.intro}>
+              {t('onboarding_recognition.look_up')}
+            </Text>
           </ReadingBeat>
           <ReadingBeat visible={stage >= 3} testID="recognition-elapsed">
             <Text accessibilityRole="header" style={styles.headline}>
-              Deux heures ont passé.
+              {t('onboarding_recognition.elapsed')}
             </Text>
           </ReadingBeat>
         </View>
         <ReadingBeat visible={stage >= 4} testID="recognition-question">
-          <Text style={styles.question}>Tu connais ce moment ?</Text>
+          <Text style={styles.question}>
+            {t('onboarding_recognition.question')}
+          </Text>
         </ReadingBeat>
       </ScrollView>
       <View style={styles.footer}>
         <ReadingBeat visible={ready} testID="recognition-continue">
           <Pill
-            label="Ça me parle"
+            label={t('onboarding_recognition.cta')}
             disabled={!ready}
             onPress={() => {
               if (ready) onNext()

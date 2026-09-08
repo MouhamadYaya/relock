@@ -42,7 +42,7 @@ describe('annual good news', () => {
       jest.advanceTimersByTime(3000)
     })
     const lead = renderer!.root.findByProps({ testID: 'good-news-lead' })
-    expect(lead.props.children.join('')).toBe(
+    expect([lead.props.children].flat(Infinity).join('')).toBe(
       'Relock va t’aider à récupérer\ndu temps pour toi.',
     )
     expect(StyleSheet.flatten(lead.props.style)).toMatchObject({

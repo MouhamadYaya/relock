@@ -145,6 +145,10 @@ export default function PaywallScreen() {
       const answers = readOnboardingCheckpoint()?.answers
       if (answers) void saveOnboardingAnswers(answers)
 
+      // `useSocialSignIn` a déjà rattaché les achats à ce compte et ouvert la
+      // porte s'il est abonné : redemander au store ne pourrait que rejouer
+      // la fenêtre où RevenueCat n'a pas fini de reporter le reçu.
+      if (useAppGateStore.getState().entitled) return
       await syncEntitlement()
       if (useAppGateStore.getState().entitled) return
       // Compte valide, aucun abonnement dessus : on le ramène aux tarifs en
@@ -174,20 +178,6 @@ export default function PaywallScreen() {
     })
   }, [])
   const closeSignIn = useCallback(() => setPhase(backPhase.current), [])
-  /**
-   * DEV uniquement : ouvre la porte dure sans passer par le store, pour
-   * travailler l'app sans racheter un abonnement à chaque réinstallation.
-   * `unlockAfterPurchase` écrit l'abonnement en cache et remplace la route —
-   * exactement le chemin d'un achat réel, sans facturation. Un prochain
-   * `syncEntitlement` refermera la porte si RevenueCat dit non : c'est un
-   * raccourci de travail, pas une fraude durable.
-   *
-   * `__DEV__` est une constante remplacée par `false` en release : ni ce
-   * callback ni le bouton qui l'appelle n'existent dans le binaire livré.
-   */
-  const devSkip = useCallback(() => {
-    if (__DEV__) unlockAfterPurchase()
-  }, [])
   const retry = useCallback(() => {
     void load()
   }, [load])
@@ -246,7 +236,6 @@ export default function PaywallScreen() {
         // l'offre puis au pitch. Seuls un achat ou une restauration ouvrent.
         escapable={false}
         onSkip={retry}
-        onDevSkip={__DEV__ ? devSkip : undefined}
       />
     </View>
   )

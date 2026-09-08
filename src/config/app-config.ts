@@ -15,15 +15,19 @@ export const appConfig = {
   enableLogs: __DEV__,
   bundleId: 'com.yaya.relock',
   /**
-   * Identifiant App Store, `null` tant que la fiche n'existe pas.
+   * Identifiant App Store de la fiche Relock (App Store Connect → General →
+   * App Information → Apple ID).
    *
-   * VOLONTAIREMENT `null` PLUTÔT QU'UN NUMÉRO D'EXEMPLE : `id0000000000` est
-   * une URL App Store syntaxiquement valide. Elle s'ouvre donc sans erreur —
-   * sur une fiche introuvable, ou pire, sur celle de quelqu'un d'autre le jour
-   * où Apple attribue ce numéro. `null` fait disparaître proprement les
-   * entrées qui en dépendent (voir `links.review` / `links.share`).
+   * IL DOIT ÊTRE LE BON, ET RIEN NE LE VÉRIFIE À L'EXÉCUTION : un
+   * `apps.apple.com/app/idXXXXXXXXXX` est syntaxiquement valide quel que soit
+   * le numéro. Un chiffre de travers n'échoue pas — il ouvre une fiche
+   * introuvable, ou celle de quelqu'un d'autre. C'est pour ça que ce champ est
+   * resté `null` jusqu'à ce que la fiche existe.
+   *
+   * `null` reste le repli prévu : les entrées « Noter » et « Partager »
+   * disparaissent alors proprement (voir `links.review` / `links.share`).
    */
-  appStoreId: null as string | null,
+  appStoreId: 6809028039 as number | null,
 }
 
 /**

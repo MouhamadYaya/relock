@@ -20,6 +20,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { annualProjection } from '@/features/onboarding/services/annualProjection'
 import { recoveryGoal } from '@/features/onboarding/services/recoveryGoal'
+import { translate } from '@/i18n/translate'
+import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { Footnote, GradientLine, Pill } from './bits'
 import { Reveal } from './motion'
@@ -38,6 +40,7 @@ import {
  * son rythme, impossible de survoler. Le CTA n'existe qu'à la fin.
  */
 export function SceneBeat({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const [stage, setStage] = useState(0)
   useEffect(() => {
     const t1 = setTimeout(() => setStage(1), 1050)
@@ -55,20 +58,20 @@ export function SceneBeat({ onNext }: { onNext: () => void }) {
           entering={FadeInDown.duration(700).easing(Easing.out(Easing.cubic))}
           style={styles.beatLine}
         >
-          Une nouvelle difficile.
+          {t('onboarding_verdict.beat_1')}
         </Animated.Text>
         {stage >= 1 ? (
           <Animated.Text
             entering={FadeInDown.duration(700).easing(Easing.out(Easing.cubic))}
             style={[styles.beatLine, styles.beatAccent]}
           >
-            Et une bonne.
+            {t('onboarding_verdict.beat_2')}
           </Animated.Text>
         ) : null}
       </View>
       {stage >= 2 ? (
         <Animated.View entering={FadeIn.duration(400)} className="gap-2 pb-2.5">
-          <Pill label="Voir la vérité" onPress={onNext} />
+          <Pill label={t('onboarding_verdict.beat_cta')} onPress={onNext} />
         </Animated.View>
       ) : null}
     </View>
@@ -89,6 +92,7 @@ export function SceneMirror({
   hours: number
   onNext: () => void
 }) {
+  const t = useT()
   const { daysPerYear: days } = annualProjection(hours)
   const [n, setN] = useState(0)
   const [settled, setSettled] = useState(false)
@@ -132,35 +136,37 @@ export function SceneMirror({
     transform: [{ scale: pulse.value }],
   }))
 
-  const label = `${n} ${n === 1 ? 'jour' : 'jours'}`
+  const label = t('onboarding_plan_summary.days', { count: n })
 
   return (
     <View className="flex-1 px-5">
       <View className="flex-1 justify-center">
         <Reveal index={0}>
-          <Text style={styles.mirrorLabel}>Ton téléphone te prend environ</Text>
+          <Text style={styles.mirrorLabel}>
+            {t('onboarding_verdict.mirror_lead')}
+          </Text>
         </Reveal>
         <Animated.View
           className="items-center mt-3.5"
           style={pulseStyle}
           accessibilityRole="text"
-          accessibilityLabel={`Ton téléphone te prend environ ${label} par an`}
+          accessibilityLabel={t('onboarding_verdict.mirror_a11y', { label })}
         >
           <GradientLine text={label} size={76} />
-          <Text style={styles.mirrorPerYear}>par an</Text>
+          <Text style={styles.mirrorPerYear}>
+            {t('onboarding_verdict.per_year')}
+          </Text>
         </Animated.View>
         <Reveal index={1}>
           <Text style={styles.mirrorBody}>
-            Des journées entières, passées les yeux baissés.
+            {t('onboarding_verdict.mirror_body')}
           </Text>
         </Reveal>
       </View>
       {settled ? (
         <Animated.View entering={FadeIn.duration(400)} className="gap-2 pb-2.5">
-          <Pill label="Voir la bonne nouvelle" onPress={onNext} />
-          <Footnote
-            text={`Estimation pour ta tranche : ${hours} h/jour × 365 ÷ 24. Arrondi en journées de 24 h.`}
-          />
+          <Pill label={t('onboarding_verdict.mirror_cta')} onPress={onNext} />
+          <Footnote text={t('onboarding_verdict.mirror_footnote', { hours })} />
         </Animated.View>
       ) : null}
     </View>
@@ -225,7 +231,10 @@ function ProjectionBar({ w }: { w: number }) {
  * parcours normal fait défiler les mots que l'utilisateur a lui-même choisis,
  * poussés ici par `personalizedPlan.aspirationWords`.
  */
-const GOOD_WORDS = ['de Présence', 'de Sommeil', 'de Calme', 'de Liberté']
+const goodWords = () =>
+  (['presence', 'sleep', 'calm', 'freedom'] as const).map(key =>
+    translate(`onboarding_plan.default_word.${key}`),
+  )
 const GOOD_WORD_MS = 1600
 
 export function SceneGoodNews({
@@ -238,13 +247,17 @@ export function SceneGoodNews({
   words?: string[]
   onNext: () => void
 }) {
+  const t = useT()
   const { width } = useWindowDimensions()
   const goal = useMemo(() => recoveryGoal(hours), [hours])
   // « par an » ouvre toujours le défilé : c'est l'unité du chiffre, pas un
   // objectif. Les mots suivants, eux, sont ceux de l'utilisateur.
   const cycle = useMemo(
-    () => ['par an', ...(words?.length ? words : GOOD_WORDS)],
-    [words],
+    () => [
+      t('onboarding_verdict.per_year'),
+      ...(words?.length ? words : goodWords()),
+    ],
+    [words, t],
   )
   const days = goal.days
   const barCount = Math.max(1, Math.min(PROJECTION_MAX_BARS, days))
@@ -304,7 +317,7 @@ export function SceneGoodNews({
   const displayedDays = Math.round(
     (Math.min(shown, barCount) / barCount) * days,
   )
-  const label = `${displayedDays} ${displayedDays === 1 ? 'jour' : 'jours'}`
+  const label = t('onboarding_plan_summary.days', { count: displayedDays })
   const suffix = cycle[word]
 
   return (
@@ -323,7 +336,7 @@ export function SceneGoodNews({
         </View>
         <Reveal index={0}>
           <Text testID="good-news-lead" style={styles.goodLead}>
-            Relock va t’aider à récupérer{'\n'}du temps pour toi.
+            {t('onboarding_verdict.good_lead')}
           </Text>
         </Reveal>
         <View style={{ height: heroLineH * 2 }}>
@@ -332,7 +345,9 @@ export function SceneGoodNews({
               entering={FadeIn.duration(300)}
               style={pulseStyle}
               accessibilityRole="text"
-              accessibilityLabel={`Objectif : ${displayedDays} jours par an, à adapter à ton usage`}
+              accessibilityLabel={t('onboarding_verdict.good_a11y', {
+                count: displayedDays,
+              })}
             >
               <GradientLine text={label} size={heroSize} />
               <View style={{ height: heroLineH }}>
@@ -356,7 +371,7 @@ export function SceneGoodNews({
       <View style={styles.goodFoot}>
         {done ? (
           <Animated.View entering={FadeIn.duration(420)} className="gap-2">
-            <Pill label="Continuer" onPress={onNext} glow />
+            <Pill label={t('paywall.continue')} onPress={onNext} glow />
             <Text style={styles.goodNote}>{goal.note}</Text>
           </Animated.View>
         ) : null}
@@ -396,31 +411,9 @@ export function SceneGoodNews({
  * d'agence — licence à vérifier avant publication.
  */
 const PRESS = [
-  {
-    id: 'meta',
-    photo: require('@assets/press/meta.jpg'),
-    quote: "« Facebook sait qu'Instagram est toxique pour les adolescentes. »",
-    source: 'The Wall Street Journal',
-    year: '2021',
-    context: "Documents internes, révélés par une lanceuse d'alerte.",
-  },
-  {
-    id: 'trial',
-    photo: require('@assets/press/zuckerberg.jpg'),
-    quote:
-      '« 41 États poursuivent Meta pour avoir conçu des fonctions addictives. »',
-    source: 'Plainte fédérale des procureurs généraux',
-    year: '2023',
-    context: "Visées : la notification, le scroll infini, les « j'aime ».",
-  },
-  {
-    id: 'tiktok',
-    photo: require('@assets/press/tiktok.jpg'),
-    quote: "« Environ 260 vidéos, et l'habitude est formée. »",
-    source: 'Documents internes TikTok',
-    year: '2024',
-    context: 'Moins de 35 minutes. Leur chiffre, pas le nôtre.',
-  },
+  { id: 'meta', photo: require('@assets/press/meta.jpg'), year: '2021' },
+  { id: 'trial', photo: require('@assets/press/zuckerberg.jpg'), year: '2023' },
+  { id: 'tiktok', photo: require('@assets/press/tiktok.jpg'), year: '2024' },
 ] as const
 
 /** Bloc texte sous la photo : citation sur 2 lignes + source + contexte. */
@@ -502,13 +495,14 @@ function PressCard({
       </View>
       <View style={styles.pressBody}>
         <Text style={styles.pressQuote} numberOfLines={2}>
-          {item.quote}
+          {translate(`onboarding_verdict.press.${item.id}.quote`)}
         </Text>
         <Text style={styles.pressSource} numberOfLines={1}>
-          {item.source} · {item.year}
+          {translate(`onboarding_verdict.press.${item.id}.source`)} ·{' '}
+          {item.year}
         </Text>
         <Text style={styles.pressContext} numberOfLines={1}>
-          {item.context}
+          {translate(`onboarding_verdict.press.${item.id}.context`)}
         </Text>
       </View>
     </Animated.View>
@@ -516,6 +510,7 @@ function PressCard({
 }
 
 export function SceneReversal({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const { height } = useWindowDimensions()
   const photoH = pressPhotoHeight(height)
   const [shown, setShown] = useState(0)
@@ -542,11 +537,13 @@ export function SceneReversal({ onNext }: { onNext: () => void }) {
     <View className="flex-1 px-5">
       <View className="flex-1 justify-center">
         <Reveal index={0}>
-          <Text style={styles.reversalTitle}>Tu n'es pas le problème.</Text>
+          <Text style={styles.reversalTitle}>
+            {t('onboarding_verdict.reversal_title')}
+          </Text>
         </Reveal>
         <Reveal index={1}>
           <Text style={styles.reversalBody}>
-            Ces apps sont réglées par des milliers d'ingénieurs pour te retenir.
+            {t('onboarding_verdict.reversal_body')}
           </Text>
         </Reveal>
         {/* Hauteur réservée dès le départ : les cartes arrivent en absolu,
@@ -576,9 +573,12 @@ export function SceneReversal({ onNext }: { onNext: () => void }) {
         {last ? (
           <Animated.View entering={FadeIn.duration(420)} className="gap-4">
             <Text style={styles.reversalVerdict}>
-              Relock rééquilibre les règles,{'\n'}en ta faveur.
+              {t('onboarding_verdict.reversal_verdict')}
             </Text>
-            <Pill label="Construire mon plan" onPress={onNext} />
+            <Pill
+              label={t('onboarding_verdict.reversal_cta')}
+              onPress={onNext}
+            />
           </Animated.View>
         ) : null}
       </View>

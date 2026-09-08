@@ -51,6 +51,7 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg'
+import { translate } from '@/i18n/translate'
 import { AppLogo } from '@/shared/components/ui/AppLogo'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { CalculatorIcon, FacebookIcon, PhoneIcon } from './decor-icons'
@@ -145,7 +146,9 @@ function CalendarIcon({ size }: { size: number }) {
         style={[styles.calendarDay, { fontSize: size * 0.17 }]}
         numberOfLines={1}
       >
-        Mar
+        {/* Abréviation du jour, comme sur la vraie icône Calendrier d'iOS :
+            elle suit donc la langue de l'app, pas un « Mar » figé. */}
+        {translate('blocking.days.short.2')}
       </Text>
       <Text
         style={[styles.calendarDate, { fontSize: size * 0.46 }]}

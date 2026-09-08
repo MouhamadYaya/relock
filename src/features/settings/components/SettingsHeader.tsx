@@ -1,9 +1,9 @@
 import { IconName } from '@assets/icons'
 import React from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
+import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { settingsTheme } from '@/shared/theme'
-import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, radius, size, spacing, type } = settingsTheme
 
@@ -23,21 +23,21 @@ interface Props {
  * titres de section, qui eux structurent vraiment la page.
  */
 export function SettingsHeader({ title, backLabel, onBack }: Props) {
-  const [pressed, setPressed] = React.useState(false)
-
   return (
     <View style={styles.bar}>
-      <Pressable
+      {/*
+        Le retour porte le même relief que tous les boutons de l'app : tic
+        haptique dès le TOUCHER, pastille qui s'enfonce, halo violet qui
+        éclôt dessous. `PressableScale` s'en charge — c'est aussi lui qui
+        remplace l'ancien état `pressed` tenu à la main ici.
+      */}
+      <PressableScale
         accessibilityRole="button"
         accessibilityLabel={backLabel}
         hitSlop={8}
-        onPress={() => {
-          haptics.selectionTick()
-          onBack()
-        }}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-        style={pressed ? styles.backPressed : styles.back}
+        onPress={onBack}
+        shadow
+        style={styles.back}
       >
         <IconSvg
           name={IconName.BACK}
@@ -45,7 +45,7 @@ export function SettingsHeader({ title, backLabel, onBack }: Props) {
           strokeWidth={size.iconStroke}
           color={colors.textPrimary}
         />
-      </Pressable>
+      </PressableScale>
 
       <Text numberOfLines={1} style={styles.title}>
         {title}
@@ -59,11 +59,11 @@ export function SettingsHeader({ title, backLabel, onBack }: Props) {
 }
 
 /**
- * ⚠️ Aucun `style` en FONCTION ni en TABLEAU sur les `Pressable` de cet
- * écran : à l'exécution, le style était purement et simplement perdu, la vue
- * retombait sur `flexDirection: 'column'` (le défaut de React Native) et tout
- * le contenu s'empilait à gauche. Invisible sous `react-test-renderer`, qui
- * résout le style-fonction correctement — voir `SettingsRow`.
+ * ⚠️ Aucun `style` en FONCTION sur les `Pressable` de cet écran : à
+ * l'exécution, le style était purement et simplement perdu, la vue retombait
+ * sur `flexDirection: 'column'` (le défaut de React Native) et tout le contenu
+ * s'empilait à gauche. Invisible sous `react-test-renderer`, qui résout le
+ * style-fonction correctement — voir `SettingsRow`.
  */
 const BACK_LAYOUT = {
   width: spacing.headerH,
@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
     height: spacing.headerH,
   },
   back: BACK_LAYOUT,
-  backPressed: { ...BACK_LAYOUT, opacity: 0.6 },
   title: {
     flex: 1,
     textAlign: 'center',

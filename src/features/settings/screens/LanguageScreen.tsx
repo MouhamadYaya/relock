@@ -1,7 +1,7 @@
 import { router } from 'expo-router'
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
-import i18n from '@/i18n/i18n'
+import { setAppLanguage } from '@/i18n/i18n'
 import { useT } from '@/i18n/useT'
 import { Button } from '@/shared/components/ui/Button'
 import { ScreenHeader } from '@/shared/components/ui/ScreenHeader'
@@ -13,9 +13,9 @@ export default function LanguageScreen() {
   const t = useT()
 
   const handleBack = useCallback(() => router.back(), [])
-  const handleEnglish = useCallback(() => i18n.changeLanguage('en'), [])
-  const handleRussian = useCallback(() => i18n.changeLanguage('ru'), [])
-  const handleGerman = useCallback(() => i18n.changeLanguage('de'), [])
+  const handleFrench = useCallback(() => setAppLanguage('fr'), [])
+  const handleEnglish = useCallback(() => setAppLanguage('en'), [])
+  const handleSpanish = useCallback(() => setAppLanguage('es'), [])
 
   return (
     <ScreenWrapper
@@ -27,15 +27,15 @@ export default function LanguageScreen() {
       }
     >
       <View style={{ padding: theme.spacing.lg, gap: theme.spacing.sm }}>
+        <Button title={t('settings.language.french')} onPress={handleFrench} />
         <Button
           title={t('settings.language.english')}
           onPress={handleEnglish}
         />
         <Button
-          title={t('settings.language.russian')}
-          onPress={handleRussian}
+          title={t('settings.language.spanish')}
+          onPress={handleSpanish}
         />
-        <Button title={t('settings.language.german')} onPress={handleGerman} />
       </View>
     </ScreenWrapper>
   )

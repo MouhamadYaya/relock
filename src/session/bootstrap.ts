@@ -1,15 +1,16 @@
 import { router } from 'expo-router'
+import { constants } from '@/config/constants'
 import {
   noteEntitled,
   noteEntitlementLost,
 } from '@/features/notifications/engine/signals'
-import { constants } from '@/config/constants'
 import { clearOnboardingCheckpoint } from '@/features/onboarding/services/onboarding-checkpoint'
 import { resetPaywallViews } from '@/features/onboarding/services/paywall-views'
 import {
   checkRelockProEntitlement,
   onEntitlementChange,
 } from '@/features/onboarding/services/revenuecat'
+import { isPaywallSkipped, setPaywallSkipped } from '@/session/dev-skip-paywall'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
 
@@ -100,13 +101,51 @@ export function signOutToAuth() {
 }
 
 /**
+ * Combien de bascules d'identité de facturation sont en cours.
+ *
+ * `Purchases.logIn` / `logOut` changent l'identifiant sous lequel RevenueCat
+ * répond. Le temps que le reçu de l'appareil soit reporté sur le nouvel
+ * identifiant, le SDK dit « pas d'abonnement » — et il le dit en poussant un
+ * `CustomerInfo` à tous ses abonnés, dont `watchEntitlement`.
+ */
+let billingIdentitySwitches = 0
+
+/**
+ * Ouvre la fenêtre pendant laquelle un « pas d'abonnement » ne veut RIEN
+ * dire. À appeler autour de tout `logIn`/`logOut` RevenueCat — c'est le rôle
+ * de `src/session/billing-identity.ts`, seul endroit qui les déclenche.
+ */
+export function beginBillingIdentitySwitch(): void {
+  billingIdentitySwitches += 1
+}
+
+/** Referme la fenêtre. Toujours dans un `finally`. */
+export function endBillingIdentitySwitch(): void {
+  billingIdentitySwitches = Math.max(0, billingIdentitySwitches - 1)
+}
+
+/**
  * Applique un état d'abonnement CONNU.
  *
  * `unknown` n'arrive jamais ici : l'appelant garde alors la dernière valeur.
  * On ne navigue que sur un vrai changement — confirmer ce qui est déjà à
  * l'écran ne doit provoquer aucune transition.
+ *
+ * Une fermeture pendant une bascule d'identité est IGNORÉE, cache comprise.
+ * C'est le bug du 2026-09-07 : payer, avancer vers la connexion, et se
+ * retrouver au paywall — parce que `Purchases.logIn` passait de
+ * l'identifiant anonyme (celui qui portait l'achat) au compte, et que le
+ * `CustomerInfo` de cet instant-là ne connaissait encore aucun abonnement.
+ * Le geste « Restaurer » de l'utilisateur ne faisait que rattraper ça.
+ * La bascule tranche elle-même à sa sortie (`attachBillingIdentity`), et le
+ * prochain démarrage à froid a toujours le dernier mot.
  */
 export function applyEntitlement(active: boolean) {
+  // DEV : « skip paywall » posé depuis le premier écran du parcours. Sans
+  // cette garde, la vérité RevenueCat (« pas d'abonnement », inévitable sur
+  // simulateur) refermerait la porte quelques secondes après le clic.
+  if (!active && isPaywallSkipped()) return
+  if (!active && billingIdentitySwitches > 0) return
   kvStorage.setString(constants.ENTITLEMENT_ACTIVE, active ? '1' : '0')
   // Le moteur de notifications a besoin de la DATE de la perte, pas seulement
   // de l'état : « ton abonnement a expiré » n'a de sens que quelques jours.
@@ -116,6 +155,57 @@ export function applyEntitlement(active: boolean) {
   if (store.entitled === active) return
   store.setEntitled(active)
   replace(active ? destinationForEntitled() : '/paywall')
+}
+
+/**
+ * DEV uniquement — saute TOUT le parcours depuis son premier écran : la porte
+ * de l'abonnement, le récit et l'activation d'un coup. On atterrit sur
+ * l'Accueil, dans l'app réelle.
+ *
+ * Les trois portes sont franchies dans l'ordre où `resolveAppRoot` les lit :
+ * en sauter une laisserait la racine sur le paywall ou sur l'onboarding, et le
+ * bouton n'aurait fait que déplacer le problème.
+ */
+export function devSkipOnboarding(): void {
+  if (!__DEV__) return
+  // 1. La porte de l'abonnement. Le DRAPEAU, pas seulement l'état : le
+  //    prochain rafraîchissement RevenueCat (« pas d'abonnement », inévitable
+  //    sur simulateur) refermerait sinon la porte quelques secondes plus tard.
+  setPaywallSkipped(true)
+  kvStorage.setString(constants.ENTITLEMENT_ACTIVE, '1')
+  useAppGateStore.getState().setEntitled(true)
+  // 2. Le récit est réputé joué : sans ça, la porte du paywall se rouvre au
+  //    prochain démarrage (`resolveAppRoot` teste `surveyDone || setupDone`).
+  kvStorage.setString(constants.ONBOARDING_SURVEY_DONE, '1')
+  useAppGateStore.getState().setSurveyDone()
+  // 3. `completeSetup` porte la SEULE navigation de la séquence. Deux
+  //    `replace` enchaînés laissent la pile native non compositée — écran noir
+  //    jusqu'à la navigation suivante (voir l'entête de ce fichier).
+  completeSetup()
+}
+
+/**
+ * DEV uniquement — bascule le court-circuit du paywall SEUL
+ * (`relock://dev/paywall-skip/<on|off>`), pour travailler le mur de prix sans
+ * rejouer le parcours. Rend l'état qui vient d'être posé.
+ *
+ * Le retour en arrière n'appelle PAS `applyEntitlement(false)` : celui-ci
+ * remplace la route par `/paywall`, qui n'est pas montée tant que le récit
+ * n'est pas terminé (écran noir, cf. l'entête de ce fichier). On écrit donc
+ * l'état, et on laisse les gardes de `app/_layout.tsx` rouvrir la bonne racine
+ * d'eux-mêmes.
+ */
+export function toggleDevPaywallSkip(): boolean {
+  if (!__DEV__) return false
+  const next = !isPaywallSkipped()
+  setPaywallSkipped(next)
+  if (next) {
+    applyEntitlement(true)
+  } else {
+    kvStorage.setString(constants.ENTITLEMENT_ACTIVE, '0')
+    useAppGateStore.getState().setEntitled(false)
+  }
+  return next
 }
 
 /** Après un achat ou une restauration réussis. */

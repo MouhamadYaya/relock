@@ -77,7 +77,11 @@ function countdownLabel(
 }
 
 /** Cadenas seul, sans pastille : l'app reste le premier élément identifiable. */
-export function BlockedAppLockGlyph({ open }: { open: boolean }) {
+export const BlockedAppLockGlyph = React.memo(function BlockedAppLockGlyph({
+  open,
+}: {
+  open: boolean
+}) {
   const glyphColor = open
     ? colors.blockingUnlockedAppMark
     : colors.blockingLockedAppMark
@@ -122,14 +126,14 @@ export function BlockedAppLockGlyph({ open }: { open: boolean }) {
       </Svg>
     </View>
   )
-}
+})
 
 /**
  * Une app couverte par une protection : sa VRAIE icône (rendue par la vue
  * native, seule capable de lire un jeton Family Controls), l'état du cadenas
  * par-dessus, et dessous l'action qui l'ouvre individuellement.
  */
-export function BlockedAppTileView({
+export const BlockedAppTileView = React.memo(function BlockedAppTileView({
   tokenKey,
   unlocked,
   label,
@@ -228,7 +232,7 @@ export function BlockedAppTileView({
       ) : null}
     </PressableScale>
   )
-}
+})
 
 const styles = StyleSheet.create({
   slot: {

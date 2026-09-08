@@ -69,6 +69,7 @@ function SelectableAppTile({
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
       accessibilityLabel={label}
+      haptic="none"
       onPress={onToggle}
       style={styles.tileSlot}
     >
@@ -192,6 +193,7 @@ export function UnlockAppsSheet({
                   ? t('blocking.unlock_picker.clear_all')
                   : t('blocking.unlock_picker.select_all')
               }
+              haptic="none"
               onPress={toggleAll}
               style={styles.selectAll}
             >

@@ -16,6 +16,7 @@
  * `RelockActivityReport`), seul un score agrégé traverse.
  */
 
+import { translate } from '@/i18n/translate'
 import { supabase } from '@/shared/services/supabase/client'
 import { normalizeError } from '@/shared/utils/normalize-error'
 
@@ -41,7 +42,7 @@ export interface DataExport {
 export async function buildDataExport(): Promise<DataExport> {
   const { data: userData } = await supabase.auth.getUser()
   const uid = userData.user?.id
-  if (!uid) throw normalizeError(new Error('Non connecté'))
+  if (!uid) throw normalizeError(new Error(translate('errors.not_signed_in')))
 
   const [profile, rules, stats, events] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),

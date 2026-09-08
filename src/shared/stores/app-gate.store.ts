@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { constants } from '@/config/constants'
+import { isPaywallSkipped } from '@/session/dev-skip-paywall'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 function readFlag(key: string): boolean {
@@ -23,6 +24,10 @@ function readFlag(key: string): boolean {
  *    faire clignoter l'app.
  */
 function readEntitled(setupDone: boolean): boolean {
+  // DEV : « skip paywall ». Décidé AVANT le cache, sinon le premier
+  // rafraîchissement RevenueCat d'un démarrage à froid rouvrirait le paywall
+  // avant même que le bouton puisse être retrouvé.
+  if (isPaywallSkipped()) return true
   const cached = kvStorage.getString(constants.ENTITLEMENT_ACTIVE)
   if (cached === null) return setupDone
   return cached === '1'

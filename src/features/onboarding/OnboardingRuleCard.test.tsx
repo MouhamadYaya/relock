@@ -1,4 +1,5 @@
 import React from 'react'
+import { StyleSheet } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { OnboardingRuleCard } from '@/features/onboarding/OnboardingRuleCard'
 
@@ -55,6 +56,18 @@ describe('onboarding rule card', () => {
     renderer.root.findByProps({
       accessibilityLabel: 'Ce que fait la règle Travail',
     })
+  const flat = (style: unknown) =>
+    (StyleSheet.flatten(style as never) ?? {}) as Record<string, unknown>
+  /** Fond du disque « ? », état repos. */
+  const helpFill = () =>
+    flat(help().props.style({ pressed: false })).backgroundColor
+  /** Fond de la pastille de coche : la vue qui porte l'icône. */
+  const checkFill = () => {
+    const icon = renderer.root.findAll(
+      n => (n.type as unknown) === 'IconSvg',
+    )[0]
+    return flat(icon.parent?.props.style).backgroundColor
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -91,6 +104,15 @@ describe('onboarding rule card', () => {
   it('keeps the help button in place once the rule is selected', () => {
     render({ selected: true })
     expect(help()).toBeTruthy()
+  })
+
+  it('poses the « ? » on white, and never on the fill of the coche next to it', () => {
+    // Le disque blanc est ce qui rend le « ? » lisible sur les huit photos ;
+    // s'il reprenait le fond de la coche, les deux badges voisins se
+    // liraient comme un seul type de pastille.
+    render({ selected: true })
+    expect(helpFill()).toBe('#FFFFFF')
+    expect(checkFill()).not.toBe(helpFill())
   })
 
   it('tells screen readers what the tiles show', () => {

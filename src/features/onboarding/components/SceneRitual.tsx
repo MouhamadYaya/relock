@@ -64,6 +64,8 @@ import { Pill } from '@/features/onboarding/bits'
 import { FingerprintMark, FP_ASPECT } from '@/features/onboarding/Fingerprint'
 import { Reveal } from '@/features/onboarding/motion'
 import { haptic, OB } from '@/features/onboarding/tokens'
+import { translate } from '@/i18n/translate'
+import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
 
 // ─── Rythme ──────────────────────────────────────────────────────────────
@@ -122,24 +124,11 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 type Phase = 'idle' | 'hold' | 'paused' | 'sealed'
 
-const COPY: Record<Phase, { title: string; sub: string }> = {
-  idle: {
-    title: 'Scellons ton engagement.',
-    sub: 'Pose ton doigt sur l’empreinte et maintiens.',
-  },
-  hold: {
-    title: 'Scellons ton engagement.',
-    sub: 'Ne lâche pas. Le sceau monte.',
-  },
-  paused: {
-    title: 'Scellons ton engagement.',
-    sub: 'Ta progression est gardée. Repose ton doigt.',
-  },
-  sealed: {
-    title: 'Engagement scellé.',
-    sub: 'Ta parole est verrouillée avec ton plan.',
-  },
-}
+/** Le texte de chaque phase, dans la langue courante. */
+const phaseCopy = (phase: Phase) => ({
+  title: translate(`onboarding_ritual.${phase}.title`),
+  sub: translate(`onboarding_ritual.${phase}.sub`),
+})
 
 // ─── Couches animées ─────────────────────────────────────────────────────
 
@@ -229,6 +218,7 @@ function Particle({
 // ─── La scène ────────────────────────────────────────────────────────────
 
 export function SceneRitual({ onDone }: { onDone: () => void }) {
+  const t = useT()
   const { height } = useWindowDimensions()
   const reduced = useReducedMotion()
 
@@ -488,7 +478,7 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
   }
 
   const sealed = phase === 'sealed'
-  const copy = COPY[phase]
+  const copy = phaseCopy(phase)
   const rippleSize = useMemo(() => ringBox, [ringBox])
 
   return (
@@ -628,11 +618,11 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Sceller mon engagement"
+            accessibilityLabel={t('onboarding_ritual.seal_a11y')}
             accessibilityHint={
               assistive
-                ? 'Appuie deux fois pour sceller ton engagement'
-                : 'Maintiens ton doigt sur l’empreinte jusqu’à ce que l’anneau se referme'
+                ? t('onboarding_ritual.seal_hint_assistive')
+                : t('onboarding_ritual.seal_hint')
             }
             accessibilityState={{ disabled: sealed }}
             hitSlop={20}
@@ -752,7 +742,12 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
       <View style={styles.foot}>
         {sealed ? (
           <Animated.View entering={FadeInDown.duration(420)}>
-            <Pill label="Continuer" onPress={onDone} kind="gradient" glow />
+            <Pill
+              label={t('paywall.continue')}
+              onPress={onDone}
+              kind="gradient"
+              glow
+            />
           </Animated.View>
         ) : null}
       </View>

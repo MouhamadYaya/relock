@@ -35,7 +35,7 @@ const TIERS = {
  * Le parent porte le rayon, `overflow: 'hidden'` (qui découpe l'arête sur les
  * angles) et `shadow.glass`.
  */
-export function HomeCardMaterial({
+export const HomeCardMaterial = React.memo(function HomeCardMaterial({
   tier = 2,
   warm = false,
 }: {
@@ -77,7 +77,7 @@ export function HomeCardMaterial({
       <View style={[styles.edge, { backgroundColor: edge }]} />
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   edge: {

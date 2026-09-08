@@ -7,10 +7,10 @@
  * quoi que ce soit, et la mention écrite dans le récapitulatif.
  */
 import {
+  allPresets,
   findPreset,
   isStrictPreset,
   NEW_RULE_PRESET_IDS,
-  PRESETS,
   presetLines,
   presetStrictEnd,
 } from '@/features/blocking/presets'
@@ -21,7 +21,9 @@ const sleep = findPreset(NEW_RULE_PRESET_IDS.sleep)
 
 describe('préréglages stricts', () => {
   it('« Sommeil profond » est le SEUL préréglage verrouillé', () => {
-    const strict = PRESETS.filter(isStrictPreset).map(preset => preset.id)
+    const strict = allPresets()
+      .filter(isStrictPreset)
+      .map(preset => preset.id)
     expect(strict).toEqual([NEW_RULE_PRESET_IDS.sleep])
   })
 
@@ -89,7 +91,7 @@ describe('presetLines', () => {
   it('ne mentionne jamais le strict là où il n’y en a pas', () => {
     // Un « Non » partout banaliserait le mot au point qu'on ne le lirait plus
     // le jour où il vaut « Oui ».
-    for (const preset of PRESETS.filter(p => !isStrictPreset(p))) {
+    for (const preset of allPresets().filter(p => !isStrictPreset(p))) {
       expect(presetLines(preset).map(line => line.label)).not.toContain(
         'Mode strict',
       )

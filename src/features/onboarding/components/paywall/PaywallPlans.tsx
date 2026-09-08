@@ -11,12 +11,12 @@ import {
   type ViewStyle,
 } from 'react-native'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
+import { featureFlags } from '@/config/feature-flags'
 import { PaywallMarquee } from '@/features/onboarding/components/paywall/PaywallMarquee'
 import {
   PaywallButton,
   PaywallLegalLinks,
   PaywallStars,
-  PaywallTextButton,
 } from '@/features/onboarding/components/paywall/PaywallPrimitives'
 import { pricePerWeek } from '@/features/onboarding/components/paywall/paywall-pricing'
 import { PW } from '@/features/onboarding/components/paywall/paywall-theme'
@@ -55,21 +55,12 @@ export function PaywallPlans({
   selected,
   onSelect,
   onPurchase,
-  onWindow,
-  onDevSkip,
   busy = false,
 }: {
   plans: readonly PaywallPlan[]
   selected: PaywallPlan
   onSelect: (plan: PaywallPlan) => void
   onPurchase: () => void
-  onWindow?: () => void
-  /**
-   * DEV uniquement : ouvre la porte sans passer par le store. Fourni par
-   * `PaywallScreen`, jamais en release — le rendu est de toute façon gardé
-   * par `__DEV__`, que Metro élimine du bundle de production.
-   */
-  onDevSkip?: () => void
   /** Un achat OU une restauration est en cours : l'écran se verrouille. */
   busy?: boolean
 }) {
@@ -156,20 +147,26 @@ export function PaywallPlans({
           </View>
 
           {/*
-            ⚠️ Le texte de cet avis est un PLACEHOLDER. Il doit être remplacé
-            par une citation réelle (et son pseudo App Store réel) avant toute
-            soumission : publier un avis fabriqué tombe sous la règle App Store
-            2.3.1 et sous le droit européen des pratiques commerciales.
+            Avis d'ouverture — masqué par `featureFlags.showUnverifiedSocialProof`,
+            avec le bloc de preuves plus bas et pour la même raison : la citation
+            et son auteur (« Alex R. ») sont écrits par nous, sur une app jamais
+            publiée. C'est la signature nommée qui fait basculer l'argument
+            publicitaire en faux témoignage — et c'est l'écran qui encaisse.
+
+            Le texte reste dans les locales : le flag porte la marche à suivre
+            pour le rallumer avec de vrais avis.
           */}
-          <PaywallReview
-            quote={t('paywall_reference.testimonial')}
-            author={t('paywall_reference.author')}
-            testID="paywall-reference-testimonial"
-            style={styles.leadReview}
-          />
+          {featureFlags.showUnverifiedSocialProof ? (
+            <PaywallReview
+              quote={t('paywall_reference.testimonial')}
+              author={t('paywall_reference.author')}
+              testID="paywall-reference-testimonial"
+              style={styles.leadReview}
+            />
+          ) : null}
         </View>
 
-        {__DEV__ ? (
+        {featureFlags.showUnverifiedSocialProof ? (
           <View style={styles.moreProof} testID="paywall-more-proof">
             <View style={styles.proofHeading}>
               <PaywallStars size={PW.layout.star + 4} />
@@ -187,15 +184,6 @@ export function PaywallPlans({
                 author={t(`paywall_reference.author_${index}`)}
               />
             ))}
-            {onWindow ? (
-              <View style={styles.devFooter}>
-                <PaywallTextButton
-                  label={t('paywall_reference.dev_window')}
-                  onPress={onWindow}
-                  disabled={locked}
-                />
-              </View>
-            ) : null}
           </View>
         ) : null}
       </ScrollView>
@@ -221,20 +209,6 @@ export function PaywallPlans({
           disabled={locked}
           compact={compact}
         />
-        {/*
-          Le raccourci de développement : il franchit la porte dure sans
-          rien facturer, pour travailler l'app sans repasser par le store à
-          chaque lancement. `__DEV__` est une constante que Metro remplace
-          par `false` en release — ce bloc n'existe pas dans le binaire livré.
-        */}
-        {__DEV__ && onDevSkip ? (
-          <PaywallTextButton
-            testID="paywall-dev-skip"
-            label={t('paywall_reference.dev_skip')}
-            onPress={onDevSkip}
-            disabled={locked}
-          />
-        ) : null}
         <PaywallLegalLinks />
       </View>
     </View>
@@ -621,11 +595,6 @@ const styles = StyleSheet.create({
     lineHeight: PW.text.captionLine,
     color: PW.color.inkFaint,
     textAlign: 'center',
-  },
-  devFooter: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: PW.space.xl,
   },
   footer: {
     paddingHorizontal: PW.layout.page,

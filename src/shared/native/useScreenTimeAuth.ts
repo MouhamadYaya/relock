@@ -5,8 +5,13 @@ import { ScreenTime } from '@/shared/native/screen-time'
 
 export type ScreenTimeAuthorizationState =
   | 'checking'
+  /** Accordée — le seul état où un blocage peut réellement s'appliquer. */
   | 'approved'
+  /** Jamais demandée : la fenêtre système existe encore. */
+  | 'notDetermined'
+  /** Refusée : iOS ne représentera plus la fenêtre. Voir `requireScreenTime`. */
   | 'denied'
+  /** Simulateur, Android, iOS < 16 : il n'y a rien à demander. */
   | 'unavailable'
   | 'error'
 
@@ -23,6 +28,14 @@ export type ScreenTimeAuthorizationState =
  * sans qu'on le sache : quand l'écran (re)devient visible, et au retour de
  * l'app au premier plan. Inutile de sonder en boucle — c'est un événement
  * rare, pas une donnée qui dérive.
+ *
+ * `notDetermined` ET `denied`, PAS UN SEUL « PAS AUTORISÉ »
+ * Ce hook repliait les deux sur `'denied'`. L'app ne pouvait donc pas
+ * distinguer « on n'a jamais demandé » de « on a demandé et c'est non » — deux
+ * situations qui appellent des gestes opposés : la première ouvre une fenêtre
+ * système, la seconde n'en ouvrira plus jamais aucune. Faute de les séparer,
+ * chaque écran proposait « Autoriser », ne provoquait rien, et renvoyait vers
+ * des Réglages qui ne contiennent pas l'interrupteur promis.
  */
 export function useScreenTimeAuthorization() {
   const [status, setStatus] = useState<ScreenTimeAuthorizationState>(() =>
@@ -40,7 +53,7 @@ export function useScreenTimeAuthorization() {
     let nextStatus: ScreenTimeAuthorizationState
     try {
       const nativeStatus = await ScreenTime.authorizationStatus()
-      nextStatus = nativeStatus === 'approved' ? 'approved' : 'denied'
+      nextStatus = nativeStatus === 'unsupported' ? 'unavailable' : nativeStatus
     } catch {
       nextStatus = 'error'
     }

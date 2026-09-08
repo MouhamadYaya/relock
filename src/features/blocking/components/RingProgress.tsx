@@ -15,7 +15,7 @@ type Props = {
   children?: React.ReactNode
 }
 
-export function RingProgress({
+export const RingProgress = React.memo(function RingProgress({
   size,
   stroke,
   fraction,
@@ -68,4 +68,4 @@ export function RingProgress({
       ) : null}
     </View>
   )
-}
+})

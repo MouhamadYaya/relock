@@ -56,10 +56,10 @@ describe('LanguagePickerModal', () => {
       .map(n => n.props.children)
       .filter(c => typeof c === 'string')
 
-    // Traduire « Deutsch » en « Allemand » oblige quelqu'un qui a mis l'app
+    // Traduire « Español » en « Espagnol » oblige quelqu'un qui a mis l'app
     // dans une langue qu'il ne lit pas à deviner laquelle est la sienne —
     // exactement la situation où l'on ouvre ce sélecteur.
-    for (const name of ['Français', 'English', 'Deutsch', 'Русский']) {
+    for (const name of ['Français', 'English', 'Español']) {
       expect(texts).toContain(name)
     }
   })
@@ -68,7 +68,7 @@ describe('LanguagePickerModal', () => {
     // Il en était absent : passer à l'anglais était sans retour.
     const labels = rows(render()).map(r => r.props.accessibilityLabel)
     expect(labels[0]).toBe('Français')
-    expect(labels).toHaveLength(4)
+    expect(labels).toHaveLength(3)
   })
 
   it('pose la coche SUR la ligne sélectionnée, à droite', () => {
@@ -105,15 +105,15 @@ describe('LanguagePickerModal', () => {
 
   it('change la langue et referme au premier appui', async () => {
     const tree = render()
-    const german = rows(tree).find(
-      r => r.props.accessibilityLabel === 'Deutsch',
+    const spanish = rows(tree).find(
+      r => r.props.accessibilityLabel === 'Español',
     )
 
     await act(async () => {
-      german?.props.onPress()
+      spanish?.props.onPress()
     })
 
-    expect(i18n.language).toBe('de')
+    expect(i18n.language).toBe('es')
     expect(router.back).toHaveBeenCalled()
   })
 
@@ -124,10 +124,10 @@ describe('LanguagePickerModal', () => {
         typeof n.type === 'string' &&
         StyleSheet.flatten(n.props?.style)?.backgroundColor === colors.divider,
     )
-    // Trois filets pour quatre langues : des lignes de liste, et non quatre
+    // Deux filets pour trois langues : des lignes de liste, et non trois
     // gros boutons pleine largeur séparés par du vide.
     expect(
       separators.filter(s => StyleSheet.flatten(s.props.style).marginLeft),
-    ).toHaveLength(3)
+    ).toHaveLength(2)
   })
 })

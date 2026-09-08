@@ -2,11 +2,11 @@ import { IconName } from '@assets/icons'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  FlatList,
   Modal,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -66,7 +66,11 @@ export function UnlockDurationSheet({
   const t = useT()
   const insets = useSafeAreaInsets()
   const [minutes, setMinutes] = useState(DEFAULT_MINUTES)
-  const pickerRef = useRef<FlatList<number>>(null)
+  // ScrollView plutôt qu'une liste virtualisée : vingt-six lignes de hauteur
+  // fixe, toutes connues d'avance. La virtualisation n'économise rien à cette
+  // taille et ajoute son suivi de fenêtre à chaque événement de défilement —
+  // sur la molette, c'est-à-dire là où le retard se voit le plus.
+  const pickerRef = useRef<ScrollView>(null)
   const hapticMinuteRef = useRef(DEFAULT_MINUTES)
 
   // Chaque ouverture repart du minimum : un déblocage n'hérite pas de la
@@ -76,7 +80,7 @@ export function UnlockDurationSheet({
     setMinutes(DEFAULT_MINUTES)
     hapticMinuteRef.current = DEFAULT_MINUTES
     const frame = requestAnimationFrame(() => {
-      pickerRef.current?.scrollToOffset({ offset: 0, animated: false })
+      pickerRef.current?.scrollTo({ y: 0, animated: false })
     })
     return () => cancelAnimationFrame(frame)
   }, [visible])
@@ -92,8 +96,8 @@ export function UnlockDurationSheet({
       if (withHaptic) haptics.selectionTick()
     }
     setMinutes(bounded)
-    pickerRef.current?.scrollToOffset({
-      offset: (bounded - UNLOCK_MIN_MINUTES) * PICKER_ROW_HEIGHT,
+    pickerRef.current?.scrollTo({
+      y: (bounded - UNLOCK_MIN_MINUTES) * PICKER_ROW_HEIGHT,
       animated,
     })
   }
@@ -146,6 +150,7 @@ export function UnlockDurationSheet({
               accessibilityLabel={t('blocking.unlock_app.cancel')}
               disabled={pending}
               onPress={close}
+              shadow
               style={styles.roundAction}
             >
               <IconSvg
@@ -192,16 +197,27 @@ export function UnlockDurationSheet({
           <View style={styles.pickerHero}>
             <View style={styles.picker}>
               <View pointerEvents="none" style={styles.pickerSelection} />
-              <FlatList
+              <ScrollView
                 ref={pickerRef}
                 accessibilityLabel={t('blocking.unlock_app.subtitle')}
-                data={UNLOCK_MINUTE_OPTIONS}
-                keyExtractor={item => String(item)}
-                renderItem={({ item }) => {
+                contentContainerStyle={styles.pickerContent}
+                style={styles.pickerList}
+                showsVerticalScrollIndicator={false}
+                snapToInterval={PICKER_ROW_HEIGHT}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                bounces={false}
+                overScrollMode="never"
+                scrollEventThrottle={16}
+                onScroll={previewPicker}
+                onMomentumScrollEnd={settlePicker}
+              >
+                {UNLOCK_MINUTE_OPTIONS.map(item => {
                   const selected = item === minutes
                   const distance = Math.abs(item - minutes)
                   return (
                     <Pressable
+                      key={item}
                       accessibilityRole="button"
                       accessibilityLabel={t('blocking.unlock_app.minutes', {
                         count: item,
@@ -222,24 +238,8 @@ export function UnlockDurationSheet({
                       </Text>
                     </Pressable>
                   )
-                }}
-                getItemLayout={(_data, index) => ({
-                  length: PICKER_ROW_HEIGHT,
-                  offset: PICKER_ROW_HEIGHT * index,
-                  index,
                 })}
-                contentContainerStyle={styles.pickerContent}
-                style={styles.pickerList}
-                showsVerticalScrollIndicator={false}
-                snapToInterval={PICKER_ROW_HEIGHT}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                bounces={false}
-                overScrollMode="never"
-                scrollEventThrottle={16}
-                onScroll={previewPicker}
-                onMomentumScrollEnd={settlePicker}
-              />
+              </ScrollView>
             </View>
           </View>
 

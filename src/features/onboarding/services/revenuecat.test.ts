@@ -12,6 +12,8 @@ jest.mock('@/config/env', () => ({
 
 const mockGetOfferings = jest.fn()
 const mockRestorePurchases = jest.fn()
+const mockLogIn = jest.fn()
+const mockSyncPurchases = jest.fn()
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
   default: {
@@ -23,6 +25,8 @@ jest.mock('react-native-purchases', () => ({
     configure: jest.fn(),
     getOfferings: (...args: unknown[]) => mockGetOfferings(...args),
     restorePurchases: (...args: unknown[]) => mockRestorePurchases(...args),
+    logIn: (...args: unknown[]) => mockLogIn(...args),
+    syncPurchasesForResult: (...args: unknown[]) => mockSyncPurchases(...args),
   },
   LOG_LEVEL: { VERBOSE: 'verbose', INFO: 'info' },
   PACKAGE_TYPE: { ANNUAL: 'ANNUAL', WEEKLY: 'WEEKLY' },
@@ -136,5 +140,76 @@ describe('restoreRevenueCatPurchases outcomes', () => {
     // Un abonné hors ligne ne doit jamais lire qu'il n'a aucun abonnement.
     mockRestorePurchases.mockRejectedValue(new Error('offline'))
     await expect(restoreRevenueCatPurchases()).resolves.toBe('failed')
+  })
+})
+
+/**
+ * La bascule d'identité, là où un client payant s'est fait renvoyer au
+ * paywall (2026-09-07).
+ *
+ * `Purchases.logIn` quitte l'identifiant anonyme — celui qui porte l'achat
+ * qu'on vient d'encaisser — pour le compte. Le reçu de l'appareil n'est pas
+ * reporté sur ce compte dans le même souffle : entre les deux, RevenueCat
+ * répond en toute bonne foi « pas d'abonnement ». Cette fonction doit donc
+ * réparer elle-même, comme le « Restaurer » manuel de l'utilisateur le
+ * faisait, et ne jamais rendre `inactive` par simple impatience.
+ */
+describe('linkRevenueCatUser', () => {
+  let linkRevenueCatUser: typeof import('./revenuecat').linkRevenueCatUser
+
+  const withEntitlement = { entitlements: { active: { relock_pro: {} } } }
+  const withoutEntitlement = { entitlements: { active: {} } }
+
+  beforeEach(() => {
+    jest.resetModules()
+    mockLogIn.mockReset()
+    mockSyncPurchases.mockReset()
+    linkRevenueCatUser = require('./revenuecat').linkRevenueCatUser
+  })
+
+  it('rattache et rend « active » quand le compte porte déjà l’abonnement', async () => {
+    mockLogIn.mockResolvedValue({
+      customerInfo: withEntitlement,
+      created: false,
+    })
+    await expect(linkRevenueCatUser('user-1')).resolves.toBe('active')
+    expect(mockLogIn).toHaveBeenCalledWith('user-1')
+    // Rien à réparer : on ne repousse pas le reçu pour le plaisir.
+    expect(mockSyncPurchases).not.toHaveBeenCalled()
+  })
+
+  it('reporte le reçu de l’appareil quand le compte ressort sans abonnement', async () => {
+    mockLogIn.mockResolvedValue({
+      customerInfo: withoutEntitlement,
+      created: true,
+    })
+    mockSyncPurchases.mockResolvedValue({ customerInfo: withEntitlement })
+
+    await expect(linkRevenueCatUser('user-1')).resolves.toBe('active')
+    expect(mockSyncPurchases).toHaveBeenCalledTimes(1)
+  })
+
+  it('rend « inactive » seulement après avoir tenté le report', async () => {
+    mockLogIn.mockResolvedValue({
+      customerInfo: withoutEntitlement,
+      created: true,
+    })
+    mockSyncPurchases.mockResolvedValue({ customerInfo: withoutEntitlement })
+
+    await expect(linkRevenueCatUser('user-1')).resolves.toBe('inactive')
+  })
+
+  it('ne conclut RIEN quand le store ne répond pas', async () => {
+    mockLogIn.mockRejectedValue(new Error('offline'))
+    await expect(linkRevenueCatUser('user-1')).resolves.toBe('unknown')
+  })
+
+  it('ne conclut rien non plus quand le report échoue', async () => {
+    mockLogIn.mockResolvedValue({
+      customerInfo: withoutEntitlement,
+      created: true,
+    })
+    mockSyncPurchases.mockRejectedValue(new Error('offline'))
+    await expect(linkRevenueCatUser('user-1')).resolves.toBe('unknown')
   })
 })

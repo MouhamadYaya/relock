@@ -4,6 +4,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { ScenePlanPreparation } from '@/features/onboarding/components/ScenePlanPreparation'
 import { ANTI_SCROLL_PLAN } from '@/features/onboarding/services/antiScrollPlan'
 import { PLAN_PREPARATION as PREP } from '@/features/onboarding/tokens'
+import i18n from '@/i18n/i18n'
 
 jest.mock('@/shared/components/ui/IconSvg', () => ({ IconSvg: 'IconSvg' }))
 
@@ -36,7 +37,11 @@ describe('plan preparation', () => {
     })
     for (const step of ANTI_SCROLL_PLAN)
       expect(
-        renderer!.root.findAllByProps({ children: step.title }).length,
+        renderer!.root.findAllByProps({
+          children: i18n.t(
+            `onboarding_plan_actions.${step.id}.title` as never,
+          ) as unknown as string,
+        }).length,
       ).toBeGreaterThan(0)
     advance(PREP.duration / 2)
     expect(percentage()).toBe(50)

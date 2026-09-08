@@ -26,6 +26,8 @@ import {
   PLAN_SUMMARY as SUM,
 } from '@/features/onboarding/tokens'
 import type { PersonalizedPlan } from '@/features/onboarding/types/personalizedPlan'
+import { translate } from '@/i18n/translate'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { relockMaterial } from '@/shared/theme/tokens/relock-material'
@@ -40,7 +42,7 @@ const ACTION_ICONS = {
 const BEATS = PLAN.readingDelays.length
 
 /** Ce que le CTA engage vraiment : rien n'est encore bloqué à cette étape. */
-const NEXT_STEP = 'Tu choisiras tes apps et tes blocages ensuite.'
+const nextStep = () => translate('onboarding_plan_summary.next_step')
 
 /**
  * « Ton plan est prêt » — la récompense du diagnostic.
@@ -69,6 +71,7 @@ export function ScenePersonalizedPlan({
   plan: PersonalizedPlan
   onNext: () => void
 }) {
+  const t = useT()
   const goal = recoveryGoal(plan.hours)
   const { height } = useWindowDimensions()
   const insets = useSafeAreaInsets()
@@ -163,7 +166,7 @@ export function ScenePersonalizedPlan({
                   style={styles.eyebrow}
                   maxFontSizeMultiplier={SUM.maxFontScale}
                 >
-                  Ce que tu as dit
+                  {t('onboarding_plan_summary.what_you_said')}
                 </Text>
                 <Text
                   style={styles.echo}
@@ -186,13 +189,15 @@ export function ScenePersonalizedPlan({
                 style={styles.cardEyebrow}
                 maxFontSizeMultiplier={SUM.maxFontScale}
               >
-                Objectif annuel
+                {t('onboarding_plan_summary.annual_goal')}
               </Text>
               {/* Le dégradé signature est réservé aux héros : sur cet écran,
                   le héros est ce chiffre-là. */}
               <View style={styles.hero}>
                 <GradientLine
-                  text={`${goal.days} jours`}
+                  text={t('onboarding_plan_summary.days', {
+                    count: goal.days,
+                  })}
                   size={layout.goalSize}
                 />
               </View>
@@ -201,16 +206,23 @@ export function ScenePersonalizedPlan({
                 numberOfLines={SUM.goalSummaryLines}
                 maxFontSizeMultiplier={SUM.maxFontScale}
               >
-                pour {plan.aspirationSummary ?? 'toi'}
+                {t('onboarding_plan_summary.for', {
+                  what:
+                    plan.aspirationSummary ??
+                    t('onboarding_plan_summary.yourself'),
+                })}
               </Text>
               <Text
                 style={styles.cardNote}
                 maxFontSizeMultiplier={SUM.maxFontScale}
               >
-                ≈ {goal.dailyTime} en moins par jour.{'\n'}
+                {t('onboarding_plan_summary.less_per_day', {
+                  time: goal.dailyTime,
+                })}
+                {'\n'}
                 {goal.exceedsUsage
-                  ? 'Cap non personnalisé, à adapter à ton usage.'
-                  : 'Un objectif, pas un gain garanti.'}
+                  ? t('onboarding_plan_summary.cap_generic')
+                  : t('onboarding_plan_summary.cap_goal')}
               </Text>
             </View>
           </PlanBeat>
@@ -222,7 +234,9 @@ export function ScenePersonalizedPlan({
                   key={action.id}
                   style={styles.method}
                   accessible
-                  accessibilityLabel={action.title}
+                  accessibilityLabel={translate(
+                    `onboarding_plan_actions.${action.id}.title`,
+                  )}
                 >
                   <View
                     style={styles.tile}
@@ -240,7 +254,7 @@ export function ScenePersonalizedPlan({
                     numberOfLines={2}
                     maxFontSizeMultiplier={SUM.maxFontScale}
                   >
-                    {action.title}
+                    {translate(`onboarding_plan_actions.${action.id}.title`)}
                   </Text>
                 </View>
               ))}
@@ -254,14 +268,14 @@ export function ScenePersonalizedPlan({
               maxFontSizeMultiplier={SUM.maxFontScale}
             >
               {plan.defense ? `${plan.defense} ` : ''}
-              {NEXT_STEP}
+              {nextStep()}
             </Text>
           </PlanBeat>
         </View>
 
         <View style={styles.footer}>
           <Pill
-            label="C’est parti"
+            label={t('onboarding_plan_summary.cta')}
             disabled={!revealed}
             glow={revealed}
             progress={progress}

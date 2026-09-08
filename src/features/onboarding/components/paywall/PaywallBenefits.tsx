@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
+import { featureFlags } from '@/config/feature-flags'
 import { PaywallTrustLogos } from '@/features/onboarding/components/paywall/PaywallArtwork'
 import {
   PaywallButton,
@@ -142,11 +143,14 @@ export function PaywallBenefits({ onNext }: { onNext: () => void }) {
         </View>
 
         {/* Chiffres d'avis, d'utilisateurs et marques universitaires : rien
-            de tout cela n'est vérifié côté Relock, donc rien n'en sort du
-            mode développement. Le jour où ces preuves seront réelles, c'est
-            cette seule condition qui tombe — la mise en page, elle, est
-            celle de la référence. */}
-        {__DEV__ ? (
+            de tout cela n'est vérifié côté Relock, donc rien ne s'affiche tant
+            que `featureFlags.showUnverifiedSocialProof` est à `false`. La mise
+            en page, elle, reste celle de la référence.
+
+            Attention en rallumant : les blasons Oxford / Harvard / Cambridge
+            ne sont pas qu'invérifiés, ils sont la marque de tiers. Sans
+            autorisation écrite, ils sortent d'ici — le flag ne les couvre pas. */}
+        {featureFlags.showUnverifiedSocialProof ? (
           <View style={styles.social} testID="paywall-reference-social-proof">
             <PaywallStars size={PW.layout.star + 3} />
             <Text style={styles.reviews}>{t('paywall_reference.reviews')}</Text>

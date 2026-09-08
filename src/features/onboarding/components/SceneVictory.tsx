@@ -11,12 +11,14 @@ import { useReducedMotion } from 'react-native-reanimated'
 import { Moon, Pill } from '@/features/onboarding/bits'
 import { Reveal } from '@/features/onboarding/motion'
 import { OB, VICTORY } from '@/features/onboarding/tokens'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
 
 /** Confirmation de configuration, pas une affirmation de blocage immédiat. */
 export function SceneVictory({ onDone }: { onDone: () => void }) {
+  const t = useT()
   const { height } = useWindowDimensions()
   const finished = useRef(false)
   const compact = height < VICTORY.compactHeight
@@ -40,11 +42,9 @@ export function SceneVictory({ onDone }: { onDone: () => void }) {
         </VictoryBeat>
         <VictoryBeat index={1}>
           <Text accessibilityRole="header" style={styles.title}>
-            C’est en marche.
+            {t('onboarding_victory.title')}
           </Text>
-          <Text style={styles.body}>
-            Moins de scroll.{'\n'}Plus de place pour toi.
-          </Text>
+          <Text style={styles.body}>{t('onboarding_victory.body')}</Text>
         </VictoryBeat>
         <VictoryBeat index={2}>
           <View style={styles.status}>
@@ -58,16 +58,16 @@ export function SceneVictory({ onDone }: { onDone: () => void }) {
                 color={OB.accent}
               />
             </View>
-            <Text style={styles.statusText}>Tes règles sont configurées</Text>
+            <Text style={styles.statusText}>
+              {t('onboarding_victory.status')}
+            </Text>
           </View>
-          <Text style={styles.note}>
-            Le blocage suivra les réglages que tu as choisis.
-          </Text>
+          <Text style={styles.note}>{t('onboarding_victory.note')}</Text>
         </VictoryBeat>
       </ScrollView>
       <View style={styles.footer}>
         <Pill
-          label="Ouvrir Relock"
+          label={t('onboarding_victory.cta')}
           onPress={() => {
             if (finished.current) return
             finished.current = true

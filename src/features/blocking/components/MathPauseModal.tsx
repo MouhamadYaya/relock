@@ -233,6 +233,7 @@ export function MathPauseModal({
               key={key}
               accessibilityRole="button"
               accessibilityLabel={key}
+              haptic="none"
               onPress={() => press(key)}
               style={styles.key}
             >
@@ -243,6 +244,7 @@ export function MathPauseModal({
             testID="math-erase"
             accessibilityRole="button"
             accessibilityLabel={t('blocking.math.erase')}
+            haptic="none"
             onPress={erase}
             style={styles.key}
           >
@@ -251,6 +253,7 @@ export function MathPauseModal({
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel="0"
+            haptic="none"
             onPress={() => press('0')}
             style={styles.key}
           >
@@ -262,6 +265,7 @@ export function MathPauseModal({
             accessibilityLabel={t('blocking.math.check')}
             accessibilityState={{ disabled: entry.length === 0 }}
             disabled={entry.length === 0}
+            haptic="none"
             onPress={submit}
             style={[styles.key, styles.keySubmit]}
           >

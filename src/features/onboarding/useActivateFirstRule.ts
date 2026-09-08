@@ -18,6 +18,7 @@ import { useCreateRuleMutation } from '@/features/blocking/hooks/useCreateRuleMu
 import { findPreset } from '@/features/blocking/presets'
 import { armRule } from '@/features/blocking/services/arm'
 import type { BlockRuleView } from '@/features/blocking/types'
+import { translate } from '@/i18n/translate'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { genUUID } from '@/shared/utils/uuid'
 
@@ -41,7 +42,7 @@ export function useActivateFirstRule() {
     async (input: ActivateFirstRuleInput): Promise<void> => {
       for (const presetId of input.presetIds) {
         const preset = findPreset(presetId)
-        if (!preset) throw new Error('Préréglage introuvable')
+        if (!preset) throw new Error(translate('errors.preset_not_found'))
 
         // Aucun `strict` posé ici : les premières règles naissent SOUPLES.
         // L'écran « Hard Mode » du tutoriel est une vitrine (voir
@@ -56,7 +57,7 @@ export function useActivateFirstRule() {
           if (ScreenTime.isAvailable) {
             const auth = await ScreenTime.authorizationStatus()
             if (auth !== 'approved') {
-              throw new Error('Autorisation Temps d’écran manquante')
+              throw new Error(translate('errors.screen_time_missing'))
             }
             await ScreenTime.bindSelection(id)
             await armRule({ id, type: preset.type, config } as BlockRuleView)

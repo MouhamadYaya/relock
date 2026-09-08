@@ -3,6 +3,7 @@ import {
   birthDateBounds,
   formatBirthDate,
   formatMemberSince,
+  MIN_AGE_YEARS,
   parseBirthDate,
   toIsoDate,
 } from '@/features/settings/services/birth-date'
@@ -30,11 +31,19 @@ describe('birth-date', () => {
     }
   })
 
-  it('borne la saisie entre 1900 et aujourd’hui', () => {
+  it('borne la saisie entre 1900 et le 13e anniversaire', () => {
     const now = new Date(2026, 8, 7, 12)
     const { min, max } = birthDateBounds(now)
     expect(min.getFullYear()).toBe(1900)
-    expect(max).toBe(now)
+    // La borne haute n'est PAS aujourd'hui : accepter une date récente
+    // reviendrait à collecter nom, e-mail et date de naissance d'un enfant,
+    // ce qui fait tomber l'app sous la guideline 5.1.4 d'Apple (et sous le
+    // RGPD/COPPA) sans consentement parental. Le sélecteur s'arrête donc au
+    // 13e anniversaire — voir `MIN_AGE_YEARS`.
+    expect(max.getFullYear()).toBe(2026 - MIN_AGE_YEARS)
+    expect(max.getMonth()).toBe(now.getMonth())
+    expect(max.getDate()).toBe(now.getDate())
+    expect(max.getTime()).toBeLessThan(now.getTime())
   })
 
   it('pose les molettes sur une année plausible, jamais aujourd’hui', () => {

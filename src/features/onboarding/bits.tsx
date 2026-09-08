@@ -32,6 +32,7 @@ import Svg, {
   Stop,
   Text as SvgText,
 } from 'react-native-svg'
+import { translate } from '@/i18n/translate'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import {
   GUIDE_FRAME_ASPECT_RATIO,
@@ -618,7 +619,7 @@ export function BackBtn({ onPress }: { onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Retour"
+      accessibilityLabel={translate('settings.back')}
       onPress={() => {
         haptic.select()
         onPress()

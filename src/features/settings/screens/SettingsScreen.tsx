@@ -41,17 +41,21 @@ import { ProfileCard } from '@/features/settings/components/ProfileCard'
 import { SettingsHeader } from '@/features/settings/components/SettingsHeader'
 import { SettingsRow } from '@/features/settings/components/SettingsRow'
 import { SettingsSection } from '@/features/settings/components/SettingsSection'
+import { LOGO_LABEL_KEY } from '@/features/settings/constants/logo-copy'
 import {
   buildDataExport,
   serializeDataExport,
 } from '@/features/settings/services/data-export'
 import { useProfile } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
+import { nativeLocale } from '@/i18n/native-locale'
 import { useT } from '@/i18n/useT'
 import { syncEntitlement } from '@/session/bootstrap'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
+import { AppIcon } from '@/shared/native/app-icon'
 import { Notif, type NotifPermission } from '@/shared/native/notifications'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { requireScreenTime } from '@/shared/native/screen-time-gate'
 import {
   applyCrashReportsPreference,
   captureError,
@@ -78,8 +82,7 @@ const { colors, spacing, type } = settingsTheme
 const LANGUAGE_NAME: Record<string, string> = {
   fr: 'Français',
   en: 'English',
-  de: 'Deutsch',
-  ru: 'Русский',
+  es: 'Español',
 }
 
 /** Minutes depuis minuit → `Date` d'aujourd'hui, pour le sélecteur natif. */
@@ -98,6 +101,8 @@ export default function SettingsScreen() {
   const { rules, refetch: refetchRules } = useBlockRulesQuery()
   const crashReports = usePreferences(state => state.crashReports)
   const pauseRitual = usePreferences(state => state.pauseRitual)
+  const appLogo = usePreferences(state => state.appLogo)
+  const setAppLogo = usePreferences(state => state.setAppLogo)
   const setPreference = usePreferences(state => state.setPreference)
 
   // Rapports d'anomalie. La politique de confidentialité PUBLIÉE
@@ -173,7 +178,15 @@ export default function SettingsScreen() {
     Notif.permissionStatus()
       .then(setNotifPermission)
       .catch(() => {})
-  }, [])
+    // L'icône se change aussi HORS de cette app : une restauration de
+    // sauvegarde ou une build sans le jeu d'icônes la remet à l'origine. Le
+    // système fait foi, la préférence locale n'en est que le reflet.
+    if (AppIcon.isAvailable) {
+      AppIcon.current()
+        .then(setAppLogo)
+        .catch(() => {})
+    }
+  }, [setAppLogo])
 
   // Ces permissions se révoquent DEPUIS iOS, pas seulement depuis ici. Une
   // lecture au seul montage laisse donc l'écran affirmer « accordée » alors
@@ -207,9 +220,14 @@ export default function SettingsScreen() {
       Linking.openSettings().catch(() => {})
       return
     }
-    ScreenTime.requestAuthorization()
-      .then(s => setAuthorized(s === 'approved'))
-      .catch(e => showErrorToast(e))
+    // Pas de `requestAuthorization()` en aveugle : après un refus, iOS ne
+    // représente plus la fenêtre et l'appel se contente de rejeter — cette
+    // ligne n'affichait donc qu'un toast d'erreur brut, sans rien à en faire.
+    void (async () => {
+      const gate = await requireScreenTime()
+      setAuthorized(gate === 'approved')
+      if (gate === 'blocked') router.push('/screen-time-help')
+    })()
   }
 
   const applyUninstallProtection = (enabled: boolean) => {
@@ -275,12 +293,23 @@ export default function SettingsScreen() {
     setRestoring(true)
     void (async () => {
       try {
-        const restored = await restoreRevenueCatPurchases()
-        // La restauration RevenueCat rend un booléen ; la porte, elle, se
-        // rouvre par la vérité serveur — d'où la synchronisation qui suit.
+        const result = await restoreRevenueCatPurchases()
+        // La porte se rouvre par la vérité serveur, jamais par le retour de
+        // la restauration — d'où la synchronisation qui suit.
         await syncEntitlement()
+        // Trois issues, trois messages. `restoreRevenueCatPurchases` rendait
+        // un booléen ; depuis qu'elle rend `restored | none | failed`, un
+        // test de véracité trouvait vraies les TROIS chaînes et annonçait
+        // « Abonnement restauré » à quelqu'un qui n'a jamais rien acheté —
+        // comme au store injoignable. Même piège que celui déjà corrigé dans
+        // `PaywallScreen`. Et « aucun achat » est un diagnostic de compte :
+        // on ne le prononce que si le store a vraiment répondu.
+        if (result === 'failed') {
+          showErrorToast(t('settings.pro.restore_failed'))
+          return
+        }
         showToast(
-          restored
+          result === 'restored'
             ? t('settings.pro.restore_done')
             : t('settings.pro.restore_none'),
         )
@@ -546,9 +575,31 @@ export default function SettingsScreen() {
           <SettingsRow
             icon={IconName.GLOBE}
             label={t('settings.language.label')}
-            value={LANGUAGE_NAME[i18n.language] ?? i18n.language.toUpperCase()}
+            value={
+              LANGUAGE_NAME[i18n.language.split('-')[0] ?? ''] ??
+              i18n.language.toUpperCase()
+            }
             onPress={() => router.push('/language-picker')}
           />
+          {/*
+            L'icône de l'app sur l'écran d'accueil de l'iPhone. Purement
+            décorative — elle ne change ni ce qui est bloqué ni la façon dont
+            on le franchit — donc sa place est ici, avec la langue, et non
+            dans une section « Apparence » à elle toute seule.
+
+            La ligne DISPARAÎT quand le binaire ne sait pas poser d'icône
+            (Android, ou un dev-client antérieur à ce module) : proposer un
+            réglage qui ne peut pas aboutir vaut moins que ne rien proposer.
+          */}
+          {AppIcon.isAvailable ? (
+            <SettingsRow
+              icon={IconName.STAR}
+              label={t('settings.logo.label')}
+              hint={t('settings.logo.hint')}
+              value={t(LOGO_LABEL_KEY[appLogo])}
+              onPress={() => router.push('/logo-picker')}
+            />
+          ) : null}
           {/*
             Le rituel de pause : ce que Relock demande avant d'ouvrir une app
             bloquée. Il a sa place ici, et non dans « Protection » — il ne
@@ -684,6 +735,7 @@ export default function SettingsScreen() {
               disabled={!notif.master}
               accessory={
                 <DateTimePicker
+                  locale={nativeLocale()}
                   mode="time"
                   display="compact"
                   themeVariant="dark"
@@ -706,6 +758,7 @@ export default function SettingsScreen() {
             disabled={!notif.master}
             accessory={
               <DateTimePicker
+                locale={nativeLocale()}
                 mode="time"
                 display="compact"
                 themeVariant="dark"
@@ -721,6 +774,7 @@ export default function SettingsScreen() {
             disabled={!notif.master}
             accessory={
               <DateTimePicker
+                locale={nativeLocale()}
                 mode="time"
                 display="compact"
                 themeVariant="dark"

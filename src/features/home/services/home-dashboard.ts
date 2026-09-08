@@ -1,4 +1,5 @@
 import type { HomeDashboardState, HomeScoreBand } from '@/features/home/types'
+import type { ScreenTimeAuthorizationState } from '@/shared/native/useScreenTimeAuth'
 
 function validScore(value: number | null | undefined): value is number {
   return (
@@ -30,9 +31,14 @@ export function dashboardState({
   rulesPending: boolean
   statsPending: boolean
   statsError: boolean
-  authorization: 'checking' | 'approved' | 'denied' | 'unavailable' | 'error'
+  authorization: ScreenTimeAuthorizationState
 }): HomeDashboardState {
-  if (authorization === 'denied') return 'permissionMissing'
+  // `denied` et `notDetermined` sont deux histoires différentes (l'une a une
+  // fenêtre système à rouvrir, l'autre non), mais l'Accueil montre la même
+  // chose des deux : il n'y a pas d'autorisation, donc rien ne bloque. La
+  // distinction se joue au moment du geste, dans `requireScreenTime`.
+  if (authorization === 'denied' || authorization === 'notDetermined')
+    return 'permissionMissing'
   if (authorization === 'unavailable') return 'unavailable'
   if (authorization === 'error' || statsError) return 'error'
   if (authorization === 'checking' || rulesPending || statsPending)

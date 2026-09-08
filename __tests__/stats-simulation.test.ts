@@ -10,7 +10,18 @@
  *   TZ=Europe/Paris npx jest __tests__/stats-simulation.test.ts
  */
 
-jest.mock('@/shared/services/supabase/client', () => ({ supabase: {} }))
+// Même raison que dans `stats.service.test.ts` : la chaîne d'imports passe
+// par `useSessionUser`, qui pose son abonnement au chargement du module.
+jest.mock('@/shared/services/supabase/client', () => ({
+  supabase: {
+    auth: {
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+      getSession: jest.fn(async () => ({ data: { session: null } })),
+    },
+  },
+}))
 jest.mock('@/shared/native/screen-time', () => ({
   ScreenTime: { isAvailable: false },
 }))

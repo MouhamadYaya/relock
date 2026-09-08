@@ -12,6 +12,11 @@
  * ce qui laisse la valeur par défaut libre d'évoluer.
  */
 import { constants } from '@/config/constants'
+import {
+  type AppLogo,
+  DEFAULT_APP_LOGO,
+  isAppLogo,
+} from '@/shared/constants/app-logo'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 
 export interface AppPreferences {
@@ -109,6 +114,32 @@ export function getPauseRitual(): PauseRitual {
 export function setPauseRitual(ritual: PauseRitual): void {
   try {
     kvStorage.setString(constants.PREF_PAUSE_RITUAL, ritual)
+  } catch {
+    // Idem : ne jamais faire échouer un choix de confort.
+  }
+}
+
+/**
+ * L'icône d'app retenue, dernier état CONNU.
+ *
+ * Ce n'est pas la source de vérité — iOS l'est (`shared/native/app-icon.ts`)
+ * — mais une lecture synchrone, disponible avant que le natif ne réponde.
+ * Même contrat que le rituel : toute valeur inconnue retombe sur l'icône
+ * d'origine, pour qu'une rétrogradation d'app ne fasse pas planter un
+ * `require` d'asset absent du binaire.
+ */
+export function getAppLogo(): AppLogo {
+  try {
+    const raw = kvStorage.getString(constants.PREF_APP_LOGO)
+    return isAppLogo(raw) ? raw : DEFAULT_APP_LOGO
+  } catch {
+    return DEFAULT_APP_LOGO
+  }
+}
+
+export function setAppLogo(logo: AppLogo): void {
+  try {
+    kvStorage.setString(constants.PREF_APP_LOGO, logo)
   } catch {
     // Idem : ne jamais faire échouer un choix de confort.
   }

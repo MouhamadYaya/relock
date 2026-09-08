@@ -9,10 +9,9 @@ import {
 } from '@/features/notifications/catalog'
 import { CAPACITY } from '@/features/notifications/engine/capacity'
 import { context } from '@/features/notifications/notif-test-fixtures'
-import de from '@/i18n/locales/de.json'
 import en from '@/i18n/locales/en.json'
+import es from '@/i18n/locales/es.json'
 import fr from '@/i18n/locales/fr.json'
-import ru from '@/i18n/locales/ru.json'
 
 it('respecte tous ses invariants', () => {
   expect(catalogIntegrityIssues()).toEqual([])
@@ -54,7 +53,7 @@ it('donne un repli à tout nœud qui vise un écran conditionnel', () => {
 })
 
 describe('traductions', () => {
-  const LOCALES = { fr, en, de, ru } as Record<string, Record<string, unknown>>
+  const LOCALES = { fr, en, es } as Record<string, Record<string, unknown>>
 
   const lookup = (bundle: Record<string, unknown>, key: string): unknown =>
     key

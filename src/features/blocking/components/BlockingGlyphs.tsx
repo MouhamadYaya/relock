@@ -48,7 +48,7 @@ function XMark({
  * ⚠️ Une règle RÉELLE n'a jamais d'`appId` (Apple ne rend qu'un jeton opaque) :
  * elle passe par `RuleAppIcons`, qui affiche les VRAIES icônes.
  */
-export function AppBadgeRow({
+export const AppBadgeRow = React.memo(function AppBadgeRow({
   apps,
   extra,
 }: {
@@ -69,7 +69,7 @@ export function AppBadgeRow({
       ) : null}
     </View>
   )
-}
+})
 
 function TemplateCalendarGlyph() {
   return (
@@ -196,7 +196,11 @@ function TemplateShieldGlyph() {
   )
 }
 
-export function RuleTemplateFlowGlyph({ kind }: { kind: RuleTypeGlyphKind }) {
+export const RuleTemplateFlowGlyph = React.memo(function RuleTemplateFlowGlyph({
+  kind,
+}: {
+  kind: RuleTypeGlyphKind
+}) {
   return (
     <View
       accessibilityElementsHidden
@@ -208,7 +212,7 @@ export function RuleTemplateFlowGlyph({ kind }: { kind: RuleTypeGlyphKind }) {
       <TemplateShieldGlyph />
     </View>
   )
-}
+})
 
 /**
  * Le badge (puce + icônes) des cartes prédéfinies — SEULE source de vérité
@@ -216,13 +220,17 @@ export function RuleTemplateFlowGlyph({ kind }: { kind: RuleTypeGlyphKind }) {
  * pour qu'une règle créée par l'utilisateur reste visuellement identique aux
  * cartes prédéfinies (même badge, même icônes, même taille).
  */
-export function RuleTemplateFlowBadge({ kind }: { kind: RuleTypeGlyphKind }) {
+export const RuleTemplateFlowBadge = React.memo(function RuleTemplateFlowBadge({
+  kind,
+}: {
+  kind: RuleTypeGlyphKind
+}) {
   return (
     <View style={styles.templateFlowBadge}>
       <RuleTemplateFlowGlyph kind={kind} />
     </View>
   )
-}
+})
 
 function FlowArrow() {
   return (
@@ -243,7 +251,11 @@ function FlowArrow() {
  * Pictogrammes des trois types de règle — dessinés à même la carte, sans tuile
  * de fond : le volume vient du dégradé et des reflets, pas d'un cadre.
  */
-export function RuleTypeGlyph({ kind }: { kind: RuleTypeGlyphKind }) {
+export const RuleTypeGlyph = React.memo(function RuleTypeGlyph({
+  kind,
+}: {
+  kind: RuleTypeGlyphKind
+}) {
   return (
     <View style={styles.typeGlyph}>
       <Svg width="100%" height="100%" viewBox="0 0 64 64">
@@ -430,7 +442,7 @@ export function RuleTypeGlyph({ kind }: { kind: RuleTypeGlyphKind }) {
       </Svg>
     </View>
   )
-}
+})
 
 export function PurplePlusButton({
   accessibilityLabel,
@@ -442,32 +454,42 @@ export function PurplePlusButton({
   compact?: boolean
 }) {
   const size = compact ? spacing.xxxl : spacing.xxxxl
+  const circle = { width: size, height: size, borderRadius: size / 2 }
   return (
+    /*
+      Deux vues et non une : le halo violet du press vit sur la vue EXTÉRIEURE,
+      qui ne rogne rien. `overflow: 'hidden'` pose `clipsToBounds` sur iOS, et
+      une couche qui masque ses bords ne dessine plus son ombre — le dégradé et
+      son rognage sont donc descendus d'un cran, dans `plusButtonFill`.
+    */
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       hitSlop={compact ? spacing.micro : undefined}
       onPress={onPress}
-      style={[
-        styles.plusButton,
-        { width: size, height: size, borderRadius: size / 2 },
-      ]}
+      shadow
+      style={[styles.plusButton, circle]}
     >
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-        <Defs>
-          <LinearGradient id="plus-gradient" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={colors.blockingAccentLight} />
-            <Stop offset="0.55" stopColor={colors.blockingAccent} />
-            <Stop offset="1" stopColor={colors.accentVioletDeep} />
-          </LinearGradient>
-        </Defs>
-        <Rect
-          width="100%"
-          height="100%"
-          rx={size / 2}
-          fill="url(#plus-gradient)"
-        />
-      </Svg>
+      <View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, styles.plusButtonFill, circle]}
+      >
+        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+          <Defs>
+            <LinearGradient id="plus-gradient" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={colors.blockingAccentLight} />
+              <Stop offset="0.55" stopColor={colors.blockingAccent} />
+              <Stop offset="1" stopColor={colors.accentVioletDeep} />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            width="100%"
+            height="100%"
+            rx={size / 2}
+            fill="url(#plus-gradient)"
+          />
+        </Svg>
+      </View>
       <IconSvg
         name={IconName.PLUS}
         size={spacing.xl}
@@ -477,7 +499,7 @@ export function PurplePlusButton({
   )
 }
 
-export function LockedAppTile() {
+export const LockedAppTile = React.memo(function LockedAppTile() {
   return (
     <View style={styles.lockedTile}>
       <XMark
@@ -507,7 +529,7 @@ export function LockedAppTile() {
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   badgeIcon: {
@@ -563,12 +585,14 @@ const styles = StyleSheet.create({
   plusButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    // Pas d'`overflow` ici : c'est la couche qui porte l'ombre au repos comme
+    // sous le doigt. Le rognage est dans `plusButtonFill`.
     shadowColor: colors.blockingAccent,
     shadowOpacity: relockMaterial.shadow.blockingGlow.shadowOpacity,
     shadowRadius: relockMaterial.shadow.blockingGlow.shadowRadius,
     shadowOffset: relockMaterial.shadow.blockingGlow.shadowOffset,
   },
+  plusButtonFill: { overflow: 'hidden' },
   lockedTile: {
     width: relockMaterial.layout.blockingLockedTileSize,
     height: relockMaterial.layout.blockingLockedTileSize,

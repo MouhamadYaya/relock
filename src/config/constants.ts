@@ -53,6 +53,14 @@ export const constants = {
    */
   PREF_PAUSE_RITUAL: 'pref.pauseRitual.v1',
   /**
+   * Icône choisie pour l'app sur l'écran d'accueil (`classic`, `orb`,
+   * `phases`). REFLET seulement : la vérité est dans iOS
+   * (`UIApplication.alternateIconName`), qui survit à une réinstallation du
+   * binaire et peut changer sans nous. Cette clé n'existe que pour dessiner
+   * les Réglages sans attendre le natif ; elle est resynchronisée au focus.
+   */
+  PREF_APP_LOGO: 'pref.appLogo.v1',
+  /**
    * Dernier déblocage d'urgence (timestamp ms). Le quota hebdomadaire s'en
    * déduit — on ne stocke pas un compteur, qui se désynchroniserait du temps
    * qui passe.
@@ -81,8 +89,34 @@ export const constants = {
   /** Première ouverture connue de l'app — base de `daysSinceInstall`. */
   NOTIF_INSTALLED_AT: 'notif.installedAt.v1',
 
+  /**
+   * Langue choisie À LA MAIN dans Réglages. Absente tant que l'utilisateur
+   * n'a rien choisi : la langue est alors déduite du téléphone à chaque
+   * démarrage (`src/i18n/i18n.ts`), ce qui laisse un changement de langue
+   * système se propager tout seul.
+   */
+  PREF_LANGUAGE: 'pref.language.v1',
+
   /** MMKV key (`navigationStorage`) for persisted React Navigation root state. */
   NAVIGATION_STATE_V1: 'navigation.state.v1',
+
+  /**
+   * DEV uniquement. Ces trois clés ne sont jamais écrites par une build
+   * Release : tout ce qui les lit passe d'abord par `__DEV__`.
+   *
+   * `DEV_FIXTURES` : interrupteur du jeu de données fictives du simulateur
+   * (`src/features/blocking/dev-fixtures.ts`), éteint par défaut.
+   * `DEV_FIXTURE_RULES` : les règles fictives, pour qu'une pause ou une
+   * suppression faite pendant un test survive au rechargement de Metro. La
+   * version de la clé monte quand le semis change : un jeu déjà écrit sur un
+   * simulateur garderait sinon les anciens noms pour toujours.
+   * `DEV_SKIP_PAYWALL` : porte de l'abonnement court-circuitée, posée par le
+   * bouton « skip onboarding » du premier écran du parcours
+   * (`src/session/dev-skip-paywall.ts`).
+   */
+  DEV_FIXTURES: 'dev.fixtures.v1',
+  DEV_FIXTURE_RULES: 'dev.fixtures.rules.v2',
+  DEV_SKIP_PAYWALL: 'dev.skipPaywall.v1',
 }
 
 export const flags = {

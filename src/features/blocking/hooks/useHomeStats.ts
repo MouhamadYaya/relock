@@ -1,4 +1,6 @@
+import { useIsFocused } from '@react-navigation/native'
 import { useQuery } from '@tanstack/react-query'
+import { devFixturesEnabled } from '@/features/blocking/dev-fixtures'
 import {
   computeRecordStreak,
   computeStreak,
@@ -11,6 +13,12 @@ import { useSessionUserId } from '@/session/useSessionUser'
 /** Stats réelles de l'Accueil : synchronise depuis l'extension puis lit Supabase. */
 export function useHomeStats() {
   const userId = useSessionUserId()
+  // Les onglets restent MONTÉS quand on en change : sans ce garde, le filet
+  // périodique ci-dessous continuait de tourner depuis Blocages et Activité,
+  // pour un écran que personne ne regardait. Chaque passage coûte une lecture
+  // du journal natif, un battement, et deux lectures Supabase dont l'année
+  // d'historique.
+  const isFocused = useIsFocused()
   const query = useQuery({
     // La clé porte l'utilisateur : le cache persisté d'un compte ne peut pas
     // être réaffiché sous un autre.
@@ -35,7 +43,9 @@ export function useHomeStats() {
     },
     // Sans session, RLS renvoie du VIDE sans erreur : interroger Supabase
     // maintenant mettrait en cache (et persisterait) de faux zéros. On attend.
-    enabled: !!userId,
+    // Le jeu de test du simulateur ne passe pas par Supabase : il n'a aucune
+    // raison d'attendre une session.
+    enabled: !!userId || devFixturesEnabled(),
     // L'Accueil est LE tableau de bord : après une résistance (« Fermer » sur
     // le bouclier), l'utilisateur revient souvent dans la minute. Avec le
     // staleTime standard (60 s), le retour au premier plan ne rejouait PAS la
@@ -43,7 +53,7 @@ export function useHomeStats() {
     // 5 s de staleness + filet périodique tant que l'écran est ouvert.
     staleTime: 5_000,
     gcTime: 5 * 60_000,
-    refetchInterval: 60_000,
+    refetchInterval: isFocused ? 60_000 : false,
     refetchOnWindowFocus: true,
   })
 

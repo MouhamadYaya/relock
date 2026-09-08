@@ -1,4 +1,9 @@
 import { useSyncExternalStore } from 'react'
+import {
+  getSessionUserId,
+  publishSessionUserId,
+  subscribeSessionUserId,
+} from '@/session/session-user-id'
 import { setSentryUser } from '@/shared/services/monitoring/sentry'
 import { supabase } from '@/shared/services/supabase/client'
 
@@ -15,20 +20,19 @@ import { supabase } from '@/shared/services/supabase/client'
  * non ». Les requêtes attendent donc un `userId` non nul (`enabled`).
  *
  * `undefined` = session encore inconnue (démarrage) ; `null` = déconnecté.
+ *
+ * L'ÉTAT lui-même vit dans `session-user-id.ts`, qui ne fait rien au
+ * chargement : un service peut y lire l'identité sans démarrer l'écoute
+ * ci-dessous. Ce fichier en est le seul rédacteur.
  */
-let currentUserId: string | null | undefined
-const listeners = new Set<() => void>()
-
 function publish(next: string | null) {
-  if (next === currentUserId) return
-  currentUserId = next
+  if (!publishSessionUserId(next)) return
   // Sentry suit la MÊME source de vérité que les requêtes. C'est ce qui
   // permet de dire « ce crash touche 3 comptes » plutôt que « 3 fois ». Seul
   // l'UUID part — jamais l'e-mail (cf. `scrubEvent`). `null` à la
   // déconnexion, sans quoi le crash suivant serait attribué au compte
   // précédent.
   setSentryUser(next)
-  for (const l of listeners) l()
 }
 
 // `onAuthStateChange` couvre INITIAL_SESSION (session restaurée du stockage),
@@ -43,23 +47,20 @@ supabase.auth.onAuthStateChange((_event, session) => {
 void supabase.auth
   .getSession()
   .then(({ data }) => {
-    if (currentUserId === undefined) publish(data.session?.user.id ?? null)
+    if (getSessionUserId() === undefined) publish(data.session?.user.id ?? null)
   })
   .catch(() => publish(null))
 
-/** Id de l'utilisateur connecté, hors composant. */
-export function getSessionUserId(): string | null | undefined {
-  return currentUserId
-}
+export {
+  getSessionUserId,
+  resolveSessionUserId,
+} from '@/session/session-user-id'
 
 /** Id de l'utilisateur connecté ; re-rend au changement de session. */
 export function useSessionUserId(): string | null | undefined {
   return useSyncExternalStore(
-    onChange => {
-      listeners.add(onChange)
-      return () => listeners.delete(onChange)
-    },
-    () => currentUserId,
-    () => currentUserId,
+    subscribeSessionUserId,
+    getSessionUserId,
+    getSessionUserId,
   )
 }

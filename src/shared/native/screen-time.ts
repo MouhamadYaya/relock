@@ -11,6 +11,7 @@
  * comportement mock (aucun blocage réel). Voir ios/.../BlocusScreenTime.swift.
  */
 import { NativeModules, Platform } from 'react-native'
+import { translate } from '@/i18n/translate'
 
 /**
  * Une ligne du journal partagé des extensions.
@@ -325,9 +326,7 @@ export const isScreenTimeAvailable = Platform.OS === 'ios' && native != null
  */
 function ensure(): BlocusScreenTimeNative {
   if (!native) {
-    throw new Error(
-      'Family Controls indisponible (simulateur ou module non lié).',
-    )
+    throw new Error(translate('errors.family_controls_unavailable'))
   }
   return native
 }

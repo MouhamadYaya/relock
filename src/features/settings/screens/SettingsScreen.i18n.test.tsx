@@ -138,7 +138,7 @@ function visibleText(tree: ReactTestRenderer): string[] {
     )
 }
 
-const LANGUAGES = ['fr', 'en', 'de', 'ru'] as const
+const LANGUAGES = ['fr', 'en', 'es'] as const
 
 describe('SettingsScreen — traductions réellement rendues', () => {
   let mounted: ReactTestRenderer | null = null
@@ -183,7 +183,7 @@ describe('SettingsScreen — traductions réellement rendues', () => {
 
     // Toute vue dotée d'une hauteur minimale de ligne EST une ligne de
     // réglage : elle doit être horizontale et ne jamais revenir à la ligne,
-    // quelle que soit la longueur du libellé allemand ou russe.
+    // quelle que soit la longueur du libellé anglais ou espagnol.
     const rows = tree.root.findAll(n => {
       const style = StyleSheet.flatten(n.props?.style)
       return (

@@ -46,11 +46,13 @@ export function ProfileCard({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      onPress={() => {
+      onPress={onPress}
+      // Le tic part du TOUCHER : la fiche profil est un écran, et l'appui doit
+      // se sentir avant qu'il ne commence à se monter.
+      onPressIn={() => {
+        setPressed(true)
         haptics.selectionTick()
-        onPress()
       }}
-      onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       style={pressed ? styles.cardPressed : styles.card}
     >

@@ -25,6 +25,7 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg'
+import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { BackBtn, GradientLine } from './bits'
 import { Reveal } from './motion'
@@ -284,6 +285,7 @@ export function SceneAuth({
    */
   onBack?: () => void
 }) {
+  const t = useT()
   const insets = useSafeAreaInsets()
   const [appleAvailable, setAppleAvailable] = useState(false)
 
@@ -326,21 +328,17 @@ export function SceneAuth({
             <AuthOrb size={ORB_SIZE} />
           </Reveal>
           <Reveal index={1} style={styles.title}>
-            <GradientLine text="Sauvegarde ta" size={35} />
-            <GradientLine text="progression." size={35} />
+            <GradientLine text={t('onboarding_auth.title_1')} size={35} />
+            <GradientLine text={t('onboarding_auth.title_2')} size={35} />
           </Reveal>
           <Reveal index={2}>
-            <Text style={styles.sub}>
-              Retrouve tes habitudes, tes blocages{'\n'}
-              et tes statistiques, synchronisés{'\n'}
-              en toute sécurité sur tous tes appareils.
-            </Text>
+            <Text style={styles.sub}>{t('onboarding_auth.sub')}</Text>
           </Reveal>
         </View>
         <Reveal index={3} style={styles.bottom}>
           {appleAvailable && (
             <SocialButton
-              label="Continuer avec Apple"
+              label={t('onboarding_auth.apple')}
               icon={<AppleGlyph />}
               onPress={onApple}
               disabled={busy}
@@ -348,7 +346,7 @@ export function SceneAuth({
             />
           )}
           <SocialButton
-            label="Continuer avec Google"
+            label={t('onboarding_auth.google')}
             icon={<GoogleGlyph />}
             onPress={onGoogle}
             disabled={busy}
@@ -357,7 +355,7 @@ export function SceneAuth({
           <View style={styles.footnoteRow}>
             <LockGlyph />
             <Text style={styles.footnoteText}>
-              Tes données d'activité restent privées.
+              {t('onboarding_auth.privacy')}
             </Text>
           </View>
         </Reveal>

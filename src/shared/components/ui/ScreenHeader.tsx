@@ -1,8 +1,9 @@
 // src/shared/components/ui/ScreenHeader.tsx
 
 import React from 'react'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import Svg, { Polyline } from 'react-native-svg'
+import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { Text } from '@/shared/components/ui/Text'
 import { useTheme } from '@/shared/theme'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -49,15 +50,15 @@ export function ScreenHeader({
       {/* Left: back button or placeholder to balance centering */}
       <View style={styles.side}>
         {onBack ? (
-          <Pressable
+          // Même relief que partout ailleurs : tic haptique au toucher, recul
+          // d'échelle, halo à la couleur d'accent du thème courant.
+          <PressableScale
             onPress={onBack}
             hitSlop={{ top: sp.xs, bottom: sp.xs, left: sp.xs, right: sp.xs }}
             accessibilityRole="button"
             accessibilityLabel={backLabel}
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && styles.iconBtnPressed,
-            ]}
+            shadow={{ color: c.primary }}
+            style={styles.iconBtn}
           >
             <Svg
               width={ICON_SIZE}
@@ -71,7 +72,7 @@ export function ScreenHeader({
             >
               <Polyline points="15 18 9 12 15 6" />
             </Svg>
-          </Pressable>
+          </PressableScale>
         ) : null}
       </View>
 
@@ -111,9 +112,6 @@ const styles = StyleSheet.create({
     height: BTN_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconBtnPressed: {
-    opacity: 0.6,
   },
   titleCenter: {
     flex: 1,

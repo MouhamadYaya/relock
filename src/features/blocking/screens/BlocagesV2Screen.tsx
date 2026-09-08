@@ -31,15 +31,12 @@ import { useLimitSteps } from '@/features/blocking/hooks/useLimitSteps'
 import { useRuleAutoCleanup } from '@/features/blocking/hooks/useRuleAutoCleanup'
 import { useRuleReconciler } from '@/features/blocking/hooks/useRuleReconciler'
 import { useResumeRuleMutation } from '@/features/blocking/hooks/useSuspendRuleMutation'
+import { configLine, stateLine } from '@/features/blocking/rule-lines'
 import {
   buildRuleTemplates,
   pickRandomRuleTemplates,
 } from '@/features/blocking/rule-templates'
 import { rulesGridPlan } from '@/features/blocking/rules-grid'
-import {
-  configLine,
-  stateLine,
-} from '@/features/blocking/screens/BlocagesScreen'
 import {
   homeUnlockEntry,
   pendingHomeUnlockRequest,
@@ -67,6 +64,7 @@ import {
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { showErrorToast } from '@/shared/utils/toast'
 
 const { colors, layout, radius, shadow, typography } = relockMaterial
@@ -172,6 +170,7 @@ function NewRuleSuggestionCard({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={() => router.push('/add-block')}
+      shadow
       style={[styles.newRuleCard, style]}
     >
       <NewRulePlusGlyph />
@@ -226,6 +225,10 @@ function EmptyBlockedAppsPanel({
                 accessibilityRole="button"
                 accessibilityLabel={restartLabel}
                 suppressHighlighting
+                // Un lien reste un bouton : il vibre au toucher comme les
+                // autres, sans quoi le seul retour est le rouet qui arrive
+                // deux dixièmes de seconde plus tard.
+                onPressIn={() => haptics.selectionTick()}
                 onPress={onRestart}
                 style={styles.emptyHintLink}
               >

@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppState } from 'react-native'
+import { devFixturesEnabled } from '@/features/blocking/dev-fixtures'
 import { useBlockedApps } from '@/features/blocking/hooks/useBlockedApps'
 import { useBlockRulesQuery } from '@/features/blocking/hooks/useBlockRulesQuery'
 import { useFreshInstallReset } from '@/features/blocking/hooks/useFreshInstallReset'
@@ -64,6 +65,12 @@ export function useHomeDashboard() {
 
   useEffect(() => {
     if (!__DEV__) return
+    // Deux jeux de test ne peuvent pas décrire le même écran. Quand celui du
+    // simulateur est allumé, c'est LUI qui tient les chiffres calculés en JS
+    // (score, série, mes apps) — la fixture native, elle, garde le héros
+    // Temps d'écran, que le JS ne sait pas simuler (`-HomeReferenceFixture
+    // YES` reste donc utile en même temps).
+    if (devFixturesEnabled()) return
     let active = true
     ScreenTime.homeReferenceFixture().then(fixture => {
       if (active) setReferenceFixture(fixture)

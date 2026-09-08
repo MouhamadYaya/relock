@@ -53,7 +53,11 @@ interface Props {
 const HEADER_SCRIM_REVEAL = 24
 const HEADER_SCRIM_REST = 0.35
 
-export function HomeHeaderScrim({ scrollY, solidHeight, fadeHeight }: Props) {
+export const HomeHeaderScrim = React.memo(function HomeHeaderScrim({
+  scrollY,
+  solidHeight,
+  fadeHeight,
+}: Props) {
   const height = solidHeight + fadeHeight
   const knee = solidHeight / height
 
@@ -93,7 +97,7 @@ export function HomeHeaderScrim({ scrollY, solidHeight, fadeHeight }: Props) {
       </Svg>
     </Animated.View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   scrim: {

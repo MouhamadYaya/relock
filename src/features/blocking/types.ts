@@ -1,5 +1,6 @@
 // Types & libellés du feature Blocage (UI ↔ Supabase).
 
+import { translate as t } from '@/i18n/translate'
 import type { AppId } from '@/shared/components/ui/AppLogo'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 
@@ -50,18 +51,20 @@ export interface CreateRuleInput {
 }
 
 /**
- * Libellé FR d'un type de règle.
+ * Libellé d'un type de règle, dans la langue courante.
+ *
+ * Une `const` figée à l'import rendait le libellé français quelle que soit la
+ * langue de l'app ; c'est maintenant une fonction, appelée au rendu.
+ *
  * NB : on réutilise les valeurs d'enum existantes avec de nouveaux sens
  * (aucune migration DB) — `progressive_delay` = « Bloquer maintenant »,
  * `daily_limit` = « Limite de temps/jour ».
  */
-export const RULE_TYPE_LABEL: Record<BlockRuleType, string> = {
-  progressive_delay: 'Bloquer maintenant',
-  schedule: 'Plage horaire',
-  daily_limit: 'Limite de temps / jour',
+export function ruleTypeLabel(type: BlockRuleType): string {
+  return t(`blocking.rule_type_label.${type}`)
 }
 
-/** Libellé FR d'une app bloquable. */
+/** Nom d'affichage d'une app bloquable — jamais traduit : c'est une marque. */
 export const APP_LABEL: Record<string, string> = {
   tiktok: 'TikTok',
   instagram: 'Instagram',
@@ -78,9 +81,9 @@ export const APP_LABEL: Record<string, string> = {
  */
 export function appsSubtitle(appIds: string[], count?: number): string {
   if (typeof count === 'number' && count > 0) {
-    return count === 1 ? '1 app bloquée' : `${count} apps bloquées`
+    return t('blocking.apps_subtitle.blocked', { count })
   }
-  if (appIds.length === 0) return 'Aucune app'
+  if (appIds.length === 0) return t('blocking.apps_subtitle.none')
   const shown = appIds.slice(0, 2).map(id => APP_LABEL[id] ?? id)
   const extra = appIds.length - shown.length
   return extra > 0 ? `${shown.join(', ')} +${extra}` : shown.join(', ')
@@ -150,7 +153,7 @@ export function blockStatusLine(rule: BlockRuleView, now = new Date()): string {
       num(rule.config?.end_hour, 8),
       num(rule.config?.end_minute),
     )
-    return `${apps} · chaque jour ${s} → ${e}`
+    return t('blocking.status_line.schedule', { apps, start: s, end: e })
   }
   if (rule.type === 'daily_limit') {
     const limit = durationLabel(num(rule.config?.limit_min, 60))
@@ -158,16 +161,23 @@ export function blockStatusLine(rule: BlockRuleView, now = new Date()): string {
     // règle activée à 18h laisserait croire que les heures du matin comptent.
     if (limitStartsFromActivation(rule, now) && rule.createdAt) {
       const from = new Date(rule.createdAt)
-      return `${apps} · limite ${limit} · démarrée à ${timeToLabel(from.getHours(), from.getMinutes())}`
+      return t('blocking.status_line.limit_started', {
+        apps,
+        limit,
+        time: timeToLabel(from.getHours(), from.getMinutes()),
+      })
     }
-    return `${apps} · limite ${limit} / jour`
+    return t('blocking.status_line.limit', { apps, limit })
   }
   // Bloquer maintenant
   const end = blockEndDate(rule)
   if (!end) return apps
   const remainingMin = Math.round((end.getTime() - Date.now()) / 60_000)
-  if (remainingMin <= 0) return `${apps} · terminé`
-  return `${apps} · encore ${durationLabel(remainingMin)}`
+  if (remainingMin <= 0) return t('blocking.status_line.done', { apps })
+  return t('blocking.status_line.remaining', {
+    apps,
+    remaining: durationLabel(remainingMin),
+  })
 }
 
 function timeToLabel(h: number, m: number): string {
@@ -254,7 +264,10 @@ export function ringLabel(rule: BlockRuleView, now = new Date()): string {
 function durationLabel(min: number): string {
   const h = Math.floor(min / 60)
   const m = min % 60
-  if (h === 0) return `${m} min`
-  if (m === 0) return `${h} h`
-  return `${h} h ${String(m).padStart(2, '0')}`
+  if (h === 0) return t('blocking.duration.minutes', { minutes: m })
+  if (m === 0) return t('blocking.duration.hours', { hours: h })
+  return t('blocking.duration.hours_minutes', {
+    hours: h,
+    minutes: String(m).padStart(2, '0'),
+  })
 }

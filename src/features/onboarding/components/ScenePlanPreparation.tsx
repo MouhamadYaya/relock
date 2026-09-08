@@ -17,6 +17,8 @@ import {
   PERSONALIZED_PLAN as PLAN,
   PLAN_PREPARATION as PREP,
 } from '@/features/onboarding/tokens'
+import { translate } from '@/i18n/translate'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { relockMaterial } from '@/shared/theme/tokens/relock-material'
@@ -24,6 +26,7 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 
 /** A guided preparation sequence, not a scan or a measurement of the phone. */
 export function ScenePlanPreparation({ onDone }: { onDone: () => void }) {
+  const t = useT()
   const { height } = useWindowDimensions()
   const reducedMotion = useReducedMotion()
   const [pct, setPct] = useState(0)
@@ -83,14 +86,14 @@ export function ScenePlanPreparation({ onDone }: { onDone: () => void }) {
           accessibilityRole="header"
           style={[styles.title, compact && styles.titleCompact]}
         >
-          On prépare ton{'\n'}plan anti-scroll.
+          {t('onboarding_plan_actions.preparing_title')}
         </Text>
       </View>
       <View style={styles.progressBlock}>
         <View
           style={styles.track}
           accessibilityRole="progressbar"
-          accessibilityLabel="Préparation du plan"
+          accessibilityLabel={t('onboarding_plan_actions.progress_a11y')}
           accessibilityValue={{ min: 0, max: 100, now: pct }}
         >
           <Svg width="100%" height={PREP.trackHeight}>
@@ -117,11 +120,17 @@ export function ScenePlanPreparation({ onDone }: { onDone: () => void }) {
           </Svg>
         </View>
         <Text style={styles.status} accessibilityLiveRegion="polite">
-          {pct === 100 ? 'Tout est prêt.' : ANTI_SCROLL_PLAN[stage].preparing}
+          {pct === 100
+            ? t('onboarding_plan_actions.ready')
+            : translate(
+                `onboarding_plan_actions.${ANTI_SCROLL_PLAN[stage].id}.preparing`,
+              )}
         </Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Ce que ton plan va t’aider à faire</Text>
+        <Text style={styles.cardTitle}>
+          {t('onboarding_plan_actions.card_title')}
+        </Text>
         {ANTI_SCROLL_PLAN.map((action, index) => {
           const done = pct === 100 || index < stage
           const current = index === stage && pct < 100
@@ -130,7 +139,15 @@ export function ScenePlanPreparation({ onDone }: { onDone: () => void }) {
               key={action.id}
               style={styles.row}
               accessible
-              accessibilityLabel={`${action.title} : ${done ? 'prêt' : current ? 'en préparation' : 'à venir'}`}
+              accessibilityLabel={`${translate(
+                `onboarding_plan_actions.${action.id}.title`,
+              )} : ${
+                done
+                  ? t('onboarding_plan_actions.state_done')
+                  : current
+                    ? t('onboarding_plan_actions.state_current')
+                    : t('onboarding_plan_actions.state_todo')
+              }`}
             >
               <View
                 style={[
@@ -153,13 +170,13 @@ export function ScenePlanPreparation({ onDone }: { onDone: () => void }) {
               <Text
                 style={[styles.rowText, (done || current) && styles.rowActive]}
               >
-                {action.title}
+                {translate(`onboarding_plan_actions.${action.id}.title`)}
               </Text>
             </View>
           )
         })}
       </View>
-      <Text style={styles.note}>Aucun nouveau blocage n’est activé ici.</Text>
+      <Text style={styles.note}>{t('onboarding_plan_actions.note')}</Text>
     </ScrollView>
   )
 }

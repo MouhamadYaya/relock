@@ -15,6 +15,7 @@
  */
 
 import { create } from 'apisauce'
+import { translate } from '@/i18n/translate'
 import { supabase } from '@/shared/services/supabase/client'
 import { normalizeError } from '@/shared/utils/normalize-error'
 
@@ -67,9 +68,7 @@ async function requestGrant(): Promise<UploadGrant> {
     { method: 'POST' },
   )
   if (error || !data?.signature) {
-    throw normalizeError(
-      error ?? new Error("ImageKit : autorisation d'upload refusée"),
-    )
+    throw normalizeError(error ?? new Error(translate('errors.upload_denied')))
   }
   return data
 }
@@ -110,7 +109,7 @@ export async function uploadToImageKit(
 
   if (!res.ok || !res.data?.filePath || !res.data.url) {
     throw normalizeError(
-      res.originalError ?? new Error('ImageKit : upload échoué'),
+      res.originalError ?? new Error(translate('errors.upload_failed')),
     )
   }
 

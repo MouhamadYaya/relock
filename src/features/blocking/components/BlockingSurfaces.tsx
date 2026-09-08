@@ -19,7 +19,7 @@ const { colors, radius } = relockMaterial
  * règles, et c'est ce que doivent porter toutes les cartes de l'app. Un aplat
  * gris se lit comme une feuille système, pas comme Relock.
  */
-export function BlockingCardSurface({
+export const BlockingCardSurface = React.memo(function BlockingCardSurface({
   active = true,
   cornerRadius = radius.functional,
 }: {
@@ -99,13 +99,13 @@ export function BlockingCardSurface({
       />
     </Svg>
   )
-}
+})
 
 /**
  * Le dégradé d'action Relock (celui du bouton « + » et des cartes prédéfinies).
  * Posé derrière un bouton, il en fait l'action principale de l'écran.
  */
-export function BrandActionSurface() {
+export const BrandActionSurface = React.memo(function BrandActionSurface() {
   return (
     <Svg
       testID="brand-action-surface"
@@ -128,13 +128,13 @@ export function BrandActionSurface() {
       <Rect width="100%" height="100%" fill="url(#brand-action)" />
     </Svg>
   )
-}
+})
 
 /**
  * Halo violet posé en haut d'une feuille : elle cesse d'être un rectangle gris
  * système et redevient une surface Relock.
  */
-export function SheetBloom() {
+export const SheetBloom = React.memo(function SheetBloom() {
   return (
     <Svg
       testID="blocking-sheet-surface"
@@ -169,4 +169,4 @@ export function SheetBloom() {
       <Rect width="100%" height="100%" fill="url(#sheet-bloom)" />
     </Svg>
   )
-}
+})

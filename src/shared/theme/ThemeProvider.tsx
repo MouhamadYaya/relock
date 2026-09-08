@@ -22,7 +22,13 @@
  * ---------------------------------------------------------------------
  */
 
-import React, { type ReactNode, useEffect, useMemo, useState } from 'react'
+import React, {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { Appearance } from 'react-native'
 import { darkTheme } from './dark'
 
@@ -71,15 +77,27 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   /**
    * Safe setter (future: persist to MMKV).
    */
-  const setTheme = (nextMode: ThemeMode) => {
+  const setTheme = useCallback((nextMode: ThemeMode) => {
     setMode(nextMode)
     // kvStorage.setString('themeMode', nextMode);
-  }
+  }, [])
+
+  /**
+   * PERFORMANCE : la valeur du contexte est mémoïsée.
+   *
+   * Ce fournisseur enveloppe TOUTE l'application. Un objet littéral recréé à
+   * chaque rendu change d'identité même quand le thème n'a pas bougé, et
+   * React réveille alors tous les `useTheme()` de l'arbre — c'est-à-dire
+   * presque tous les composants. Le thème, lui, ne change qu'au changement de
+   * mode : la dépendance le dit.
+   */
+  const value = useMemo(
+    () => ({ theme, mode, setTheme }),
+    [theme, mode, setTheme],
+  )
 
   return (
     // @ts-ignore
-    <ThemeContext.Provider value={{ theme, mode, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   )
 }

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   PaywallBanner,
   PaywallButton,
+  PaywallLegalLinks,
   PaywallMark,
   PaywallPrice,
 } from '@/features/onboarding/components/paywall/PaywallPrimitives'
@@ -123,6 +124,13 @@ export function PaywallOffer({
                 {t('paywall_reference.offer_warning')}
               </Text>
             </View>
+            {/*
+              Conditions et confidentialité, exigées par la 3.1.2 sur toute
+              surface qui propose un abonnement — celle-ci en est une. `paper`
+              parce que la feuille est en nuit violette : le ton `muted`, réglé
+              pour le fond de l'app, s'y éteint.
+            */}
+            <PaywallLegalLinks tone="paper" />
           </View>
         </View>
       </View>

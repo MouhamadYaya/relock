@@ -52,12 +52,36 @@ export function birthDateAnchor(now: Date = new Date()): Date {
   )
 }
 
-/** Bornes du sélecteur : de 1900 à aujourd'hui. Pas de naissance future. */
+/**
+ * Âge minimum acceptable.
+ *
+ * Ce n'est pas un choix de produit, c'est une contrainte réglementaire :
+ * collecter une donnée personnelle (nom, e-mail, date de naissance) auprès
+ * d'un enfant fait tomber l'app sous la guideline 5.1.4 d'Apple et sous le
+ * RGPD/COPPA, qui exigent alors un consentement parental vérifiable et une
+ * note d'âge dédiée. Relock n'a rien de tout ça — donc la borne haute du
+ * sélecteur s'arrête au 13e anniversaire, et la question ne se pose plus.
+ *
+ * À tenir cohérent avec la note d'âge déclarée dans App Store Connect
+ * (nouveau questionnaire 4+/9+/13+/16+/18+).
+ */
+export const MIN_AGE_YEARS = 13
+
+/**
+ * Bornes du sélecteur : de 1900 au 13e anniversaire. Ni naissance future, ni
+ * date qui ferait de l'utilisateur un enfant (voir `MIN_AGE_YEARS`).
+ */
 export function birthDateBounds(now: Date = new Date()): {
   min: Date
   max: Date
 } {
-  return { min: new Date(MIN_YEAR, 0, 1, 12), max: now }
+  const max = new Date(
+    now.getFullYear() - MIN_AGE_YEARS,
+    now.getMonth(),
+    now.getDate(),
+    12,
+  )
+  return { min: new Date(MIN_YEAR, 0, 1, 12), max }
 }
 
 /**

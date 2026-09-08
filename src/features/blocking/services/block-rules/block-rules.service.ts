@@ -3,7 +3,12 @@
  * La RLS restreint automatiquement aux règles de l'utilisateur connecté.
  */
 
+import {
+  devFixtureRules,
+  devFixturesEnabled,
+} from '@/features/blocking/dev-fixtures'
 import type { BlockRuleView, CreateRuleInput } from '@/features/blocking/types'
+import { translate } from '@/i18n/translate'
 import type { AppId } from '@/shared/components/ui/AppLogo'
 import { supabase } from '@/shared/services/supabase/client'
 import type {
@@ -27,6 +32,10 @@ function toView(row: BlockRule): BlockRuleView {
 
 export const BlockRulesService = {
   async list(): Promise<BlockRuleView[]> {
+    // Jeu de test du simulateur : la règle vit dans un magasin local, et
+    // Supabase n'est plus touché du tout — ni ici, ni dans les écritures
+    // ci-dessous. Aucune règle fictive ne peut donc atterrir dans un compte.
+    if (devFixturesEnabled()) return devFixtureRules.list()
     const { data, error } = await supabase
       .from('block_rules')
       .select('*')
@@ -36,10 +45,12 @@ export const BlockRulesService = {
   },
 
   async create(input: CreateRuleInput): Promise<BlockRuleView> {
+    if (devFixturesEnabled()) return devFixtureRules.create(input)
     const { data: userData, error: userErr } = await supabase.auth.getUser()
     if (userErr) throw normalizeError(userErr)
     const userId = userData.user?.id
-    if (!userId) throw normalizeError(new Error('Non connecté'))
+    if (!userId)
+      throw normalizeError(new Error(translate('errors.not_signed_in')))
 
     const { data, error } = await supabase
       .from('block_rules')
@@ -77,6 +88,7 @@ export const BlockRulesService = {
       config: Record<string, unknown>
     },
   ): Promise<void> {
+    if (devFixturesEnabled()) return devFixtureRules.update(id, input)
     // La lecture doit réussir AVANT d'écrire : sur erreur, les valeurs de repli
     // ci-dessous écraseraient la sélection d'apps par une liste vide et
     // perdraient `suspended_until`.
@@ -113,6 +125,7 @@ export const BlockRulesService = {
   },
 
   async setActive(id: string, isActive: boolean): Promise<void> {
+    if (devFixturesEnabled()) return devFixtureRules.setActive(id, isActive)
     const { error } = await supabase
       .from('block_rules')
       .update({ is_active: isActive })
@@ -127,6 +140,7 @@ export const BlockRulesService = {
    * On patche la config sans écraser le reste (durée de vie, strict, jours…).
    */
   async suspend(id: string, until: Date | null): Promise<void> {
+    if (devFixturesEnabled()) return devFixtureRules.suspend(id, until)
     const { data } = await supabase
       .from('block_rules')
       .select('config')
@@ -145,6 +159,7 @@ export const BlockRulesService = {
 
   /** REPRENDRE une protection suspendue : l'échéance n'a plus lieu d'être. */
   async resume(id: string): Promise<void> {
+    if (devFixturesEnabled()) return devFixtureRules.resume(id)
     const { data } = await supabase
       .from('block_rules')
       .select('config')
@@ -166,6 +181,8 @@ export const BlockRulesService = {
    * (carte Accueil, onglet Blocages, fiche détail).
    */
   async extendTimedBlock(id: string, durationMin: number): Promise<void> {
+    if (devFixturesEnabled())
+      return devFixtureRules.extendTimedBlock(id, durationMin)
     const { data } = await supabase
       .from('block_rules')
       .select('config')
@@ -184,6 +201,7 @@ export const BlockRulesService = {
 
   /** Suppression définitive d'une règle (action « Arrêter le blocage »). */
   async remove(id: string): Promise<void> {
+    if (devFixturesEnabled()) return devFixtureRules.remove(id)
     const { error } = await supabase.from('block_rules').delete().eq('id', id)
     if (error) throw normalizeError(error)
   },

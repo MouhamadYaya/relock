@@ -23,7 +23,7 @@ interface Props {
   style?: ViewStyle
 }
 
-export function IconSvg({
+export const IconSvg = React.memo(function IconSvg({
   name,
   size = DEFAULT_ICON_SIZE,
   color,
@@ -53,4 +53,4 @@ export function IconSvg({
       />
     </View>
   )
-}
+})

@@ -5,10 +5,9 @@ import {
   normalizeTranscription,
   TRANSCRIBE_LINE_COUNT,
 } from '@/features/blocking/services/pause-ritual/transcribe-challenge'
-import de from '@/i18n/locales/de.json'
 import en from '@/i18n/locales/en.json'
+import es from '@/i18n/locales/es.json'
 import fr from '@/i18n/locales/fr.json'
-import ru from '@/i18n/locales/ru.json'
 
 const MODEL = 'Je choisis d’ouvrir cette application maintenant.'
 
@@ -79,7 +78,7 @@ describe('nextTranscribeIndex', () => {
  * fichiers de langue contiennent vraiment.
  */
 describe('répertoire de phrases', () => {
-  const locales = { fr, en, de, ru }
+  const locales = { fr, en, es }
 
   for (const [name, bundle] of Object.entries(locales)) {
     it(`fournit ${TRANSCRIBE_LINE_COUNT} phrases non vides en ${name}`, () => {

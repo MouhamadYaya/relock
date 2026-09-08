@@ -63,7 +63,7 @@ describe('engagements de la politique de confidentialité', () => {
     })
 
     it('le libellé existe dans toutes les locales', () => {
-      for (const locale of ['en', 'de', 'fr', 'ru']) {
+      for (const locale of ['en', 'es', 'fr']) {
         const messages = JSON.parse(
           read('src', 'i18n', 'locales', `${locale}.json`),
         )

@@ -121,6 +121,15 @@ describe('Reference paywall and strictly separated offers', () => {
       await renderer.root.findByType(PaywallPlans).props.onPurchase()
       await Promise.resolve()
     })
+  /**
+   * Une annulation AVÉRÉE de la feuille Apple — le seul chemin vers la
+   * feuille à −50 %. L'aperçu de développement qui l'ouvrait aussi a été
+   * retiré avec les autres raccourcis dev (2026-09-07).
+   */
+  const cancelledOnStoreSheet = () =>
+    jest
+      .fn()
+      .mockResolvedValue({ status: 'cancelled', storeSheetPresented: true })
 
   beforeEach(() => {
     skip.mockClear()
@@ -246,10 +255,10 @@ describe('Reference paywall and strictly separated offers', () => {
     act(() => offerRenderer.unmount())
   })
 
-  it('offers a development-only Fenêtre preview which closes back to the same plan', () => {
-    mount(jest.fn())
+  it('closes the cancellation sheet back to the same plan', async () => {
+    mount(cancelledOnStoreSheet())
     openPlans()
-    press('Aperçu de l’offre')
+    await buy()
     expect(sheetVisible()).toBe(true)
     expect(renderer.root.findAllByType(PaywallExitOffer)).toHaveLength(0)
     act(() => renderer.root.findByType(Modal).props.onRequestClose())
@@ -317,9 +326,6 @@ describe('Reference paywall and strictly separated offers', () => {
     expect(renderer.root.findByProps({ label: 'Restaurer' })).toBeDefined()
     expect(
       renderer.root.findAllByProps({ testID: 'paywall-more-proof' }),
-    ).toHaveLength(0)
-    expect(
-      renderer.root.findAllByProps({ label: 'Aperçu de l’offre' }),
     ).toHaveLength(0)
   })
 
@@ -523,12 +529,10 @@ describe('Reference paywall and strictly separated offers', () => {
   })
 
   it('cancelling purchase on the sheet preserves it without adding another offer', async () => {
-    const purchase = jest
-      .fn()
-      .mockResolvedValue({ status: 'cancelled', storeSheetPresented: true })
+    const purchase = cancelledOnStoreSheet()
     mount(purchase)
     openPlans()
-    press('Aperçu de l’offre')
+    await buy()
     await act(async () => {
       await renderer.root.findByType(PaywallOffer).props.onPurchase()
       await Promise.resolve()

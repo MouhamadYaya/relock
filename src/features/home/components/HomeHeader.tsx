@@ -7,7 +7,6 @@ import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, layout, radius, typography } = relockMaterial
 
@@ -35,18 +34,13 @@ interface Props {
 /** Sans pastille, la flamme n'offre plus de cible : on la rend au doigt. */
 const STREAK_HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 }
 
-export function HomeHeader({
+export const HomeHeader = React.memo(function HomeHeader({
   streak,
   streakLabel,
   settingsLabel,
   onPressStreak,
   onPressSettings,
 }: Props) {
-  const press = (action: () => void) => {
-    haptics.selectionTick()
-    action()
-  }
-
   return (
     <View style={styles.header}>
       <RelockWordmark height={layout.homeLogoHeight} />
@@ -55,7 +49,7 @@ export function HomeHeader({
           accessibilityRole="button"
           accessibilityLabel={streakLabel}
           hitSlop={STREAK_HIT_SLOP}
-          onPress={() => press(onPressStreak)}
+          onPress={onPressStreak}
           style={styles.streak}
         >
           <Text accessibilityElementsHidden style={styles.flame}>
@@ -66,7 +60,8 @@ export function HomeHeader({
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={settingsLabel}
-          onPress={() => press(onPressSettings)}
+          onPress={onPressSettings}
+          shadow
           style={styles.settings}
         >
           <IconSvg
@@ -78,7 +73,7 @@ export function HomeHeader({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   header: {

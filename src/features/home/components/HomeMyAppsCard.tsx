@@ -36,7 +36,7 @@ function ShieldMark() {
   )
 }
 
-export function HomeMyAppsCard({
+export const HomeMyAppsCard = React.memo(function HomeMyAppsCard({
   model,
   now,
   onPress,
@@ -201,7 +201,7 @@ export function HomeMyAppsCard({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   card: {

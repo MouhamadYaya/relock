@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { IconName } from '@assets/icons'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Image,
+  type LayoutRectangle,
   Pressable,
   StyleSheet,
   Text,
@@ -33,12 +35,21 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg'
+import { featureFlags } from '@/config/feature-flags'
+import { ScienceSheet } from '@/features/onboarding/components/ScienceSheet'
+import { ShieldRain } from '@/features/onboarding/components/ShieldRain'
+import type { RainField } from '@/features/onboarding/shield-rain'
+import { translate } from '@/i18n/translate'
+import { useT } from '@/i18n/useT'
+import { devSkipOnboarding } from '@/session/bootstrap'
+import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import {
   Footnote,
   GhostLink,
   GradientLine,
+  HaloBackdrop,
   Moon,
   Pill,
   StudyLine,
@@ -113,226 +124,243 @@ export function SceneIgnition({ onDone }: { onDone: () => void }) {
 
 // ─── Acte 0 · La promesse ───────────────────────────────────────────────
 //
-// Reproduction fidèle de la maquette `design/welcome/welcomeimg.png` :
-// capture d'écran réelle du mockup de téléphone (design/welcome/
-// phoneOnwelcome.png, cf. WelcomeGlow/PHONE_W plus bas), gros titre à
-// deux tons, puis CTA. Le titre, le sous-titre et le CTA restent dérivés
-// d'une seule échelle `v()` calquée sur la largeur de la maquette source
-// (863 px) pour rester fidèles à ses proportions sur n'importe quel écran.
+// Le premier écran ne DÉCRIT pas le produit, il le montre : une averse de
+// billes tombe, une bulle invisible la renvoie, le lecteur ne lève même pas
+// les yeux. Tout l'onboarding découle de cette image — c'est la promesse en
+// une seconde, avant le moindre mot.
+//
+// La simulation et son rendu vivent à part (`shield-rain.ts`,
+// `components/ShieldRain.tsx`). Ce qui reste ici, c'est la composition — et
+// la GÉOMÉTRIE qui relie les deux : le dôme de collision est déduit du cadre
+// réellement occupé par l'illustration à l'écran, jamais d'une constante
+// devinée. Une bille qui rebondirait à côté du halo ruinerait l'effet.
 
 /**
- * Un <Text> RN natif (pas de SVG) : react-native-svg ne fiabilise pas
- * `textLength`/`lengthAdjust` sur ce titre (constaté à l'écran —
- * dépassement silencieux), alors que le moteur de texte natif enroule et
- * centre correctement quel que soit l'appareil. Couleur unie (au lieu du
- * dégradé signature) : compromis assumé pour cette fiabilité.
+ * Rapport largeur/hauteur de `assets/onboarding-welcome-hero.png`, recadré au
+ * pixel sur sa boîte opaque (1130 × 1218). Nécessaire ici : avec
+ * `resizeMode="contain"`, le dessin n'occupe pas toute sa boîte de mise en
+ * page, et c'est le dessin — pas la boîte — que les billes doivent frôler.
  */
-function HeroLine2({
-  fontSize,
-  lineHeight,
-}: {
-  fontSize: number
-  lineHeight: number
-}) {
+const HERO_ASPECT = 1130 / 1218
+
+/**
+ * Le dôme, en fractions du dessin — relevé sur l'illustration. Il épouse le
+ * halo et la boucle extérieure de l'anneau, et laisse dehors les bulles
+ * d'icônes et les jambes croisées : une bille qui les recouvre passe DERRIÈRE
+ * elles (l'illustration se dessine par-dessus la pluie, cf. l'ordre des
+ * frères dans la scène), ce qui se lit comme une glissade, pas comme un bug.
+ */
+const HERO_SHIELD = { cx: 0.49, cy: 0.5, rx: 0.445, ry: 0.405 } as const
+
+/**
+ * Part de la largeur d'écran occupée par l'illustration.
+ *
+ * C'est elle qui borne la taille du dessin sur presque tous les iPhone (la
+ * cale est plus haute que large) — et donc, du même coup, le rayon du dôme.
+ * Trop petite, les billes rebondissent au milieu du vide et il reste un trou
+ * entre le lecteur et le bouton.
+ */
+const HERO_WIDTH_RATIO = 0.72
+
+const HERO = require('@assets/onboarding-welcome-hero.png')
+
+/**
+ * DEV uniquement — « skip onboarding ».
+ *
+ * Le seul raccourci de dev VISIBLE de l'app (tous les autres passent par le
+ * pont `relock://dev/…`), et il est ici parce que c'est ici qu'on relance un
+ * test : rejouer trente écrans de récit pour vérifier un détail de l'Accueil
+ * n'apprend rien. Il franchit les trois portes d'un coup — abonnement, récit,
+ * activation — et atterrit sur l'Accueil.
+ *
+ * Rien de tout ça n'existe en Release : `__DEV__` retire le rendu ici, et
+ * l'effet du drapeau dans `dev-skip-paywall.ts`.
+ */
+function DevSkipOnboarding({ top }: { top: number }) {
   return (
-    <Text
-      style={{
-        ...fonts.bold,
-        fontSize,
-        lineHeight,
-        letterSpacing: -1.2,
-        textAlign: 'center',
-        color: OB.grad[1],
+    <Pressable
+      testID="dev-skip-onboarding"
+      accessibilityRole="button"
+      // i18n-ignore — raccourci de dev, retiré du binaire par `__DEV__`.
+      accessibilityLabel="skip onboarding (dev)"
+      hitSlop={12}
+      onPress={() => {
+        haptic.select()
+        devSkipOnboarding()
       }}
+      style={[styles.devSkip, { top }]}
     >
-      Sauve ton cerveau.
-    </Text>
+      {/* i18n-ignore — même raison. */}
+      <Text style={styles.devSkipText}>skip onboarding · dev</Text>
+    </Pressable>
   )
 }
 
-// Largeur (en unités de canevas 863, comme `v()`) occupée par la capture
-// d'écran du mockup de téléphone — calibrée sur la silhouette opaque de
-// `assets/welcome-phone-mockup.png` (760/941 de sa largeur totale, ombre
-// portée comprise) pour occuper la même largeur dans la composition que
-// l'ancien mockup reconstruit en JSX. Réutilisée par WelcomeGlow pour que
-// le halo reste proportionné à la taille réelle de l'image.
-const PHONE_W = 616
-
 /**
- * Halo « projecteur » derrière le mockup, plus large et plus vif que
- * `HaloBackdrop` (fond commun de l'onboarding) : la maquette de cet écran
- * en fait un élément central, pas une simple nappe de fond en haut d'écran.
+ * « Soutenu par la science », et la porte derrière.
+ *
+ * Il ne réutilise pas `StudyLine` (la pilule discrète du reste du parcours)
+ * pour une raison de fond : celle-ci ÉNONCE un fait et s'arrête là, alors que
+ * celui-ci PROMET une explication. Sans le chevron d'information à droite,
+ * rien ne dit qu'il y a quelque chose à toucher — et l'affirmation resterait
+ * une affirmation nue, ce qu'on ne veut pas ici (cf. `ScienceSheet`).
  */
-function WelcomeGlow({
-  top,
-  width,
-  height,
+function ScienceBadge({
+  label,
+  onPress,
 }: {
-  top: number
-  width: number
-  height: number
+  label: string
+  onPress: () => void
 }) {
   return (
-    // Centrage explicite (left 50% + marge négative de la moitié de la
-    // largeur) plutôt que de compter sur `alignItems` du parent : constaté
-    // à l'écran, Yoga ne centre pas de façon fiable un enfant en position
-    // absolute sur son axe croisé (contrairement à un enfant en flux
-    // normal, comme le mockup lui-même) — le halo se retrouvait collé à
-    // gauche alors que le téléphone était bien centré.
-    <View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        top,
-        left: '50%',
-        marginLeft: -width / 2,
-        width,
-        height,
-      }}
+    <Pressable
+      testID="science-badge"
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={translate('onboarding_intro.science.open_a11y')}
+      hitSlop={10}
+      onPress={onPress}
+      style={styles.scienceBadge}
     >
-      <Svg width={width} height={height}>
-        <Defs>
-          {/* Deux halos superposés plutôt qu'un radial uni : la maquette
-              passe du violet (gauche) au bleu (droite) derrière le mockup —
-              un seul dégradé radial ne peut pas porter cette teinte qui
-              varie selon l'angle, deux taches de couleur qui se chevauchent
-              recréent le même effet. */}
-          <RadialGradient id="welcomeGlowLeft" cx="38%" cy="42%" r="52%">
-            <Stop offset="0%" stopColor={OB.grad[0]} stopOpacity={0.62} />
-            <Stop offset="45%" stopColor={OB.grad[0]} stopOpacity={0.32} />
-            <Stop offset="75%" stopColor={OB.grad[0]} stopOpacity={0.12} />
-            <Stop offset="100%" stopColor={OB.grad[0]} stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id="welcomeGlowRight" cx="64%" cy="46%" r="50%">
-            <Stop offset="0%" stopColor={OB.grad[2]} stopOpacity={0.58} />
-            <Stop offset="45%" stopColor={OB.grad[2]} stopOpacity={0.3} />
-            <Stop offset="75%" stopColor={OB.grad[2]} stopOpacity={0.12} />
-            <Stop offset="100%" stopColor={OB.grad[2]} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width={width} height={height} fill="url(#welcomeGlowLeft)" />
-        <Rect width={width} height={height} fill="url(#welcomeGlowRight)" />
-      </Svg>
-    </View>
+      <IconSvg
+        name={IconName.PULSE}
+        size={15}
+        color={OB.accent}
+        strokeWidth={1.9}
+      />
+      <Text style={styles.scienceBadgeText}>{label}</Text>
+      <IconSvg
+        name={IconName.INFO}
+        size={14}
+        color={OB.ink40}
+        strokeWidth={1.9}
+      />
+    </Pressable>
   )
 }
 
-export function SceneWelcome({
-  onNext,
-  onSkipDev,
-  onPaywallDev,
-}: {
-  onNext: () => void
-  onSkipDev?: () => void
-  /** DEV : saut direct à l'entrée du chapitre de l'offre (QA visuelle). */
-  onPaywallDev?: () => void
-}) {
-  const { width: windowW, height: windowH } = useWindowDimensions()
+export function SceneWelcome({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const insets = useSafeAreaInsets()
-  const availableH = windowH - insets.top - insets.bottom - 12
-  const widthScale = windowW / 863
 
-  // Un canevas-hauteur codé en dur (« la maquette mesure 2400 ») s'est avéré
-  // peu fiable d'un appareil à l'autre (polices système, densité, marges de
-  // sécurité…) : au lieu de deviner, on mesure la hauteur RÉELLEMENT rendue
-  // à l'échelle "pleine largeur", puis on corrige l'échelle une fois si ça
-  // dépasse l'espace disponible. Convergent en un aller-retour (la 2de
-  // mesure ne fait que confirmer, `measuredH` n'est donc capturé qu'une
-  // fois — cf. la garde dans l'onLayout).
-  const [measuredH, setMeasuredH] = useState<number | null>(null)
-  // La mesure de référence ne dépend que de la largeur qui fixe l'échelle de
-  // base. Une variation de hauteur ou de safe area doit conserver cette
-  // mesure afin que `availableH` puisse réduire l'échelle sans nouveau cycle.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: windowW est volontairement un déclencheur de remise à zéro
-  useEffect(() => {
-    setMeasuredH(null)
-  }, [windowW])
-  const scale =
-    measuredH && measuredH > availableH
-      ? widthScale * (availableH / measuredH)
-      : widthScale
-  const v = (n: number) => n * scale
+  // Mesuré, pas déduit de `useWindowDimensions` : cette scène possède sa
+  // safe area (cf. `ownsSafeArea` dans OnboardingFlow), et c'est la boîte
+  // RÉELLE qu'on lui donne qui définit le champ de la pluie.
+  const [field, setField] = useState<RainField | null>(null)
+  // La place laissée à l'illustration par la colonne de contenu. Elle est
+  // mesurée sur une CALE vide, et l'illustration est ensuite dessinée en
+  // absolu dans ce cadre : c'est le seul moyen de la faire passer par-dessus
+  // la pluie tout en la laissant se comprimer avec la mise en page.
+  const [slot, setSlot] = useState<LayoutRectangle | null>(null)
+  const [scienceOpen, setScienceOpen] = useState(false)
+
+  const hero = useMemo(() => {
+    if (!field || !slot) return null
+    const width = Math.min(
+      field.width * HERO_WIDTH_RATIO,
+      slot.height * HERO_ASPECT,
+    )
+    const height = width / HERO_ASPECT
+    const left = slot.x + (slot.width - width) / 2
+    const top = slot.y + (slot.height - height) / 2
+    return {
+      frame: { position: 'absolute' as const, left, top, width, height },
+      shield: {
+        cx: left + width * HERO_SHIELD.cx,
+        cy: top + height * HERO_SHIELD.cy,
+        rx: width * HERO_SHIELD.rx,
+        ry: height * HERO_SHIELD.ry,
+      },
+    }
+  }, [field, slot])
 
   return (
-    <View style={{ flex: 1, paddingHorizontal: 20 }}>
+    <View
+      style={styles.welcome}
+      onLayout={e => {
+        const { width, height } = e.nativeEvent.layout
+        setField(prev =>
+          prev && prev.width === width && prev.height === height
+            ? prev
+            : { width, height },
+        )
+      }}
+    >
+      {/* Le fond de l'onboarding, tel quel. La scène possède sa safe area
+          (`ownsSafeArea`), donc le flux ne le pose plus pour elle : c'est à
+          elle de le peindre, et depuis le tout premier pixel — le halo doit
+          couvrir la status bar comme sur tous les autres écrans du récit. */}
+      <HaloBackdrop />
+
       <View
-        onLayout={e => {
-          if (measuredH === null) setMeasuredH(e.nativeEvent.layout.height)
+        style={{
+          flex: 1,
+          paddingTop: insets.top + 34,
+          paddingBottom: insets.bottom + 14,
         }}
       >
-        <Reveal index={0} style={{ alignItems: 'center', marginTop: v(40) }}>
-          {/* Capture d'écran réelle (design/welcome/phoneOnwelcome.png) à la
-              place d'un mockup reconstruit en JSX : après plusieurs passes
-              de mesure au pixel sur la maquette, l'image source reste plus
-              fidèle qu'une reconstitution manuelle. PHONE_W (594) est
-              calibré sur la silhouette opaque de cette image (760/941 de sa
-              largeur totale, marge de l'ombre portée incluse) pour occuper
-              la même largeur que le mockup précédent dans la composition ;
-              la hauteur suit par aspectRatio (941×1672, celui du fichier). */}
-          <WelcomeGlow
-            top={-v(99)}
-            width={v(PHONE_W) * 2.3}
-            height={v(PHONE_W) * 2.1875}
+        <Reveal index={0} style={styles.welcomeCopy}>
+          <Text style={styles.welcomeHero}>
+            {t('onboarding_intro.welcome.hero_before')}
+            <Text style={styles.welcomeHeroAccent}>
+              {t('onboarding_intro.welcome.hero_gain')}
+            </Text>
+            {t('onboarding_intro.welcome.hero_middle')}
+            <Text style={styles.welcomeHeroAccent}>
+              {t('onboarding_intro.welcome.hero_span')}
+            </Text>
+            {t('onboarding_intro.welcome.hero_after')}
+          </Text>
+        </Reveal>
+
+        <Reveal index={1} style={styles.welcomeProof}>
+          <ScienceBadge
+            label={t('onboarding_intro.science.badge')}
+            onPress={() => {
+              haptic.select()
+              setScienceOpen(true)
+            }}
           />
+        </Reveal>
+
+        <View
+          style={styles.welcomeStage}
+          onLayout={e => setSlot(e.nativeEvent.layout)}
+        />
+
+        {/* `kind="gradient"` : le même bouton que les deux autres bascules du
+            récit (la preuve, le rituel). Le `primary` blanc est celui des
+            écrans de question — il ne porte pas un premier écran. */}
+        <Reveal index={3} style={styles.welcomeCta}>
+          <Pill
+            label={t('paywall.continue')}
+            kind="gradient"
+            onPress={onNext}
+          />
+        </Reveal>
+      </View>
+
+      {/* ⚠️ ORDRE DES FRÈRES = ORDRE DE PROFONDEUR, et c'est lui qui
+          reproduit la référence : la pluie passe DEVANT le titre, le lecteur
+          passe DEVANT la pluie. Déplacer l'un de ces deux blocs, c'est faire
+          passer une bille devant son visage. */}
+      {field && hero ? <ShieldRain field={field} shield={hero.shield} /> : null}
+      {hero ? (
+        <Reveal index={2} style={hero.frame}>
           <Image
-            source={require('../../../assets/welcome-phone-mockup.png')}
-            // Hauteur explicite plutôt que `aspectRatio` seul : sur cette
-            // image locale, `aspectRatio` sans hauteur numérique se faisait
-            // ignorer (l'image se dimensionnait à sa taille intrinsèque,
-            // débordant largement l'écran) — width + height calculée à la
-            // main lève l'ambiguïté.
-            style={{ width: v(PHONE_W), height: v(PHONE_W) * (1672 / 941) }}
+            source={HERO}
+            style={styles.welcomeHeroArt}
             resizeMode="contain"
           />
         </Reveal>
+      ) : null}
 
-        <Reveal index={1} style={{ alignItems: 'center', marginTop: v(66) }}>
-          <Text
-            style={{
-              ...fonts.bold,
-              fontSize: v(70),
-              lineHeight: v(70) * 1.06,
-              letterSpacing: -1.2,
-              color: OB.ink,
-              textAlign: 'center',
-            }}
-          >
-            Arrête de scroller.
-          </Text>
-          <HeroLine2 fontSize={v(70)} lineHeight={v(70) * 1.06} />
-        </Reveal>
+      {__DEV__ ? <DevSkipOnboarding top={insets.top + 6} /> : null}
 
-        <Reveal index={2} style={{ marginTop: v(42) }}>
-          <Text
-            style={{
-              ...fonts.regular,
-              fontSize: v(27),
-              lineHeight: v(36),
-              color: OB.ink55,
-              textAlign: 'center',
-            }}
-          >
-            Relock bloque les distractions,{'\n'}et t'aide à récupérer ce qui
-            compte vraiment.
-          </Text>
-        </Reveal>
-
-        <View style={{ height: v(70) }} />
-
-        <Reveal index={3} style={{ paddingBottom: 10 }}>
-          <Pill label="Commencer" onPress={onNext} />
-          {__DEV__ && (onSkipDev || onPaywallDev) ? (
-            <View className="flex-row items-center justify-center gap-6 pt-3">
-              {onSkipDev ? (
-                <GhostLink label="Passer (dev)" onPress={onSkipDev} dim />
-              ) : null}
-              {onPaywallDev ? (
-                <GhostLink label="Paywall (dev)" onPress={onPaywallDev} dim />
-              ) : null}
-            </View>
-          ) : null}
-        </Reveal>
-      </View>
+      <ScienceSheet
+        visible={scienceOpen}
+        onClose={() => setScienceOpen(false)}
+      />
     </View>
   )
 }
@@ -414,7 +442,9 @@ function PhoneDemo() {
         <View className="z-[2] flex-row items-center justify-between px-4 pt-3 pb-2">
           <Text style={styles.phoneClock}>23:47</Text>
           <View style={styles.phonePill}>
-            <Text style={styles.phonePillText}>Pour toi</Text>
+            <Text style={styles.phonePillText}>
+              {translate('onboarding_intro.demo.feed_tab')}
+            </Text>
           </View>
         </View>
         <Animated.View style={feedStyle}>
@@ -428,10 +458,14 @@ function PhoneDemo() {
         </Animated.View>
         <Animated.View style={[styles.shield, shieldStyle]}>
           <Moon size={56} glow />
-          <Text style={styles.shieldTitle}>Bloqué</Text>
-          <Text style={styles.shieldSub}>Retrouve ta soirée.</Text>
+          <Text style={styles.shieldTitle}>{translate('blocking.locked')}</Text>
+          <Text style={styles.shieldSub}>
+            {translate('onboarding_intro.demo.shield_sub')}
+          </Text>
           <View style={styles.shieldBtn}>
-            <Text style={styles.shieldBtnText}>Fermer</Text>
+            <Text style={styles.shieldBtnText}>
+              {translate('common.close')}
+            </Text>
           </View>
         </Animated.View>
       </View>
@@ -440,6 +474,7 @@ function PhoneDemo() {
 }
 
 export function SceneDemo({ onNext }: { onNext: () => void }) {
+  const t = useT()
   // Le CTA reste désactivé tant que le mur de blocage n'est pas apparu dans
   // l'animation du mockup (cf. `DEMO_WALL_REVEAL_MS`) : on guide l'utilisateur
   // à regarder la démo avant de pouvoir continuer, plutôt que de laisser
@@ -455,21 +490,26 @@ export function SceneDemo({ onNext }: { onNext: () => void }) {
       <View className="flex-1 justify-center">
         <Reveal index={0}>
           <Text style={[styles.h1, styles.h1Center]}>
-            Le blocage intervient
+            {t('onboarding_intro.demo.title')}
           </Text>
-          <GradientLine text="au bon moment." size={32} />
+          <GradientLine
+            text={t('onboarding_intro.demo.title_accent')}
+            size={32}
+          />
         </Reveal>
         <Reveal index={1} style={{ marginTop: 26 }}>
           <PhoneDemo />
         </Reveal>
         <Reveal index={2} style={{ marginTop: 22 }}>
-          <Text style={styles.sub}>
-            Relock s'interpose. Toi, tu récupères ta soirée.
-          </Text>
+          <Text style={styles.sub}>{t('onboarding_intro.demo.sub')}</Text>
         </Reveal>
       </View>
       <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Je veux ça" onPress={onNext} disabled={!ctaReady} />
+        <Pill
+          label={t('onboarding_intro.demo.cta')}
+          onPress={onNext}
+          disabled={!ctaReady}
+        />
       </Reveal>
     </View>
   )
@@ -490,22 +530,23 @@ export function SceneName({
   // à l'utilisateur par son prénom (question d'intention, plan personnalisé,
   // écran de victoire). Sans lui, ces écrans perdent leur raison d'être — donc
   // pas de lien « Passer », et le CTA reste éteint tant que le champ est vide.
+  const t = useT()
   const canContinue = value.trim().length > 0
 
   return (
     <View className="flex-1 px-5">
       <View className="flex-1 pt-3">
         <Reveal index={0}>
-          <Text style={styles.h1}>Comment tu t'appelles ?</Text>
+          <Text style={styles.h1}>{t('onboarding_intro.name.title')}</Text>
         </Reveal>
         <Reveal index={1}>
-          <Text style={styles.subLeft}>Pour que ton plan te parle, à toi.</Text>
+          <Text style={styles.subLeft}>{t('onboarding_intro.name.sub')}</Text>
         </Reveal>
         <Reveal index={2} style={{ marginTop: 34 }}>
           <TextInput
             value={value}
             onChangeText={onChange}
-            placeholder="Ton prénom"
+            placeholder={t('onboarding_intro.name.placeholder')}
             placeholderTextColor={OB.ink28}
             style={styles.nameInput}
             autoCorrect={false}
@@ -517,7 +558,11 @@ export function SceneName({
         </Reveal>
       </View>
       <Reveal index={3} className="gap-2 pb-2.5">
-        <Pill label="Continuer" onPress={onNext} disabled={!canContinue} />
+        <Pill
+          label={t('paywall.continue')}
+          onPress={onNext}
+          disabled={!canContinue}
+        />
       </Reveal>
     </View>
   )
@@ -542,6 +587,7 @@ export function SceneHours({
   setHours: (h: number) => void
   onNext: () => void
 }) {
+  const t = useT()
   const { width } = useWindowDimensions()
   const trackW = width - 40 - 44 * 2 - 24
   const pos = useSharedValue(((hours - MIN_H) / (MAX_H - MIN_H)) * trackW)
@@ -595,22 +641,24 @@ export function SceneHours({
     <View className="flex-1 px-5">
       <View className="flex-1 pt-3">
         <Reveal index={0}>
-          <Text style={styles.h1}>Combien d'heures par jour, à ton avis ?</Text>
+          <Text style={styles.h1}>{t('onboarding_intro.hours.title')}</Text>
         </Reveal>
         <Reveal index={1}>
-          <Text style={styles.subLeft}>Une estimation honnête suffit.</Text>
+          <Text style={styles.subLeft}>{t('onboarding_intro.hours.sub')}</Text>
         </Reveal>
         <Reveal index={2} className="items-center mt-10">
           <GradientLine
             text={`${hours}${hours >= MAX_H ? '+' : ''}`}
             size={104}
           />
-          <Text style={styles.hoursUnit}>heures par jour</Text>
+          <Text style={styles.hoursUnit}>
+            {t('onboarding_intro.hours.unit')}
+          </Text>
         </Reveal>
         <Reveal index={3} className="flex-row items-center gap-3 mt-[34px]">
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Moins"
+            accessibilityLabel={t('onboarding_intro.hours.less')}
             onPress={() => step(-1)}
             style={styles.stepBtn}
           >
@@ -627,7 +675,7 @@ export function SceneHours({
           </GestureDetector>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Plus"
+            accessibilityLabel={t('onboarding_intro.hours.more')}
             onPress={() => step(1)}
             style={styles.stepBtn}
           >
@@ -636,9 +684,9 @@ export function SceneHours({
         </Reveal>
       </View>
       <Reveal index={4} className="gap-2 pb-2.5">
-        <Pill label="Continuer" onPress={onNext} />
+        <Pill label={t('paywall.continue')} onPress={onNext} />
         <GhostLink
-          label="Je ne sais pas"
+          label={t('onboarding_intro.hours.unknown')}
           onPress={() => {
             setHours(4)
             onNext()
@@ -653,18 +701,20 @@ export function SceneHours({
 // ─── Acte 1 · La preuve (courbe de divergence) ──────────────────────────
 
 /**
- * ⚠️ PLACEHOLDER — chiffres INVENTÉS, pour la maquette uniquement.
+ * Preuve sociale de l'écran d'acquisition — MASQUÉE tant qu'elle est inventée.
  *
- * L'app n'est pas publiée : ce bloc existe pour valider la composition de
- * l'écran. AVANT toute mise en ligne sur l'App Store, remplacer par les
- * vrais chiffres, ou remettre `null` (la ligne d'étude reprend alors la
- * place). Annoncer une note et un volume d'utilisateurs qui n'existent pas
- * sur un écran d'acquisition, c'est une allégation trompeuse.
+ * Le contenu est conservé ici exprès (il ne coûte rien et évite de le
+ * réécrire), mais il ne s'affiche que si `featureFlags.showUnverifiedSocialProof`
+ * passe à `true` — et ce flag porte la marche à suivre complète, y compris
+ * pourquoi le rallumer tel quel serait une allégation trompeuse.
+ *
+ * Masqué, ce n'est pas un trou : la ligne d'étude (`StudyLine`) reprend la
+ * place, avec un chiffre vérifiable qui ne parle pas de Relock.
  */
-const SOCIAL_PROOF: { stars: number; text: string } | null = {
-  stars: 5,
-  text: '12K+ avis · 300K d’utilisateurs',
-}
+const SOCIAL_PROOF: { stars: number; text: string } | null =
+  featureFlags.showUnverifiedSocialProof
+    ? { stars: 5, text: '12K+ avis · 300K d’utilisateurs' }
+    : null
 
 /** Repère du graphe, en unités viewBox. Tout se positionne à partir de là. */
 const CHART_VB_W = 390
@@ -679,21 +729,9 @@ const END_Y = 158
 const FLAT_Y = 40
 
 const BENEFITS = [
-  {
-    Icon: IconShield,
-    lead: 'Travaille sans interruption.',
-    rest: ' Donne le meilleur de toi-même.',
-  },
-  {
-    Icon: IconCalendar,
-    lead: 'Reprends le contrôle de ton temps.',
-    rest: ' Vis chaque journée pleinement.',
-  },
-  {
-    Icon: IconPeople,
-    lead: 'Sois présent dans l’instant.',
-    rest: ' La vie ne se passe pas sur un écran.',
-  },
+  { id: 'focus', Icon: IconShield },
+  { id: 'time', Icon: IconCalendar },
+  { id: 'presence', Icon: IconPeople },
 ] as const
 
 /**
@@ -704,6 +742,7 @@ const BENEFITS = [
  * les trois bénéfices, la preuve, le CTA.
  */
 export function SceneProof({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const { width } = useWindowDimensions()
   // Tracé progressif des courbes : un progrès JS suffit largement ici
   // (33 valeurs par seconde sur un strokeDashoffset).
@@ -730,8 +769,11 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
     <View className="flex-1">
       <Reveal index={0} className="px-6 pt-1">
         <Text style={styles.proofTitle}>
-          Deux semaines pour récupérer{' '}
-          <Text style={styles.proofTitleAccent}>+ 2 heures</Text> par jour
+          {t('onboarding_intro.proof.title_before')}
+          <Text style={styles.proofTitleAccent}>
+            {t('onboarding_intro.proof.title_accent')}
+          </Text>
+          {t('onboarding_intro.proof.title_after')}
         </Text>
       </Reveal>
 
@@ -815,7 +857,9 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
               pointerEvents="none"
             >
               <View style={styles.tagDim}>
-                <Text style={styles.tagDimText}>Sans rien</Text>
+                <Text style={styles.tagDimText}>
+                  {t('onboarding_intro.proof.tag_without')}
+                </Text>
               </View>
               <View style={styles.tagAvatar}>
                 <IconPerson />
@@ -833,7 +877,9 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
               pointerEvents="none"
             >
               <View style={styles.tagAccent}>
-                <Text style={styles.tagAccentText}>Avec Relock</Text>
+                <Text style={styles.tagAccentText}>
+                  {t('onboarding_intro.proof.tag_with')}
+                </Text>
               </View>
               <View style={styles.tagTail} />
             </Animated.View>
@@ -843,22 +889,26 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
 
       <View style={styles.hairline} />
       <Reveal index={1} className="flex-row justify-between px-6 py-3">
-        <Text style={styles.axisDim}>Aujourd’hui</Text>
-        <Text style={styles.axisAccent}>Ton écran dans 2 semaines</Text>
+        <Text style={styles.axisDim}>{t('home.score_today')}</Text>
+        <Text style={styles.axisAccent}>
+          {t('onboarding_intro.proof.axis_future')}
+        </Text>
       </Reveal>
       <View style={styles.hairline} />
 
       <View className="flex-1 justify-center px-6 gap-[18px] py-4">
         {BENEFITS.map((b, i) => (
           <Reveal
-            key={b.lead}
+            key={b.id}
             index={2 + i}
             className="flex-row items-center gap-[14px]"
           >
             <b.Icon />
             <Text style={styles.benefitText} className="flex-1">
-              <Text style={styles.benefitLead}>{b.lead}</Text>
-              {b.rest}
+              <Text style={styles.benefitLead}>
+                {translate(`onboarding_intro.proof.benefit.${b.id}.lead`)}
+              </Text>
+              {translate(`onboarding_intro.proof.benefit.${b.id}.rest`)}
             </Text>
           </Reveal>
         ))}
@@ -875,13 +925,13 @@ export function SceneProof({ onNext }: { onNext: () => void }) {
             <Text style={styles.socialText}>{SOCIAL_PROOF.text}</Text>
           </>
         ) : (
-          <StudyLine text="En moyenne, on consulte son téléphone plus de 140 fois par jour." />
+          <StudyLine text={t('onboarding_intro.proof.study')} />
         )}
       </Reveal>
 
       <Reveal index={6} className="gap-2 px-5 pt-5 pb-2.5">
-        <Pill label="Continuer" kind="gradient" onPress={onNext} />
-        <Footnote text="Projection basée sur tes blocages planifiés. Pas une promesse magique." />
+        <Pill label={t('paywall.continue')} kind="gradient" onPress={onNext} />
+        <Footnote text={t('onboarding_intro.proof.footnote')} />
       </Reveal>
     </View>
   )
@@ -1000,6 +1050,59 @@ function IconStar() {
 // ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // Raccourci de dev : posé hors flux pour ne pas décaler d'un pixel la
+  // composition de la promesse, et pointillé pour qu'on ne le confonde
+  // jamais avec un vrai bouton du produit.
+  devSkip: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: OB.ink28,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  devSkipText: { ...fonts.medium, fontSize: 11, color: OB.ink55 },
+
+  welcome: { flex: 1, backgroundColor: OB.bg },
+  welcomeCopy: { paddingHorizontal: 22 },
+  welcomeHero: {
+    ...fonts.bold,
+    fontSize: 31,
+    lineHeight: 38,
+    letterSpacing: -0.8,
+    color: OB.ink,
+  },
+  welcomeHeroAccent: { color: OB.grad[0] },
+  welcomeProof: { flexDirection: 'row', paddingHorizontal: 22, marginTop: 16 },
+  // `alignSelf` plutôt qu'un parent qui centre : posé dans une rangée, le
+  // badge ne prend que sa largeur de texte et reste calé à gauche du titre.
+  scienceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 8,
+    backgroundColor: OB.accentDim,
+    borderRadius: 14,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+  },
+  scienceBadgeText: {
+    ...fonts.medium,
+    fontSize: 13,
+    color: OB.ink70,
+    flexShrink: 1,
+  },
+  // La cale de l'illustration : elle prend toute la hauteur libre et se
+  // comprime avant tout le reste, mais jamais en dessous de quoi rester une
+  // image (iPhone SE, titre sur quatre lignes).
+  welcomeStage: { flexGrow: 1, flexShrink: 1, minHeight: 190 },
+  welcomeHeroArt: { width: '100%', height: '100%' },
+  welcomeCta: { paddingHorizontal: 20, paddingTop: 10 },
+
   ignition: {
     flex: 1,
     alignItems: 'center',

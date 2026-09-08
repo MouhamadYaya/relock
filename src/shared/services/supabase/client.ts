@@ -58,6 +58,49 @@ const secureAuthStorage = {
 export const isSupabaseConfigured =
   env.SUPABASE_URL.length > 0 && env.SUPABASE_ANON_KEY.length > 0
 
+/**
+ * Plafond de patience d'une requête Supabase.
+ *
+ * `supabase-js` n'en pose AUCUN : il passe au `fetch` de la plateforme, qui
+ * attend indéfiniment. Sur un réseau qui accepte la connexion puis ne répond
+ * plus — wifi de café, tunnel, avion — la connexion et la suppression de
+ * compte tournent donc en spinner sans fin. C'est exactement ce qu'un
+ * reviewer Apple voit et rapporte comme « the app hangs » (2.1).
+ *
+ * 15 s, comme `http.client.ts` : au-delà, la réponse n'a plus d'intérêt pour
+ * quelqu'un qui attend devant l'écran.
+ */
+const REQUEST_TIMEOUT_MS = 15_000
+
+/**
+ * `fetch` borné dans le temps, qui RESPECTE le signal de l'appelant.
+ *
+ * Écrit avec un `AbortController` et un `setTimeout` plutôt qu'avec
+ * `AbortSignal.timeout` / `AbortSignal.any` : ces deux statiques n'existent
+ * pas dans toutes les versions de Hermes, et une `TypeError` ici couperait
+ * TOUT le réseau Supabase — l'inverse exact de ce que ce garde-fou cherche.
+ *
+ * Le signal de l'appelant est chaîné, pas écrasé : React Query doit pouvoir
+ * annuler une requête qu'il abandonne (écran démonté, paramètres changés),
+ * sinon on laisse tourner des requêtes orphelines.
+ */
+const timeoutFetch: typeof fetch = (input, init) => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  const caller = init?.signal
+  const forward = () => controller.abort()
+  if (caller) {
+    if (caller.aborted) forward()
+    else caller.addEventListener('abort', forward)
+  }
+
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => {
+    clearTimeout(timer)
+    caller?.removeEventListener('abort', forward)
+  })
+}
+
 export const supabase = createClient<Database>(
   env.SUPABASE_URL || 'http://localhost',
   env.SUPABASE_ANON_KEY || 'public-anon-key-placeholder',
@@ -69,5 +112,6 @@ export const supabase = createClient<Database>(
       // Pas de redirection OAuth par URL sur mobile.
       detectSessionInUrl: false,
     },
+    global: { fetch: timeoutFetch },
   },
 )

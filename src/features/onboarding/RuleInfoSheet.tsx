@@ -27,6 +27,7 @@ import {
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { findPreset, presetLines } from '@/features/blocking/presets'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { OnboardingAppIcons } from './OnboardingAppIcons'
@@ -68,6 +69,7 @@ function Section({
 }
 
 export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
+  const t = useT()
   const insets = useSafeAreaInsets()
   const reduceMotion = useReducedMotion()
   const preset = target ? findPreset(target.presetId) : undefined
@@ -77,10 +79,8 @@ export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
   // parle donc du total — c'est ce que l'écran précédent a annoncé.
   const scope =
     appCount > 0
-      ? `${appCount === 1 ? 'L’app' : `Les ${appCount} apps`} que tu viens de choisir. ${
-          appCount === 1 ? 'La même' : 'Les mêmes'
-        } pour toutes les règles de cet écran.`
-      : 'Les apps que tu choisiras. Aucune règle ne bloque quoi que ce soit tant que la liste est vide.'
+      ? t('onboarding_rule_info.scope', { count: appCount })
+      : t('onboarding_rule_info.scope_empty')
 
   return (
     <Modal
@@ -96,7 +96,7 @@ export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Fermer l’explication"
+          accessibilityLabel={t('onboarding_rule_info.close_a11y')}
         />
         <View
           accessibilityViewIsModal
@@ -114,12 +114,12 @@ export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
             <Text accessibilityRole="header" style={styles.title}>
               {target?.title}
             </Text>
-            <Text style={styles.lede}>
-              Une règle, c’est un moment de la journée que Relock protège pour
-              toi. Celle-ci s’allume toute seule, sans que tu aies rien à faire.
-            </Text>
+            <Text style={styles.lede}>{t('onboarding_rule_info.lede')}</Text>
 
-            <Section icon={IconName.CLOCK} title="Quand">
+            <Section
+              icon={IconName.CLOCK}
+              title={t('onboarding_rule_info.when')}
+            >
               {(preset ? presetLines(preset) : []).map(line => (
                 <View key={line.label} style={styles.line}>
                   <Text style={styles.lineLabel}>{line.label}</Text>
@@ -128,35 +128,39 @@ export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
               ))}
             </Section>
 
-            <Section icon={IconName.LOCK} title="Sur quelles apps">
+            <Section
+              icon={IconName.LOCK}
+              title={t('onboarding_rule_info.which_apps')}
+            >
               <View style={styles.scopeRow}>
                 <OnboardingAppIcons keys={appKeys} size={30} max={4} />
                 <Text style={styles.paragraph}>{scope}</Text>
               </View>
             </Section>
 
-            <Section icon={IconName.SHIELD} title="Ce qui se passe">
+            <Section
+              icon={IconName.SHIELD}
+              title={t('onboarding_rule_info.what_happens')}
+            >
               <Text style={styles.paragraph}>
-                Pendant ce créneau, ouvrir l’une de ces apps affiche un mur
-                Relock à la place. Pour passer outre, il faut d’abord traverser
-                le rituel de pause — le temps de se demander si on en avait
-                vraiment envie.
+                {t('onboarding_rule_info.what_happens_body')}
               </Text>
             </Section>
 
             <Text style={styles.footnote}>
-              Rien n’est figé : horaires, jours et apps se modifient à tout
-              moment dans l’onglet Règles.
+              {t('onboarding_rule_info.footnote')}
             </Text>
           </ScrollView>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="J’ai compris"
+            accessibilityLabel={t('onboarding_tutorial.picker_demo.understood')}
             onPress={onClose}
             style={styles.cta}
           >
-            <Text style={styles.ctaLabel}>J’ai compris</Text>
+            <Text style={styles.ctaLabel}>
+              {t('onboarding_tutorial.picker_demo.understood')}
+            </Text>
           </Pressable>
         </View>
       </View>

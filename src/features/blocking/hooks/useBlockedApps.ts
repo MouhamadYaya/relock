@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  devFixtureBlockedApps,
+  devFixturesEnabled,
+} from '@/features/blocking/dev-fixtures'
 import type { BlockRuleView } from '@/features/blocking/types'
 import { ScreenTime } from '@/shared/native/screen-time'
 
@@ -65,6 +69,14 @@ export function useBlockedApps(runningRules: BlockRuleView[]) {
 
   const load = useCallback(async (_nativeRefreshTrigger?: string) => {
     const request = ++requestRef.current
+    // Jeu de test du simulateur : le natif ne détient aucun jeton (le
+    // sélecteur Apple n'y existe pas), la rangée « Mes apps » resterait donc
+    // vide alors que des règles tournent.
+    if (devFixturesEnabled()) {
+      setApps(devFixtureBlockedApps(runningRulesRef.current))
+      setIsLoading(false)
+      return
+    }
     // `activeWindows` côté natif est l'autorité. On le relit même si le calcul
     // JS des sessions n'est pas encore stabilisé : sinon une vraie fenêtre déjà
     // ouverte pouvait rester invisible jusqu'au prochain rendu de l'écran.

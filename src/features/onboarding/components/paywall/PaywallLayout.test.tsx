@@ -68,15 +68,19 @@ describe('Paywall composition', () => {
       }),
     )
 
-    it('keeps the band, the title, both plans and a first review above the fold', () => {
-      // La liste exacte du brief : rien de ce qui décide de l'achat ne
+    it('keeps the band, the title and both plans above the fold', () => {
+      // La liste du brief, moins l'avis : rien de ce qui décide de l'achat ne
       // descend sous la ligne de flottaison.
+      //
+      // `paywall-reference-testimonial` en est sorti avec
+      // `featureFlags.showUnverifiedSocialProof` : le témoignage est signé d'un
+      // nom inventé, il ne s'affiche plus. Sa place dans la maquette reste
+      // celle-ci — voir le test suivant, qui garde l'emplacement documenté.
       const fold = renderer.root.findByProps({ testID: 'paywall-fold' })
       for (const testID of [
         'paywall-marquee-slot',
         'paywall-plan-annual',
         'paywall-plan-weekly',
-        'paywall-reference-testimonial',
       ]) {
         expect(fold.findAllByProps({ testID })).not.toHaveLength(0)
       }
@@ -85,14 +89,27 @@ describe('Paywall composition', () => {
       ).not.toHaveLength(0)
     })
 
-    it('leaves the remaining proof below the fold', () => {
-      const fold = renderer.root.findByProps({ testID: 'paywall-fold' })
+    it('shows no unverified review while the flag is off', () => {
+      // L'invariant a changé de nature : tant que
+      // `featureFlags.showUnverifiedSocialProof` est à `false`, l'avis
+      // d'ouverture n'existe NULLE PART dans l'arbre — ni au-dessus de la
+      // ligne de flottaison, ni en dessous. Le jour où de vrais avis
+      // arrivent, ce test redevient l'assertion d'emplacement d'origine
+      // (`fold.findAllByProps(...)` non vide).
       expect(
-        fold.findAllByProps({ testID: 'paywall-more-proof' }),
+        renderer.root.findAllByProps({
+          testID: 'paywall-reference-testimonial',
+        }),
       ).toHaveLength(0)
+    })
+
+    it('shows no secondary proof block while the flag is off', () => {
+      // Ce bloc portait les avis secondaires — inventés eux aussi. Il était
+      // « sous la ligne de flottaison » ; il n'est désormais nulle part tant
+      // que `featureFlags.showUnverifiedSocialProof` est à `false`.
       expect(
-        renderer.root.findByProps({ testID: 'paywall-more-proof' }),
-      ).toBeDefined()
+        renderer.root.findAllByProps({ testID: 'paywall-more-proof' }),
+      ).toHaveLength(0)
     })
 
     it('pins the cancellation promise and the call to action outside the scroll', () => {
@@ -217,17 +234,20 @@ describe('Paywall composition', () => {
       }
     })
 
-    it('keeps the unverified proof and the university marks together', () => {
-      // Avis, nombre d'utilisateurs et marques universitaires ne sont pas
-      // vérifiés : ils partagent le MÊME bloc, donc la même condition de
-      // sortie. Une marque isolée hors du bloc échapperait au garde-fou.
-      const proof = renderer.root.findByProps({
-        testID: 'paywall-reference-social-proof',
-      })
-      expect(proof.findAllByType('PaywallTrustLogos' as never)).toHaveLength(1)
+    it('shows neither the unverified proof nor the university marks', () => {
+      // Avis, nombre d'utilisateurs et blasons universitaires partagent le
+      // MÊME bloc, donc la même condition de sortie — et elle est fermée.
+      // Le test vérifie les deux séparément : c'est le blason ÉCHAPPÉ du bloc
+      // qui serait le vrai accident, puisqu'il ajoute une contrefaçon de
+      // marque à l'allégation invérifiée.
+      expect(
+        renderer.root.findAllByProps({
+          testID: 'paywall-reference-social-proof',
+        }),
+      ).toHaveLength(0)
       expect(
         renderer.root.findAllByType('PaywallTrustLogos' as never),
-      ).toHaveLength(1)
+      ).toHaveLength(0)
     })
 
     it('pins the call to action outside the scroll', () => {
@@ -249,8 +269,33 @@ describe('Paywall composition', () => {
       )
     })
     const sheet = renderer.root.findByProps({ testID: 'paywall-offer-sheet' })
-    expect(sheet.findAllByProps({ accessibilityRole: 'button' })).toHaveLength(
-      1,
+    // Les deux liens légaux ne sont pas des appels à l'action : ils sont
+    // OBLIGATOIRES sur toute surface qui vend un abonnement (3.1.2), et
+    // volontairement discrets. Ce que ce test protège, c'est qu'un seul
+    // bouton propose d'acheter — pas que la feuille soit vide de tout lien.
+    const buttons = sheet.findAllByProps({ accessibilityRole: 'button' })
+    const legal = sheet.findByProps({ testID: 'paywall-legal' })
+    const legalButtons = legal.findAllByProps({ accessibilityRole: 'button' })
+    expect(legalButtons).toHaveLength(2)
+    expect(buttons).toHaveLength(legalButtons.length + 1)
+  })
+
+  it('carries the legal links required on every purchase surface', () => {
+    act(() => {
+      renderer = create(
+        <PaywallOffer
+          regular={PREVIEW_PLANS[0]}
+          offer={PREVIEW_OFFER}
+          onPurchase={jest.fn()}
+        />,
+      )
+    })
+    const sheet = renderer.root.findByProps({ testID: 'paywall-offer-sheet' })
+    expect(sheet.findAllByProps({ testID: 'paywall-terms' })).not.toHaveLength(
+      0,
     )
+    expect(
+      sheet.findAllByProps({ testID: 'paywall-privacy' }),
+    ).not.toHaveLength(0)
   })
 })

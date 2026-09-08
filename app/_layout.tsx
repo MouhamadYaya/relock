@@ -2,7 +2,7 @@ import { ThemeProvider as NavThemeProvider } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
 import { Stack, useNavigationContainerRef } from 'expo-router'
 import React, { useEffect } from 'react'
-import { StyleSheet } from 'react-native'
+import { InteractionManager, StyleSheet } from 'react-native'
 import BootSplash from 'react-native-bootsplash'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -98,54 +98,86 @@ function AppShell() {
 
   useEffect(() => {
     let stopEntitlementWatch: (() => void) | undefined
-    setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
-    // Chaque requête Supabase devient une miette du fil d'Ariane : on voit la
-    // dernière table interrogée avant un crash.
-    attachSupabaseTelemetry(supabase)
-    // Les 5 extensions Family Controls sont des processus séparés : leurs
-    // erreurs n'apparaissent jamais dans le rapport de l'app. On publie le
-    // DSN pour celles qui portent un SDK, et on relève le journal partagé de
-    // toutes les autres — c'est le seul canal de RelockActivityReport, à qui
-    // Apple refuse tout accès réseau.
-    publishSentryDsnToExtensions()
-    drainExtensionTelemetry().catch(error =>
-      captureError(error, {
-        tags: { boot: 'extension-telemetry' },
-        level: 'warning',
-      }),
-    )
-    // Dev : session Supabase automatique quand le login est désactivé.
-    ensureDevSession().catch(error =>
-      captureError(error, { tags: { boot: 'dev-session' }, level: 'warning' }),
-    )
-    // Dev : pilotage par deep link (tests scriptés sur simulateur).
-    initDevTestBridge()
-    // (Ré)installation : purge le blocage résiduel au niveau système.
-    //
-    // Un échec ici laisse un blocage fantôme actif au niveau SYSTÈME, que
-    // l'utilisateur ne peut plus lever depuis l'app : c'est exactement le
-    // genre de panne dont personne ne fait de rapport et qui provoque une
-    // désinstallation. D'où le niveau `error`.
-    runInstallReset().catch(error =>
-      captureError(error, { tags: { boot: 'install-reset' } }),
-    )
-    initializeRevenueCat()
-      .then(() => {
-        // Vérité serveur de l'abonnement, au démarrage puis à chaque
-        // changement (expiration, remboursement, renouvellement, achat fait
-        // depuis les Réglages iOS). Sans le second, la porte ne serait
-        // réévaluée qu'au prochain démarrage à froid.
-        void syncEntitlement()
-        stopEntitlementWatch = watchEntitlement()
-      })
-      // RevenueCat muet = la porte dure du paywall ne peut plus s'ouvrir,
-      // même pour un abonné en règle. Panne commercialement critique, et
-      // parfaitement silencieuse jusqu'ici.
-      .catch(error =>
-        captureError(error, { tags: { boot: 'revenuecat' }, level: 'fatal' }),
-      )
+    let disposed = false
 
-    return () => stopEntitlementWatch?.()
+    // ── Chemin du PREMIER RENDU ──────────────────────────────────────────
+    // Ne reste ici que ce dont le premier écran dépend vraiment. Le transport
+    // doit être posé avant la moindre requête ; la télémétrie Supabase doit
+    // l'être avant la première, sinon on perd les miettes du démarrage — le
+    // moment le plus utile du fil d'Ariane. Les deux sont synchrones et
+    // quasi gratuites.
+    setTransport(flags.USE_MOCK ? mockAdapter : restAdapter)
+    attachSupabaseTelemetry(supabase)
+
+    // ── APRÈS le premier rendu ───────────────────────────────────────────
+    // Tout le reste est du travail de fond : ponts natifs, SDK d'achat,
+    // relevés de journaux. Exécuté dans le même tour que le premier rendu, il
+    // se battait avec lui pour le thread JS — c'est précisément ce qui fait
+    // qu'une app « démarre lentement ». `runAfterInteractions` le replace
+    // après l'apparition de l'écran, sans rien retirer : ce sont les mêmes
+    // appels, quelques centaines de millisecondes plus tard, dans une fenêtre
+    // où l'utilisateur ne peut de toute façon rien demander.
+    //
+    // Aucun de ces travaux ne conditionne l'affichage : la porte du paywall
+    // s'ouvre sur le DERNIER état connu (cache MMKV, cf. `app-gate.store`),
+    // que `syncEntitlement` ne fait que confirmer ou corriger ensuite.
+    const task = InteractionManager.runAfterInteractions(() => {
+      if (disposed) return
+      // Les 5 extensions Family Controls sont des processus séparés : leurs
+      // erreurs n'apparaissent jamais dans le rapport de l'app. On publie le
+      // DSN pour celles qui portent un SDK, et on relève le journal partagé de
+      // toutes les autres — c'est le seul canal de RelockActivityReport, à qui
+      // Apple refuse tout accès réseau.
+      publishSentryDsnToExtensions()
+      drainExtensionTelemetry().catch(error =>
+        captureError(error, {
+          tags: { boot: 'extension-telemetry' },
+          level: 'warning',
+        }),
+      )
+      // Dev : session Supabase automatique quand le login est désactivé.
+      ensureDevSession().catch(error =>
+        captureError(error, {
+          tags: { boot: 'dev-session' },
+          level: 'warning',
+        }),
+      )
+      // Dev : pilotage par deep link (tests scriptés sur simulateur).
+      initDevTestBridge()
+      // (Ré)installation : purge le blocage résiduel au niveau système.
+      //
+      // Un échec ici laisse un blocage fantôme actif au niveau SYSTÈME, que
+      // l'utilisateur ne peut plus lever depuis l'app : c'est exactement le
+      // genre de panne dont personne ne fait de rapport et qui provoque une
+      // désinstallation. D'où le niveau `error`.
+      runInstallReset().catch(error =>
+        captureError(error, { tags: { boot: 'install-reset' } }),
+      )
+      initializeRevenueCat()
+        .then(() => {
+          // L'écran a pu être démonté pendant l'initialisation : sans ce
+          // garde, on poserait une écoute que plus personne ne referme.
+          if (disposed) return
+          // Vérité serveur de l'abonnement, au démarrage puis à chaque
+          // changement (expiration, remboursement, renouvellement, achat fait
+          // depuis les Réglages iOS). Sans le second, la porte ne serait
+          // réévaluée qu'au prochain démarrage à froid.
+          void syncEntitlement()
+          stopEntitlementWatch = watchEntitlement()
+        })
+        // RevenueCat muet = la porte dure du paywall ne peut plus s'ouvrir,
+        // même pour un abonné en règle. Panne commercialement critique, et
+        // parfaitement silencieuse jusqu'ici.
+        .catch(error =>
+          captureError(error, { tags: { boot: 'revenuecat' }, level: 'fatal' }),
+        )
+    })
+
+    return () => {
+      disposed = true
+      task.cancel()
+      stopEntitlementWatch?.()
+    }
   }, [])
 
   // La porte franchie fait partie du contexte de tout crash ultérieur :
@@ -213,6 +245,7 @@ function AppShell() {
           <Stack.Screen name="preset-recap" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="theme-picker" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen name="language-picker" options={HALF_SHEET_OPTIONS} />
+          <Stack.Screen name="logo-picker" options={HALF_SHEET_OPTIONS} />
           <Stack.Screen
             name="pause-ritual-picker"
             options={HALF_SHEET_OPTIONS}
@@ -221,6 +254,10 @@ function AppShell() {
           <Stack.Screen name="profile" />
           <Stack.Screen name="delete-account" />
           <Stack.Screen name="reset-app" />
+          {/* Sortie du refus Temps d'écran. Atteint depuis l'Accueil, les
+              Réglages, l'Activité et la création de règle : c'est le seul
+              endroit qui explique ce qu'iOS a fait et par où l'on revient. */}
+          <Stack.Screen name="screen-time-help" />
           {/* Diagnostic du moteur de notifications : tout s'y décide hors
               écran, et une notification qui ne part pas ressemble exactement à
               une notification qui n'avait pas lieu d'être. Dev uniquement, et

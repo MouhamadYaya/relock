@@ -7,7 +7,10 @@
  *
  * - Pas de « + » : sur cet écran on SÉLECTIONNE, on n'ajoute pas ; un badge
  *   d'ajout promettrait une action qui n'existe pas encore.
- * - État sélectionné explicite : liseré blanc + pastille de coche.
+ * - État sélectionné explicite : liseré blanc + pastille de coche LAVANDE
+ *   (`OB.accent`, la couleur de sélection du sélecteur d'apps et du paywall).
+ *   Elle voisine le « ? » blanc : deux pastilles blanches côte à côte se
+ *   liraient comme deux badges du même type.
  * - Les icônes des apps que l'utilisateur vient de choisir, posées en bas à
  *   droite : sans elles, rien ne disait que ces règles s'appliquent à SA
  *   sélection de l'écran précédent — les testeurs lisaient huit cartes
@@ -38,17 +41,28 @@ import {
   RuleTemplateFlowGlyph,
   type RuleTypeGlyphKind,
 } from '@/features/blocking/components/BlockingGlyphs'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { OnboardingAppIcons } from './OnboardingAppIcons'
 import { OB } from './tokens'
 
 /**
- * Gris du bouton d'aide — `systemGray3` clair, celui des « ? » d'Apple.
- * Volontairement OPAQUE : les huit cartes portent des photos différentes, et
- * un gris translucide changeait de valeur à chaque carte.
+ * Fond du bouton d'aide : BLANC PLEIN, glyphe noir.
+ *
+ * Le gris `systemGray3` d'origine (`#C7C7CC`) portait un « ? » sombre : sur
+ * des photos claires, disque ET glyphe tombaient dans la même valeur que
+ * l'image — le bouton disparaissait purement et simplement. Le blanc est la
+ * seule valeur qu'aucune de ces huit photos n'atteint, donc la seule qui
+ * garantit le contraste sur toutes.
+ *
+ * Volontairement OPAQUE : un blanc translucide reprendrait la valeur de la
+ * photo dessous et changerait d'aspect d'une carte à l'autre.
  */
-const HELP_GREY = '#C7C7CC'
+const HELP_BG = '#FFFFFF'
+
+/** Blanc légèrement enfoncé au toucher (`systemGray5` clair). */
+const HELP_BG_PRESSED = '#E5E5EA'
 
 interface Props {
   title: string
@@ -105,13 +119,16 @@ export function OnboardingRuleCard({
   appsLabel,
   onInfo,
 }: Props) {
+  const t = useT()
   return (
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
       accessibilityLabel={`${title}. ${time}. ${description}. ${appsLabel}`}
       accessibilityHint={
-        selected ? 'Toucher pour désélectionner' : 'Toucher pour sélectionner'
+        selected
+          ? t('onboarding_rule_info.deselect_hint')
+          : t('onboarding_rule_info.select_hint')
       }
       onPress={onToggle}
       style={[styles.card, selected && styles.cardSelected]}
@@ -145,6 +162,10 @@ export function OnboardingRuleCard({
           Amarré à droite : la coche s'insère À GAUCHE du « ? », qui ne bouge
           donc jamais d'une carte à l'autre ni d'un état à l'autre — une aide
           qui se déplace quand on coche est une aide qu'on ne retrouve pas.
+
+          Les deux pastilles font la même taille et se touchent presque : ce
+          qui les sépare est la COULEUR, pas la forme — lavande = « choisie »,
+          blanc = « explique-moi ». Ne jamais leur redonner le même fond.
         */}
         <View style={styles.topRight}>
           {selected ? (
@@ -154,8 +175,10 @@ export function OnboardingRuleCard({
           ) : null}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Ce que fait la règle ${title}`}
-            accessibilityHint="Ouvre l’explication de cette règle"
+            accessibilityLabel={t('onboarding_rule_info.what_rule_does', {
+              title,
+            })}
+            accessibilityHint={t('onboarding_rule_info.open_explanation')}
             // Le « ? » est POSÉ SUR une carte qui bascule au toucher : sans
             // arrêter la propagation, demander l'explication cochait la règle
             // au passage. `onPress` ne remonte pas dans un Pressable imbriqué,
@@ -260,7 +283,11 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: OB.ink,
+    // Lavande, pas blanc : le blanc est passé au bouton d'aide voisin, et
+    // c'est déjà la couleur qui dit « sélectionné » sur l'écran de choix des
+    // apps (`pickCardDone`) comme sur le paywall. Le glyphe reste en encre
+    // sombre — du blanc sur cette lavande tombe sous le seuil de contraste.
+    backgroundColor: OB.accent,
   },
   help: {
     width: 30,
@@ -268,25 +295,25 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    // Le bouton d'aide d'iOS (`questionmark.circle.fill`) : disque gris PLEIN,
-    // glyphe détouré en sombre. La première version — glyphe clair sur pastille
-    // sombre translucide — laissait la photo de la carte transparaître, et le
-    // « ? » se noyait dès que l'image était claire. Un aplat opaque ne dépend
-    // plus de ce qu'il y a dessous : même lisibilité sur les huit cartes.
-    backgroundColor: HELP_GREY,
-    // Sur un ciel très clair, le disque gris se confondait à son tour avec le
-    // fond : ce liseré sombre lui rend un bord, quelle que soit la photo.
+    // Disque BLANC plein, glyphe noir : l'inverse exact du fond de la carte,
+    // donc le seul couple qui reste lisible sur les huit photos — y compris
+    // les plus claires, où le gris précédent se fondait dans l'image.
+    backgroundColor: HELP_BG,
+    // Un bord, même sur un ciel blanc : le liseré empêche le disque de fuir
+    // dans les zones les plus lumineuses des photos.
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(0,0,0,0.22)',
+    borderColor: 'rgba(0,0,0,0.18)',
   },
   helpPressed: {
-    backgroundColor: '#A8A8AE',
+    backgroundColor: HELP_BG_PRESSED,
   },
   helpGlyph: {
     ...fonts.bold,
     fontSize: 19,
     lineHeight: 22,
     textAlign: 'center',
+    // Encre quasi noire sur le disque blanc : le contraste maximal dont on
+    // dispose, indépendant de la photo qui passe dessous.
     color: OB.onAccent,
     // Le « ? » de SF est bien plus haut que large : sans cette reprise, il
     // flotte au-dessus du centre optique du disque.

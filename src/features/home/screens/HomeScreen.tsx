@@ -1,13 +1,12 @@
 import { IconName } from '@assets/icons'
 import { router } from 'expo-router'
-import React, { useMemo, useState } from 'react'
-import { Alert, Linking, StyleSheet, Text, View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { DevRestartButton } from '@/features/home/components/DevRestartButton'
 import { HomeBackdrop } from '@/features/home/components/HomeBackdrop'
 import { HomeDashboardSurface } from '@/features/home/components/HomeDashboardSurface'
 import { HomeDetailSheet } from '@/features/home/components/HomeDetailSheet'
@@ -24,9 +23,11 @@ import {
   scoreFooterKey,
 } from '@/features/home/services/home-score'
 import { useT } from '@/i18n/useT'
+import { useWarmRoute } from '@/navigation/helpers/route-warmup'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { ScreenTime } from '@/shared/native/screen-time'
+import { requireScreenTime } from '@/shared/native/screen-time-gate'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -38,6 +39,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const dashboard = useHomeDashboard()
   const [streakOpen, setStreakOpen] = useState(false)
+  // Les Réglages sont l'écran le plus lourd de l'app, et on y va depuis ici :
+  // on charge son module pendant que l'Accueil ne fait rien.
+  useWarmRoute('settings')
   const [scoreOpen, setScoreOpen] = useState(false)
   // Le voile de l'entete naît du défilement : on suit l'offset sur le thread
   // UI (aucun aller-retour JS, donc aucun retard sur un scroll rapide).
@@ -59,34 +63,45 @@ export default function HomeScreen() {
     })
   }, [dashboard.streakMinutesRemaining, t])
 
-  const requestScreenTimeAuthorization = async () => {
+  /**
+   * L'ancienne version rappelait `requestAuthorization()` puis, en cas
+   * d'échec, proposait « Ouvrir Réglages ». Les deux gestes étaient vides :
+   * iOS ne représente plus sa fenêtre après un refus, et la fiche Réglages de
+   * Relock ne contient aucun interrupteur Temps d'écran. On passait donc son
+   * temps à renvoyer les gens chercher une chose absente.
+   *
+   * `requireScreenTime` ne demande que lorsqu'il reste une fenêtre à ouvrir,
+   * et l'écran de récupération prend le relais quand il n'y en a plus.
+   */
+  const requestScreenTimeAuthorization = useCallback(async () => {
     if (!ScreenTime.isAvailable) return
-    const openSettingsAlert = () =>
-      Alert.alert(
-        t('home.permission_title'),
-        t('home.permission_settings_body'),
-        [
-          { text: t('home.permission_later'), style: 'cancel' },
-          {
-            text: t('home.permission_open_settings'),
-            onPress: () => Linking.openSettings(),
-          },
-        ],
-      )
-    try {
-      const status = await ScreenTime.requestAuthorization()
-      await dashboard.authorization.refresh()
-      if (status !== 'approved') openSettingsAlert()
-    } catch {
-      openSettingsAlert()
-    }
-  }
+    const gate = await requireScreenTime()
+    await dashboard.authorization.refresh()
+    if (gate === 'blocked') router.push('/screen-time-help')
+  }, [dashboard.authorization])
 
-  const openBlocks = () => {
+  const openBlocks = useCallback(() => {
     if (dashboard.isNewUser && !dashboard.referenceFixture)
       router.push('/add-block')
     else router.navigate('/(tabs)/blocks')
-  }
+  }, [dashboard.isNewUser, dashboard.referenceFixture])
+
+  // Les quatre gestes de l'écran, d'identité stable : ils traversent
+  // `React.memo` sans le percer à chaque tic d'horloge (`now` avance toutes
+  // les 30 s et re-rend cet écran, pas ses cartes).
+  const openScoreDetail = useCallback(() => setScoreOpen(true), [])
+  const closeScoreDetail = useCallback(() => setScoreOpen(false), [])
+  const openStreakDetail = useCallback(() => setStreakOpen(true), [])
+  const closeStreakDetail = useCallback(() => setStreakOpen(false), [])
+  const openSettings = useCallback(() => router.push('/settings'), [])
+  const openBlocksUnlock = useCallback(
+    () =>
+      router.navigate({
+        pathname: '/(tabs)/blocks',
+        params: { homeUnlockRequest: String(Date.now()) },
+      }),
+    [],
+  )
 
   return (
     <ScreenWrapper
@@ -149,7 +164,7 @@ export default function HomeScreen() {
                   dashboard.scores.focus ?? '—'
                 }, ${t('home.rest_score')} ${dashboard.scores.rest ?? '—'}`}
                 accessibilityHint={t('home.score_accessibility')}
-                onPress={() => setScoreOpen(true)}
+                onPress={openScoreDetail}
               />
             }
             blockedAppsCard={
@@ -158,12 +173,7 @@ export default function HomeScreen() {
                   model={dashboard.myApps}
                   now={dashboard.now}
                   onPress={openBlocks}
-                  onUnlock={() =>
-                    router.navigate({
-                      pathname: '/(tabs)/blocks',
-                      params: { homeUnlockRequest: String(Date.now()) },
-                    })
-                  }
+                  onUnlock={openBlocksUnlock}
                 />
               ) : null
             }
@@ -174,9 +184,6 @@ export default function HomeScreen() {
               <HomeProgressCard streak={streak} />
             </View>
           )}
-
-          {/* Dernier élément du contenu : ne rend rien hors DEV. */}
-          <DevRestartButton />
         </View>
       </Animated.ScrollView>
 
@@ -201,8 +208,8 @@ export default function HomeScreen() {
           streak={streak}
           streakLabel={t('home.streak_accessibility', { days: streak })}
           settingsLabel={t('home.settings_accessibility')}
-          onPressStreak={() => setStreakOpen(true)}
-          onPressSettings={() => router.push('/settings')}
+          onPressStreak={openStreakDetail}
+          onPressSettings={openSettings}
         />
       </View>
 
@@ -223,14 +230,14 @@ export default function HomeScreen() {
       <HomeScoreDetail
         visible={scoreOpen}
         snapshot={dashboard.score}
-        onClose={() => setScoreOpen(false)}
+        onClose={closeScoreDetail}
       />
 
       <HomeDetailSheet
         visible={streakOpen}
         title={t('home.streak_detail_title')}
         closeLabel={t('home.close')}
-        onClose={() => setStreakOpen(false)}
+        onClose={closeStreakDetail}
       >
         <View style={styles.sheetMetrics}>
           <View style={styles.sheetMetricNeutral}>

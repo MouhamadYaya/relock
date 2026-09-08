@@ -374,6 +374,7 @@ export default function BlockDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('blocking.session_sheet.close')}
               onPress={() => closeSheet(close)}
+              shadow
               style={styles.roundAction}
             >
               <IconSvg

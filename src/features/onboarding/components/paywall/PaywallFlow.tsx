@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { notePaywallAbandoned } from '@/features/notifications/engine/signals'
 import {
   PaywallBackdrop,
   PaywallField,
@@ -23,7 +24,6 @@ import {
   PaywallTextButton,
 } from '@/features/onboarding/components/paywall/PaywallPrimitives'
 import { PW } from '@/features/onboarding/components/paywall/paywall-theme'
-import { notePaywallAbandoned } from '@/features/notifications/engine/signals'
 import { shouldShowCancellationOffer } from '@/features/onboarding/services/paywall-flow'
 import type {
   PaywallPlan,
@@ -49,7 +49,6 @@ export function PaywallFlow({
   onRestore,
   escapable = true,
   onSignIn,
-  onDevSkip,
 }: {
   /** Les formules du store, prix compris. Rien ne s'affiche sans elles. */
   plans: readonly PaywallPlan[]
@@ -73,12 +72,6 @@ export function PaywallFlow({
   escapable?: boolean
   /** « J'ai déjà un compte » : la seule issue d'un abonné qui a réinstallé. */
   onSignIn?: () => void
-  /**
-   * DEV uniquement : franchit la porte dure sans rien facturer. Le bouton
-   * qui l'appelle vit sous `__DEV__` dans `PaywallPlans` — il n'existe pas
-   * dans le bundle de production.
-   */
-  onDevSkip?: () => void
   /**
    * Sépare les trois issues d'une restauration — `restored`, `none`,
    * `failed`. Un booléen ne le pouvait pas : « ce compte n'a aucun
@@ -400,9 +393,29 @@ export function PaywallFlow({
             )}
           </View>
         ) : screen === 'exit-offer' ? (
-          // L'offre unique se passe du logotype : rien ne doit concurrencer
-          // la remise. Seule la croix reste, discrète, en haut à droite.
-          <View style={[styles.toolbar, styles.bareToolbar]}>
+          /*
+            L'offre unique se passe du logotype : rien ne doit concurrencer la
+            remise. Restent les deux commandes obligatoires, dans la même
+            disposition que l'écran des formules — restauration à gauche,
+            sortie à droite.
+
+            « Restaurer » n'est PAS un ornement de symétrie : la guideline
+            3.1.1 l'exige sur CHAQUE surface qui affiche un prix, et celle-ci
+            en affiche deux (le plein tarif barré et le remisé). L'omettre ici
+            est le motif de rejet 3.1.1 le plus courant — le reviewer ouvre
+            l'écran de remise, ne voit pas la restauration, rejette.
+          */
+          <View style={styles.toolbar}>
+            <PaywallTextButton
+              testID="paywall-exit-offer-restore"
+              label={
+                restoring
+                  ? t('paywall_reference.processing')
+                  : t('paywall.restore')
+              }
+              onPress={handleRestore}
+              disabled={busy || restoring}
+            />
             <PaywallClose onPress={close} />
           </View>
         ) : null}
@@ -430,15 +443,6 @@ export function PaywallFlow({
               return buy('plans')
             }}
             busy={busy || restoring}
-            onWindow={
-              offer
-                ? () => {
-                    if (!purchasing.current && !restoringRef.current)
-                      setSheetVisible(true)
-                  }
-                : undefined
-            }
-            onDevSkip={onDevSkip}
           />
         )}
       </View>
@@ -457,7 +461,29 @@ export function PaywallFlow({
             accessibilityRole="button"
             accessibilityLabel={t('paywall.close')}
           />
-          <View style={[styles.modalClose, { top: insets.top }]}>
+          {/*
+            La feuille de rattrapage vend, elle aussi : un prix barré, un prix
+            remisé, un bouton d'achat. Elle porte donc les mêmes obligations
+            que les deux autres écrans — restauration ici (3.1.1), conditions
+            et confidentialité dans la feuille elle-même (3.1.2).
+
+            La barre est posée SUR le voile plutôt que dans la feuille : celle-ci
+            est calée en bas de l'écran et son contenu est déjà dense ; deux
+            liens de plus à l'intérieur écraseraient le prix, qui est ce que la
+            feuille a à dire.
+          */}
+          <View style={[styles.modalBar, { top: insets.top }]}>
+            <PaywallTextButton
+              testID="paywall-sheet-restore"
+              label={
+                restoring
+                  ? t('paywall_reference.processing')
+                  : t('paywall.restore')
+              }
+              onPress={handleRestore}
+              disabled={busy || restoring}
+              tone="bright"
+            />
             <PaywallClose onPress={dismissSheet} />
           </View>
           {offer ? (
@@ -534,5 +560,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     backgroundColor: PW.color.scrim,
   },
-  modalClose: { position: 'absolute', right: PW.space.xs },
+  /**
+   * La barre de la feuille de rattrapage, en surimpression du voile. Étirée
+   * d'un bord à l'autre (et non calée à droite comme l'ancienne `modalClose`)
+   * pour porter la restauration à gauche et la fermeture à droite, comme les
+   * deux autres surfaces d'achat.
+   */
+  modalBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    minHeight: PW.layout.touch,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: PW.space.xs,
+  },
 })

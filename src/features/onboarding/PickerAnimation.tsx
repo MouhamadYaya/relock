@@ -28,6 +28,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg'
+import { translate } from '@/i18n/translate'
 import { type AppId, AppLogo } from '@/shared/components/ui/AppLogo'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { AllAppsGlyph, FacebookIcon, SocialGlyph } from './decor-icons'
@@ -92,18 +93,24 @@ const TEXT_L = PAD_L + RADIO + 12 + ICON + 14
  */
 const CARD_H = Math.round(ROW_H * 7.4)
 
-type Category = { id: string; label: string; glyph: 'all' | 'social' | string }
+type Category = { id: string; glyph: 'all' | 'social' | string }
 
-/** Les huit catégories de la feuille, dans l'ordre réel d'iOS en français. */
+/**
+ * Les huit catégories de la feuille, dans l'ordre réel d'iOS.
+ *
+ * Les libellés vivent dans les fichiers de langue : cette animation imite
+ * l'écran système d'Apple, qui est lui-même traduit — l'imiter en français
+ * sur un iPhone espagnol montrerait une feuille qui n'existe pas.
+ */
 const CATEGORIES: Category[] = [
-  { id: 'all', label: 'Toutes apps et catégories', glyph: 'all' },
-  { id: 'social', label: 'Social', glyph: 'social' },
-  { id: 'games', label: 'Jeux', glyph: '🚀' },
-  { id: 'fun', label: 'Divertissement', glyph: '🍿' },
-  { id: 'creative', label: 'Créativité', glyph: '🎨' },
-  { id: 'reading', label: 'Information et lecture', glyph: '📖' },
-  { id: 'shopping', label: 'Magasinage et nourriture', glyph: '🛍️' },
-  { id: 'work', label: 'Productivité et finance', glyph: '✈️' },
+  { id: 'all', glyph: 'all' },
+  { id: 'social', glyph: 'social' },
+  { id: 'games', glyph: '🚀' },
+  { id: 'fun', glyph: '🍿' },
+  { id: 'creative', glyph: '🎨' },
+  { id: 'reading', glyph: '📖' },
+  { id: 'shopping', glyph: '🛍️' },
+  { id: 'work', glyph: '✈️' },
 ]
 
 /**
@@ -315,7 +322,7 @@ export function PickerAnimation({ width }: { width: number }) {
           return (
             <View key={cat.id} style={styles.rowWrap}>
               <Row
-                label={cat.label}
+                label={translate(`onboarding_picker.category.${cat.id}`)}
                 glyph={cat.glyph}
                 trailing={
                   cat.id === 'all' ? null : <Chevron size={18} color={C.ring} />
@@ -330,7 +337,7 @@ export function PickerAnimation({ width }: { width: number }) {
           <View key={cat.id}>
             <View style={styles.rowWrap}>
               <Row
-                label={cat.label}
+                label={translate(`onboarding_picker.category.${cat.id}`)}
                 glyph={cat.glyph}
                 halo={
                   <>

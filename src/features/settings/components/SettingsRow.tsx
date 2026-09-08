@@ -87,16 +87,27 @@ export function SettingsRow({
   const navigates = onPress !== undefined && !hasSwitch
   const inert = disabled || busy
 
-  const toggle = () => {
+  const toggle = (next: boolean) => {
     if (inert || !hasSwitch) return
-    haptics.selectionTick()
-    onSwitchChange(!switchValue)
+    onSwitchChange(next)
   }
 
   const press = () => {
     if (inert) return
-    haptics.selectionTick()
     onPress?.()
+  }
+
+  /**
+   * Le tic part du TOUCHER, pas du relâchement — comme partout ailleurs
+   * (`PressableScale`). Sur une ligne qui ouvre un écran lourd, le doigt sent
+   * l'appui avant que React n'ait commencé à monter la destination : l'attente
+   * se lit comme un chargement, plus comme une ligne morte.
+   *
+   * L'interrupteur garde son propre tic : on peut le faire glisser sans jamais
+   * déclencher le `onPressIn` de la rangée.
+   */
+  const tick = () => {
+    if (!inert) haptics.selectionTick()
   }
 
   const body = (
@@ -159,7 +170,10 @@ export function SettingsRow({
             accessibilityLabel={label}
             accessibilityHint={hint}
             value={switchValue}
-            onValueChange={toggle}
+            onValueChange={next => {
+              tick()
+              toggle(next)
+            }}
             disabled={inert}
             trackColor={{ true: colors.accent, false: colors.control }}
             thumbColor={colors.textPrimary}
@@ -193,7 +207,11 @@ export function SettingsRow({
   // Une ligne à interrupteur reste tappable sur toute sa surface : viser un
   // switch de 50 pt au bout d'une ligne de 350 est un geste de précision
   // qu'on ne demande pas dans une liste de réglages.
-  const handler = hasSwitch ? toggle : navigates ? press : undefined
+  const handler = hasSwitch
+    ? () => toggle(!switchValue)
+    : navigates
+      ? press
+      : undefined
 
   if (!handler) {
     return <View style={disabled ? styles.rowDimmed : styles.row}>{body}</View>
@@ -211,7 +229,10 @@ export function SettingsRow({
       }
       disabled={inert}
       onPress={handler}
-      onPressIn={() => setPressed(true)}
+      onPressIn={() => {
+        setPressed(true)
+        tick()
+      }}
       onPressOut={() => setPressed(false)}
       style={
         disabled ? styles.rowDimmed : pressed ? styles.rowPressed : styles.row

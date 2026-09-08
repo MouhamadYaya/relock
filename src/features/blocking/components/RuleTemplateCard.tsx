@@ -117,6 +117,8 @@ export function RuleTemplateCard({
       accessibilityRole="button"
       accessibilityLabel={addLabel}
       onPress={onAdd}
+      // Pas de halo : la carte rogne son image (`overflow: 'hidden'`) et iOS
+      // supprime l'ombre d'une couche qui masque ses bords. Cf. `PressableScale`.
       style={[styles.card, style]}
     >
       <ImageBackground

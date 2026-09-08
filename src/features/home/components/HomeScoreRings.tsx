@@ -37,7 +37,7 @@ function arcGeometry(value: number | null, radius: number) {
  * Le rayon extérieur réserve `stroke * 1.2` de marge pour que le halo diffus
  * tienne dans le canevas SVG sans se faire couper au bord.
  */
-export function HomeScoreRings({
+export const HomeScoreRings = React.memo(function HomeScoreRings({
   focus,
   rest,
   size,
@@ -136,7 +136,7 @@ export function HomeScoreRings({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center' },

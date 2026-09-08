@@ -16,6 +16,7 @@
  * vie expire.
  */
 import type { BlockRuleView } from '@/features/blocking/types'
+import { translate as t } from '@/i18n/translate'
 
 export type RuleState = 'running' | 'upcoming' | 'suspended'
 
@@ -53,9 +54,9 @@ const DAY_MIN = 1440
 export function ruleTitle(r: BlockRuleView): string {
   const n = cfg(r).name
   if (typeof n === 'string' && n.trim()) return n.trim()
-  if (r.type === 'daily_limit') return 'Limite du jour'
-  if (r.type === 'schedule') return 'Plage horaire'
-  return 'Blocage minuté'
+  if (r.type === 'daily_limit') return t('blocking.rule_types.daily_limit')
+  if (r.type === 'schedule') return t('blocking.rule_types.schedule')
+  return t('blocking.rule_types.timed')
 }
 
 /** Le mode strict s'applique désormais à TOUS les types. */
@@ -75,13 +76,17 @@ export function ruleDays(r: BlockRuleView): number[] | null {
  * l'utilisateur croit avoir créé autre chose que ce qu'il lit.
  */
 export function daysLabel(days: number[] | null): string {
-  if (!days || days.length === 0 || days.length === 7) return 'Tous les jours'
+  if (!days || days.length === 0 || days.length === 7)
+    return t('blocking.days.every_day')
   const sorted = [...days].sort()
   const key = sorted.join(',')
-  if (key === '1,2,3,4,5') return 'Du lundi au vendredi'
-  if (key === '0,6') return 'Samedi et dimanche'
-  const NAMES = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam']
-  return sorted.map(d => NAMES[d]).join(', ')
+  if (key === '1,2,3,4,5') return t('blocking.days.weekdays')
+  if (key === '0,6') return t('blocking.days.weekend')
+  // Index Apple : 0 = dimanche. Les abréviations vivent dans les fichiers de
+  // langue — « lun » n'a de sens qu'en français.
+  return sorted
+    .map(d => t(`blocking.days.short.${d}`))
+    .join(t('blocking.days.separator'))
 }
 
 export function appliesOn(r: BlockRuleView, now: Date): boolean {

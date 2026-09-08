@@ -9,127 +9,103 @@ import type {
   PersonalizedPlan,
   PlanAnswers,
 } from '@/features/onboarding/types/personalizedPlan'
-
-const MOMENT_COPY: Record<string, string> = {
-  bed: 'surtout le soir, au lit',
-  wake: 'dès le réveil',
-  work: 'pendant le travail ou les cours',
-  break: 'pendant tes pauses',
-  transport: 'dans les transports',
-  meals: 'pendant les repas',
-  weekend: 'le week-end, des heures entières',
-  always: 'un peu tout le temps',
-}
-// Rephrase without guessing gender or adding a diagnosis.
-const FEELING_COPY: Record<string, string> = {
-  guilt: 'de la culpabilité',
-  empty: 'une sensation de vide',
-  anxious: 'de l’anxiété',
-  wasted: 'l’impression de perdre ton temps',
-  drained: 'un manque d’énergie',
-  overwhelmed: 'le sentiment que tout déborde',
-  foggy: 'du brouillard dans la tête',
-  regret: 'des regrets',
-  unproductive: 'l’impression de ne pas avancer',
-  disconnected: 'une distance avec le réel',
-  angry: 'de l’énervement',
-  hopeless: 'du découragement',
-  ashamed: 'de la honte',
-  lonely: 'de la solitude',
-  restless: 'de l’agitation',
-  numb: 'une forme d’anesthésie',
-}
+import i18n from '@/i18n/i18n'
+import { translate as t } from '@/i18n/translate'
 
 /**
- * Ce que le scroll a volé, reformulé au « tu » pour être recousu dans une
- * phrase. Les libellés d'origine sont à la première personne (c'est un aveu
- * que l'utilisateur signe) ; ici c'est le plan qui parle, il le lui rend.
+ * Les identifiants de réponse, tels qu'ils sortent du questionnaire.
+ *
+ * Le texte, lui, vit dans les fichiers de langue (`onboarding_plan.*`) : ce
+ * module recoud des phrases, et une phrase recousue à partir de fragments
+ * français codés en dur ne peut pas se traduire — c'est ce qui laissait tout
+ * le plan personnalisé en français dans une app anglaise ou espagnole.
  */
-const STOLEN_COPY: Record<string, string> = {
-  nights: 'des nuits',
-  people: 'des moments avec les gens que tu aimes',
-  becoming: 'du temps pour devenir qui tu veux être',
-  focus: 'ta concentration',
-  presence: 'des moments où tu aurais voulu être là',
-  energy: 'ton énergie',
-  mornings: 'tes matins',
-  sport: 'l’envie de bouger',
-  projects: 'des projets jamais commencés',
-  calm: 'le calme dans ta tête',
-  pride: 'la fierté de tes journées',
-}
+const MOMENT_IDS = [
+  'bed',
+  'wake',
+  'work',
+  'break',
+  'transport',
+  'meals',
+  'weekend',
+  'always',
+] as const
 
-/**
- * Pourquoi chaque méthode déjà tentée a lâché. Jamais un reproche : c'est la
- * méthode qui est en cause, pas la personne — la même thèse que l'écran
- * « Tu n'es pas le problème ».
- */
-const ATTEMPT_COPY: Record<string, string> = {
-  deleted: 'réinstaller une app prend dix secondes',
-  limit: "une limite d'écran se repousse d'un tap",
-  willpower: "la volonté seule tient jusqu'au premier soir difficile",
-  distance: 'un téléphone posé plus loin se rattrape en dix pas',
-  hidden: "une app cachée s'ouvre quand même",
-  grayscale: 'un écran gris se remet en couleur en trois taps',
-  notifications:
-    "une notification coupée n'empêche pas d'ouvrir l'app soi-même",
-  blocker: 'un blocage qui se désactive tout seul ne bloque rien',
-  detox: "une détox a une date de fin, et l'habitude attend derrière",
-  logout: 'se reconnecter prend le temps d’un mot de passe enregistré',
-}
+const FEELING_IDS = [
+  'guilt',
+  'empty',
+  'anxious',
+  'wasted',
+  'drained',
+  'overwhelmed',
+  'foggy',
+  'regret',
+  'unproductive',
+  'disconnected',
+  'angry',
+  'hopeless',
+  'ashamed',
+  'lonely',
+  'restless',
+  'numb',
+] as const
 
-/** Ce que le temps récupéré redevient, dans la phrase d'objectif. */
-const ASPIRATION_COPY: Record<string, string> = {
-  sleep: 'dormir',
-  move: 'bouger',
-  read: 'lire',
-  people: 'voir tes proches',
-  project: 'avancer sur un projet',
-  hobby: 'reprendre un hobby',
-  breathe: 'souffler',
-  cook: 'cuisiner',
-  work: 'mieux travailler',
-  morning: 'retrouver tes matins',
-  study: 'réussir tes études',
-  present: 'être présent',
-  family: 'être avec ta famille',
-  nature: 'sortir dehors',
-  learn: 'apprendre',
-  create: 'créer',
-  music: 'faire de la musique',
-  silence: 'ne rien faire, vraiment',
-}
+const STOLEN_IDS = [
+  'nights',
+  'people',
+  'becoming',
+  'focus',
+  'presence',
+  'energy',
+  'mornings',
+  'sport',
+  'projects',
+  'calm',
+  'pride',
+] as const
 
-/** Le suffixe qui défile sur le compteur du bon verdict (« 47 jours · … »). */
-const ASPIRATION_WORDS: Record<string, string> = {
-  sleep: 'de Sommeil',
-  move: 'de Sport',
-  read: 'de Lecture',
-  people: 'avec les tiens',
-  project: 'de Projets',
-  hobby: 'de Plaisir',
-  breathe: 'de Calme',
-  cook: 'de Cuisine',
-  work: 'de Clarté',
-  morning: 'de Matins',
-  study: 'de Réussite',
-  present: 'de Présence',
-  family: 'en Famille',
-  nature: 'Dehors',
-  learn: 'd’Apprentissage',
-  create: 'de Création',
-  music: 'de Musique',
-  silence: 'de Silence',
-}
+const ATTEMPT_IDS = [
+  'deleted',
+  'limit',
+  'willpower',
+  'distance',
+  'hidden',
+  'grayscale',
+  'notifications',
+  'blocker',
+  'detox',
+  'logout',
+] as const
+
+const ASPIRATION_IDS = [
+  'sleep',
+  'move',
+  'read',
+  'people',
+  'project',
+  'hobby',
+  'breathe',
+  'cook',
+  'work',
+  'morning',
+  'study',
+  'present',
+  'family',
+  'nature',
+  'learn',
+  'create',
+  'music',
+  'silence',
+] as const
 
 /** Repli quand la question de l'objectif n'a pas été posée (saut de DEV). */
-const DEFAULT_ASPIRATION_WORDS = [
-  'de Présence',
-  'de Sommeil',
-  'de Calme',
-  'de Liberté',
-  'de Vie',
-]
+const DEFAULT_ASPIRATION_WORD_KEYS = [
+  'presence',
+  'sleep',
+  'calm',
+  'freedom',
+  'life',
+] as const
 
 /**
  * L'ordre COMPTE : plusieurs motivations peuvent être cochées, et c'est la
@@ -137,17 +113,18 @@ const DEFAULT_ASPIRATION_WORDS = [
  * précis (« tes nuits ») au plus général (« reprendre la main »), pour qu'un
  * choix multiple n'aboutisse pas à la formule la plus vague.
  */
-const INTENTIONS: [id: string, intention: string][] = [
-  ['bed', 'Ton objectif : retrouver tes nuits.'],
-  ['sleep', 'Ton objectif : retrouver un vrai sommeil.'],
-  ['focus', 'Ton objectif : retrouver ta concentration.'],
-  ['goals', 'Ton objectif : tenir tes journées.'],
-  ['presence', 'Ton objectif : être vraiment là.'],
-  ['mood', 'Ton objectif : avoir la tête plus légère.'],
-  ['habit', 'Ton objectif : casser le réflexe.'],
-  ['time', 'Ton objectif : retrouver du temps pour toi.'],
-  ['control', 'Ton objectif : reprendre la main.'],
-]
+const INTENTION_IDS = [
+  'bed',
+  'sleep',
+  'focus',
+  'goals',
+  'presence',
+  'mood',
+  'habit',
+  'time',
+  'control',
+] as const
+
 const MOMENT_RULES: Record<string, string[]> = {
   bed: [IDS.sleep],
   wake: [IDS.morning],
@@ -173,34 +150,56 @@ const TRIGGER_RULES: Record<string, string> = {
 /** Deux citations suffisent à faire une phrase juste ; trois font une liste. */
 const MAX_QUOTED = 2
 
+/** Traduit un identifiant, ou rend `undefined` s'il n'est pas au catalogue. */
+function copy(
+  section: string,
+  allowed: readonly string[],
+  id: string,
+): string | undefined {
+  return allowed.includes(id)
+    ? t(`onboarding_plan.${section}.${id}`)
+    : undefined
+}
+
 /** Les réponses retenues, dédupliquées, traduites, et bornées à deux. */
-function pick(ids: string[], copy: Record<string, string>) {
+function pick(ids: string[], section: string, allowed: readonly string[]) {
   return [...new Set(ids)]
-    .map(id => copy[id])
-    .filter(Boolean)
+    .map(id => copy(section, allowed, id))
+    .filter((value): value is string => Boolean(value))
     .slice(0, MAX_QUOTED)
 }
 
-function joinFrench(items: string[]) {
+/**
+ * « a, b et c » — avec la conjonction de la langue courante.
+ *
+ * L'espagnol impose « e » (et non « y ») devant un mot commençant par le son
+ * /i/ : « sueño e insomnio ». Le cas est fréquent ici — « ilusión »,
+ * « energía » n'en fait pas partie mais « imagen » oui — et une conjonction
+ * fausse se remarque immédiatement pour un lecteur natif.
+ */
+function joinList(items: string[]) {
   if (items.length < 2) return items[0] ?? ''
-  return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`
+  const last = items[items.length - 1] ?? ''
+  const head = items.slice(0, -1).join(t('onboarding_plan.list.separator'))
+  let conjunction = t('onboarding_plan.list.and')
+  if (
+    i18n.language.startsWith('es') &&
+    /^(i|hi(?!e))/i.test(last.replace(/^[¿¡"'«\s]+/, ''))
+  ) {
+    conjunction = t('onboarding_plan.list.and_alt')
+  }
+  return `${head}${conjunction}${last}`
 }
 
 /** A proposal only: no storage, permissions, app selection or native blocking. */
 export function buildPersonalizedPlan(answers: PlanAnswers): PersonalizedPlan {
   const name = answers.name.trim()
-  const apps = joinFrench([
+  const apps = joinList([
     ...new Set(answers.apps.map(app => app.trim()).filter(Boolean)),
   ])
-  const moment = joinFrench(pick(answers.moment, MOMENT_COPY))
-  const recap =
-    apps || moment
-      ? `${name ? `${name}, tu` : 'Tu'} scrolles${apps ? ` sur ${apps}` : ''}${moment ? ` ${moment}` : ''}.`
-      : `${name ? `${name}, voici` : 'Voici'} un point de départ à adapter à ton quotidien.`
-  const feelings = [...new Set(answers.feelings)]
-    .map(id => FEELING_COPY[id])
-    .filter(Boolean)
-    .slice(0, 2)
+  const moment = joinList(pick(answers.moment, 'moment', MOMENT_IDS))
+  const recap = buildRecap(name, apps, moment)
+  const feelings = pick(answers.feelings, 'feeling', FEELING_IDS)
   // Les moments d'abord (c'est eux que la règle protégera), la motivation
   // ensuite : à deux règles proposées, l'ordre décide laquelle survit.
   const candidates = answers.moment.flatMap(id => MOMENT_RULES[id] ?? [])
@@ -220,30 +219,57 @@ export function buildPersonalizedPlan(answers: PlanAnswers): PersonalizedPlan {
     .slice(0, 2)
     .map(findPreset)
     .filter((rule): rule is Preset => Boolean(rule))
-  const stolen = pick(answers.stolen, STOLEN_COPY)
-  const tried = pick(answers.attempts, ATTEMPT_COPY)
-  const aspirations = pick(answers.aspirations, ASPIRATION_COPY)
+  const stolen = pick(answers.stolen, 'stolen', STOLEN_IDS)
+  const tried = pick(answers.attempts, 'attempt', ATTEMPT_IDS)
+  const aspirations = pick(answers.aspirations, 'aspiration', ASPIRATION_IDS)
   const words = [...new Set(answers.aspirations)]
-    .map(id => ASPIRATION_WORDS[id])
-    .filter(Boolean)
+    .map(id => copy('aspiration_word', ASPIRATION_IDS, id))
+    .filter((value): value is string => Boolean(value))
+  const intentionId = INTENTION_IDS.find(id => answers.trigger.includes(id))
   return {
     recap,
     feeling: feelings.length
-      ? `Après, tu décris ${joinFrench(feelings)}.`
+      ? t('onboarding_plan.feeling_sentence', { feelings: joinList(feelings) })
       : null,
-    loss: stolen.length ? `Et ça t'a déjà pris ${joinFrench(stolen)}.` : null,
+    loss: stolen.length
+      ? t('onboarding_plan.loss_sentence', { stolen: joinList(stolen) })
+      : null,
     defense: buildDefense(answers.attempts, tried),
-    intention:
-      INTENTIONS.find(([id]) => answers.trigger.includes(id))?.[1] ??
-      'Un premier pas pour retrouver du temps pour toi.',
+    intention: intentionId
+      ? t(`onboarding_plan.intention.${intentionId}`)
+      : t('onboarding_plan.intention_default'),
     rules,
     hours: answers.hours,
     recoverableDays: annualProjection(answers.hours).recoverableDaysPerYear,
     // Toutes les réponses défilent ici (pas seulement les deux citées en
     // prose) : le compteur a le temps de les montrer une par une.
-    aspirationWords: words.length ? words : DEFAULT_ASPIRATION_WORDS,
-    aspirationSummary: aspirations.length ? joinFrench(aspirations) : null,
+    aspirationWords: words.length
+      ? words
+      : DEFAULT_ASPIRATION_WORD_KEYS.map(key =>
+          t(`onboarding_plan.default_word.${key}`),
+        ),
+    aspirationSummary: aspirations.length ? joinList(aspirations) : null,
   }
+}
+
+/**
+ * La phrase d'ouverture, choisie parmi six gabarits complets.
+ *
+ * Coller « sur {apps} » puis « {moment} » derrière un tronc commun marchait en
+ * français et nulle part ailleurs : l'anglais veut « you scroll on X in the
+ * evening », l'espagnol place le prénom autrement. Chaque combinaison a donc
+ * sa phrase entière, que chaque langue écrit comme elle l'entend.
+ */
+function buildRecap(name: string, apps: string, moment: string): string {
+  const scope =
+    apps && moment ? 'apps_moment' : apps ? 'apps' : moment ? 'moment' : null
+  if (!scope) {
+    return name
+      ? t('onboarding_plan.recap.fallback_named', { name })
+      : t('onboarding_plan.recap.fallback')
+  }
+  const key = name ? `named_${scope}` : scope
+  return t(`onboarding_plan.recap.${key}`, { name, apps, moment })
 }
 
 /**
@@ -253,9 +279,9 @@ export function buildPersonalizedPlan(answers: PlanAnswers): PersonalizedPlan {
  */
 function buildDefense(ids: string[], tried: string[]): string | null {
   if (ids.includes('never') && tried.length === 0)
-    return "Tu n'as pas encore vraiment essayé. Autant commencer par quelque chose qui tient tout seul."
+    return t('onboarding_plan.defense_never')
   if (tried.length === 0) return null
-  return `Tu as déjà essayé, mais ${joinFrench(tried)}. Ton plan, lui, se règle à froid — au moment où tu y vois clair — et ne se retire pas à chaud.`
+  return t('onboarding_plan.defense_tried', { tried: joinList(tried) })
 }
 
 /** Keep proposed rules visible even if they were beyond the old eight-card cutoff. */

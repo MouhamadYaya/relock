@@ -8,11 +8,14 @@
  * rendu, jamais le choix.
  */
 import { create } from 'zustand'
+import type { AppLogo } from '@/shared/constants/app-logo'
 import {
   type AppPreferences,
+  getAppLogo,
   getPauseRitual,
   getPreferences,
   type PauseRitual,
+  setAppLogo,
   setPauseRitual,
   setPreference,
 } from '@/shared/services/storage/app-preferences'
@@ -20,13 +23,17 @@ import {
 type PreferencesStore = AppPreferences & {
   /** Le rituel exigé avant un déblocage — pas un booléen, d'où sa propre action. */
   pauseRitual: PauseRitual
+  /** L'icône de l'app sur l'écran d'accueil — reflet de l'état iOS. */
+  appLogo: AppLogo
   setPreference: (key: keyof AppPreferences, value: boolean) => void
   setPauseRitual: (ritual: PauseRitual) => void
+  setAppLogo: (logo: AppLogo) => void
 }
 
 export const usePreferences = create<PreferencesStore>(set => ({
   ...getPreferences(),
   pauseRitual: getPauseRitual(),
+  appLogo: getAppLogo(),
   setPreference: (key, value) => {
     setPreference(key, value)
     set({ [key]: value } as Pick<AppPreferences, typeof key>)
@@ -34,5 +41,9 @@ export const usePreferences = create<PreferencesStore>(set => ({
   setPauseRitual: ritual => {
     setPauseRitual(ritual)
     set({ pauseRitual: ritual })
+  },
+  setAppLogo: logo => {
+    setAppLogo(logo)
+    set({ appLogo: logo })
   },
 }))

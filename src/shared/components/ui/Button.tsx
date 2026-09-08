@@ -10,11 +10,13 @@ import React from 'react'
 import {
   ActivityIndicator,
   Pressable,
+  type PressableProps,
   StyleSheet,
   TextStyle,
   ViewStyle,
 } from 'react-native'
 import { useTheme } from '@/shared/theme/useTheme'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { Text } from './Text'
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline'
@@ -39,8 +41,8 @@ interface ButtonProps {
   loading?: boolean
   disabled?: boolean
   onPress?: () => void
-  onPressIn?: () => void
-  onPressOut?: () => void
+  onPressIn?: PressableProps['onPressIn']
+  onPressOut?: PressableProps['onPressOut']
   style?: ViewStyle
   textStyle?: TextStyle
   testID?: string
@@ -109,7 +111,17 @@ export function Button({
     <Pressable
       testID={testID}
       onPress={isInactive ? undefined : onPress}
-      onPressIn={isInactive ? undefined : onPressIn}
+      // Le retour haptique part au TOUCHER : sur un bouton qui déclenche un
+      // appel réseau ou ouvre un écran, c'est la seule confirmation que
+      // l'utilisateur reçoit avant que quoi que ce soit ne bouge.
+      onPressIn={
+        isInactive
+          ? undefined
+          : e => {
+              haptics.selectionTick()
+              onPressIn?.(e)
+            }
+      }
       onPressOut={isInactive ? undefined : onPressOut}
       accessibilityRole="button"
       accessibilityLabel={title}

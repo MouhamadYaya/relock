@@ -6,7 +6,13 @@
  * (proxy fiable des ouvertures évitées ; iOS ne donne pas le nb d'ouvertures).
  */
 
+import {
+  devFixtureStats,
+  devFixturesEnabled,
+  devFixtureToday,
+} from '@/features/blocking/dev-fixtures'
 import { noteSynced } from '@/features/notifications/engine/signals'
+import { resolveSessionUserId } from '@/session/session-user-id'
 import { ScreenTime } from '@/shared/native/screen-time'
 import { supabase } from '@/shared/services/supabase/client'
 import type { DailyStats } from '@/shared/services/supabase/database.types'
@@ -61,11 +67,15 @@ export const StatsService = {
    * resynchronisé au prochain passage.
    */
   async syncFromDevice(): Promise<void> {
+    // Jeu de test du simulateur : l'historique est fabriqué, il n'y a rien à
+    // remonter — et surtout rien à écrire dans un vrai compte.
+    if (devFixturesEnabled()) return
     if (!ScreenTime.isAvailable) return
 
-    const { data: u, error: uErr } = await supabase.auth.getUser()
-    if (uErr) throw normalizeError(uErr)
-    const userId = u.user?.id
+    // Identité lue EN MÉMOIRE (cf. `resolveSessionUserId`) : ce chemin est
+    // rejoué en boucle par l'Accueil, et l'appel Supabase qu'il remplace
+    // ajoutait un aller-retour réseau à chaque passage.
+    const userId = await resolveSessionUserId()
     if (!userId) return // pas de session → on ne touche PAS au journal
 
     const events = await ScreenTime.pullEvents()
@@ -151,8 +161,8 @@ export const StatsService = {
    * orpheline impossible à supprimer depuis l'UI (filtrée de l'Accueil).
    */
   async heartbeatToday(): Promise<void> {
-    const { data: u } = await supabase.auth.getUser()
-    const userId = u.user?.id
+    if (devFixturesEnabled()) return
+    const userId = await resolveSessionUserId()
     if (!userId) return
 
     // Auto-guérison : une ligne datée dans le FUTUR est impossible légitimement
@@ -219,6 +229,7 @@ export const StatsService = {
   },
 
   async today(): Promise<DailyStats | null> {
+    if (devFixturesEnabled()) return devFixtureToday()
     const { data, error } = await supabase
       .from('daily_stats')
       .select('*')
@@ -233,6 +244,7 @@ export const StatsService = {
    * 365 par défaut : la série et le record ne sont plus plafonnés à 30 j.
    */
   async recent(days = 365): Promise<DailyStats[]> {
+    if (devFixturesEnabled()) return devFixtureStats(days)
     const { data, error } = await supabase
       .from('daily_stats')
       .select('*')

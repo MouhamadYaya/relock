@@ -4,6 +4,7 @@ import {
   hasPendingFreshInstall,
   wipeCloudData,
 } from '@/features/blocking/services/reset.service'
+import { translate } from '@/i18n/translate'
 import { showErrorToast } from '@/shared/utils/toast'
 
 /**
@@ -32,7 +33,7 @@ export function useFreshInstallReset() {
         // Échec partiel : le drapeau reste posé, on réessaiera au prochain
         // lancement. Surtout pas de faux « c'est propre ».
         if (!ok) {
-          showErrorToast(new Error("La remise à zéro n'a pas pu aboutir."))
+          showErrorToast(new Error(translate('errors.reset_failed')))
           return
         }
         return qc.invalidateQueries()

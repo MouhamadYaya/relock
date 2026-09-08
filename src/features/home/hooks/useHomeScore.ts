@@ -49,15 +49,20 @@ export function useHomeScore({
   limitSteps,
   reprievedApps,
 }: Params): HomeScoreSnapshot {
+  // `now` avance toutes les 30 s : sans ce découpage, l'année d'historique
+  // était recopiée à chaque battement d'horloge alors qu'elle ne change qu'au
+  // rafraîchissement du journal.
+  const days = useMemo(() => toScoreDays(history), [history])
+
   return useMemo(
     () =>
       computeHomeScore({
         now,
-        history: toScoreDays(history),
+        history: days,
         rules,
         limitSteps,
         reprievedApps,
       }),
-    [now, history, rules, limitSteps, reprievedApps],
+    [now, days, rules, limitSteps, reprievedApps],
   )
 }

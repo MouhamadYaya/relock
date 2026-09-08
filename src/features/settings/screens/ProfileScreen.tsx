@@ -34,6 +34,7 @@ import {
   useUpdateName,
 } from '@/features/user/hooks/useProfile'
 import { i18n } from '@/i18n'
+import { nativeLocale } from '@/i18n/native-locale'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
@@ -317,6 +318,7 @@ export default function ProfileScreen() {
               son calendrier. */}
           {birthOpen ? (
             <DateTimePicker
+              locale={nativeLocale()}
               mode="date"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               themeVariant="dark"

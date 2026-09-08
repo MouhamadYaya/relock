@@ -47,7 +47,6 @@ export function SettingsSection({ title, caption, children }: Props) {
         {rows.map((row, index) => (
           // L'index suffit : dans une section donnée, l'ordre des lignes est
           // décidé à l'écriture de l'écran, jamais réordonné à l'exécution.
-          // biome-ignore lint/suspicious/noArrayIndexKey: ordre statique
           <React.Fragment key={index}>
             {index > 0 ? <View style={styles.divider} /> : null}
             {row}

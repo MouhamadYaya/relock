@@ -11,7 +11,7 @@ import { relockMaterial } from '@/shared/theme'
 
 const { colors, opacity } = relockMaterial
 
-export function BlockingCanvas() {
+export const BlockingCanvas = React.memo(function BlockingCanvas() {
   return (
     <View pointerEvents="none" style={styles.canvas}>
       <Svg width="100%" height="100%" preserveAspectRatio="none">
@@ -44,7 +44,7 @@ export function BlockingCanvas() {
       </Svg>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   canvas: {

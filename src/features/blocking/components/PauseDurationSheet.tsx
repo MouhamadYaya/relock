@@ -2,11 +2,11 @@ import { IconName } from '@assets/icons'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  FlatList,
   Modal,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -127,7 +127,13 @@ export function PauseDurationSheet({
   // Le choix le moins destructeur d'abord : une pause courte se répare toute
   // seule, une pause indéfinie s'oublie.
   const [choice, setChoice] = useState<PauseChoice>('min15')
-  const listRef = useRef<FlatList<PauseChoice>>(null)
+  // ScrollView plutôt qu'une liste virtualisée : cinq lignes de hauteur
+  // fixe. La virtualisation n'a rien à économiser ici — elle ne fait
+  // qu'ajouter son suivi de fenêtre à chaque événement de défilement, sur un
+  // composant dont tout l'intérêt est de suivre le doigt sans retard. Et
+  // `scrollTo` est synchrone, là où le positionnement d'une liste dépendait
+  // de la fenêtre déjà montée.
+  const listRef = useRef<ScrollView>(null)
   const hapticChoiceRef = useRef<PauseChoice>('min15')
 
   useEffect(() => {
@@ -135,7 +141,7 @@ export function PauseDurationSheet({
     setChoice('min15')
     hapticChoiceRef.current = 'min15'
     requestAnimationFrame(() => {
-      listRef.current?.scrollToOffset({ offset: 0, animated: false })
+      listRef.current?.scrollTo({ y: 0, animated: false })
     })
   }, [visible])
 
@@ -145,8 +151,8 @@ export function PauseDurationSheet({
       if (withHaptic) haptics.selectionTick()
     }
     setChoice(next)
-    listRef.current?.scrollToOffset({
-      offset: PAUSE_CHOICES.indexOf(next) * ROW_HEIGHT,
+    listRef.current?.scrollTo({
+      y: PAUSE_CHOICES.indexOf(next) * ROW_HEIGHT,
       animated,
     })
   }
@@ -219,6 +225,7 @@ export function PauseDurationSheet({
               accessibilityLabel={t('blocking.pause_sheet.back')}
               disabled={pending}
               onPress={close}
+              shadow
               style={styles.roundAction}
             >
               <IconSvg
@@ -248,18 +255,29 @@ export function PauseDurationSheet({
               pointerEvents="none"
               style={styles.pickerSelection}
             />
-            <FlatList
+            <ScrollView
               ref={listRef}
               accessibilityLabel={t('blocking.pause_sheet.title')}
-              data={PAUSE_CHOICES}
-              keyExtractor={item => item}
-              renderItem={({ item }) => {
+              contentContainerStyle={styles.pickerContent}
+              style={styles.pickerList}
+              showsVerticalScrollIndicator={false}
+              snapToInterval={ROW_HEIGHT}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              bounces={false}
+              overScrollMode="never"
+              scrollEventThrottle={16}
+              onScroll={preview}
+              onMomentumScrollEnd={settle}
+            >
+              {PAUSE_CHOICES.map(item => {
                 const selected = item === choice
                 const distance = Math.abs(
                   PAUSE_CHOICES.indexOf(item) - PAUSE_CHOICES.indexOf(choice),
                 )
                 return (
                   <Pressable
+                    key={item}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     accessibilityLabel={t(PAUSE_LABEL_KEY[item])}
@@ -278,24 +296,8 @@ export function PauseDurationSheet({
                     </Text>
                   </Pressable>
                 )
-              }}
-              getItemLayout={(_data, index) => ({
-                length: ROW_HEIGHT,
-                offset: ROW_HEIGHT * index,
-                index,
               })}
-              contentContainerStyle={styles.pickerContent}
-              style={styles.pickerList}
-              showsVerticalScrollIndicator={false}
-              snapToInterval={ROW_HEIGHT}
-              snapToAlignment="start"
-              decelerationRate="fast"
-              bounces={false}
-              overScrollMode="never"
-              scrollEventThrottle={16}
-              onScroll={preview}
-              onMomentumScrollEnd={settle}
-            />
+            </ScrollView>
           </View>
 
           <PressableScale

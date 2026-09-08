@@ -1,7 +1,7 @@
 /**
  * Formats de temps partagés par les écrans de blocage.
  *
- * Ils vivaient en double dans `BlocagesScreen` et `BlockDetailScreen` : deux
+ * Ils vivaient en double dans `BlocagesV2Screen` et `BlockDetailScreen` : deux
  * copies qui pouvaient diverger alors qu'un même blocage doit se lire
  * exactement pareil sur la carte, dans la fiche et dans les feuilles.
  */

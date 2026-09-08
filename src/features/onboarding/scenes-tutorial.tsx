@@ -177,6 +177,7 @@ function usePhoneWidth(maxHeightRatio = 1) {
 
 /** Respiration entre le paywall et le tutoriel : la lune, une phrase, rien d'autre. */
 export function SceneGroundRules({ onNext }: { onNext: () => void }) {
+  const t = useT()
   // `OnboardingFlow` pose la scène dans un conteneur à `paddingTop`. Sans ce
   // débord, le dégradé démarrerait SOUS la status bar : couture nette entre le
   // noir uni du haut et le violet du ciel (même piège que `HaloBackdrop`).
@@ -226,12 +227,12 @@ export function SceneGroundRules({ onNext }: { onNext: () => void }) {
           </Reveal>
           <Reveal index={2}>
             <Text style={styles.groundTitle}>
-              Super. Maintenant, fixons{`\n`}quelques règles de base.
+              {t('onboarding_tutorial.ground.title')}
             </Text>
           </Reveal>
         </View>
         <Reveal index={3} style={styles.footer}>
-          <Pill label="Continuer" onPress={onNext} />
+          <Pill label={t('paywall.continue')} onPress={onNext} />
         </Reveal>
       </View>
     </View>
@@ -246,6 +247,7 @@ export function SceneGroundRules({ onNext }: { onNext: () => void }) {
  * un rendu qui ne suivra jamais un futur changement de palette.
  */
 export function SceneLockDemo({ onNext }: { onNext: () => void }) {
+  const t = useT()
   // Cet appareil-là n'est pas rogné au ratio d'un vrai iPhone : on n'en montre
   // que le haut (le bas s'efface). On dimensionne donc sur la hauteur
   // réellement libre, pas sur le ratio d'un cadre complet.
@@ -256,8 +258,8 @@ export function SceneLockDemo({ onNext }: { onNext: () => void }) {
 
   return (
     <TutorialScene
-      title={'Les règles bloquent les Apps\nà des heures précises.'}
-      footer={<Pill label="Continuer" onPress={onNext} />}
+      title={t('onboarding_tutorial.lock.title')}
+      footer={<Pill label={t('paywall.continue')} onPress={onNext} />}
     >
       <Reveal index={2}>
         <LockAnimation width={width} />
@@ -286,17 +288,18 @@ export function SceneLockDemo({ onNext }: { onNext: () => void }) {
  * d'écran qui dit où et quand il s'active vraiment.
  */
 export function SceneHardMode({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const width = usePhoneWidth()
 
   return (
     <TutorialScene
-      badge="DANS L’APP"
-      title="Et si tu veux ne rien te laisser passer…"
-      sub="Le Hard Mode verrouille un blocage : ni déblocage temporaire d’une app, ni arrêt de la règle avant la fin."
+      badge={t('onboarding_tutorial.hard.badge')}
+      title={t('onboarding_tutorial.hard.title')}
+      sub={t('onboarding_tutorial.hard.sub')}
       footer={
         <>
-          <Pill label="Continuer" onPress={onNext} />
-          <Footnote text="Rien à régler maintenant. Tu l’activeras toi-même dans l’app, blocage par blocage, le jour où tu en auras besoin." />
+          <Pill label={t('paywall.continue')} onPress={onNext} />
+          <Footnote text={t('onboarding_tutorial.hard.footnote')} />
         </>
       }
     >
@@ -323,7 +326,9 @@ export function SceneHardMode({ onNext }: { onNext: () => void }) {
           {/* Posée par-dessus le cadre, à cheval sur ses bords : c'est le
               réglage qui compte, pas le décor derrière. */}
           <View style={styles.hardModeBar}>
-            <Text style={styles.hardModeLabel}>Hard Mode</Text>
+            <Text style={styles.hardModeLabel}>
+              {t('onboarding_tutorial.hard.switch')}
+            </Text>
             {/* Interrupteur DESSINÉ, jamais un `Switch` : un vrai composant
                 reste focusable et basculable au lecteur d'écran même
                 `disabled`, et `disabled` le grise — ce qui donnerait une
@@ -351,12 +356,13 @@ export function SceneHardMode({ onNext }: { onNext: () => void }) {
  */
 export function ScenePickerDemo({
   onNext,
-  cta = 'J’ai compris',
+  cta,
 }: {
   onNext: () => void
   /** Libellé une fois la démonstration vue — la suite diffère selon l'appelant. */
   cta?: string
 }) {
+  const t = useT()
   const { width } = useWindowDimensions()
   const reduceMotion = useReducedMotion()
   const [ready, setReady] = useState(false)
@@ -385,11 +391,15 @@ export function ScenePickerDemo({
 
   return (
     <TutorialScene
-      title="Choisis tes plus grandes distractions"
-      sub="Les apps sont rangées par catégorie."
+      title={t('onboarding_tutorial.picker_demo.title')}
+      sub={t('onboarding_tutorial.picker_demo.sub')}
       footer={
         <Pill
-          label={ready ? cta : 'Regarde la démonstration'}
+          label={
+            ready
+              ? (cta ?? t('onboarding_tutorial.picker_demo.understood'))
+              : t('onboarding_tutorial.picker_demo.watch')
+          }
           onPress={onNext}
           disabled={!ready}
           progress={gate}
@@ -424,6 +434,7 @@ export function ScenePickApps({
   onCount: (n: number) => void
   onNext: () => void
 }) {
+  const t = useT()
   const [busy, setBusy] = useState(false)
   const [emptyTry, setEmptyTry] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -476,18 +487,22 @@ export function ScenePickApps({
 
   return (
     <TutorialScene
-      title="Choisis tes distractions"
-      sub="Déplie une catégorie dans le sélecteur Apple, puis coche les apps à bloquer."
+      title={t('onboarding_tutorial.pick_apps.title')}
+      sub={t('onboarding_tutorial.pick_apps.sub')}
       footer={
         <>
           <Pill
-            label={picked ? 'Continuer' : 'Ouvrir le sélecteur'}
+            label={
+              picked
+                ? t('paywall.continue')
+                : t('onboarding_tutorial.pick_apps.open_picker')
+            }
             onPress={picked ? onNext : pick}
             disabled={busy}
           />
           <View style={{ paddingVertical: spacing.sm }}>
             <GhostLink
-              label="Voir comment faire"
+              label={t('onboarding_tutorial.pick_apps.how_to')}
               onPress={() => {
                 if (!pickerOpen.current) setShowHelp(true)
               }}
@@ -504,7 +519,7 @@ export function ScenePickApps({
           <Reveal index={2}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}. Modifier la sélection.`}
+              accessibilityLabel={`${t('onboarding_tutorial.pick_apps.selected', { count })}. ${t('onboarding_tutorial.pick_apps.edit_selection')}`}
               onPress={pick}
               disabled={busy}
               style={[styles.pickCard, styles.pickCardDone]}
@@ -513,16 +528,16 @@ export function ScenePickApps({
                 <IconSvg name={IconName.CHECK} size={26} color={OB.onAccent} />
               </View>
               <Text style={styles.pickCount}>
-                {`${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`}
+                {t('onboarding_tutorial.pick_apps.selected', { count })}
               </Text>
-              <Text style={styles.pickHint}>Touche pour modifier</Text>
+              <Text style={styles.pickHint}>{t('add_rule.tap_to_edit')}</Text>
             </Pressable>
           </Reveal>
         ) : busy ? (
           <ActivityIndicator color={OB.accent} />
         ) : emptyTry ? (
           <View style={styles.pickAlert}>
-            <RedAlert text="Relock n’a rien à bloquer tant que tu n’as choisi aucune app. Choisis-en au moins une pour continuer." />
+            <RedAlert text={t('onboarding_tutorial.pick_apps.empty')} />
           </View>
         ) : null}
       </View>
@@ -613,24 +628,18 @@ export function SceneRules({
   const gap = 14
   const sidePad = Math.round((width - cardWidth) / 2)
   const count = selectedIds.length
-  // Le CTA compte ce qui est coché : promettre « ces règles » quand une seule
-  // est choisie ferait douter de ce qui va réellement s'allumer.
-  const plural = count > 1
-
   // Le sous-titre porte à lui seul le lien entre les deux écrans : c'est la
   // première chose lue, avant même que les vignettes ne soient remarquées.
   // Sans sélection connue (Android, sélecteur passé), on ne bluffe pas un
   // nombre — la phrase reste vraie, simplement moins précise.
   const appsLabel =
     appCount > 0
-      ? `S’applique ${appCount === 1 ? 'à l’app' : `aux ${appCount} apps`} que tu viens de choisir.`
-      : 'S’applique aux apps que tu choisiras.'
+      ? t('onboarding_tutorial.rules.applies_to', { count: appCount })
+      : t('onboarding_tutorial.rules.applies_future')
   const sub =
     appCount > 0
-      ? `Chacune protège un moment de la journée en bloquant ${
-          appCount === 1 ? 'l’app' : `les ${appCount} apps`
-        } que tu viens de choisir. Garde celles qui te parlent, décoche les autres.`
-      : 'Chacune protège un moment de la journée en bloquant les apps que tu as choisies. Garde celles qui te parlent, décoche les autres.'
+      ? t('onboarding_tutorial.rules.sub', { count: appCount })
+      : t('onboarding_tutorial.rules.sub_generic')
   // Les vignettes ne couvrent que les apps : une catégorie ou un domaine web
   // cochés n'ont pas d'icône propre et se replient sur le « +N », pour que le
   // total montré colle à celui annoncé par le sélecteur.
@@ -640,8 +649,8 @@ export function SceneRules({
     <TutorialScene
       title={
         name
-          ? `${name}, voici les règles que je te propose`
-          : 'Voici les règles que je te propose'
+          ? t('onboarding_tutorial.rules.title_named', { name })
+          : t('onboarding_tutorial.rules.title')
       }
       sub={sub}
       footer={
@@ -649,21 +658,13 @@ export function SceneRules({
           <Pill
             label={
               busy
-                ? 'Activation…'
-                : plural
-                  ? `Activer ces ${count} règles`
-                  : 'Activer cette règle'
+                ? t('onboarding_tutorial.rules.activating')
+                : t('onboarding_tutorial.rules.activate', { count })
             }
             onPress={onActivate}
             disabled={count === 0 || busy}
           />
-          <Footnote
-            text={
-              plural
-                ? 'Elles seront actives dès ton entrée dans l’app.'
-                : 'Elle sera active dès ton entrée dans l’app.'
-            }
-          />
+          <Footnote text={t('onboarding_tutorial.rules.footnote', { count })} />
         </>
       }
     >

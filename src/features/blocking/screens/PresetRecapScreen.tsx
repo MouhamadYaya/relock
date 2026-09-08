@@ -146,24 +146,29 @@ export default function PresetRecapScreen() {
       <HalfSheet onClose={returnToBlocks}>
         {close => (
           <View style={s.wrap}>
-            <Text style={[f(700), s.title]}>C'est en place.</Text>
+            <Text style={[f(700), s.title]}>
+              {t('blocking.preset_recap.done_title')}
+            </Text>
             {/* Une règle STRICTE ne se suspend pas : promettre le contraire
                 ici serait le premier mensonge de l'app, et il tomberait au
                 pire moment — quand l'utilisateur essaiera. */}
             <Text style={[f(400), s.pitch]}>
-              « {preset.title} » bloque maintenant {count} app
-              {(count ?? 0) > 1 ? 's' : ''}. Tu la retrouveras dans l'onglet
-              Règles —{' '}
+              {t('blocking.preset_recap.done_body', {
+                title: preset.title,
+                count: count ?? 0,
+              })}{' '}
               {isStrictPreset(preset)
-                ? 'en mode strict : impossible de l’arrêter avant la fin de chaque session.'
-                : 'pour la suspendre ou la retirer quand tu veux.'}
+                ? t('blocking.preset_recap.done_strict')
+                : t('blocking.preset_recap.done_soft')}
             </Text>
             <Pressable
               accessibilityRole="button"
               onPress={close}
               style={s.primary}
             >
-              <Text style={[f(600), s.primaryTxt]}>Terminé</Text>
+              <Text style={[f(600), s.primaryTxt]}>
+                {t('blocking.preset_recap.finish')}
+              </Text>
             </Pressable>
           </View>
         )}
@@ -188,19 +193,20 @@ export default function PresetRecapScreen() {
               </View>
             ))}
             <View style={[s.row, s.rowSep]}>
-              <Text style={[f(400), s.rowLabel]}>Apps</Text>
+              <Text style={[f(400), s.rowLabel]}>
+                {t('blocking.resume_sheet.apps')}
+              </Text>
               <Text style={[f(500), s.rowValue]}>
                 {needsApps
-                  ? 'À choisir'
-                  : `${count} app${count > 1 ? 's' : ''}`}
+                  ? t('blocking.preset_recap.apps_todo')
+                  : t('blocking.app_count', { count })}
               </Text>
             </View>
           </View>
 
           {needsApps && (
             <Text style={[f(400), s.note]}>
-              Apple ne laisse aucune app choisir les tiennes à ta place : tu les
-              désignes toi-même, une fois.
+              {t('blocking.preset_recap.apps_note')}
             </Text>
           )}
 
@@ -213,7 +219,9 @@ export default function PresetRecapScreen() {
               onPress={pickApps}
               style={s.primary}
             >
-              <Text style={[f(600), s.primaryTxt]}>Choisir les apps</Text>
+              <Text style={[f(600), s.primaryTxt]}>
+                {t('add_rule.pick_apps')}
+              </Text>
             </Pressable>
           ) : (
             <HoldToConfirmButton
@@ -227,7 +235,9 @@ export default function PresetRecapScreen() {
           )}
 
           <Pressable accessibilityRole="button" onPress={close} style={s.ghost}>
-            <Text style={[f(500), s.ghostTxt]}>Pas maintenant</Text>
+            <Text style={[f(500), s.ghostTxt]}>
+              {t('blocking.preset_recap.not_now')}
+            </Text>
           </Pressable>
 
           <StrictCommitmentSheet

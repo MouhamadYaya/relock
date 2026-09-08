@@ -6,21 +6,23 @@ import {
   ActivityIndicator,
   DeviceEventEmitter,
   Linking,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
+import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
+import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import {
   isScreenTimeReportAvailable,
   ScreenTimeReport,
 } from '@/shared/native/ScreenTimeReport'
-import { ScreenTime } from '@/shared/native/screen-time'
+import { requireScreenTime } from '@/shared/native/screen-time-gate'
 import { useScreenTimeAuthorization } from '@/shared/native/useScreenTimeAuth'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const C = {
   bg: '#0B0C10',
@@ -48,9 +50,10 @@ function ReloadIcon({ color, size = 19 }: { color: string; size?: number }) {
 }
 
 function ActivityHeader({ refreshing }: { refreshing?: boolean }) {
+  const t = useT()
   return (
     <View style={styles.header}>
-      <Text style={styles.title}>Activité</Text>
+      <Text style={styles.title}>{t('activity.title')}</Text>
       <View style={styles.headerActions}>
         <View style={styles.iconBtn}>
           {refreshing ? (
@@ -68,6 +71,7 @@ function ActivityHeader({ refreshing }: { refreshing?: boolean }) {
 }
 
 function ReportPlaceholder({ refreshing }: { refreshing?: boolean }) {
+  const t = useT()
   return (
     <View
       testID="activity-report-placeholder"
@@ -88,9 +92,7 @@ function ReportPlaceholder({ refreshing }: { refreshing?: boolean }) {
       <View style={styles.placeholderSectionLabel} />
       <View style={styles.placeholderChart}>
         <ActivityIndicator color={C.accent} />
-        <Text style={styles.loadingText}>
-          Préparation de tes données Temps d'écran…
-        </Text>
+        <Text style={styles.loadingText}>{t('activity.state.loading')}</Text>
       </View>
       <View style={styles.placeholderSectionLabel} />
       <View style={styles.placeholderRows}>
@@ -122,10 +124,11 @@ function StateCard({
   return (
     <View style={styles.statePage}>
       <ActivityHeader />
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         accessibilityLabel={action}
         onPress={onPress}
+        shadow={{ color: C.accent }}
         style={styles.stateCard}
       >
         <View style={styles.stateIcon}>
@@ -138,7 +141,7 @@ function StateCard({
         <Text style={styles.stateTitle}>{title}</Text>
         <Text style={styles.stateDescription}>{description}</Text>
         <Text style={styles.stateAction}>{action}</Text>
-      </Pressable>
+      </PressableScale>
     </View>
   )
 }
@@ -146,6 +149,7 @@ function StateCard({
 type NativeCommandEvent = { nativeEvent: { command: string } }
 
 export default function ActivityScreen() {
+  const t = useT()
   const isFocused = useIsFocused()
   const [dayOffset, setDayOffset] = useState(0)
   const [reloadKey, setReloadKey] = useState(0)
@@ -178,19 +182,20 @@ export default function ActivityScreen() {
     }
   }, [isRefreshing, refresh])
 
+  /**
+   * `Linking.openSettings()` en repli, c'était envoyer vers la fiche Réglages
+   * de Relock — qui ne contient aucun interrupteur Temps d'écran quand
+   * l'autorisation a été refusée. `requireScreenTime` ouvre la fenêtre système
+   * s'il en reste une, et l'écran de récupération dit quoi faire sinon.
+   */
   const askAuthorization = useCallback(async () => {
-    try {
-      const requestedStatus = await ScreenTime.requestAuthorization()
-      const checkedStatus = await refresh()
-      if (requestedStatus === 'approved' && checkedStatus === 'approved') {
-        setReloadKey(key => key + 1)
-      } else {
-        Linking.openSettings()
-      }
-    } catch {
-      await refresh()
-      Linking.openSettings()
+    const gate = await requireScreenTime()
+    const checkedStatus = await refresh()
+    if (gate === 'approved' && checkedStatus === 'approved') {
+      setReloadKey(key => key + 1)
+      return
     }
+    if (gate === 'blocked') router.push('/screen-time-help')
   }, [refresh])
 
   const selectDay = useCallback((nextOffset: number) => {
@@ -199,6 +204,16 @@ export default function ActivityScreen() {
     setDayOffset(nextOffset)
   }, [])
 
+  /**
+   * L'entête du rapport (actualiser, réglages, les sept jours) est dessinée en
+   * UIKit, pas en React — elle vit dans `ScreenTimeReportView.swift`, par-dessus
+   * la vue système de Screen Time. Le retour haptique de ces boutons part donc
+   * d'ici, à réception de la commande, et non d'un `onPressIn`.
+   *
+   * Il n'est volontairement PAS déclenché côté natif : le réglage « Retours
+   * haptiques » vit dans MMKV, côté JS. Un `UIImpactFeedbackGenerator` posé
+   * dans le Swift vibrerait pour quelqu'un qui a justement coupé l'option.
+   */
   const handleNativeCommand = useCallback(
     ({ nativeEvent: { command } }: NativeCommandEvent) => {
       if (command === 'ready') {
@@ -210,15 +225,20 @@ export default function ActivityScreen() {
         return
       }
       if (command === 'refresh') {
+        haptics.selectionTick()
         reloadReport().catch(() => {})
         return
       }
       if (command === 'settings') {
+        haptics.selectionTick()
         router.push('/settings')
         return
       }
       const selection = command.match(/^select\.day(\d)$/)
-      if (selection) selectDay(Number(selection[1]))
+      if (selection) {
+        haptics.selectionTick()
+        selectDay(Number(selection[1]))
+      }
     },
     [reloadReport, selectDay],
   )
@@ -226,7 +246,10 @@ export default function ActivityScreen() {
   useEffect(() => {
     const settingsSub = DeviceEventEmitter.addListener(
       'relock-native-settings',
-      () => router.push('/settings'),
+      () => {
+        haptics.selectionTick()
+        router.push('/settings')
+      },
     )
     return () => settingsSub.remove()
   }, [])
@@ -261,9 +284,9 @@ export default function ActivityScreen() {
               fallback={
                 <StateCard
                   icon="reload"
-                  title="Rapport indisponible"
-                  description="Le rapport Temps d'écran n'a pas pu être affiché."
-                  action="Réessayer"
+                  title={t('activity.state.report_unavailable_title')}
+                  description={t('activity.state.report_unavailable_body')}
+                  action={t('common.retry')}
                   onPress={() => {
                     reloadReport().catch(() => {})
                   }}
@@ -271,12 +294,13 @@ export default function ActivityScreen() {
               }
             />
           </>
-        ) : authorizationStatus === 'denied' ? (
+        ) : authorizationStatus === 'denied' ||
+          authorizationStatus === 'notDetermined' ? (
           <StateCard
             icon="monitor"
-            title="Autorise le Temps d'écran"
-            description="iOS ne communique aucune donnée d'usage tant que Relock n'y est pas autorisé."
-            action="Autoriser"
+            title={t('activity.state.denied_title')}
+            description={t('activity.state.denied_body')}
+            action={t('activity.state.allow')}
             onPress={() => {
               askAuthorization().catch(() => {})
             }}
@@ -284,9 +308,9 @@ export default function ActivityScreen() {
         ) : authorizationStatus === 'error' ? (
           <StateCard
             icon="reload"
-            title="Données momentanément indisponibles"
-            description="Relock n'a pas pu vérifier l'accès au Temps d'écran."
-            action="Réessayer"
+            title={t('activity.state.error_title')}
+            description={t('activity.state.error_body')}
+            action={t('common.retry')}
             onPress={() => {
               reloadReport().catch(() => {})
             }}
@@ -295,9 +319,9 @@ export default function ActivityScreen() {
           !isScreenTimeReportAvailable ? (
           <StateCard
             icon="monitor"
-            title="Disponible sur iPhone"
-            description="Le vrai temps d'écran par app est fourni par iOS sur un iPhone physique."
-            action="Ouvrir les réglages"
+            title={t('activity.state.device_title')}
+            description={t('activity.state.device_body')}
+            action={t('home.permission_open_settings')}
             onPress={() => Linking.openSettings()}
           />
         ) : (

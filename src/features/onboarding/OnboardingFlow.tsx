@@ -9,14 +9,14 @@ import {
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RuleTemplateCard as RuleTemplate } from '@/features/blocking/rule-templates'
+import { riskHourFromMoments } from '@/features/notifications/engine/risk-hour'
+import { noteRiskHour } from '@/features/notifications/engine/signals'
 import { ScenePersonalizedPlan } from '@/features/onboarding/components/ScenePersonalizedPlan'
 import { ScenePlanPreparation } from '@/features/onboarding/components/ScenePlanPreparation'
 import { SceneRecognition } from '@/features/onboarding/components/SceneRecognition'
 import { SceneRitual } from '@/features/onboarding/components/SceneRitual'
 import { SceneVictory } from '@/features/onboarding/components/SceneVictory'
 import { SCREEN_TIME_ESTIMATES } from '@/features/onboarding/services/annualProjection'
-import { riskHourFromMoments } from '@/features/notifications/engine/risk-hour'
-import { noteRiskHour } from '@/features/notifications/engine/signals'
 import { saveOnboardingAnswers } from '@/features/onboarding/services/onboarding-answers.service'
 import {
   type OnboardingCheckpoint,
@@ -26,11 +26,9 @@ import {
 import { buildPersonalizedPlan } from '@/features/onboarding/services/personalizedPlan'
 import { recoveryGoal } from '@/features/onboarding/services/recoveryGoal'
 import { setOnboardingAttributes } from '@/features/onboarding/services/revenuecat'
-import {
-  applyEntitlement,
-  completeSetup,
-  completeSurvey,
-} from '@/session/bootstrap'
+import { translate } from '@/i18n/translate'
+import { useT } from '@/i18n/useT'
+import { completeSetup, completeSurvey } from '@/session/bootstrap'
 import { DEV_EVENT_ONBOARDING_JUMP } from '@/session/dev-test-bridge'
 import { useSocialSignIn } from '@/session/useSocialSignIn'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
@@ -221,15 +219,15 @@ function resumeIndex(
  * la seule réponse qui se convertit en nombre (`hours`).
  */
 const TRIGGERS = [
-  { id: 'time', emoji: '⏳', label: 'Je perds trop de temps' },
-  { id: 'bed', emoji: '🌙', label: 'Je scrolle au lit' },
-  { id: 'focus', emoji: '🎯', label: "Je n'arrive plus à me concentrer" },
-  { id: 'control', emoji: '🔒', label: 'Je veux reprendre le contrôle' },
-  { id: 'sleep', emoji: '😴', label: 'Je dors mal' },
-  { id: 'habit', emoji: '🔁', label: "J'ouvre les apps sans même y penser" },
-  { id: 'mood', emoji: '🌧️', label: 'Ça joue sur mon moral' },
-  { id: 'presence', emoji: '🤍', label: 'Je veux être plus présent' },
-  { id: 'goals', emoji: '🎓', label: 'Mes études ou mon travail en pâtissent' },
+  { id: 'time', emoji: '⏳' },
+  { id: 'bed', emoji: '🌙' },
+  { id: 'focus', emoji: '🎯' },
+  { id: 'control', emoji: '🔒' },
+  { id: 'sleep', emoji: '😴' },
+  { id: 'habit', emoji: '🔁' },
+  { id: 'mood', emoji: '🌧️' },
+  { id: 'presence', emoji: '🤍' },
+  { id: 'goals', emoji: '🎓' },
 ]
 
 /**
@@ -263,37 +261,37 @@ const APPS: readonly string[] = [
 ]
 
 const MOMENTS = [
-  { id: 'bed', emoji: '🌙', label: 'Le soir, au lit' },
-  { id: 'wake', emoji: '☀️', label: 'Dès le réveil' },
-  { id: 'work', emoji: '💻', label: 'Pendant le travail ou les cours' },
-  { id: 'break', emoji: '☕', label: 'Pendant mes pauses' },
-  { id: 'transport', emoji: '🚇', label: 'Dans les transports' },
-  { id: 'meals', emoji: '🍽️', label: 'Pendant les repas' },
-  { id: 'weekend', emoji: '🛋️', label: 'Le week-end, des heures entières' },
-  { id: 'always', emoji: '🌀', label: 'Un peu tout le temps' },
+  { id: 'bed', emoji: '🌙' },
+  { id: 'wake', emoji: '☀️' },
+  { id: 'work', emoji: '💻' },
+  { id: 'break', emoji: '☕' },
+  { id: 'transport', emoji: '🚇' },
+  { id: 'meals', emoji: '🍽️' },
+  { id: 'weekend', emoji: '🛋️' },
+  { id: 'always', emoji: '🌀' },
 ]
 
 /**
  * L'aveu émotionnel : ce que le scroll laisse derrière lui. Choix multiple
  * — personne ne ressent une seule de ces choses à la fois.
  */
-const FEELINGS: readonly GridChoice[] = [
-  { id: 'guilt', emoji: '😔', label: 'Coupable' },
-  { id: 'empty', emoji: '😶', label: 'Vide' },
-  { id: 'anxious', emoji: '😰', label: 'Anxieux' },
-  { id: 'wasted', emoji: '⏳', label: 'Je perds ma vie' },
-  { id: 'drained', emoji: '🪫', label: 'Sans énergie' },
-  { id: 'overwhelmed', emoji: '😵‍💫', label: 'Débordé' },
-  { id: 'foggy', emoji: '🌫️', label: 'Esprit brouillé' },
-  { id: 'regret', emoji: '😓', label: 'Des regrets' },
-  { id: 'unproductive', emoji: '😞', label: 'Improductif' },
-  { id: 'disconnected', emoji: '🫥', label: 'Déconnecté du réel' },
-  { id: 'angry', emoji: '😡', label: 'Énervé' },
-  { id: 'hopeless', emoji: '🤕', label: 'Sans espoir' },
-  { id: 'ashamed', emoji: '🫣', label: 'Honteux' },
-  { id: 'lonely', emoji: '🥲', label: 'Seul' },
-  { id: 'restless', emoji: '😬', label: 'Agité' },
-  { id: 'numb', emoji: '🫠', label: 'Anesthésié' },
+const FEELING_EMOJI: readonly [string, string][] = [
+  ['guilt', '😔'],
+  ['empty', '😶'],
+  ['anxious', '😰'],
+  ['wasted', '⏳'],
+  ['drained', '🪫'],
+  ['overwhelmed', '😵‍💫'],
+  ['foggy', '🌫️'],
+  ['regret', '😓'],
+  ['unproductive', '😞'],
+  ['disconnected', '🫥'],
+  ['angry', '😡'],
+  ['hopeless', '🤕'],
+  ['ashamed', '🫣'],
+  ['lonely', '🥲'],
+  ['restless', '😬'],
+  ['numb', '🫠'],
 ]
 
 /**
@@ -315,37 +313,17 @@ function togglePick(list: string[], id: string) {
  * que l'utilisateur signe, pas un constat qu'on lui impose.
  */
 const STOLEN = [
-  {
-    id: 'nights',
-    emoji: '🌙',
-    label: 'Des nuits que je ne récupérerai jamais',
-  },
-  { id: 'people', emoji: '💬', label: "Des moments avec les gens que j'aime" },
-  {
-    id: 'becoming',
-    emoji: '🌱',
-    label: 'Du temps pour devenir qui je veux être',
-  },
-  { id: 'focus', emoji: '🧠', label: 'Ma capacité à me concentrer' },
-  {
-    id: 'presence',
-    emoji: '🤍',
-    label: "Des moments où j'aurais aimé être présent",
-  },
-  {
-    id: 'energy',
-    emoji: '🔋',
-    label: "L'énergie que je n'ai plus pour le reste",
-  },
-  { id: 'mornings', emoji: '☀️', label: 'Mes matins, avant même de me lever' },
-  { id: 'sport', emoji: '🏃', label: "L'envie de bouger" },
-  {
-    id: 'projects',
-    emoji: '🎸',
-    label: "Des projets que je n'ai jamais commencés",
-  },
-  { id: 'calm', emoji: '🧘', label: 'Le calme dans ma tête' },
-  { id: 'pride', emoji: '🪞', label: "La fierté d'une journée bien remplie" },
+  { id: 'nights', emoji: '🌙' },
+  { id: 'people', emoji: '💬' },
+  { id: 'becoming', emoji: '🌱' },
+  { id: 'focus', emoji: '🧠' },
+  { id: 'presence', emoji: '🤍' },
+  { id: 'energy', emoji: '🔋' },
+  { id: 'mornings', emoji: '☀️' },
+  { id: 'sport', emoji: '🏃' },
+  { id: 'projects', emoji: '🎸' },
+  { id: 'calm', emoji: '🧘' },
+  { id: 'pride', emoji: '🪞' },
 ]
 
 /** « Jamais vraiment essayé » : la seule réponse qui exclut les autres. */
@@ -357,37 +335,17 @@ const ATTEMPT_NEVER = 'never'
  * produit bien mieux qu'un argumentaire.
  */
 const ATTEMPTS = [
-  { id: 'deleted', emoji: '🗑️', label: "J'ai supprimé l'app… puis réinstallé" },
-  {
-    id: 'limit',
-    emoji: '⏱️',
-    label: "J'ai mis une limite… puis « encore 15 min »",
-  },
-  {
-    id: 'willpower',
-    emoji: '💪',
-    label: "J'ai tenu à la volonté. Ça n'a pas duré",
-  },
-  {
-    id: 'distance',
-    emoji: '📵',
-    label: "J'ai posé le téléphone loin. J'y suis retourné",
-  },
-  { id: 'hidden', emoji: '🙈', label: "J'ai caché les apps dans un dossier" },
-  {
-    id: 'grayscale',
-    emoji: '🌑',
-    label: "J'ai passé l'écran en noir et blanc",
-  },
-  { id: 'notifications', emoji: '🔕', label: "J'ai coupé les notifications" },
-  { id: 'blocker', emoji: '🧱', label: "J'ai essayé une autre app de blocage" },
-  { id: 'detox', emoji: '🏝️', label: "J'ai fait une détox. Puis j'ai rechuté" },
-  {
-    id: 'logout',
-    emoji: '🚪',
-    label: 'Je me suis déconnecté de mes comptes',
-  },
-  { id: ATTEMPT_NEVER, emoji: '🤍', label: 'Jamais vraiment essayé' },
+  { id: 'deleted', emoji: '🗑️' },
+  { id: 'limit', emoji: '⏱️' },
+  { id: 'willpower', emoji: '💪' },
+  { id: 'distance', emoji: '📵' },
+  { id: 'hidden', emoji: '🙈' },
+  { id: 'grayscale', emoji: '🌑' },
+  { id: 'notifications', emoji: '🔕' },
+  { id: 'blocker', emoji: '🧱' },
+  { id: 'detox', emoji: '🏝️' },
+  { id: 'logout', emoji: '🚪' },
+  { id: ATTEMPT_NEVER, emoji: '🤍' },
 ]
 
 /**
@@ -396,26 +354,40 @@ const ATTEMPTS = [
  * plus fort que la personne vient de nommer ce qu'elle voudrait récupérer.
  * C'est aussi cette réponse qui remplit le « pour toi » du plan.
  */
-const ASPIRATIONS: readonly GridChoice[] = [
-  { id: 'sleep', emoji: '😴', label: 'Dormir' },
-  { id: 'move', emoji: '🏃', label: 'Bouger' },
-  { id: 'read', emoji: '📚', label: 'Lire' },
-  { id: 'people', emoji: '💬', label: 'Mes proches' },
-  { id: 'project', emoji: '🎯', label: 'Un projet' },
-  { id: 'hobby', emoji: '🎸', label: 'Un hobby' },
-  { id: 'breathe', emoji: '🧘', label: 'Souffler' },
-  { id: 'cook', emoji: '🍳', label: 'Cuisiner' },
-  { id: 'work', emoji: '💼', label: 'Mieux bosser' },
-  { id: 'morning', emoji: '☀️', label: 'Mes matins' },
-  { id: 'study', emoji: '🎓', label: 'Mes études' },
-  { id: 'present', emoji: '🧠', label: 'Être présent' },
-  { id: 'family', emoji: '👨‍👩‍👧', label: 'Ma famille' },
-  { id: 'nature', emoji: '🌿', label: 'Sortir dehors' },
-  { id: 'learn', emoji: '🧩', label: 'Apprendre' },
-  { id: 'create', emoji: '🎨', label: 'Créer' },
-  { id: 'music', emoji: '🎹', label: 'La musique' },
-  { id: 'silence', emoji: '🌙', label: 'Ne rien faire' },
+const ASPIRATION_EMOJI: readonly [string, string][] = [
+  ['sleep', '😴'],
+  ['move', '🏃'],
+  ['read', '📚'],
+  ['people', '💬'],
+  ['project', '🎯'],
+  ['hobby', '🎸'],
+  ['breathe', '🧘'],
+  ['cook', '🍳'],
+  ['work', '💼'],
+  ['morning', '☀️'],
+  ['study', '🎓'],
+  ['present', '🧠'],
+  ['family', '👨‍👩‍👧'],
+  ['nature', '🌿'],
+  ['learn', '🧩'],
+  ['create', '🎨'],
+  ['music', '🎹'],
+  ['silence', '🌙'],
 ]
+
+/**
+ * Les grilles reçoivent leurs libellés TRADUITS, reconstruits à chaque rendu.
+ * Un tableau `const` figeait le français à l'import du module.
+ */
+const gridChoices = (
+  section: string,
+  pairs: readonly [string, string][],
+): GridChoice[] =>
+  pairs.map(([id, emoji]) => ({
+    id,
+    emoji,
+    label: translate(`onboarding_survey.${section}.${id}`),
+  }))
 
 /**
  * Estimation du temps de scroll quotidien. `hours` est la valeur retenue
@@ -426,6 +398,7 @@ const ASPIRATIONS: readonly GridChoice[] = [
 const SCREEN_TIME = SCREEN_TIME_ESTIMATES
 
 export default function OnboardingFlow() {
+  const t = useT()
   const insets = useSafeAreaInsets()
   // Lu une seule fois au montage : l'onboarding entamé puis abandonné
   // reprend où il s'était arrêté, même des semaines plus tard.
@@ -675,27 +648,6 @@ export default function OnboardingFlow() {
     goNext,
   ])
 
-  const skipOnboardingDev = useCallback(() => {
-    if (!__DEV__) return
-    // Le « passer » de développement doit atterrir DANS l'app : terminer le
-    // parcours sans abonnement laisserait le gate ouvrir le paywall, ce que
-    // ce bouton n'a jamais promis. L'abonnement simulé est corrigé au
-    // prochain démarrage par `syncEntitlement` (et `dev-test-bridge` expose
-    // `entitlement-lock` pour retester la porte dure).
-    applyEntitlement(true)
-    finish()
-  }, [finish])
-
-  /**
-   * DEV uniquement : atterrir sur le dernier écran du récit. Le paywall
-   * étant une route gardée, on ne peut pas y sauter directement — mais
-   * terminer le rituel y mène en un tap, sans rejouer tout le diagnostic.
-   */
-  const jumpToPaywallDev = useCallback(() => {
-    if (!__DEV__) return
-    goStep('ritual')
-  }, [goStep])
-
   /**
    * Demander les notifications après la création et l'armement des règles.
    * Un échec ne demande pas de permission pour une activation qui n'a pas
@@ -783,13 +735,7 @@ export default function OnboardingFlow() {
       case 'ignition':
         return <SceneIgnition onDone={goNext} />
       case 'welcome':
-        return (
-          <SceneWelcome
-            onNext={goNext}
-            onSkipDev={__DEV__ ? skipOnboardingDev : undefined}
-            onPaywallDev={__DEV__ ? jumpToPaywallDev : undefined}
-          />
-        )
+        return <SceneWelcome onNext={goNext} />
       case 'recognition':
         return <SceneRecognition onNext={goNext} />
       case 'name':
@@ -797,19 +743,25 @@ export default function OnboardingFlow() {
       case 'trigger':
         return (
           <QuestionScene
-            title={`Qu'est-ce qui t'amène${name.trim() ? `, ${name.trim()}` : ''} ?`}
-            sub="Sois honnête. Coche tout ce qui est vrai."
+            title={
+              name.trim()
+                ? t('onboarding_survey.trigger.title_named', {
+                    name: name.trim(),
+                  })
+                : t('onboarding_survey.trigger.title')
+            }
+            sub={t('onboarding_survey.trigger.sub')}
             scroll
             onNext={trigger.length > 0 ? goNext : undefined}
           >
-            {TRIGGERS.map((t, i) => (
+            {TRIGGERS.map((item, i) => (
               <ChoiceCard
-                key={t.id}
+                key={item.id}
                 index={i}
-                emoji={t.emoji}
-                label={t.label}
-                selected={trigger.includes(t.id)}
-                onPress={() => toggleTrigger(t.id)}
+                emoji={item.emoji}
+                label={translate(`onboarding_survey.trigger.${item.id}`)}
+                selected={trigger.includes(item.id)}
+                onPress={() => toggleTrigger(item.id)}
               />
             ))}
           </QuestionScene>
@@ -817,13 +769,13 @@ export default function OnboardingFlow() {
       case 'apps':
         return (
           <QuestionScene
-            title="Quelles apps te retiennent le plus ?"
-            sub="Sélectionnes-en autant que tu veux."
+            title={t('onboarding_survey.apps.title')}
+            sub={t('onboarding_survey.apps.sub')}
             scroll
             onNext={apps.length > 0 ? goNext : undefined}
             extra={
               apps.length > 0 ? (
-                <StudyLine text="Le scroll du soir est le plus dur à lâcher. Tu n'es pas seul." />
+                <StudyLine text={t('onboarding_survey.apps.study')} />
               ) : null
             }
           >
@@ -841,8 +793,8 @@ export default function OnboardingFlow() {
       case 'moment':
         return (
           <QuestionScene
-            title="Quand est-ce que tu décroches ?"
-            sub="Ton plan protégera d'abord ces moments."
+            title={t('onboarding_survey.moment.title')}
+            sub={t('onboarding_survey.moment.sub')}
             scroll
             onNext={moment.length > 0 ? goNext : undefined}
           >
@@ -851,7 +803,7 @@ export default function OnboardingFlow() {
                 key={m.id}
                 index={i}
                 emoji={m.emoji}
-                label={m.label}
+                label={translate(`onboarding_survey.moment.${m.id}`)}
                 selected={moment.includes(m.id)}
                 onPress={() => toggleMoment(m.id)}
               />
@@ -861,18 +813,18 @@ export default function OnboardingFlow() {
       case 'feelings':
         return (
           <QuestionScene
-            title="Et après avoir scrollé, tu ressens quoi ?"
-            sub="Sélectionne tout ce qui te parle."
+            title={t('onboarding_survey.feelings.title')}
+            sub={t('onboarding_survey.feelings.sub')}
             fill
             onNext={feelings.length > 0 ? goNext : undefined}
             extra={
               feelings.length > 0 ? (
-                <StudyLine text="Ce n'est pas un défaut de volonté. C'est le design de ces apps." />
+                <StudyLine text={t('onboarding_survey.feelings.study')} />
               ) : null
             }
           >
             <ChoiceGrid
-              items={FEELINGS}
+              items={gridChoices('feelings', FEELING_EMOJI)}
               selected={feelings}
               onToggle={toggleFeeling}
             />
@@ -881,14 +833,14 @@ export default function OnboardingFlow() {
       case 'stolen':
         return (
           <QuestionScene
-            title="Qu'est-ce que le scroll t'a déjà volé ?"
-            sub="Coche tout ce qui te parle, surtout ce qui fait le plus mal."
+            title={t('onboarding_survey.stolen.title')}
+            sub={t('onboarding_survey.stolen.sub')}
             scroll
             onNext={stolen.length > 0 ? goNext : undefined}
             extra={
               <PickHint
                 picks={stolen}
-                text="Ce que tu coches ici, ton plan va essayer de te le rendre."
+                text={t('onboarding_survey.stolen.hint')}
               />
             }
           >
@@ -897,7 +849,7 @@ export default function OnboardingFlow() {
                 key={item.id}
                 index={i}
                 emoji={item.emoji}
-                label={item.label}
+                label={translate(`onboarding_survey.stolen.${item.id}`)}
                 selected={stolen.includes(item.id)}
                 onPress={() => toggleStolen(item.id)}
               />
@@ -907,8 +859,8 @@ export default function OnboardingFlow() {
       case 'attempts':
         return (
           <QuestionScene
-            title="Tu as déjà essayé d'arrêter ?"
-            sub="Coche tout ce que tu as tenté. Il n'y a pas de mauvaise réponse."
+            title={t('onboarding_survey.attempts.title')}
+            sub={t('onboarding_survey.attempts.sub')}
             scroll
             onNext={attempts.length > 0 ? goNext : undefined}
             extra={
@@ -916,8 +868,8 @@ export default function OnboardingFlow() {
                 picks={attempts}
                 text={
                   attempts.includes(ATTEMPT_NEVER)
-                    ? 'Alors autant commencer par une méthode qui tient toute seule.'
-                    : 'Toutes ces méthodes ont un point commun : elles se désactivent en trois secondes.'
+                    ? t('onboarding_survey.attempts.hint_never')
+                    : t('onboarding_survey.attempts.hint')
                 }
               />
             }
@@ -927,7 +879,7 @@ export default function OnboardingFlow() {
                 key={item.id}
                 index={i}
                 emoji={item.emoji}
-                label={item.label}
+                label={translate(`onboarding_survey.attempts.${item.id}`)}
                 selected={attempts.includes(item.id)}
                 onPress={() => toggleAttempt(item.id)}
               />
@@ -942,21 +894,23 @@ export default function OnboardingFlow() {
             // promet pas un temps qu'il n'a pas : la question reste ouverte.
             title={
               recoveryGoal(hours).exceedsUsage
-                ? 'Et ce temps, tu en ferais quoi ?'
-                : `Si tu récupérais ${recoveryGoal(hours).dailyTime} par jour, tu en ferais quoi ?`
+                ? t('onboarding_survey.aspiration.title')
+                : t('onboarding_survey.aspiration.title_time', {
+                    time: recoveryGoal(hours).dailyTime,
+                  })
             }
-            sub="Coche tout ce que tu veux retrouver. Ce sera l'objectif de ton plan."
+            sub={t('onboarding_survey.aspiration.sub')}
             fill
             onNext={aspirations.length > 0 ? goNext : undefined}
             extra={
               <PickHint
                 picks={aspirations}
-                text="C'est ça qu'on va protéger."
+                text={t('onboarding_survey.aspiration.hint')}
               />
             }
           >
             <ChoiceGrid
-              items={ASPIRATIONS}
+              items={gridChoices('aspiration', ASPIRATION_EMOJI)}
               selected={aspirations}
               onToggle={toggleAspiration}
             />
@@ -968,19 +922,21 @@ export default function OnboardingFlow() {
             // Seule question du diagnostic à réponse unique : elle se
             // convertit en un nombre d'heures, et deux tranches cochées ne
             // désignent aucune durée.
-            title="Tu scrolles combien de temps par jour ?"
-            sub="Une seule réponse — une estimation honnête suffit."
+            title={t('onboarding_survey.screen_time.title')}
+            sub={t('onboarding_survey.screen_time.sub')}
             onNext={screenTime ? goNext : undefined}
           >
-            {SCREEN_TIME.map((s, i) => (
+            {SCREEN_TIME.map((estimate, i) => (
               <ChoiceCard
-                key={s.id}
+                key={estimate.id}
                 index={i}
-                label={s.label}
-                selected={screenTime === s.id}
+                label={translate(
+                  `onboarding_survey.screen_time.${estimate.id}`,
+                )}
+                selected={screenTime === estimate.id}
                 onPress={() => {
-                  setScreenTime(s.id)
-                  setHours(s.hours)
+                  setScreenTime(estimate.id)
+                  setHours(estimate.hours)
                 }}
               />
             ))}
@@ -1015,7 +971,25 @@ export default function OnboardingFlow() {
       case 'ritual':
         return <SceneRitual onDone={finishSurvey} />
       case 'permission':
-        return <ScenePermission onNext={goNext} />
+        return (
+          <ScenePermission
+            onNext={goNext}
+            /*
+              Sortie après deux refus. On ne va PAS à l'étape suivante : les
+              trois qui suivent (`tutoPicker`, `tutoApps`, `tutoRules`) ouvrent
+              la feuille d'Apple et posent la première règle — elles exigent
+              l'autorisation qu'on vient de ne pas obtenir, et échoueraient sur
+              `errors.screen_time_missing`. On saute donc directement aux
+              notifications, puis à la fin du parcours.
+
+              L'app s'ouvre alors sans blocage armé : c'est l'état qu'elle sait
+              déjà tenir quand l'autorisation est retirée en cours de route
+              (voir `health.screen_time_revoked`), et la permission se
+              redemande depuis les Réglages.
+            */
+            onSkip={() => goStep('notifs')}
+          />
+        )
       case 'notifs':
         return <SceneNotifs onNext={() => goStep('victory')} />
       case 'victory':
@@ -1038,7 +1012,7 @@ export default function OnboardingFlow() {
         // La démonstration précède TOUJOURS la feuille d'Apple : elle s'ouvre
         // désormais d'elle-même à l'écran suivant, et personne ne doit y
         // arriver sans avoir vu qu'une catégorie se déplie.
-        return <ScenePickerDemo onNext={goNext} cta="Choisir mes apps" />
+        return <ScenePickerDemo onNext={goNext} cta={t('add_rule.pick_apps')} />
       case 'tutoApps':
         return (
           <ScenePickApps
@@ -1068,7 +1042,11 @@ export default function OnboardingFlow() {
   // `auth` peint son propre fond jusque sous la status bar (voir SceneAuth) :
   // avec le paddingTop du conteneur, le dégradé s'arrêtait sous l'encoche et
   // laissait une bande noire à coins carrés en haut de l'écran.
-  const ownsSafeArea = isIgnition || step === 'auth'
+  //
+  // `welcome` en est là pour une raison de plus : sa pluie de billes DOIT
+  // pouvoir tomber depuis le tout premier pixel, sinon les billes
+  // apparaissent d'un coup sous l'encoche au lieu d'entrer par le haut.
+  const ownsSafeArea = isIgnition || step === 'auth' || step === 'welcome'
 
   return (
     <View className="flex-1" style={{ backgroundColor: OB.bg }}>
@@ -1188,7 +1166,7 @@ function QuestionScene({
       </View>
       <View className="pb-2.5">
         <Pill
-          label="Continuer"
+          label={translate('paywall.continue')}
           onPress={onNext ?? (() => {})}
           disabled={!onNext}
         />

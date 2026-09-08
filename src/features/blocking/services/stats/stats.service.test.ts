@@ -22,8 +22,21 @@ jest.mock('@/shared/native/screen-time', () => ({
   },
 }))
 
+// `stats.service` importe `useSessionUser`, qui S'ABONNE À L'IMPORT
+// (`onAuthStateChange` + `getSession` au niveau module). Un mock qui n'expose
+// que ce que le service appelle lui-même ne suffit donc pas : c'est la simple
+// résolution de l'import qui casse, avant même le premier test.
 jest.mock('@/shared/services/supabase/client', () => ({
-  supabase: { auth: { getUser: jest.fn() }, from: jest.fn() },
+  supabase: {
+    auth: {
+      getUser: jest.fn(),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+      getSession: jest.fn(async () => ({ data: { session: null } })),
+    },
+    from: jest.fn(),
+  },
 }))
 
 jest.mock('@/shared/utils/normalize-error', () => ({
@@ -33,7 +46,9 @@ jest.mock('@/shared/utils/normalize-error', () => ({
 
 const mockPull = ScreenTime.pullEvents as jest.Mock
 const mockAck = ScreenTime.ackEvents as jest.Mock
-const mockGetUser = supabase.auth.getUser as unknown as jest.Mock
+// Le service lit la session LOCALE (aucun aller-retour d'identité) : c'est
+// `getSession` qu'il faut câbler, plus `getUser`.
+const mockGetSession = supabase.auth.getSession as unknown as jest.Mock
 const mockFrom = supabase.from as unknown as jest.Mock
 
 const resisted = (at: string) => ({ kind: 'resisted', activity: 'shield', at })
@@ -51,7 +66,9 @@ function wireSupabase(existing: Record<string, number> | null) {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+  mockGetSession.mockResolvedValue({
+    data: { session: { user: { id: 'u1' } } },
+  })
   mockAck.mockResolvedValue(true)
 })
 
@@ -129,7 +146,7 @@ describe('StatsService.syncFromDevice', () => {
   })
 
   it('SANS session : ne lit ni ne purge le journal (zéro perte)', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null })
+    mockGetSession.mockResolvedValue({ data: { session: null } })
     await StatsService.syncFromDevice()
     expect(mockPull).not.toHaveBeenCalled()
     expect(mockAck).not.toHaveBeenCalled()

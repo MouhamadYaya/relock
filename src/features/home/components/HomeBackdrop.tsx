@@ -25,12 +25,25 @@ const { colors, layout, opacity } = relockMaterial
  * Tout le reste de l'écran répond à cette lumière : les cartes captent leur
  * arête haute d'autant plus qu'elles en sont proches (voir `HomeCardMaterial`).
  */
-export function HomeBackdrop() {
+export const HomeBackdrop = React.memo(function HomeBackdrop() {
   return (
     <View
       testID="home-fixed-backdrop"
       pointerEvents="none"
       accessibilityElementsHidden
+      // Cette scène ne change JAMAIS : ni prop, ni état, ni animation (le
+      // composant est mémoïsé et ne prend aucune prop). Or le grain ci-dessous
+      // est un calque plein écran en fondu `overlay`, et un mode de fusion se
+      // recalcule à la composition, pas une fois pour toutes — c'est-à-dire à
+      // chaque image pendant qu'on fait défiler l'Accueil, pour un résultat
+      // rigoureusement identique. `shouldRasterizeIOS` demande à iOS de garder
+      // le composite en texture et de le réutiliser tel quel.
+      //
+      // Le prix est une texture plein écran en mémoire vidéo. Il se paie une
+      // fois, il est borné, et il ne se rejoue pas : c'est exactement le cas
+      // pour lequel l'option existe — un calque coûteux à composer et
+      // strictement immuable.
+      shouldRasterizeIOS
       style={styles.backdrop}
     >
       <View style={styles.artwork}>
@@ -120,7 +133,7 @@ export function HomeBackdrop() {
       />
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   backdrop: {

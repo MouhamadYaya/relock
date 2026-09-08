@@ -1,21 +1,14 @@
-/** The same three promises appear during preparation and on the final plan. */
+/**
+ * Les trois promesses, montrées pendant la préparation puis sur le plan final.
+ *
+ * Seuls les identifiants vivent ici : le texte est dans les fichiers de langue
+ * (`onboarding_plan_actions.<id>`), sinon les trois écrans qui les affichent
+ * resteraient en français dans une app anglaise ou espagnole.
+ */
 export const ANTI_SCROLL_PLAN = [
-  {
-    id: 'block',
-    title: 'Bloque les distractions',
-    detail: 'Les apps qui te font perdre le fil.',
-    preparing: 'Préparation de tes blocages…',
-  },
-  {
-    id: 'pause',
-    title: 'Casse le réflexe',
-    detail: 'Une pause avant de replonger.',
-    preparing: 'Mise en place des pauses…',
-  },
-  {
-    id: 'progress',
-    title: 'Vois tes progrès',
-    detail: 'Ton temps d’écran, jour après jour.',
-    preparing: 'Préparation du suivi quotidien…',
-  },
+  { id: 'block' },
+  { id: 'pause' },
+  { id: 'progress' },
 ] as const
+
+export type AntiScrollPlanId = (typeof ANTI_SCROLL_PLAN)[number]['id']

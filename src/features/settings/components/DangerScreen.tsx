@@ -13,6 +13,7 @@ import { SettingsHeader } from '@/features/settings/components/SettingsHeader'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { settingsTheme } from '@/shared/theme'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, radius, size, spacing, type } = settingsTheme
 
@@ -124,7 +125,12 @@ export function DangerScreen({
             accessibilityState={{ busy }}
             disabled={busy}
             onPress={onConfirm}
-            onPressIn={() => setPressedCta(true)}
+            // Un écran de destruction : l'appui se sent d'abord, il se confirme
+            // ensuite. Le coup est plus franc que le tic des lignes ordinaires.
+            onPressIn={() => {
+              setPressedCta(true)
+              if (!busy) haptics.impactLight()
+            }}
             onPressOut={() => setPressedCta(false)}
             style={pressedCta ? styles.destructivePressed : styles.destructive}
           >
@@ -140,7 +146,10 @@ export function DangerScreen({
             accessibilityLabel={cancelLabel}
             disabled={busy}
             onPress={() => router.back()}
-            onPressIn={() => setPressedCancel(true)}
+            onPressIn={() => {
+              setPressedCancel(true)
+              if (!busy) haptics.selectionTick()
+            }}
             onPressOut={() => setPressedCancel(false)}
             style={pressedCancel ? styles.secondaryPressed : styles.secondary}
           >

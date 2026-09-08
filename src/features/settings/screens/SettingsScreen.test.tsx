@@ -13,6 +13,10 @@ import {
   getNotifPrefs,
   setNotifPrefs,
 } from '@/features/notifications/prefs/prefs'
+import {
+  isRevenueCatEnabled,
+  restoreRevenueCatPurchases,
+} from '@/features/onboarding/services/revenuecat'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { Notif } from '@/shared/native/notifications'
 import { ScreenTime } from '@/shared/native/screen-time'
@@ -26,7 +30,7 @@ import {
 } from '@/shared/services/storage/app-preferences'
 import { kvStorage } from '@/shared/services/storage/mmkv'
 import { usePreferences } from '@/shared/stores/preferences.store'
-import { showToast } from '@/shared/utils/toast'
+import { showErrorToast, showToast } from '@/shared/utils/toast'
 
 jest.mock('expo-router', () => {
   const { useEffect } = require('react')
@@ -89,7 +93,9 @@ jest.mock('@/features/user/hooks/useProfile', () => ({
 }))
 
 jest.mock('@/features/onboarding/services/revenuecat', () => ({
-  isRevenueCatEnabled: () => false,
+  // Coupée par défaut : les autres tests n'ont rien à faire du store. Les
+  // tests de restauration la rallument.
+  isRevenueCatEnabled: jest.fn(() => false),
   openRevenueCatCustomerCenter: jest.fn(),
   restoreRevenueCatPurchases: jest.fn(),
 }))
@@ -614,6 +620,57 @@ describe('SettingsScreen', () => {
 
       expect(getPreference('crashReports')).toBe(true)
       expect(applyCrashReportsPreference).toHaveBeenCalledWith(true)
+    })
+  })
+
+  /**
+   * Trois issues, trois messages — et surtout : « restauré » ne se dit que
+   * quand quelque chose l'a été.
+   *
+   * `restoreRevenueCatPurchases` rendait un booléen ; depuis qu'elle rend
+   * `restored | none | failed`, le test de véracité laissé derrière trouvait
+   * vraies les TROIS chaînes. Un utilisateur qui n'a jamais rien acheté
+   * lisait « Abonnement restauré », le store injoignable aussi.
+   */
+  describe('restauration des achats', () => {
+    const pressRestore = async () => {
+      const tree = await render()
+      await act(async () => {
+        rowFor(tree, 'settings.pro.restore').props.onPress()
+      })
+    }
+
+    beforeEach(() => {
+      jest.mocked(isRevenueCatEnabled).mockReturnValue(true)
+    })
+    afterEach(() => {
+      jest.mocked(isRevenueCatEnabled).mockReturnValue(false)
+    })
+
+    it('annonce la restauration seulement quand le store a rendu un abonnement', async () => {
+      jest.mocked(restoreRevenueCatPurchases).mockResolvedValue('restored')
+
+      await pressRestore()
+
+      expect(showToast).toHaveBeenCalledWith('settings.pro.restore_done')
+    })
+
+    it('dit qu’il n’y a rien à restaurer sur un compte sans achat', async () => {
+      jest.mocked(restoreRevenueCatPurchases).mockResolvedValue('none')
+
+      await pressRestore()
+
+      expect(showToast).toHaveBeenCalledWith('settings.pro.restore_none')
+      expect(showToast).not.toHaveBeenCalledWith('settings.pro.restore_done')
+    })
+
+    it('invite à réessayer quand le store n’a pas pu répondre, sans jamais dire « aucun achat »', async () => {
+      jest.mocked(restoreRevenueCatPurchases).mockResolvedValue('failed')
+
+      await pressRestore()
+
+      expect(showErrorToast).toHaveBeenCalledWith('settings.pro.restore_failed')
+      expect(showToast).not.toHaveBeenCalled()
     })
   })
 

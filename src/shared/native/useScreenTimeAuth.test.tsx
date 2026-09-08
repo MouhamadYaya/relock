@@ -91,6 +91,34 @@ describe('useScreenTimeAuthorization', () => {
     await act(async () => renderer!.unmount())
   })
 
+  /**
+   * Le hook repliait `notDetermined` sur `'denied'`. Les écrans ne pouvaient
+   * donc plus distinguer « on n'a jamais demandé » (une fenêtre système existe
+   * encore) de « c'est non » (il n'y en aura plus) — la confusion d'où venait
+   * le cul-de-sac du refus Temps d'écran.
+   */
+  it('garde notDetermined et denied distincts', async () => {
+    for (const [native, expected] of [
+      ['notDetermined', 'notDetermined'],
+      ['denied', 'denied'],
+      ['unsupported', 'unavailable'],
+    ] as const) {
+      mockAuthorizationStatus.mockResolvedValueOnce(native)
+      let latest: AuthorizationValue | undefined
+
+      let renderer: ReactTestRenderer.ReactTestRenderer
+      await act(async () => {
+        renderer = ReactTestRenderer.create(
+          <AuthorizationHarness onChange={value => (latest = value)} />,
+        )
+      })
+
+      expect(latest?.status).toBe(expected)
+      expect(latest?.authorized).toBe(false)
+      await act(async () => renderer!.unmount())
+    }
+  })
+
   it('expose explicitement une erreur de vérification native', async () => {
     mockAuthorizationStatus.mockRejectedValueOnce(new Error('native failure'))
     let latest: AuthorizationValue | undefined

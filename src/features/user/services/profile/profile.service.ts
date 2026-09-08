@@ -1,5 +1,6 @@
 /** Profil utilisateur — Supabase (table `profiles`). */
 
+import { translate } from '@/i18n/translate'
 import { supabase } from '@/shared/services/supabase/client'
 import type { Profile } from '@/shared/services/supabase/database.types'
 import { normalizeError } from '@/shared/utils/normalize-error'
@@ -116,7 +117,7 @@ export const ProfileService = {
 
   async updateName(name: string): Promise<void> {
     const uid = await currentUserId()
-    if (!uid) throw normalizeError(new Error('Non connecté'))
+    if (!uid) throw normalizeError(new Error(translate('errors.not_signed_in')))
     const value = name.trim()
     const { error } = await supabase
       .from('profiles')
@@ -128,17 +129,14 @@ export const ProfileService = {
   /** `YYYY-MM-DD`, ou `null` pour effacer la date. */
   async updateBirthDate(birthDate: string | null): Promise<void> {
     const uid = await currentUserId()
-    if (!uid) throw normalizeError(new Error('Non connecté'))
+    if (!uid) throw normalizeError(new Error(translate('errors.not_signed_in')))
     const { error } = await supabase
       .from('profiles')
       .update({ birth_date: birthDate })
       .eq('id', uid)
     if (isMissingColumn(error)) {
       throw normalizeError(
-        new Error(
-          'La date de naissance n’est pas encore activée côté serveur ' +
-            '(migration `profiles.birth_date` à appliquer).',
-        ),
+        new Error(translate('errors.birth_date_unavailable')),
       )
     }
     if (error) throw normalizeError(error)
@@ -147,7 +145,7 @@ export const ProfileService = {
   /** Persiste le chemin ImageKit renvoyé par l'upload. */
   async updateAvatar(filePath: string): Promise<void> {
     const uid = await currentUserId()
-    if (!uid) throw normalizeError(new Error('Non connecté'))
+    if (!uid) throw normalizeError(new Error(translate('errors.not_signed_in')))
     const { error } = await supabase
       .from('profiles')
       .update({ avatar_url: filePath })
@@ -175,7 +173,7 @@ export const ProfileService = {
     if ((await edgeErrorCode(error)) === REAUTH_REQUIRED) {
       throw normalizeError({
         code: REAUTH_REQUIRED,
-        message: 'Reconnexion requise avant la suppression du compte.',
+        message: translate('errors.reauth_required'),
         status: 403,
         raw: error,
       })

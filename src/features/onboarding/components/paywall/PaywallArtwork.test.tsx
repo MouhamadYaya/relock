@@ -8,12 +8,11 @@ import {
   offerReduction,
   pricePerMonth,
 } from '@/features/onboarding/components/paywall/paywall-pricing'
-import de from '@/i18n/locales/de.json'
 import en from '@/i18n/locales/en.json'
+import es from '@/i18n/locales/es.json'
 import fr from '@/i18n/locales/fr.json'
-import ru from '@/i18n/locales/ru.json'
 
-const LOCALES = [en, fr, de, ru]
+const LOCALES = [en, fr, es]
 
 describe('Paywall copy and offer arithmetic', () => {
   it.each(LOCALES)('removes competitor wording from every locale', locale => {

@@ -8,7 +8,6 @@ import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, layout, opacity, radius, typography } = relockMaterial
 
@@ -94,7 +93,7 @@ function ScoreRow({
  * l'extension `RelockActivityReport` dessine la même carte dès que Temps
  * d'écran est autorisé ; les deux géométries partagent `homeScoreHeight`.
  */
-export function HomeScoreCard({
+export const HomeScoreCard = React.memo(function HomeScoreCard({
   scores,
   title,
   subtitle,
@@ -113,10 +112,11 @@ export function HomeScoreCard({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      onPress={() => {
-        haptics.selectionTick()
-        onPress()
-      }}
+      onPress={onPress}
+      // Pas de halo : la carte rogne ses enfants (`overflow: 'hidden'`, pour
+      // que le verre de `HomeCardMaterial` suive les coins), et iOS ne dessine
+      // aucune ombre sur une couche qui masque ses bords. Reste l'échelle et
+      // le tic haptique, tous deux au toucher.
       style={styles.card}
     >
       <HomeCardMaterial tier={1} />
@@ -182,7 +182,7 @@ export function HomeScoreCard({
       </Text>
     </PressableScale>
   )
-}
+})
 
 const styles = StyleSheet.create({
   card: {

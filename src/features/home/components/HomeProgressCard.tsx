@@ -9,7 +9,11 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 
 const { colors, layout, radius, typography } = relockMaterial
 
-export function HomeProgressCard({ streak }: { streak: number }) {
+export const HomeProgressCard = React.memo(function HomeProgressCard({
+  streak,
+}: {
+  streak: number
+}) {
   const t = useT()
   if (streak < 1) return null
   return (
@@ -61,7 +65,7 @@ export function HomeProgressCard({ streak }: { streak: number }) {
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   card: {

@@ -248,6 +248,14 @@ export type EntitlementCheck = 'active' | 'inactive' | 'unknown'
 /** Au-delà, on n'attend plus : la valeur en cache prend le relais. */
 const ENTITLEMENT_TIMEOUT_MS = 2500
 
+/**
+ * La bascule d'identité, elle, fait deux allers-retours réseau (`logIn` puis
+ * le report du reçu) : la même patience que pour une simple lecture la
+ * ferait échouer sur un réseau lent, et on retomberait sur le seul cas
+ * vraiment coûteux — un abonné qu'on ne reconnaît pas.
+ */
+const LINK_TIMEOUT_MS = 8000
+
 export async function checkRelockProEntitlement(): Promise<EntitlementCheck> {
   if (!isConfigured()) {
     return __DEV__ ? 'inactive' : 'active'
@@ -267,13 +275,22 @@ export async function checkRelockProEntitlement(): Promise<EntitlementCheck> {
   }
 }
 
-function withTimeout<T>(promise: Promise<T>): Promise<T | null> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number = ENTITLEMENT_TIMEOUT_MS,
+): Promise<T | null> {
+  // Le minuteur est ANNULÉ dès que le store a répondu : laissé pendant, il
+  // tient le processus éveillé (Jest le signale) et retarde d'autant la
+  // libération du contexte sur l'appareil.
+  let timer: ReturnType<typeof setTimeout> | undefined
   return Promise.race([
     promise,
-    new Promise<null>(resolve =>
-      setTimeout(() => resolve(null), ENTITLEMENT_TIMEOUT_MS),
-    ),
-  ])
+    new Promise<null>(resolve => {
+      timer = setTimeout(() => resolve(null), ms)
+    }),
+  ]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer)
+  })
 }
 
 export async function hasRelockProEntitlement(): Promise<boolean> {
@@ -304,19 +321,70 @@ export function onEntitlementChange(
 }
 
 /**
- * Rattache les achats au compte Supabase.
+ * Rattache les achats au compte Supabase, et rend l'abonnement TEL QUE
+ * RevenueCat le voit APRÈS la bascule.
  *
- * Sans ça, un achat fait avant la création du compte reste sur un identifiant
- * anonyme : réinstaller ou changer d'appareil oblige à passer par
- * « Restaurer », qui ne fonctionne que sur le MÊME compte Apple. Avec le
- * rattachement, l'abonnement suit le compte, partout.
+ * Sans le rattachement, un achat fait avant la création du compte reste sur un
+ * identifiant anonyme : réinstaller ou changer d'appareil oblige à passer par
+ * « Restaurer », qui ne fonctionne que sur le MÊME compte Apple. Rattaché,
+ * l'abonnement suit le compte, partout.
+ *
+ * Mais `logIn` fait basculer le SDK de l'identifiant anonyme — celui qui
+ * porte l'achat qu'on vient d'encaisser — vers le compte, et le reçu de
+ * l'appareil n'est pas reporté sur ce compte instantanément. Entre les deux,
+ * RevenueCat répond en toute bonne foi « pas d'abonnement » pour quelqu'un
+ * qui vient de payer. C'est exactement ce qui renvoyait un client payant au
+ * paywall juste après sa connexion (constaté le 2026-09-07), et ce que son
+ * « Restaurer » manuel réparait.
+ *
+ * On répare donc nous-mêmes : si le compte ressort sans abonnement, on
+ * repousse le reçu de l'appareil sur l'identifiant courant — le geste de
+ * « Restaurer », sans feuille Apple ni mot de passe demandé — puis on relit.
+ * Et on distingue toujours les trois réponses : `unknown` (rien de sûr) ne
+ * doit JAMAIS être traité comme `inactive`, cf. `checkRelockProEntitlement`.
  */
-export async function linkRevenueCatUser(userId: string): Promise<void> {
-  if (!(await initializeRevenueCat())) return
+export async function linkRevenueCatUser(
+  userId: string,
+): Promise<EntitlementCheck> {
+  // Build sans facturation : la politique asymétrique est écrite une seule
+  // fois, dans `checkRelockProEntitlement`. On ne la recopie pas ici.
+  if (!isConfigured()) return checkRelockProEntitlement()
+  if (!(await initializeRevenueCat())) return 'unknown'
+
   try {
-    await Purchases.logIn(userId)
+    const result = await withTimeout(Purchases.logIn(userId), LINK_TIMEOUT_MS)
+    // Délai dépassé : le rattachement continue côté SDK, mais on ne sait rien
+    // de l'abonnement. Le dernier état connu reste en place.
+    if (!result) return 'unknown'
+    if (hasRelockProEntitlementFromCustomerInfo(result.customerInfo)) {
+      return 'active'
+    }
+    return await postDeviceReceiptToCurrentUser()
   } catch {
-    // Le rattachement est un confort : jamais un blocage du parcours.
+    return 'unknown'
+  }
+}
+
+/**
+ * Reporte le reçu de l'appareil sur l'identifiant RevenueCat courant.
+ *
+ * C'est la moitié utile de « Restaurer » : le reçu repart au serveur, qui
+ * rattache l'abonnement au compte connecté. Contrairement à
+ * `restorePurchases`, aucune feuille Apple ne s'ouvre — l'utilisateur ne voit
+ * rien, ce qui est bien le but au milieu d'une connexion.
+ */
+async function postDeviceReceiptToCurrentUser(): Promise<EntitlementCheck> {
+  try {
+    const synced = await withTimeout(
+      Purchases.syncPurchasesForResult(),
+      LINK_TIMEOUT_MS,
+    )
+    if (!synced) return 'unknown'
+    return hasRelockProEntitlementFromCustomerInfo(synced.customerInfo)
+      ? 'active'
+      : 'inactive'
+  } catch {
+    return 'unknown'
   }
 }
 

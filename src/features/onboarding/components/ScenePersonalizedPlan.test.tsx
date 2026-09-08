@@ -17,7 +17,6 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }))
 jest.mock('@/shared/components/ui/IconSvg', () => ({ IconSvg: 'IconSvg' }))
-jest.mock('@/i18n/useT', () => ({ useT: () => (key: string) => key }))
 
 describe('ScenePersonalizedPlan', () => {
   let renderer: ReactTestRenderer

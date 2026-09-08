@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { blockingKeys } from '@/features/blocking/api/keys'
+import { devFixturesEnabled } from '@/features/blocking/dev-fixtures'
 import { BlockRulesService } from '@/features/blocking/services/block-rules/block-rules.service'
 import type { BlockRuleView } from '@/features/blocking/types'
 import { useSessionUserId } from '@/session/useSessionUser'
@@ -15,8 +16,10 @@ export function useBlockRulesQuery() {
     // (useFreshInstallReset) — cette requête ne fait que lire.
     queryFn: () => BlockRulesService.list(),
     // Sans session, RLS renvoie une liste VIDE sans erreur : sans ce garde,
-    // l'Accueil affiche « Aucun blocage » et met ce vide en cache.
-    enabled: !!userId,
+    // l'Accueil affiche « Aucun blocage » et met ce vide en cache. Le jeu de
+    // test du simulateur, lui, ne dépend d'aucune session — l'exiger le
+    // rendrait inutilisable hors ligne, c'est-à-dire là où il sert.
+    enabled: !!userId || devFixturesEnabled(),
     staleTime: Freshness.nearRealtime.staleTime,
     gcTime: Freshness.nearRealtime.gcTime,
   })

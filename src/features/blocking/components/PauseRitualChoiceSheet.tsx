@@ -120,6 +120,7 @@ export function PauseRitualChoiceSheet({
             accessibilityRole="button"
             accessibilityLabel={t('common.close')}
             onPress={onClose}
+            shadow
             style={styles.closeAction}
           >
             <IconSvg
@@ -141,6 +142,7 @@ export function PauseRitualChoiceSheet({
                 accessibilityLabel={t(RITUAL_COPY[ritual].title)}
                 accessibilityHint={t(RITUAL_COPY[ritual].description)}
                 accessibilityState={{ selected }}
+                haptic="none"
                 onPress={() => select(ritual)}
                 style={styles.option}
               >

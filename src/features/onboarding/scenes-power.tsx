@@ -40,7 +40,29 @@ import { GUIDE_BOTTOM_PADDING, GUIDE_SCENE_PADDING, haptic, OB } from './tokens'
  * refus, iOS ne re-présente plus le dialogue : on envoie vers Réglages, et
  * on avance tout seul dès que l'autorisation apparaît.
  */
-export function ScenePermission({ onNext }: { onNext: () => void }) {
+export function ScenePermission({
+  onNext,
+  onSkip,
+}: {
+  onNext: () => void
+  /**
+   * La porte de sortie, ouverte seulement après DEUX refus.
+   *
+   * Elle n'existe pas par gentillesse : sans elle, cet écran est un cul-de-sac
+   * (le seul bouton renvoie aux Réglages, en boucle), et on y arrive APRÈS le
+   * paiement. Un reviewer Apple qui refuse la permission — ce que beaucoup
+   * font exprès pour éprouver les chemins d'erreur — se retrouve enfermé dans
+   * une app qu'il vient d'acheter : c'est un rejet 2.1 (« the app got stuck »),
+   * et pour un vrai utilisateur un remboursement.
+   *
+   * Elle saute les étapes qui EXIGENT l'autorisation (choix des apps, première
+   * règle) et mène droit à l'app, où le blocage reste inerte tant que la
+   * permission n'est pas accordée — un état que l'app sait déjà tenir, c'est
+   * celui d'une autorisation révoquée en cours de route.
+   */
+  onSkip?: () => void
+}) {
+  const t = useT()
   const [denied, setDenied] = useState(0)
   const [busy, setBusy] = useState(false)
   const [dimmed, setDimmed] = useState(false)
@@ -106,25 +128,25 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
   const cardAction = denied >= 2 ? openSettings : request
   const continueLabel =
     denied >= 2
-      ? 'Ouvrir les Réglages'
+      ? t('home.permission_open_settings')
       : denied === 1
-        ? 'Réessayer'
-        : 'Continuer'
+        ? t('common.retry')
+        : t('paywall.continue')
 
   return (
     <View style={styles.guideScene}>
       <Reveal index={0} style={styles.guideHeroWrap}>
         <Text style={styles.heroTitle}>
-          Donnons à Relock l'accès à{`\n`}Temps d'écran. En toute confiance.
+          {t('onboarding_power.screen_time.hero')}
         </Text>
       </Reveal>
       <View style={styles.guideMiddle}>
         <Reveal index={1}>
           <GuideCard
-            title="« Relock » souhaite accéder à Temps d'écran"
-            body="L'accès à Temps d'écran permet à Relock de limiter les apps choisies et de t'aider à rester concentré. Tes données restent sur ton appareil."
+            title={t('onboarding_power.screen_time.card_title')}
+            body={t('onboarding_power.screen_time.card_body')}
             leftLabel={continueLabel}
-            rightLabel="Ne pas autoriser"
+            rightLabel={t('onboarding_power.dont_allow')}
             activeSide="left"
             onActivePress={cardAction}
             activeBusy={busy}
@@ -133,24 +155,44 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
         </Reveal>
         {denied > 0 ? (
           <View style={{ marginTop: 18 }}>
-            <RedAlert text="Relock ne peut pas fonctionner sans cette autorisation. Rien ne quitte ton téléphone, rien ne nous est transmis." />
+            {/*
+              Deux messages, pas un. Au premier refus on insiste, parce que
+              c'est souvent un réflexe et que le dialogue iOS repassera. Au
+              second, iOS ne le représentera plus : répéter « Relock ne peut
+              pas fonctionner sans » devient un reproche adressé à quelqu'un
+              qu'on retient de force. On dit alors ce qui va se passer.
+            */}
+            <RedAlert
+              text={
+                denied >= 2 && onSkip
+                  ? t('onboarding_power.screen_time.denied_final')
+                  : t('onboarding_power.screen_time.denied')
+              }
+            />
+            {denied >= 2 && onSkip ? (
+              <View style={styles.escapeWrap}>
+                <GhostLink
+                  label={t('onboarding_power.screen_time.continue_without')}
+                  onPress={onSkip}
+                  dim
+                  underline
+                />
+              </View>
+            ) : null}
           </View>
         ) : null}
       </View>
       <Reveal index={2} style={styles.guideBottom}>
         <View style={styles.privacyWrap}>
           <Text style={styles.privacyText}>
-            Tes informations restent protégées par Apple et stockées uniquement
-            sur ton téléphone.
+            {t('onboarding_power.screen_time.privacy')}
           </Text>
-          <GhostLink label="En savoir plus" onPress={learnMore} accent />
+          <GhostLink
+            label={t('onboarding_power.learn_more')}
+            onPress={learnMore}
+            accent
+          />
         </View>
-        {__DEV__ ? (
-          // Échappatoire DEV uniquement : le simulateur a le module mais ne
-          // peut pas finir le parcours d'autorisation (code de l'appareil).
-          // En production, le blocage est absolu.
-          <GhostLink label="Passer (dev)" onPress={advance} dim />
-        ) : null}
       </Reveal>
     </View>
   )
@@ -167,6 +209,7 @@ export function ScenePermission({ onNext }: { onNext: () => void }) {
  * sont un plus, jamais une condition, et on avance dans les deux cas.
  */
 export function SceneNotifs({ onNext }: { onNext: () => void }) {
+  const t = useT()
   const [busy, setBusy] = useState(false)
   const [dimmed, setDimmed] = useState(false)
 
@@ -189,16 +232,16 @@ export function SceneNotifs({ onNext }: { onNext: () => void }) {
     <View style={styles.guideScene}>
       <Reveal index={0} style={styles.guideHeroWrap}>
         <Text style={styles.heroTitle}>
-          Reçois tes bilans Relock{`\n`}et célèbre chaque progrès.
+          {t('onboarding_power.notifs.hero')}
         </Text>
       </Reveal>
       <View style={styles.guideMiddle}>
         <Reveal index={1}>
           <GuideCard
-            title="« Relock » souhaite t'envoyer des notifications"
-            body="Les notifications peuvent inclure des alertes, des sons et des pastilles. Tu peux les configurer dans Réglages."
-            leftLabel="Ne pas autoriser"
-            rightLabel="Autoriser"
+            title={t('onboarding_power.notifs.card_title')}
+            body={t('onboarding_power.notifs.card_body')}
+            leftLabel={t('onboarding_power.dont_allow')}
+            rightLabel={t('activity.state.allow')}
             activeSide="right"
             onActivePress={request}
             activeBusy={busy}
@@ -244,6 +287,12 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
     paddingHorizontal: GUIDE_BOTTOM_PADDING,
   },
+  /**
+   * La sortie de secours, sous l'alerte rouge. Volontairement discrète et
+   * détachée du bloc d'alerte : c'est un recours, pas une alternative qu'on
+   * met sur le même plan que l'autorisation.
+   */
+  escapeWrap: { alignItems: 'center', paddingTop: 14 },
   privacyWrap: { alignItems: 'center', gap: 10, paddingBottom: 6 },
   privacyText: {
     ...fonts.regular,
