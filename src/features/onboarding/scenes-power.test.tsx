@@ -1,6 +1,8 @@
 import React from 'react'
+import { Linking } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { ScenePermission } from '@/features/onboarding/scenes-power'
+import { translate } from '@/i18n/translate'
 import { ScreenTime } from '@/shared/native/screen-time'
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -54,6 +56,12 @@ function pressAllow(renderer: ReactTestRenderer) {
   })
 }
 
+/** Le libellé du bouton lumineux de la carte-guide. */
+function allowLabel(renderer: ReactTestRenderer) {
+  return renderer.root.findByType('GuideCard' as unknown as React.ElementType)
+    .props.leftLabel
+}
+
 /** Le lien de sortie, s'il est monté. */
 function escapeLinks(renderer: ReactTestRenderer) {
   return renderer.root.findAllByType(
@@ -74,6 +82,81 @@ function escapeLinks(renderer: ReactTestRenderer) {
  * La sortie n'apparaît qu'au SECOND refus, et c'est délibéré : au premier,
  * iOS represente son dialogue, donc insister a encore un sens.
  */
+/**
+ * Le bouton ne doit JAMAIS devenir « Ouvrir Réglages ».
+ *
+ * Il l'est devenu au second refus, et c'est là que le parcours cassait :
+ * `Linking.openSettings()` ouvre la fiche Réglages de Relock, où l'accès
+ * Temps d'écran ne figure pas — il vit dans Réglages › Temps d'écran. On
+ * arrivait donc sur une page d'autorisations toutes déjà accordées, sans
+ * savoir quoi y activer. Redemander l'autorisation est la seule action qui
+ * puisse encore aboutir ; on la garde à chaque appui.
+ */
+describe('ScenePermission — on redemande, on n’envoie pas aux Réglages', () => {
+  let renderer: ReactTestRenderer
+  const openSettings = jest
+    .spyOn(Linking, 'openSettings')
+    .mockResolvedValue(undefined)
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    screenTime.authorizationStatus.mockResolvedValue('notDetermined')
+    screenTime.requestAuthorization.mockResolvedValue('denied')
+  })
+
+  afterEach(() => {
+    act(() => renderer.unmount())
+  })
+
+  it('redemande l’autorisation à chaque appui, sans jamais ouvrir Réglages', async () => {
+    act(() => {
+      renderer = create(
+        <ScenePermission onNext={jest.fn()} onSkip={jest.fn()} />,
+      )
+    })
+
+    await pressAllow(renderer)
+    await pressAllow(renderer)
+    await pressAllow(renderer)
+    await pressAllow(renderer)
+
+    expect(screenTime.requestAuthorization).toHaveBeenCalledTimes(4)
+    expect(openSettings).not.toHaveBeenCalled()
+  })
+
+  it('bascule sur « Réessayer » au premier refus et n’en bouge plus', async () => {
+    act(() => {
+      renderer = create(
+        <ScenePermission onNext={jest.fn()} onSkip={jest.fn()} />,
+      )
+    })
+    expect(allowLabel(renderer)).toBe(translate('paywall.continue'))
+
+    await pressAllow(renderer)
+    expect(allowLabel(renderer)).toBe(translate('common.retry'))
+
+    await pressAllow(renderer)
+    await pressAllow(renderer)
+    expect(allowLabel(renderer)).toBe(translate('common.retry'))
+    expect(allowLabel(renderer)).not.toBe(
+      translate('home.permission_open_settings'),
+    )
+  })
+
+  it('avance encore si l’autorisation est accordée au troisième essai', async () => {
+    const onNext = jest.fn()
+    act(() => {
+      renderer = create(<ScenePermission onNext={onNext} onSkip={jest.fn()} />)
+    })
+    await pressAllow(renderer)
+    await pressAllow(renderer)
+    screenTime.requestAuthorization.mockResolvedValue('approved')
+    await pressAllow(renderer)
+
+    expect(onNext).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('ScenePermission — la porte de sortie', () => {
   let renderer: ReactTestRenderer
 

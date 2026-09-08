@@ -36,9 +36,19 @@ import { GUIDE_BOTTOM_PADDING, GUIDE_SCENE_PADDING, haptic, OB } from './tokens'
 /**
  * LA permission qui fait exister le produit. Amorcée façon Opal : réplique
  * du dialogue iOS, choix « autoriser » lumineux, l'autre éteint. Refus →
- * alerte rouge minimaliste intégrée, et on ne passe PAS. Après un second
- * refus, iOS ne re-présente plus le dialogue : on envoie vers Réglages, et
- * on avance tout seul dès que l'autorisation apparaît.
+ * alerte rouge minimaliste intégrée, et on ne passe PAS.
+ *
+ * L'action principale redemande TOUJOURS l'autorisation, autant de fois qu'on
+ * la presse. Elle n'a jamais envoyé vers les Réglages, et ne le fera pas :
+ * `Linking.openSettings()` ouvre la fiche Réglages de Relock, où l'accès
+ * Temps d'écran n'apparaît pas (il vit dans Réglages › Temps d'écran). On y
+ * expédiait donc quelqu'un chercher un interrupteur absent, au milieu de ceux
+ * qu'il a déjà accordés — le tour de l'écran le plus sûr pour perdre
+ * quelqu'un. Tant qu'iOS accepte de représenter sa fenêtre, réessayer est le
+ * seul geste qui puisse aboutir ; quand il ne la représente plus, l'appel
+ * rejette sans rien afficher et la sortie ouverte au second refus prend le
+ * relais. On avance aussi tout seul si l'autorisation apparaît pendant qu'on
+ * était ailleurs.
  */
 export function ScenePermission({
   onNext,
@@ -49,8 +59,8 @@ export function ScenePermission({
    * La porte de sortie, ouverte seulement après DEUX refus.
    *
    * Elle n'existe pas par gentillesse : sans elle, cet écran est un cul-de-sac
-   * (le seul bouton renvoie aux Réglages, en boucle), et on y arrive APRÈS le
-   * paiement. Un reviewer Apple qui refuse la permission — ce que beaucoup
+   * (le seul bouton redemande une autorisation qu'iOS finit par ne plus
+   * présenter du tout), et on y arrive APRÈS le paiement. Un reviewer Apple qui refuse la permission — ce que beaucoup
    * font exprès pour éprouver les chemins d'erreur — se retrouve enfermé dans
    * une app qu'il vient d'acheter : c'est un rejet 2.1 (« the app got stuck »),
    * et pour un vrai utilisateur un remboursement.
@@ -117,21 +127,11 @@ export function ScenePermission({
     }
   }
 
-  const openSettings = () => {
-    Linking.openSettings().catch(() => {})
-  }
-
   const learnMore = () => {
     Linking.openURL('https://www.apple.com/privacy/').catch(() => {})
   }
 
-  const cardAction = denied >= 2 ? openSettings : request
-  const continueLabel =
-    denied >= 2
-      ? t('home.permission_open_settings')
-      : denied === 1
-        ? t('common.retry')
-        : t('paywall.continue')
+  const continueLabel = denied > 0 ? t('common.retry') : t('paywall.continue')
 
   return (
     <View style={styles.guideScene}>
@@ -148,7 +148,7 @@ export function ScenePermission({
             leftLabel={continueLabel}
             rightLabel={t('onboarding_power.dont_allow')}
             activeSide="left"
-            onActivePress={cardAction}
+            onActivePress={request}
             activeBusy={busy}
             dimmed={dimmed}
           />
@@ -157,10 +157,11 @@ export function ScenePermission({
           <View style={{ marginTop: 18 }}>
             {/*
               Deux messages, pas un. Au premier refus on insiste, parce que
-              c'est souvent un réflexe et que le dialogue iOS repassera. Au
-              second, iOS ne le représentera plus : répéter « Relock ne peut
-              pas fonctionner sans » devient un reproche adressé à quelqu'un
-              qu'on retient de force. On dit alors ce qui va se passer.
+              c'est souvent un réflexe et que le dialogue iOS repassera. À
+              partir du second, répéter « Relock ne peut pas fonctionner
+              sans » devient un reproche adressé à quelqu'un qu'on retient de
+              force : on dit alors ce qui va se passer. Le bouton, lui, reste
+              « Réessayer » — c'est la seule action qui puisse encore aboutir.
             */}
             <RedAlert
               text={
