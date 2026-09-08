@@ -841,7 +841,6 @@
       "classic": "Origine",
       "orb": "Orbe",
       "phases": "Phases",
-      "footnote": "Le logotype « Relock » ne change pas : il reste en haut de l’Accueil et au lancement de l’app. iOS confirme lui-même chaque changement d’icône.",
       "error": "iOS a refusé de changer l’icône. Réessaie dans un instant."
     },
     "theme": "Thème",

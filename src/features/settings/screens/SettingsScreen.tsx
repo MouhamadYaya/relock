@@ -12,6 +12,7 @@ import {
   Share,
   StyleSheet,
   Text,
+  View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { appBuild, appConfig, appVersion, links } from '@/config/app-config'
@@ -41,7 +42,6 @@ import { ProfileCard } from '@/features/settings/components/ProfileCard'
 import { SettingsHeader } from '@/features/settings/components/SettingsHeader'
 import { SettingsRow } from '@/features/settings/components/SettingsRow'
 import { SettingsSection } from '@/features/settings/components/SettingsSection'
-import { LOGO_LABEL_KEY } from '@/features/settings/constants/logo-copy'
 import {
   buildDataExport,
   serializeDataExport,
@@ -51,6 +51,7 @@ import { i18n } from '@/i18n'
 import { nativeLocale } from '@/i18n/native-locale'
 import { useT } from '@/i18n/useT'
 import { syncEntitlement } from '@/session/bootstrap'
+import { AppIconPreview } from '@/shared/components/ui/AppIconPreview'
 import { ScreenWrapper } from '@/shared/components/ui/ScreenWrapper'
 import { AppIcon } from '@/shared/native/app-icon'
 import { Notif, type NotifPermission } from '@/shared/native/notifications'
@@ -596,8 +597,18 @@ export default function SettingsScreen() {
               icon={IconName.STAR}
               label={t('settings.logo.label')}
               hint={t('settings.logo.hint')}
-              value={t(LOGO_LABEL_KEY[appLogo])}
               onPress={() => router.push('/logo-picker')}
+              accessory={
+                // L'icône POSÉE, pas son nom. « Orbe » ne veut rien dire tant
+                // qu'on ne l'a pas vue, et le sélecteur ne nomme plus rien :
+                // la ligne montre donc ce qu'on a choisi, comme lui.
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  <AppIconPreview logo={appLogo} size={26} />
+                </View>
+              }
             />
           ) : null}
           {/*

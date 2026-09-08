@@ -1,5 +1,6 @@
 import { router } from 'expo-router'
 import React from 'react'
+import { Text } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { constants } from '@/config/constants'
 import LogoPickerModal from '@/features/settings/screens/LogoPickerModal'
@@ -36,7 +37,7 @@ jest.mock('@/shared/native/app-icon', () => ({
 
 const setIcon = AppIcon.set as jest.Mock
 
-/** La ligne portant ce libellé (les clés i18n brutes, `useT` étant neutralisé). */
+/** La tuile portant ce libellé (les clés i18n brutes, `useT` étant neutralisé). */
 function rowFor(tree: ReactTestRenderer, label: string) {
   return tree.root.find(
     node =>
@@ -85,6 +86,28 @@ describe('LogoPickerModal', () => {
       rowFor(tree, 'settings.logo.orb').props.accessibilityState.selected,
     ).toBe(true)
     expect(rowFor(tree, 'settings.logo.phases')).toBeTruthy()
+  })
+
+  it('ne montre QUE des icônes — aucun nom écrit à l’écran', () => {
+    // La demande tient en une phrase : on choisit ce qu'on va voir sur son
+    // écran d'accueil. « Origine », « Orbe », « Phases » ne veulent rien dire
+    // tant qu'on n'a pas vu les dessins, et les afficher volait la place que
+    // ces dessins réclamaient. Ils restent sur les tuiles pour VoiceOver,
+    // jamais en pixels.
+    const tree = render()
+
+    const written = tree.root
+      .findAllByType(Text)
+      .flatMap(node => React.Children.toArray(node.props.children))
+      .filter((child): child is string => typeof child === 'string')
+
+    for (const logo of ['classic', 'orb', 'phases']) {
+      expect(written).not.toContain(`settings.logo.${logo}`)
+      // La note « le logotype Relock ne change pas » a disparu avec eux.
+      expect(written).not.toContain('settings.logo.footnote')
+    }
+    // Le titre de la feuille, lui, reste : c'est la seule phrase de l'écran.
+    expect(written).toContain('settings.logo.label')
   })
 
   it('demande l’icône à iOS, puis retient le choix et referme', async () => {

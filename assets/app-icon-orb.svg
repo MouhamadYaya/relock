@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    Icône alternative « Orbe » — source de vérité.
+
+    Une lune de verre PLEINE, violette, sur un fond mauve. Aucun terminateur,
+    aucun croissant : c'est tout l'objet du dessin. La version précédente
+    reprenait la construction de l'icône d'origine (moitié éclairée à gauche,
+    moitié dans l'ombre) et ne s'en distinguait, sur l'écran d'accueil, que
+    par un détail de dégradé.
+
+    Ce qui la sépare maintenant, dans l'ordre de ce qu'on voit à 40 px :
+    le FOND (mauve clair, quand les deux autres sont sur du noir), puis la
+    silhouette (un disque plein, pas un disque coupé).
+
+    Rendu par scripts/generate-alt-icon-orb.cjs vers :
+      ios/Relock/Images.xcassets/AppIcon-Orb.appiconset/*.png
+      assets/logo-orb{,@2x,@3x}.png  (l'aperçu du sélecteur)
+  -->
+  <defs>
+    <!-- Le fond mauve, éclairé du même côté que la sphère. -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E9DAFC"/>
+      <stop offset="0.46" stop-color="#CBAEF3"/>
+      <stop offset="1" stop-color="#9575DC"/>
+    </linearGradient>
+
+    <!-- Assombrit les angles : sans ça, la sphère flotte sans se détacher. -->
+    <radialGradient id="vignette" cx="0.5" cy="0.46" r="0.78">
+      <stop offset="0.42" stop-color="#2E1857" stop-opacity="0"/>
+      <stop offset="1" stop-color="#2E1857" stop-opacity="0.34"/>
+    </radialGradient>
+
+    <!-- Le halo que le verre projette sur le fond. -->
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.63" stop-color="#F4ECFF" stop-opacity="0.5"/>
+      <stop offset="0.8" stop-color="#F4ECFF" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#F4ECFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Le corps : lumière en haut à gauche, profondeur vers le bas droit. -->
+    <radialGradient id="glass" cx="0.33" cy="0.27" r="0.94">
+      <stop offset="0" stop-color="#A98CFF"/>
+      <stop offset="0.28" stop-color="#8262F0"/>
+      <stop offset="0.6" stop-color="#5233C8"/>
+      <stop offset="0.86" stop-color="#301B8A"/>
+      <stop offset="1" stop-color="#21125F"/>
+    </radialGradient>
+
+    <!-- Lumière traversante, ramassée sur le bord bas-droit. -->
+    <radialGradient id="through" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F0E4FF" stop-opacity="0.72"/>
+      <stop offset="0.5" stop-color="#B695FF" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#B695FF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Les deux reflets spéculaires. -->
+    <radialGradient id="spec" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.92"/>
+      <stop offset="0.45" stop-color="#F1E8FF" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#F1E8FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="specSmall" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- La paroi de verre : allumée en bas-droite, éteinte en haut-gauche. -->
+    <linearGradient id="shell" x1="0.15" y1="0.1" x2="0.85" y2="0.92">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="0.78" stop-color="#F3E8FF" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.72"/>
+    </linearGradient>
+
+    <!--
+      Les mers lunaires. Des nappes larges et très douces, pas des cratères :
+      un creux cerné d'une lèvre claire redevient une petite sphère dès qu'on
+      réduit l'image, et l'icône se couvrait de bulles à 40 px. Ici le
+      contraste est si faible qu'il ne survit pas à la réduction — c'est
+      voulu : de près une lune, de loin un disque net.
+    -->
+    <radialGradient id="mare" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#1B0D50" stop-opacity="0.20"/>
+      <stop offset="0.55" stop-color="#1B0D50" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#1B0D50" stop-opacity="0"/>
+    </radialGradient>
+
+    <clipPath id="sphere">
+      <circle cx="512" cy="512" r="360"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#vignette)"/>
+
+  <circle cx="512" cy="512" r="452" fill="url(#halo)"/>
+  <circle cx="512" cy="512" r="360" fill="url(#glass)"/>
+
+  <g clip-path="url(#sphere)">
+    <!-- Les mers, sous les reflets : le verre les recouvre, il ne les porte pas. -->
+    <g>
+      <ellipse cx="452" cy="596" rx="168" ry="128"
+               transform="rotate(-24 452 596)" fill="url(#mare)"/>
+      <ellipse cx="666" cy="452" rx="112" ry="86"
+               transform="rotate(-34 666 452)" fill="url(#mare)"/>
+      <ellipse cx="576" cy="712" rx="86" ry="62"
+               transform="rotate(-14 576 712)" fill="url(#mare)"/>
+    </g>
+
+    <ellipse cx="694" cy="768" rx="268" ry="150"
+             transform="rotate(-40 694 768)" fill="url(#through)"/>
+
+    <ellipse cx="404" cy="360" rx="150" ry="106"
+             transform="rotate(-30 404 360)" fill="url(#spec)"/>
+    <ellipse cx="372" cy="322" rx="52" ry="36"
+             transform="rotate(-30 372 322)" fill="url(#specSmall)"/>
+  </g>
+
+  <circle cx="512" cy="512" r="353" fill="none" stroke="url(#shell)" stroke-width="13"/>
+</svg>

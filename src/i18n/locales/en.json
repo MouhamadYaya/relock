@@ -841,7 +841,6 @@
       "classic": "Original",
       "orb": "Orb",
       "phases": "Phases",
-      "footnote": "The “Relock” wordmark never changes: it stays at the top of Home and on the launch screen. iOS confirms every icon change itself.",
       "error": "iOS refused to change the icon. Try again in a moment."
     },
     "theme": "Theme",

@@ -849,7 +849,6 @@ declare module 'i18next' {
             "classic": string;
             "orb": string;
             "phases": string;
-            "footnote": string;
             "error": string;
           };
           "theme": string;
