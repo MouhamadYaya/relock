@@ -56,17 +56,31 @@ final class RelockShieldAction: ShieldActionDelegate {
     let title: String
     let body: String
     if total == 1 {
-      title = copy["firstTitle"] ?? "Première victoire"
+      title =
+        copy["firstTitle"]
+        ?? RelockLanguage.pick(
+          fr: "Première victoire", en: "First win", es: "Primera victoria")
       body =
         copy["firstBody"]
-        ?? "Tu viens de résister. C'est exactement comme ça qu'on reprend le contrôle."
+        ?? RelockLanguage.pick(
+          fr: "Tu viens de résister. C'est exactement comme ça qu'on reprend le contrôle.",
+          en: "You just resisted. That is exactly how you take back control.",
+          es: "Acabas de resistir. Así es exactamente como se recupera el control.")
     } else if [10, 50, 100, 250, 500, 1000].contains(total) {
       // Le gabarit porte `{total}` : l'app ne peut pas connaître le compteur au
       // moment où elle publie les textes, seule l'extension le connaît.
-      let titleTemplate = copy["milestoneTitle"] ?? "{total} résistances"
+      let titleTemplate =
+        copy["milestoneTitle"]
+        ?? RelockLanguage.pick(
+          fr: "{total} résistances",
+          en: "{total} times you resisted",
+          es: "{total} veces que has resistido")
       let bodyTemplate =
         copy["milestoneBody"]
-        ?? "{total} fois où tu as choisi ton temps plutôt que le scroll. Continue."
+        ?? RelockLanguage.pick(
+          fr: "{total} fois où tu as choisi ton temps plutôt que le scroll. Continue.",
+          en: "{total} times you chose your time over the scroll. Keep going.",
+          es: "{total} veces que has elegido tu tiempo antes que el scroll. Sigue así.")
       title = titleTemplate.replacingOccurrences(of: "{total}", with: "\(total)")
       body = bodyTemplate.replacingOccurrences(of: "{total}", with: "\(total)")
     } else {

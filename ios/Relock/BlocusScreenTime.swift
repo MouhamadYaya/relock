@@ -75,7 +75,7 @@ final class BlocusScreenTime: NSObject {
           frameCapacity: AVAudioFrameCount(sampleRate * duration)),
         let channels = buffer.floatChannelData
       else {
-        reject("calm_audio_buffer", "Impossible de créer le son de respiration", nil)
+        reject("calm_audio_buffer", BridgeError.breathingSound, nil)
         return
       }
 
@@ -169,7 +169,7 @@ final class BlocusScreenTime: NSObject {
     {
       reject(
         "too_many_rules",
-        "iOS ne peut surveiller que 20 blocages à la fois. Retires-en un pour en créer un autre.",
+        BridgeError.tooManyRules,
         error)
       return
     }
@@ -408,7 +408,7 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis pour Family Controls", nil); return
+      reject("unsupported", BridgeError.iOS16RequiredFamilyControls, nil); return
     }
     Task {
       do {
@@ -465,11 +465,11 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     DispatchQueue.main.async {
       guard let presenter = RCTPresentedViewController() else {
-        reject("no_vc", "Aucun view controller pour présenter le sélecteur", nil)
+        reject("no_vc", BridgeError.noViewController, nil)
         return
       }
       let model = SelectionModel(selection: self.loadSelection())
@@ -511,7 +511,7 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     guard let sel = loadRuleSelection(ruleId) else {
       // Règle sans sélection connue : on repart d'une ardoise vide plutôt que
@@ -531,17 +531,17 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     let sel = loadSelection()
     guard selectionCount(sel) > 0 else {
-      reject("empty_selection", "Aucune app sélectionnée", nil); return
+      reject("empty_selection", BridgeError.noAppSelected, nil); return
     }
     if let data = try? JSONEncoder().encode(sel) {
       defaults?.set(data, forKey: "selection.\(ruleId)")
       resolve(true)
     } else {
-      reject("encode_failed", "Sélection non encodable", nil)
+      reject("encode_failed", BridgeError.selectionNotEncodable, nil)
     }
   }
 
@@ -685,7 +685,7 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     let mins = min(30, max(1, minutes.intValue))
     let until = Date().addingTimeInterval(TimeInterval(mins * 60))
@@ -701,7 +701,7 @@ final class BlocusScreenTime: NSObject {
       rollBackReprieve(key)
       reject(
         "reprieve_wake_unavailable",
-        "Impossible de programmer la fin du sursis", nil)
+        BridgeError.reprieveWake, nil)
       return
     }
     resolve(["until": until.timeIntervalSince1970])
@@ -716,7 +716,7 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     Self.withGroupLock {
       var map = defaults?.dictionary(forKey: "reprieves") as? [String: Double] ?? [:]
@@ -774,15 +774,15 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     guard let sel = loadRuleSelection(ruleId) else {
-      reject("empty_selection", "Aucune app liée à cette règle", nil); return
+      reject("empty_selection", BridgeError.noAppForRule, nil); return
     }
     let apps = Array(sel.applicationTokens)
     let i = index.intValue
     guard i >= 0, i < apps.count, let key = Self.tokenKey(apps[i]) else {
-      reject("bad_index", "App introuvable dans cette règle", nil); return
+      reject("bad_index", BridgeError.appNotInRule, nil); return
     }
     let mins = min(30, max(1, minutes.intValue))
     let until = Date().addingTimeInterval(TimeInterval(mins * 60))
@@ -799,7 +799,7 @@ final class BlocusScreenTime: NSObject {
       rollBackReprieve(key)
       reject(
         "reprieve_wake_unavailable",
-        "Impossible de programmer la fin du sursis", nil)
+        BridgeError.reprieveWake, nil)
       return
     }
 
@@ -837,12 +837,12 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     guard let selection = loadRuleSelection(ruleId),
       selectionCount(selection) > 0
     else {
-      reject("empty_selection", "Aucune app liée à cette règle", nil); return
+      reject("empty_selection", BridgeError.noAppForRule, nil); return
     }
     let raw = Self.activityName(kind: "timed", ruleId: ruleId)
     let activity = DeviceActivityName(raw)
@@ -900,10 +900,10 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     guard let sel = loadRuleSelection(ruleId), selectionCount(sel) > 0 else {
-      reject("empty_selection", "Aucune app liée à cette règle", nil); return
+      reject("empty_selection", BridgeError.noAppForRule, nil); return
     }
     let base = Self.activityName(kind: "schedule", ruleId: ruleId)
     let sh = startHour.intValue, sm = startMinute.intValue
@@ -982,12 +982,12 @@ final class BlocusScreenTime: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard #available(iOS 16.0, *) else {
-      reject("unsupported", "iOS 16+ requis", nil); return
+      reject("unsupported", BridgeError.iOS16Required, nil); return
     }
     guard let selection = loadRuleSelection(ruleId),
       selectionCount(selection) > 0
     else {
-      reject("empty_selection", "Aucune app liée à cette règle", nil); return
+      reject("empty_selection", BridgeError.noAppForRule, nil); return
     }
     let raw = Self.activityName(kind: "limit", ruleId: ruleId)
     let activity = DeviceActivityName(raw)
@@ -1265,7 +1265,7 @@ final class BlocusScreenTime: NSObject {
       rejecter reject: @escaping RCTPromiseRejectBlock
     ) {
       guard #available(iOS 16.0, *) else {
-        reject("unsupported", "iOS 16+ requis", nil); return
+        reject("unsupported", BridgeError.iOS16Required, nil); return
       }
       let raw = Self.activityName(kind: "limit", ruleId: ruleId)
       Self.withGroupLock {
@@ -1730,6 +1730,22 @@ final class BlocusScreenTime: NSObject {
   /// L'extension bouclier ne peut pas charger i18next : elle écrivait donc du
   /// français en dur, quelle que soit la langue de l'utilisateur. On lui dépose
   /// ici le texte déjà traduit, remis à jour à chaque changement de langue.
+  /// Publie la langue de l'app pour ses extensions.
+  ///
+  /// Une extension Family Controls ne voit que la langue SYSTÈME : sans ce
+  /// dépôt, le mur de blocage et le rapport d'activité restaient dans la
+  /// langue du téléphone même quand l'app était réglée sur une autre. Appelé
+  /// au démarrage et à chaque changement de langue (`src/i18n/i18n.ts`).
+  @objc(setAppLanguage:resolver:rejecter:)
+  func setAppLanguage(
+    _ language: NSString,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    defaults?.set(language as String, forKey: RelockLanguage.storageKey)
+    resolve(true)
+  }
+
   @objc(setCelebrationCopy:resolver:rejecter:)
   func setCelebrationCopy(
     _ copy: NSDictionary,
@@ -2022,16 +2038,95 @@ private struct PickerContainer: View {
   var body: some View {
     NavigationView {
       FamilyActivityPicker(selection: $model.selection)
-        .navigationTitle("Apps à bloquer")
+        .navigationTitle(
+          RelockLanguage.pick(
+            fr: "Apps à bloquer", en: "Apps to block", es: "Apps que bloquear"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .cancellationAction) {
-            Button("Annuler", action: onCancel)
+            Button(
+              RelockLanguage.pick(fr: "Annuler", en: "Cancel", es: "Cancelar"),
+              action: onCancel)
           }
           ToolbarItem(placement: .confirmationAction) {
-            Button("Terminé", action: onDone).bold()
+            Button(
+              RelockLanguage.pick(fr: "Terminé", en: "Done", es: "Listo"),
+              action: onDone
+            ).bold()
           }
         }
     }
+  }
+}
+
+/// Messages d'erreur REMONTÉS À JS, et donc affichés à l'utilisateur.
+///
+/// `reject(code, message, error)` traverse le pont, devient le `message` d'une
+/// `Error` JS, et finit tel quel dans l'`Alert` de `showErrorToast`. Ce ne sont
+/// donc pas des messages de journal : ils se traduisent comme n'importe quel
+/// texte d'écran.
+enum BridgeError {
+  static var noAppSelected: String {
+    RelockLanguage.pick(
+      fr: "Aucune app sélectionnée",
+      en: "No app selected",
+      es: "Ninguna app seleccionada")
+  }
+  static var noAppForRule: String {
+    RelockLanguage.pick(
+      fr: "Aucune app liée à cette règle",
+      en: "No app linked to this rule",
+      es: "Ninguna app vinculada a esta regla")
+  }
+  static var appNotInRule: String {
+    RelockLanguage.pick(
+      fr: "App introuvable dans cette règle",
+      en: "App not found in this rule",
+      es: "App no encontrada en esta regla")
+  }
+  static var selectionNotEncodable: String {
+    RelockLanguage.pick(
+      fr: "Sélection non encodable",
+      en: "Selection could not be encoded",
+      es: "La selección no se ha podido codificar")
+  }
+  static var noViewController: String {
+    RelockLanguage.pick(
+      fr: "Aucun view controller pour présenter le sélecteur",
+      en: "No view controller available to present the picker",
+      es: "No hay view controller para presentar el selector")
+  }
+  static var breathingSound: String {
+    RelockLanguage.pick(
+      fr: "Impossible de créer le son de respiration",
+      en: "Could not create the breathing sound",
+      es: "No se ha podido crear el sonido de respiración")
+  }
+  static var reprieveWake: String {
+    RelockLanguage.pick(
+      fr: "Impossible de programmer la fin du sursis",
+      en: "Could not schedule the end of the reprieve",
+      es: "No se ha podido programar el fin de la prórroga")
+  }
+  static var iOS16Required: String {
+    RelockLanguage.pick(
+      fr: "iOS 16+ requis",
+      en: "iOS 16+ required",
+      es: "Se requiere iOS 16+")
+  }
+  static var iOS16RequiredFamilyControls: String {
+    RelockLanguage.pick(
+      fr: "iOS 16+ requis pour Family Controls",
+      en: "iOS 16+ required for Family Controls",
+      es: "Se requiere iOS 16+ para Family Controls")
+  }
+  static var tooManyRules: String {
+    RelockLanguage.pick(
+      fr:
+        "iOS ne peut surveiller que 20 blocages à la fois. Retires-en un pour en créer un autre.",
+      en:
+        "iOS can only monitor 20 blocks at a time. Remove one to create another.",
+      es:
+        "iOS solo puede supervisar 20 bloqueos a la vez. Quita uno para crear otro.")
   }
 }

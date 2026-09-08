@@ -1,25 +1,33 @@
 {
   "name": "Relock",
   "displayName": "Relock",
+
   "expo": {
     "name": "Relock",
     "slug": "blocus",
     "scheme": "relock",
-    "version": "0.0.1",
+
+    "version": "1.0.0",
+
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+
     "ios": {
       "bundleIdentifier": "com.yaya.relock",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "buildNumber": "1"
     },
+
     "android": {
       "package": "com.yaya.relock"
     },
+
     "plugins": [
       "expo-router",
       "@react-native-google-signin/google-signin",
       "expo-secure-store"
     ],
+
     "experiments": {
       "typedRoutes": true
     }

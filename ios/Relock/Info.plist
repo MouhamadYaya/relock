@@ -22,8 +22,6 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -34,10 +32,6 @@
 				<string>relock</string>
 			</array>
 		</dict>
-		<!--
-			Sign in with Google: reversed form of GOOGLE_IOS_CLIENT_ID (.env).
-			Keep these two in sync if the OAuth client is ever recreated.
-		-->
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
@@ -45,6 +39,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -54,14 +52,6 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<!--
-		Réseau local : iOS 14+ exige un consentement explicite pour joindre une
-		adresse du réseau local. Sans cette clé, l'app ne peut PAS charger son
-		bundle depuis Metro sur un iPhone physique — elle se lance et reste
-		muette, ce qui ressemble à une panne applicative. Le blocage d'apps
-		(Family Controls) n'en dépend pas, et la demande n'apparaît qu'en
-		développement, quand l'app tente réellement de joindre le Mac.
-	-->
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_expo-dev-server._tcp</string>
@@ -69,9 +59,9 @@
 		<string>_http._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Relock se connecte au serveur de développement sur ton réseau local. Le blocage d’apps n’en dépend pas.</string>
+	<string>Relock connects to the development server on your local network. App blocking does not depend on it.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choisis une photo dans ta galerie pour l’utiliser comme photo de profil. Relock n’accède à aucune autre image.</string>
+	<string>Pick a photo from your library to use as your profile picture. Relock accesses no other image.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>RCTNewArchEnabled</key>
@@ -89,8 +79,12 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>

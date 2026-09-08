@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	Manifeste de confidentialité PARTAGÉ par les cinq extensions Family Controls.
+
+	POURQUOI IL EXISTE
+	Le contrôle ITMS-91053 d'Apple est fait par BUNDLE, pas par app : le
+	manifeste de `Relock.app` ne couvre pas `RelockMonitor.appex`. Or
+	`Shared/ExtensionLog.swift` est compilé dans les cinq extensions et y
+	appelle `UserDefaults(suiteName:)` — une Required Reason API. Sans ce
+	fichier dans chaque .appex, l'upload est refusé par mail avant toute
+	review humaine.
+
+	CE QU'IL DÉCLARE
+	CA92.1 — lecture/écriture d'infos accessibles à l'extension seule.
+	1C8F.1 — les mêmes, PARTAGÉES via le groupe `group.com.yaya.relock` :
+	         c'est le cas de figure réel ici, et c'est le code que le
+	         manifeste de l'app oubliait.
+
+	Les extensions ne collectent aucune donnée pour leur propre compte et ne
+	font aucun tracking — d'où l'absence de `NSPrivacyCollectedDataTypes` et
+	`NSPrivacyTracking` à false. La déclaration complète des données reste
+	celle de `Relock/PrivacyInfo.xcprivacy`, que Xcode agrège à l'archivage.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+				<string>1C8F.1</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSPrivacyTracking</key>
+	<false/>
+</dict>
+</plist>

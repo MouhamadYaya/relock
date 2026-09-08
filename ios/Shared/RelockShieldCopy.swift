@@ -1,27 +1,38 @@
 import Foundation
 
-/// Toutes les chaînes du mur système vivent ici. Les clés sont prêtes pour un
-/// futur catalogue `Localizable.xcstrings`; les valeurs françaises restent la
-/// source de vérité demandée tant qu'aucune traduction n'est fournie.
+/// Toutes les chaînes du mur système vivent ici.
+///
+/// Elles suivent la langue CHOISIE DANS RELOCK (`RelockLanguage`), pas celle
+/// du système : le mur est la surface la plus visible du produit, et il
+/// s'affichait en français devant une app réglée en anglais ou en espagnol.
 enum RelockShieldCopy {
-  static let title = localized(
-    "shield.title",
-    defaultValue: "Reprends le contrôle\nde ton temps.")
-  static let mission = localized(
-    "shield.mission",
-    defaultValue: "C’est la mission de Relock.")
-  static let management = localized(
-    "shield.management",
-    defaultValue: "Gère ce blocage en ouvrant l’application Relock.")
-  static let openRelock = localized(
-    "shield.open_relock",
-    defaultValue: "Ouvrir Relock")
-  static let ignore = localized(
-    "shield.ignore",
-    defaultValue: "Ignorer")
-  static let fallbackApplicationName = localized(
-    "shield.fallback_application_name",
-    defaultValue: "Cette app")
+  static var title: String {
+    RelockLanguage.pick(
+      fr: "Reprends le contrôle\nde ton temps.",
+      en: "Take back control\nof your time.",
+      es: "Recupera el control\nde tu tiempo.")
+  }
+  static var mission: String {
+    RelockLanguage.pick(
+      fr: "C’est la mission de Relock.",
+      en: "That’s Relock’s mission.",
+      es: "Esa es la misión de Relock.")
+  }
+  static var management: String {
+    RelockLanguage.pick(
+      fr: "Gère ce blocage en ouvrant l’application Relock.",
+      en: "Manage this block by opening the Relock app.",
+      es: "Gestiona este bloqueo abriendo la aplicación Relock.")
+  }
+  static var openRelock: String {
+    RelockLanguage.pick(fr: "Ouvrir Relock", en: "Open Relock", es: "Abrir Relock")
+  }
+  static var ignore: String {
+    RelockLanguage.pick(fr: "Ignorer", en: "Dismiss", es: "Ignorar")
+  }
+  static var fallbackApplicationName: String {
+    RelockLanguage.pick(fr: "Cette app", en: "This app", es: "Esta app")
+  }
 
   /// Marqueur de la ligne de compteur.
   ///
@@ -44,32 +55,22 @@ enum RelockShieldCopy {
   /// conduite à tenir, compteur — donnent la même aération que les meilleurs
   /// murs du marché.
   static func subtitle(applicationName: String, count: Int) -> String {
-    let blocked = format(
-      "shield.blocked_reason",
-      defaultValue: "C’est pourquoi %@ a été bloqué pendant ta session.",
-      applicationName)
-    let counter = format(
-      "shield.daily_count",
-      defaultValue: "%@ bloqué par Relock %d× aujourd’hui",
-      applicationName,
-      count)
+    let blockedTemplate = RelockLanguage.pick(
+      fr: "C’est pourquoi %@ a été bloqué pendant ta session.",
+      en: "That’s why %@ was blocked during your session.",
+      es: "Por eso %@ se ha bloqueado durante tu sesión.")
+    let counterTemplate = RelockLanguage.pick(
+      fr: "%@ bloqué par Relock %d× aujourd’hui",
+      en: "%@ blocked by Relock %d× today",
+      es: "%@ bloqueada por Relock %d× hoy")
+    let blocked = String(
+      format: blockedTemplate, locale: Locale.autoupdatingCurrent, applicationName)
+    let counter = String(
+      format: counterTemplate, locale: Locale.autoupdatingCurrent, applicationName, count)
     // La ligne vide DE TÊTE n'est pas décorative : le titre et le sous-titre
     // sont deux libellés distincts dont iOS fixe lui-même l'écart, très serré.
     // « Reprends le contrôle de ton temps. » se retrouvait collé à la phrase
     // suivante. Une ligne vide est le seul moyen d'aérer ce joint.
     return "\n\(mission)\n\n\(blocked)\n\n\(management)\n\n\(counterMark)  \(counter)"
-  }
-  
-  private static func localized(_ key: String, defaultValue: String) -> String {
-    NSLocalizedString(key, bundle: .main, value: defaultValue, comment: "")
-  }
-
-  private static func format(
-    _ key: String,
-    defaultValue: String,
-    _ arguments: CVarArg...
-  ) -> String {
-    let template = localized(key, defaultValue: defaultValue)
-    return String(format: template, locale: Locale.autoupdatingCurrent, arguments: arguments)
   }
 }

@@ -73,6 +73,48 @@ private struct TokenIcon: View {
   }
 }
 
+#if targetEnvironment(simulator)
+  /// Vignette FACTICE — simulateur uniquement, jamais compilée pour un iPhone.
+  ///
+  /// Family Controls n'existe pas sur simulateur : aucun jeton ne s'y résout,
+  /// et la rangée « Apps bloquées » restait une file de carrés vides. On rend
+  /// donc la même géométrie avec des marques inventées, dans la palette du
+  /// rapport factice (`ScreenTimeReportView`), pour pouvoir juger l'écran.
+  private struct SimulatorIcon: View {
+    let key: String
+    let side: CGFloat
+
+    private static let palette: [(symbol: String, tint: Color)] = [
+      ("camera.fill", Color(red: 0.79, green: 0.33, blue: 0.63)),
+      ("music.note", Color(red: 0.13, green: 0.13, blue: 0.16)),
+      ("safari.fill", Color(red: 0.20, green: 0.55, blue: 0.95)),
+      ("message.fill", Color(red: 0.30, green: 0.78, blue: 0.36)),
+      ("play.rectangle.fill", Color(red: 0.90, green: 0.22, blue: 0.21)),
+      ("music.note.list", Color(red: 0.11, green: 0.73, blue: 0.33)),
+    ]
+
+    /// Empreinte STABLE d'un lancement à l'autre. `hashValue` est ensemencé
+    /// aléatoirement par processus : la même app aurait changé d'icône à
+    /// chaque démarrage, et deux captures ne se seraient plus ressemblé.
+    private static func face(for key: String) -> (symbol: String, tint: Color) {
+      let sum = key.unicodeScalars.reduce(0) { ($0 * 31 + Int($1.value)) % 100_003 }
+      return palette[sum % palette.count]
+    }
+
+    var body: some View {
+      let face = Self.face(for: key)
+      RoundedRectangle(cornerRadius: side * 0.26, style: .continuous)
+        .fill(face.tint)
+        .overlay(
+          Image(systemName: face.symbol)
+            .font(.system(size: side * 0.52, weight: .medium))
+            .foregroundColor(.white)
+        )
+        .frame(width: side, height: side)
+    }
+  }
+#endif
+
 @objc(BlockedAppIconsView)
 final class BlockedAppIconsView: UIView {
   fileprivate static let log = Logger(
@@ -216,17 +258,21 @@ final class BlockedAppIconsView: UIView {
   private func rebuild() {
     guard window != nil, #available(iOS 16.0, *) else { return }
     detachHosting()
-    guard let token = loadToken() else { return }
 
     // Ne jamais figer la taille de secours de 24 pt avant le layout RN. C'était
     // invisible dans les cartes de 24 pt, mais la grande tuile restait ensuite
     // rendue à 24 pt au centre d'un conteneur de 72 pt.
     let side = min(bounds.width, bounds.height)
-    guard side > 0 else { return }
+    guard side > 0, tokenKey.length > 0 else { return }
     renderedSide = side
-    let displayScale = window?.screen.scale ?? UIScreen.main.scale
-    let root = AnyView(
-      TokenIcon(token: token, side: side, displayScale: displayScale))
+    #if targetEnvironment(simulator)
+      let root = AnyView(SimulatorIcon(key: tokenKey as String, side: side))
+    #else
+      guard let token = loadToken() else { return }
+      let displayScale = window?.screen.scale ?? UIScreen.main.scale
+      let root = AnyView(
+        TokenIcon(token: token, side: side, displayScale: displayScale))
+    #endif
     let vc = UIHostingController(rootView: root)
     vc.view.backgroundColor = .clear
     vc.view.frame = bounds

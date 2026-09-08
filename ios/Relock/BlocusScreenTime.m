@@ -223,6 +223,11 @@ RCT_EXTERN_METHOD(setCelebrationCopy
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(setAppLanguage
+                  : (nonnull NSString *)language
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(setUninstallProtection
                   : (BOOL)enabled
                   resolver : (RCTPromiseResolveBlock)resolve

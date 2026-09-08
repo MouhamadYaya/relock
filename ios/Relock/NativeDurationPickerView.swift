@@ -69,6 +69,11 @@ final class NativeDurationPickerView: UIView {
 
     picker.datePickerMode = .countDownTimer
     picker.preferredDatePickerStyle = .wheels
+    // Les unités de la roue (« heures » / « hours » / « horas ») sont écrites
+    // par UIKit, pas par nous : elles suivent la locale du contrôle. Sans
+    // cette ligne, la roue restait dans la langue du TÉLÉPHONE — « 1 heure »
+    // s'affichait sous un libellé « Limit / day » anglais.
+    picker.locale = RelockLanguage.currentLocale
     picker.minuteInterval = safeMinuteInterval
     picker.overrideUserInterfaceStyle = .dark
     picker.addTarget(self, action: #selector(valueChanged), for: .valueChanged)

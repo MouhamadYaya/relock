@@ -67,7 +67,9 @@ struct UsageReportView: View {
         Text(model.isEmpty ? "—" : formatDuration(model.totalSeconds))
           .font(.system(size: 30, weight: .bold))
           .foregroundColor(ReportPalette.ink)
-        Text("Temps d'écran")
+        Text(
+          RelockLanguage.pick(
+            fr: "Temps d'écran", en: "Screen time", es: "Tiempo de pantalla"))
           .font(.system(size: 13, weight: .medium))
           .foregroundColor(ReportPalette.ink2)
       }
@@ -81,7 +83,11 @@ struct UsageReportView: View {
 
   private var chartSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Temps d'écran par heure")
+      Text(
+        RelockLanguage.pick(
+          fr: "Temps d'écran par heure",
+          en: "Screen time by hour",
+          es: "Tiempo de pantalla por hora"))
         .font(.system(size: 14, weight: .semibold))
         .foregroundColor(ReportPalette.ink2)
       UsageChartView(model: model)
@@ -92,7 +98,11 @@ struct UsageReportView: View {
 
   private var appsSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Temps d'écran le plus élevé")
+      Text(
+        RelockLanguage.pick(
+          fr: "Temps d'écran le plus élevé",
+          en: "Highest screen time",
+          es: "Mayor tiempo de pantalla"))
         .font(.system(size: 14, weight: .semibold))
         .foregroundColor(ReportPalette.ink2)
       if model.apps.isEmpty {
@@ -100,8 +110,14 @@ struct UsageReportView: View {
         // court, le dire évite de faire passer une absence pour une mesure.
         Text(
           model.beyondRetention
-            ? "iOS ne conserve pas le détail du temps d'écran aussi loin dans le passé."
-            : "Aucune donnée d'usage sur la période."
+            ? RelockLanguage.pick(
+              fr: "iOS ne conserve pas le détail du temps d'écran aussi loin dans le passé.",
+              en: "iOS does not keep detailed screen time that far back.",
+              es: "iOS no conserva el detalle del tiempo de pantalla tan atrás.")
+            : RelockLanguage.pick(
+              fr: "Aucune donnée d'usage sur la période.",
+              en: "No usage data for this period.",
+              es: "Ningún dato de uso en el periodo.")
         )
         .font(.system(size: 13)).foregroundColor(ReportPalette.ink3)
         .fixedSize(horizontal: false, vertical: true)
@@ -187,20 +203,29 @@ struct UsageReportView: View {
 
   private var otherStatsSection: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("Autres statistiques")
+      Text(
+        RelockLanguage.pick(
+          fr: "Autres statistiques",
+          en: "Other statistics",
+          es: "Otras estadísticas"))
         .font(.system(size: 23, weight: .bold))
         .foregroundColor(ReportPalette.ink)
 
       statCard(
         value: model.totalNotifications,
         title: "Notifications",
-        subtitle: "reçues sur la période",
+        subtitle: RelockLanguage.pick(
+          fr: "reçues sur la période",
+          en: "received over the period",
+          es: "recibidas en el periodo"),
         imageName: "notification-card")
 
       statCard(
         value: model.totalPickups,
-        title: "Prises en main",
-        subtitle: "sur la période",
+        title: RelockLanguage.pick(
+          fr: "Prises en main", en: "Pickups", es: "Desbloqueos"),
+        subtitle: RelockLanguage.pick(
+          fr: "sur la période", en: "over the period", es: "en el periodo"),
         imageName: "pickups-card")
     }
   }

@@ -67,10 +67,16 @@ target 'Relock' do
     # `op_new_builtin_ = false` ci-dessous aggrave même le cas, puisqu'il
     # force précisément le chemin `::operator new` qui porte cette annotation.
     #
-    # L'app exige de toute façon `min_ios_version_supported` (15.1) : aucun
-    # pod ne peut réellement tourner plus bas. On remonte donc chaque cible à
-    # ce plancher — jamais l'inverse, un pod qui vise plus haut garde sa
-    # valeur.
+    # `min_ios_version_supported` (15.1) est le plancher de React Native :
+    # aucun pod ne peut réellement tourner plus bas. On remonte donc chaque
+    # cible à ce plancher — jamais l'inverse, un pod qui vise plus haut garde
+    # sa valeur.
+    #
+    # C'est le plancher des PODS, pas celui de l'app : la cible Relock exige
+    # iOS 16.0 (Family Controls — cf. les extensions et les
+    # `@available(iOS 16.0, *)` de BlocusScreenTime.swift). Un pod compilé
+    # pour 15.1 tourne sans problème dans une app qui demande plus haut ;
+    # aligner les deux ne ferait que recompiler tous les pods pour rien.
     minimum = Gem::Version.new(min_ios_version_supported)
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
@@ -122,7 +128,7 @@ target 'Relock' do
     # Modules" de Xcode 26, le module libc++ précompilé et partagé entre
     # cibles ne recalcule pas correctement cette macro par cible : elle
     # ressort à `false` pour certains fichiers (ex. react-native-blur) alors
-    # que le deployment target (15.1) supporte largement l'allocation
+    # que le deployment target des pods (15.1) supporte largement l'allocation
     # alignée (dispo depuis iOS 11). Folly retombe alors sur le chemin
     # "library", dont l'annotation de disponibilité iOS 11 est rejetée par
     # erreur en contexte de substitution SFINAE ("Call to consteval

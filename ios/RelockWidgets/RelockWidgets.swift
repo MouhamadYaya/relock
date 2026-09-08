@@ -46,7 +46,7 @@ struct RelockBlockLiveActivity: Widget {
         }
         DynamicIslandExpandedRegion(.center) {
           VStack(alignment: .leading, spacing: 2) {
-            Text("Blocage en cours")
+            Text(RelockWidgetCopy.running)
               .font(.system(size: 15, weight: .bold))
               .foregroundColor(.white)
             Text(appsLabel(context.attributes.count))
@@ -60,7 +60,7 @@ struct RelockBlockLiveActivity: Widget {
               .font(.system(size: 24, weight: .bold, design: .rounded))
               .foregroundColor(accent)
               .frame(maxWidth: 72)
-            Text("restant")
+            Text(RelockWidgetCopy.remaining)
               .font(.system(size: 11))
               .foregroundColor(ink2)
           }
@@ -127,7 +127,7 @@ struct RelockBlockLiveActivity: Widget {
   }
 
   private func appsLabel(_ count: Int) -> String {
-    count == 1 ? "1 app bloquée" : "\(count) apps bloquées"
+    RelockWidgetCopy.apps(count)
   }
 
   // ── Carte écran verrouillé ────────────────────────────────────────
@@ -146,7 +146,7 @@ struct RelockBlockLiveActivity: Widget {
         }
         .font(.system(size: 13, weight: .medium))
         .foregroundColor(ink2)
-        Text("Bloquer")
+        Text(RelockWidgetCopy.block)
           .font(.system(size: 19, weight: .bold))
           .foregroundColor(.white)
         Text(appsLabel(context.attributes.count))
@@ -161,11 +161,39 @@ struct RelockBlockLiveActivity: Widget {
           .font(.system(size: 30, weight: .bold, design: .rounded))
           .foregroundColor(accent)
           .frame(maxWidth: 96)
-        Text("restant")
+        Text(RelockWidgetCopy.remaining)
           .font(.system(size: 13))
           .foregroundColor(ink2)
       }
     }
     .padding(16)
+  }
+}
+
+/// Les libellés de l'activité en direct, dans la langue choisie DANS Relock.
+///
+/// Un widget hérite de la langue système : sur un iPhone anglais réglé sur une
+/// app en espagnol, l'écran verrouillé annonçait « Blocage en cours » en
+/// français. `RelockLanguage` lit la langue publiée par l'app.
+enum RelockWidgetCopy {
+  static var running: String {
+    RelockLanguage.pick(
+      fr: "Blocage en cours", en: "Block running", es: "Bloqueo en curso")
+  }
+  static var remaining: String {
+    RelockLanguage.pick(fr: "restant", en: "left", es: "restante")
+  }
+  static var block: String {
+    RelockLanguage.pick(fr: "Bloquer", en: "Block", es: "Bloquear")
+  }
+  static func apps(_ count: Int) -> String {
+    if count == 1 {
+      return RelockLanguage.pick(
+        fr: "1 app bloquée", en: "1 app blocked", es: "1 app bloqueada")
+    }
+    return RelockLanguage.pick(
+      fr: "\(count) apps bloquées",
+      en: "\(count) apps blocked",
+      es: "\(count) apps bloqueadas")
   }
 }

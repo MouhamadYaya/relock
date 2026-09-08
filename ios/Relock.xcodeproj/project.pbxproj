@@ -37,6 +37,8 @@
 		941C45C7F39E4CD8AC8F7A88 /* RelockNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A25A30A6916412082D443CB /* RelockNotificationDelegate.swift */; };
 		A1B2C3D40003TRACKING0003 /* RelockTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40001TRACKING0001 /* RelockTracking.swift */; };
 		A1B2C3D40004TRACKING0004 /* RelockTracking.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40002TRACKING0002 /* RelockTracking.m */; };
+		A1B2C3D40003ICONSWAP0003 /* RelockAppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40001ICONSWAP0001 /* RelockAppIcon.swift */; };
+		A1B2C3D40004ICONSWAP0004 /* RelockAppIcon.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40002ICONSWAP0002 /* RelockAppIcon.m */; };
 		A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99267AE42A73E61E98DE0728 /* RelockShield.swift */; };
 		A71C00000000000000000002 /* ReportAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A71C00000000000000000001 /* ReportAssets.xcassets */; };
 		A71C00000000000000000003 /* ReportAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A71C00000000000000000001 /* ReportAssets.xcassets */; };
@@ -64,6 +66,11 @@
 		C0DE20000000000000000021 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
 		C0DE20000000000000000022 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
 		C0DE20000000000000000023 /* ExtensionSentry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ExtensionSentry.swift */; };
+		C0DE40000000000000000011 /* RelockLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE40000000000000000001 /* RelockLanguage.swift */; };
+		C0DE40000000000000000012 /* RelockLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE40000000000000000001 /* RelockLanguage.swift */; };
+		C0DE40000000000000000013 /* RelockLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE40000000000000000001 /* RelockLanguage.swift */; };
+		C0DE40000000000000000014 /* RelockLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE40000000000000000001 /* RelockLanguage.swift */; };
+		C0DE40000000000000000015 /* RelockLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE40000000000000000001 /* RelockLanguage.swift */; };
 		C0DE30000000000000000001 /* HomeReportSurvivalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */; };
 		C1969627609148D28FAAC183 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C504AB07807F4A598A8D411D /* BootSplash.storyboard */; };
 		C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */ = {isa = PBXBuildFile; fileRef = EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */; };
@@ -193,6 +200,8 @@
 		99267AE42A73E61E98DE0728 /* RelockShield.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockShield.swift; path = RelockShield/RelockShield.swift; sourceTree = "<group>"; };
 		A1B2C3D40001TRACKING0001 /* RelockTracking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockTracking.swift; path = Relock/RelockTracking.swift; sourceTree = "<group>"; };
 		A1B2C3D40002TRACKING0002 /* RelockTracking.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = RelockTracking.m; path = Relock/RelockTracking.m; sourceTree = "<group>"; };
+		A1B2C3D40001ICONSWAP0001 /* RelockAppIcon.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RelockAppIcon.swift; path = Relock/RelockAppIcon.swift; sourceTree = "<group>"; };
+		A1B2C3D40002ICONSWAP0002 /* RelockAppIcon.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = RelockAppIcon.m; path = Relock/RelockAppIcon.m; sourceTree = "<group>"; };
 		A5105764AAD7F928DECAA495 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Relock/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		A673B73E1554D473DCDADCDD /* RelockShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RelockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A71C00000000000000000001 /* ReportAssets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = ReportAssets.xcassets; path = RelockActivityReport/ReportAssets.xcassets; sourceTree = "<group>"; };
@@ -212,6 +221,7 @@
 		C0DE10000000000000000020 /* RelockBridgeDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelockBridgeDiagnosticsTests.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000001 /* ExtensionLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionLog.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000002 /* ExtensionSentry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExtensionSentry.swift; sourceTree = "<group>"; };
+		C0DE40000000000000000001 /* RelockLanguage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RelockLanguage.swift; sourceTree = "<group>"; };
 		C0DE20000000000000000003 /* ExtensionLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLogTests.swift; sourceTree = "<group>"; };
 		C0DE30000000000000000002 /* HomeReportSurvivalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeReportSurvivalTests.swift; sourceTree = "<group>"; };
 		C255B7D7CE483341272A5DBA /* BlocusScreenTime.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BlocusScreenTime.swift; path = Relock/BlocusScreenTime.swift; sourceTree = "<group>"; };
@@ -312,6 +322,8 @@
 				EAA43773BD5CDEF748AB6DFA /* BlocusScreenTime.m */,
 				A1B2C3D40001TRACKING0001 /* RelockTracking.swift */,
 				A1B2C3D40002TRACKING0002 /* RelockTracking.m */,
+				A1B2C3D40001ICONSWAP0001 /* RelockAppIcon.swift */,
+				A1B2C3D40002ICONSWAP0002 /* RelockAppIcon.m */,
 				55276F1AD513ADCDA696FED4 /* ScreenTimeReportView.swift */,
 				0E239EECBD552FA87471FE5E /* ScreenTimeReportViewManager.swift */,
 				98079D45DBD5B7E03CB4ADCA /* ScreenTimeReportViewManager.mm */,
@@ -493,6 +505,7 @@
 				C0DE20000000000000000001 /* ExtensionLog.swift */,
 				C0DE10000000000000000011 /* ShieldAttemptStore.swift */,
 				C0DE10000000000000000012 /* RelockShieldCopy.swift */,
+				C0DE40000000000000000001 /* RelockLanguage.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1008,6 +1021,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE40000000000000000011 /* RelockLanguage.swift in Sources */,
 				C0DE20000000000000000011 /* ExtensionLog.swift in Sources */,
 				D1A700000000000000000004 /* NativeDurationPickerView.swift in Sources */,
 				D1A700000000000000000005 /* NativeDurationPickerViewManager.swift in Sources */,
@@ -1020,6 +1034,8 @@
 				C70C38870562AE72C60202DC /* BlocusScreenTime.m in Sources */,
 				A1B2C3D40003TRACKING0003 /* RelockTracking.swift in Sources */,
 				A1B2C3D40004TRACKING0004 /* RelockTracking.m in Sources */,
+				A1B2C3D40003ICONSWAP0003 /* RelockAppIcon.swift in Sources */,
+				A1B2C3D40004ICONSWAP0004 /* RelockAppIcon.m in Sources */,
 				0CF7C5D8BB8B78E3539478DC /* ScreenTimeReportView.swift in Sources */,
 				325143E77DE7C2351A0B913B /* ScreenTimeReportViewManager.swift in Sources */,
 				B4023F30873148ABB150DA54 /* ScreenTimeReportViewManager.mm in Sources */,
@@ -1034,6 +1050,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE40000000000000000014 /* RelockLanguage.swift in Sources */,
 				C0DE20000000000000000023 /* ExtensionSentry.swift in Sources */,
 				C0DE20000000000000000015 /* ExtensionLog.swift in Sources */,
 				AB1CE0000000000000000005 /* RelockWidgets.swift in Sources */,
@@ -1045,6 +1062,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE40000000000000000012 /* RelockLanguage.swift in Sources */,
 				C0DE20000000000000000012 /* ExtensionLog.swift in Sources */,
 				9571C7B669E6791135EE028E /* RelockActivityReport.swift in Sources */,
 				F3083772854003506E957D81 /* UsageReportView.swift in Sources */,
@@ -1069,6 +1087,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE40000000000000000015 /* RelockLanguage.swift in Sources */,
 				C0DE20000000000000000022 /* ExtensionSentry.swift in Sources */,
 				C0DE20000000000000000016 /* ExtensionLog.swift in Sources */,
 				4D1BA0600FD737B1D5856585 /* RelockShieldAction.swift in Sources */,
@@ -1090,6 +1109,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE40000000000000000013 /* RelockLanguage.swift in Sources */,
 				C0DE20000000000000000013 /* ExtensionLog.swift in Sources */,
 				A5522BB2CE6F0324926EF2B3 /* RelockShield.swift in Sources */,
 				C0DE10000000000000000002 /* ShieldAttemptStore.swift in Sources */,
@@ -1142,7 +1162,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-Relock.debug.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Orb AppIcon-Phases";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Relock/Relock.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -1150,12 +1172,12 @@
 				DEVELOPMENT_TEAM = 7K9HCH8GF2;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Relock/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1173,19 +1195,21 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-Relock.release.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Orb AppIcon-Phases";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Relock/Relock.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7K9HCH8GF2;
 				INFOPLIST_FILE = Relock/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1215,14 +1239,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShieldAction;
 				PRODUCT_NAME = RelockShieldAction;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1243,14 +1267,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockActivityReport;
 				PRODUCT_NAME = RelockActivityReport;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -1271,14 +1295,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShieldAction;
 				PRODUCT_NAME = RelockShieldAction;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -1298,14 +1322,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShield;
 				PRODUCT_NAME = RelockShield;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1327,14 +1351,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockMonitor;
 				PRODUCT_NAME = RelockMonitor;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1501,14 +1525,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockShield;
 				PRODUCT_NAME = RelockShield;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -1529,14 +1553,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockMonitor;
 				PRODUCT_NAME = RelockMonitor;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -1556,14 +1580,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockWidgets;
 				PRODUCT_NAME = RelockWidgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -1583,14 +1607,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockWidgets;
 				PRODUCT_NAME = RelockWidgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1604,7 +1628,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Le harnais de test joint le Mac de développement pour vérifier que l'iPhone peut atteindre Metro et le pont de test.";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1613,7 +1637,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_TARGET_NAME = Relock;
 			};
 			name = Debug;
@@ -1627,14 +1651,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Le harnais de test joint le Mac de développement pour vérifier que l'iPhone peut atteindre Metro et le pont de test.";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_TARGET_NAME = Relock;
 			};
 			name = Release;
@@ -1655,14 +1679,14 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.yaya.relock.RelockActivityReport;
 				PRODUCT_NAME = RelockActivityReport;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

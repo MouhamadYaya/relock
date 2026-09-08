@@ -130,7 +130,8 @@ private final class ActivityControlsOverlay: UIView {
   private func configure() {
     backgroundColor = background
 
-    titleLabel.text = "Activité"
+    titleLabel.text = RelockLanguage.pick(
+      fr: "Activité", en: "Activity", es: "Actividad")
     titleLabel.textColor = ink
     titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
     titleLabel.accessibilityTraits = .header
@@ -140,14 +141,16 @@ private final class ActivityControlsOverlay: UIView {
     configureHeaderButton(
       refreshButton,
       symbol: "arrow.clockwise",
-      label: "Rafraîchir",
+      label: RelockLanguage.pick(
+        fr: "Rafraîchir", en: "Refresh", es: "Actualizar"),
       identifier: "activity-native-refresh")
     refreshButton.addAction(UIAction { [weak self] _ in self?.onRefresh?() }, for: .touchUpInside)
 
     configureHeaderButton(
       settingsButton,
       symbol: "gearshape",
-      label: "Réglages",
+      label: RelockLanguage.pick(
+        fr: "Réglages", en: "Settings", es: "Ajustes"),
       identifier: "activity-native-settings")
     settingsButton.addAction(UIAction { [weak self] _ in self?.onSettings?() }, for: .touchUpInside)
 
@@ -181,7 +184,10 @@ private final class ActivityControlsOverlay: UIView {
 
   func acknowledgeRefresh() {
     refreshRevision += 1
-    refreshButton.accessibilityValue = "Actualisé \(refreshRevision)"
+    refreshButton.accessibilityValue = RelockLanguage.pick(
+      fr: "Actualisé \(refreshRevision)",
+      en: "Refreshed \(refreshRevision)",
+      es: "Actualizado \(refreshRevision)")
     UIView.animate(
       withDuration: 0.28,
       animations: {
@@ -276,8 +282,18 @@ private final class HomeReportControls: UIControl {
 
   override init(frame: CGRect) {
     super.init(frame: frame)
-    configure(hero, command: "home.hero", label: "Ouvrir le détail du temps d’écran")
-    configure(apps, command: "home.apps", label: "Voir les applications dans Activité")
+    configure(
+      hero, command: "home.hero",
+      label: RelockLanguage.pick(
+        fr: "Ouvrir le détail du temps d’écran",
+        en: "Open the screen time details",
+        es: "Abrir el detalle del tiempo de pantalla"))
+    configure(
+      apps, command: "home.apps",
+      label: RelockLanguage.pick(
+        fr: "Voir les applications dans Activité",
+        en: "See the apps in Activity",
+        es: "Ver las aplicaciones en Actividad"))
   }
 
   required init?(coder: NSCoder) { fatalError("init(coder:) unavailable") }
@@ -706,8 +722,7 @@ final class ScreenTimeReportView: UIView {
     reportMounted = true
     #if targetEnvironment(simulator)
       vc.rootView = AnyView(MockReport(
-        mode: mode as String, showsBlockedCard: showsBlockedCard,
-        homeReferenceFixture: UserDefaults.standard.bool(forKey: "HomeReferenceFixture")
+        mode: mode as String, showsBlockedCard: showsBlockedCard
       ).ignoresSafeArea())
     #else
       let reportIdentity = UUID()
@@ -820,13 +835,10 @@ final class ScreenTimeReportView: UIView {
   private struct MockReport: View {
     let mode: String
     let showsBlockedCard: Bool
-    let homeReferenceFixture: Bool
 
     var body: some View {
       if mode == "home" {
-        MockHomeView(
-          referenceFixture: homeReferenceFixture,
-          showsBlockedCard: showsBlockedCard)
+        MockHomeView(showsBlockedCard: showsBlockedCard)
       } else {
         MockUsageView()
       }
@@ -862,8 +874,14 @@ final class ScreenTimeReportView: UIView {
   /// Accueil factice : les valeurs n'existent QUE sur simulateur. La géométrie
   /// reste identique à HomeSectionView afin de valider le rapport unique qui
   /// traverse le héro et la carte des trois apps.
+  ///
+  /// Le héros et le classement sont TOUJOURS remplis ici. Un tiret et « les
+  /// données réelles ne sont pas simulées » décrivaient honnêtement la
+  /// situation, mais laissaient le chiffre CENTRAL de l'Accueil vide : on ne
+  /// pouvait juger ni la composition, ni une capture. Les valeurs sont
+  /// alignées sur `MockUsageView` (onglet Activité) — les deux écrans doivent
+  /// raconter la même journée, sans quoi deux captures se contredisent.
   private struct MockHomeView: View {
-    let referenceFixture: Bool
     let showsBlockedCard: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selectedApp: String?
@@ -877,35 +895,36 @@ final class ScreenTimeReportView: UIView {
         VStack(alignment: .leading, spacing: 0) {
         ZStack(alignment: .top) {
           VStack(alignment: .center, spacing: 5) {
-            Text("Temps d’écran aujourd’hui")
-              .font(.system(size: 15, weight: .medium))
+            Text(
+              RelockLanguage.pick(
+                fr: "Temps d’écran aujourd’hui", en: "Screen time today",
+                es: "Tiempo de pantalla hoy")
+            )
+            .font(.system(size: 15, weight: .medium))
               .foregroundColor(ink.opacity(0.94))
               .shadow(color: .black.opacity(0.9), radius: 7, x: 0, y: 2)
-            // « 5h34 » : aucune espace autour des unités, minutes sur deux
+            // « 3h12 » : aucune espace autour des unités, minutes sur deux
             // chiffres, unité à 0.45x la taille du nombre et même graisse.
             // Miroir de `segments` dans HeroTotalView.
             HStack(alignment: .firstTextBaseline, spacing: 0) {
-              Text(referenceFixture ? "5" : "—").font(.system(size: 48, weight: .bold)).kerning(-1.2)
+              Text("3").font(.system(size: 48, weight: .bold)).kerning(-1.2)
                 .foregroundColor(ink)
-              if referenceFixture {
-                Text("h").font(.system(size: 22, weight: .bold)).kerning(-0.4)
-                  .foregroundColor(unit.opacity(0.45))
-                Text("34").font(.system(size: 48, weight: .bold)).kerning(-1.2).foregroundColor(ink)
-              }
+              Text("h").font(.system(size: 22, weight: .bold)).kerning(-0.4)
+                .foregroundColor(unit.opacity(0.45))
+              Text("12").font(.system(size: 48, weight: .bold)).kerning(-1.2)
+                .foregroundColor(ink)
             }
-            if referenceFixture {
-              // Comparaison à la référence PERSONNELLE proratisée, jamais au
-              // total d'hier — miroir de `comparison` dans HeroTotalView.
-              HStack(spacing: 6) {
-                Image(systemName: "arrow.down")
-                  .font(.system(size: 17, weight: .bold)).foregroundColor(green)
-                Text("1h12 sous ta moyenne")
-                  .font(.system(size: 17, weight: .semibold)).foregroundColor(green)
-              }
-            } else {
-              Text("Les données réelles ne sont pas simulées.")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(ink.opacity(0.68))
+            // Comparaison à la référence PERSONNELLE proratisée, jamais au
+            // total d'hier — miroir de `comparison` dans HeroTotalView.
+            HStack(spacing: 6) {
+              Image(systemName: "arrow.down")
+                .font(.system(size: 17, weight: .bold)).foregroundColor(green)
+              Text(
+                RelockLanguage.pick(
+                  fr: "1h12 sous ta moyenne", en: "1h12 below your average",
+                  es: "1h12 por debajo de tu media")
+              )
+              .font(.system(size: 17, weight: .semibold)).foregroundColor(green)
             }
           }
           .frame(maxWidth: .infinity)
@@ -921,12 +940,15 @@ final class ScreenTimeReportView: UIView {
         Color.clear.frame(height: showsBlockedCard ? 328 : 24)
 
         VStack(alignment: .leading, spacing: 16) {
-          Text("Top 3 applications aujourd’hui")
-            .font(.system(size: 15, weight: .semibold))
+          Text(
+            RelockLanguage.pick(
+              fr: "Top 3 applications aujourd’hui", en: "Top 3 apps today",
+              es: "Top 3 apps hoy")
+          )
+          .font(.system(size: 15, weight: .semibold))
             .foregroundColor(ink)
-          if referenceFixture {
-            VStack(spacing: 12) {
-              ForEach(Array(referenceApps.enumerated()), id: \.offset) { _, app in
+          VStack(spacing: 12) {
+            ForEach(Array(referenceApps.enumerated()), id: \.offset) { _, app in
                 Button {
                   let action = { selectedApp = selectedApp == app.name ? nil : app.name }
                   if reduceMotion { action() } else { withAnimation(.easeOut(duration: 0.2), action) }
@@ -983,14 +1005,6 @@ final class ScreenTimeReportView: UIView {
                 .buttonStyle(.plain)
               }
             }
-          } else {
-            VStack(spacing: 12) {
-              ForEach(0..<3, id: \.self) { _ in
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                  .fill(Color.white.opacity(0.045)).frame(height: 46)
-              }
-            }
-          }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
@@ -1006,13 +1020,9 @@ final class ScreenTimeReportView: UIView {
       }
     }
 
-    private var referenceApps: [MockApp] {
-      [
-        MockApp(name: "TikTok", minutes: 132, symbol: "music.note", tint: Color.black),
-        MockApp(name: "Instagram", minutes: 88, symbol: "camera.fill", tint: Color(red: 0.79, green: 0.23, blue: 0.67)),
-        MockApp(name: "YouTube", minutes: 52, symbol: "play.fill", tint: Color(red: 0.92, green: 0.08, blue: 0.12)),
-      ]
-    }
+    /// Les trois premières de `mockApps` (onglet Activité), aux mêmes durées :
+    /// l'Accueil et l'Activité doivent décrire la même journée.
+    private var referenceApps: [MockApp] { Array(mockApps.prefix(3)) }
   }
 
   /// Écran Activité factice : total, graphe, classement (miroir d'UsageReportView).
@@ -1032,7 +1042,11 @@ final class ScreenTimeReportView: UIView {
           Color.clear.frame(height: 134).accessibilityHidden(true)
           // Résumé
           VStack(alignment: .leading, spacing: 4) {
-            Text("Temps d'écran").font(.system(size: 13)).foregroundColor(ink2)
+            Text(
+              RelockLanguage.pick(
+                fr: "Temps d'écran", en: "Screen time", es: "Tiempo de pantalla")
+            )
+            .font(.system(size: 13)).foregroundColor(ink2)
             Text("3 h 12").font(.system(size: 34, weight: .bold)).foregroundColor(ink)
           }
 
@@ -1082,7 +1096,10 @@ final class ScreenTimeReportView: UIView {
           .accessibilityIdentifier("activity-native-apps")
 
           VStack(alignment: .leading, spacing: 12) {
-            Text("Autres statistiques")
+            Text(
+              RelockLanguage.pick(
+                fr: "Autres statistiques", en: "Other statistics",
+                es: "Otras estadísticas"))
               .font(.system(size: 23, weight: .bold))
               .foregroundColor(ink)
             mockStatCard(

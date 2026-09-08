@@ -67,6 +67,14 @@ react {
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ *
+ * ⚠️ ENCORE À `false`, et c'est délibéré : les règles de `proguard-rules.pro`
+ * sont écrites et prêtes, mais une règle manquante ne se voit PAS à la
+ * compilation — elle produit un plantage au lancement ou une fonctionnalité
+ * muette, uniquement dans le binaire minifié. Passer à `true` demande donc de
+ * valider un APK de release sur un appareil réel (marche à suivre détaillée en
+ * bas de `proguard-rules.pro`). Le gain attendu est un APK sensiblement plus
+ * petit et un démarrage plus court côté Android ; il ne concerne pas iOS.
  */
 def enableProguardInReleaseBuilds = false
 

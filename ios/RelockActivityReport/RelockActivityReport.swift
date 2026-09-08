@@ -458,12 +458,12 @@ private struct HomeReportCopy {
   let footerRest: [String]
 
   static var current: HomeReportCopy {
-    // L'interface React Native démarre en français. Une extension de rapport
-    // reçoit cependant la langue SYSTÈME, pas celle choisie dans Relock; utiliser
-    // cette valeur produisait une Home moitié française, moitié anglaise.
-    let language = "fr"
-    switch language {
-    case "fr":
+    // La langue vient de l'app, pas du système : une extension de rapport
+    // reçoit la langue SYSTÈME, et l'utiliser produisait une Home moitié
+    // espagnole, moitié anglaise. `RelockLanguage` lit la valeur publiée dans
+    // le groupe d'app par `src/i18n/i18n.ts`.
+    switch RelockLanguage.current {
+    case .french:
       return HomeReportCopy(
         screenTimeToday: "Temps d’écran aujourd’hui",
         topApps: "Top 3 applications aujourd’hui",
@@ -498,77 +498,42 @@ private struct HomeReportCopy {
           "Bon rythme, avec un peu plus d’écran que ta moyenne.",
           "Journée maîtrisée : tu laisses ton écran de côté.",
         ])
-    case "de":
+    case .spanish:
       return HomeReportCopy(
-        screenTimeToday: "Bildschirmzeit heute",
-        topApps: "Meistgenutzte Apps",
-        noUsage: "Heute wurde noch keine Nutzung gemessen.",
-        onAverage: "in deinem Schnitt",
-        belowAverage: { "\($0) unter deinem Schnitt" },
-        aboveAverage: { "\($0) über deinem Schnitt" },
-        improvingContext: "Ein ausgewogenerer Rhythmus als gestern.",
-        stableContext: "Ein ähnlicher Rhythmus wie gestern.",
-        risingContext: "Ein intensiverer Rhythmus als gestern.",
-        globalScore: "Gesamtscore",
-        focusScore: "Fokus",
-        restScore: "Ruhe",
-        today: "Heute",
-        scoreCalculating: "Wird berechnet",
-        scoreDeltaSuffix: "vs. gestern",
+        screenTimeToday: "Tiempo de pantalla hoy",
+        topApps: "Top 3 aplicaciones de hoy",
+        noUsage: "Hoy todavía no se ha medido ningún uso.",
+        onAverage: "dentro de tu media",
+        belowAverage: { "\($0) por debajo de tu media" },
+        aboveAverage: { "\($0) por encima de tu media" },
+        improvingContext: "Un ritmo más equilibrado que ayer.",
+        stableContext: "Un ritmo estable respecto a ayer.",
+        risingContext: "Un ritmo más intenso que ayer.",
+        globalScore: "Puntuación global",
+        focusScore: "Foco",
+        restScore: "Descanso",
+        today: "Hoy",
+        scoreCalculating: "Calculando",
+        scoreDeltaSuffix: "vs ayer",
         bands: [
-          "Fragile Balance", "Mittlere Balance", "Gute Balance",
-          "Ausgezeichnete Balance",
+          "Equilibrio frágil", "Equilibrio medio", "Buen equilibrio",
+          "Excelente equilibrio",
         ],
-        footerPending: "Wird berechnet",
-        footerProvisional: "Noch ungefähr — der Score wird täglich genauer.",
+        footerPending: "Calculando",
+        footerProvisional: "Puntuación aún aproximada: se afina cada día.",
         footerFocus: [
-          "Du greifst heute oft zum Handy. Eine Sperre würde helfen.",
-          "Deine Aufmerksamkeit zerfällt: viele Unterbrechungen heute.",
-          "Guter Rhythmus. Etwas häufiger am Handy als sonst.",
-          "Starker Tag: deine Aufmerksamkeit hält.",
+          "Hoy te desconectas a menudo. Un bloqueo te ayudaría a aguantar.",
+          "Tu atención se fragmenta: hoy hay muchas idas y venidas.",
+          "Buen ritmo. Coges el móvil un poco más de lo habitual.",
+          "Día bajo control: tu atención aguanta.",
         ],
         footerRest: [
-          "Viel Bildschirmzeit heute. Gönn dir eine echte Pause.",
-          "Du verbringst mehr Zeit am Bildschirm als sonst.",
-          "Guter Rhythmus, mit etwas mehr Bildschirmzeit als üblich.",
-          "Starker Tag: du lässt den Bildschirm liegen.",
+          "Mucha pantalla hoy. Date un descanso de verdad.",
+          "Pasas más tiempo frente a la pantalla de lo habitual.",
+          "Buen ritmo, con algo más de pantalla que tu media.",
+          "Día bajo control: dejas la pantalla de lado.",
         ])
-    case "ru":
-      return HomeReportCopy(
-        screenTimeToday: "Экранное время сегодня",
-        topApps: "Самые используемые приложения",
-        noUsage: "Сегодня использование пока не зафиксировано.",
-        onAverage: "в пределах твоей нормы",
-        belowAverage: { "на \($0) ниже твоей нормы" },
-        aboveAverage: { "на \($0) выше твоей нормы" },
-        improvingContext: "Более сбалансированный ритм, чем вчера.",
-        stableContext: "Ритм на уровне вчерашнего дня.",
-        risingContext: "Более интенсивный ритм, чем вчера.",
-        globalScore: "Общий балл",
-        focusScore: "Фокус",
-        restScore: "Отдых",
-        today: "Сегодня",
-        scoreCalculating: "Идёт расчёт",
-        scoreDeltaSuffix: "к вчера",
-        bands: [
-          "Хрупкий баланс", "Средний баланс", "Хороший баланс",
-          "Отличный баланс",
-        ],
-        footerPending: "Идёт расчёт",
-        footerProvisional: "Пока приблизительно — балл уточняется каждый день.",
-        footerFocus: [
-          "Сегодня ты часто отвлекаешься. Блокировка помогла бы удержаться.",
-          "Внимание дробится: сегодня слишком много переключений.",
-          "Хороший ритм. Берёшь телефон чуть чаще обычного.",
-          "Собранный день: внимание держится.",
-        ],
-        footerRest: [
-          "Сегодня много экрана. Устрой себе настоящий перерыв.",
-          "Ты проводишь у экрана больше времени, чем обычно.",
-          "Хороший ритм, экрана чуть больше среднего.",
-          "Собранный день: ты откладываешь экран.",
-        ])
-    default:
+    case .english:
       return HomeReportCopy(
         screenTimeToday: "Screen time today",
         topApps: "Top 3 apps today",
