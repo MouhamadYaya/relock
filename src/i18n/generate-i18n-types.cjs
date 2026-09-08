@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const localesDir = path.join(__dirname, 'locales')
-const languages = ['en', 'ru', 'de']
+const languages = ['fr', 'en', 'es']
 
 /** Flat locale files: `locales/en.json` (matches i18n.ts imports). */
 let template = null

@@ -1,0 +1,4 @@
+/* Voir en.lproj/InfoPlist.strings : ces libellés sont ceux qu'iOS affiche
+   lui-même, dans la langue du téléphone. */
+"NSPhotoLibraryUsageDescription" = "Choisis une photo dans ta galerie pour l’utiliser comme photo de profil. Relock n’accède à aucune autre image.";
+"NSLocalNetworkUsageDescription" = "Relock se connecte au serveur de développement sur ton réseau local. Le blocage d’apps n’en dépend pas.";

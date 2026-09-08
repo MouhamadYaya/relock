@@ -487,6 +487,7 @@ declare module 'i18next' {
             "schedule": string;
             "limit": string;
             "timed": string;
+            "daily_limit": string;
           };
           "resume_sheet": {
             "title": string;
@@ -504,6 +505,187 @@ declare module 'i18next' {
           };
           "preset_recap": {
             "activate": string;
+            "done_title": string;
+            "done_body_one": string;
+            "done_body_other": string;
+            "done_strict": string;
+            "done_soft": string;
+            "finish": string;
+            "apps_todo": string;
+            "apps_note": string;
+            "not_now": string;
+          };
+          "days": {
+            "every_day": string;
+            "weekdays": string;
+            "weekend": string;
+            "separator": string;
+            "short": {
+              "0": string;
+              "1": string;
+              "2": string;
+              "3": string;
+              "4": string;
+              "5": string;
+              "6": string;
+            };
+          };
+          "preset_detail": {
+            "limit": string;
+            "timed": string;
+            "schedule": string;
+          };
+          "preset_lines": {
+            "type": string;
+            "limit": string;
+            "limit_value": string;
+            "days": string;
+            "once_spent": string;
+            "once_spent_value": string;
+            "duration": string;
+            "duration_value": string;
+            "starts": string;
+            "starts_now": string;
+            "slot": string;
+            "strict": string;
+            "strict_yes": string;
+          };
+          "presets": {
+            "focus": {
+              "title": string;
+              "pitch": string;
+            };
+            "nuit": {
+              "title": string;
+              "pitch": string;
+            };
+            "reveil": {
+              "title": string;
+              "pitch": string;
+            };
+            "matin": {
+              "title": string;
+              "pitch": string;
+            };
+            "aprem": {
+              "title": string;
+              "pitch": string;
+            };
+            "repas": {
+              "title": string;
+              "pitch": string;
+            };
+            "weekend": {
+              "title": string;
+              "pitch": string;
+            };
+            "dose": {
+              "title": string;
+              "pitch": string;
+            };
+            "micro": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-work": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-focus": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-study": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-creative": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-decompression": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-sleep": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-evening": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-weekend": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-morning": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-social": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-doomscroll": {
+              "title": string;
+              "pitch": string;
+            };
+            "new-rule-family": {
+              "title": string;
+              "pitch": string;
+            };
+          };
+          "rule_type_label": {
+            "progressive_delay": string;
+            "schedule": string;
+            "daily_limit": string;
+          };
+          "apps_subtitle": {
+            "blocked_one": string;
+            "blocked_other": string;
+            "none": string;
+          };
+          "status_line": {
+            "schedule": string;
+            "limit_started": string;
+            "limit": string;
+            "done": string;
+            "remaining": string;
+          };
+          "duration": {
+            "minutes": string;
+            "hours": string;
+            "hours_minutes": string;
+          };
+          "app_count_one": string;
+          "app_count_other": string;
+          "per_day": string;
+          "state_line": {
+            "suspended_indefinite": string;
+            "resumes_in": string;
+            "ends_at": string;
+            "limit_reached": string;
+            "limit_of": string;
+            "left_today": string;
+            "until": string;
+            "still_left": string;
+            "starts_at": string;
+            "tomorrow_at": string;
+            "in_duration": string;
+          };
+          "list": {
+            "title": string;
+            "none_running": string;
+            "running_count_one": string;
+            "running_count_other": string;
+            "new": string;
+            "create": string;
+            "empty_title": string;
+            "empty_body": string;
+            "section_running": string;
+            "section_upcoming": string;
+            "section_suspended": string;
           };
         };
         "home": {
@@ -528,20 +710,7 @@ declare module 'i18next' {
             "title": string;
             "body": string;
           };
-          "stat_done": string;
-          "stat_active": string;
-          "stat_streak": string;
-          "featured_title": string;
-          "featured_subtitle": string;
-          "quick_actions": string;
-          "overview": string;
-          "recent_activity": string;
           "title": string;
-          "quick_action_task": string;
-          "quick_action_message": string;
-          "quick_action_schedule": string;
-          "quick_action_report": string;
-          "quick_action_upload": string;
           "resisted_lead": string;
           "openings": string;
           "streak_current": string;
@@ -600,9 +769,6 @@ declare module 'i18next' {
           "new_user_body": string;
           "new_user_action": string;
           "data_error": string;
-          "permission_title": string;
-          "permission_settings_body": string;
-          "permission_later": string;
           "permission_open_settings": string;
           "close": string;
           "score_footer_provisional": string;
@@ -639,6 +805,18 @@ declare module 'i18next' {
           "interceptions": string;
           "per_hour": string;
           "top_apps": string;
+          "state": {
+            "report_unavailable_title": string;
+            "report_unavailable_body": string;
+            "denied_title": string;
+            "denied_body": string;
+            "allow": string;
+            "error_title": string;
+            "error_body": string;
+            "device_title": string;
+            "device_body": string;
+            "loading": string;
+          };
         };
         "add": {
           "title": string;
@@ -663,8 +841,16 @@ declare module 'i18next' {
             "label": string;
             "french": string;
             "english": string;
-            "russian": string;
-            "german": string;
+            "spanish": string;
+          };
+          "logo": {
+            "label": string;
+            "hint": string;
+            "classic": string;
+            "orb": string;
+            "phases": string;
+            "footnote": string;
+            "error": string;
           };
           "theme": string;
           "theme_light": string;
@@ -715,6 +901,7 @@ declare module 'i18next' {
             "restore": string;
             "restore_done": string;
             "restore_none": string;
+            "restore_failed": string;
             "unavailable": string;
             "footnote": string;
           };
@@ -739,6 +926,16 @@ declare module 'i18next' {
           "screen_time_missing": string;
           "screen_time_unavailable_title": string;
           "screen_time_unavailable_body": string;
+          "screen_time_help_title": string;
+          "screen_time_help_intro": string;
+          "screen_time_help_step1_title": string;
+          "screen_time_help_step1_body": string;
+          "screen_time_help_step2_title": string;
+          "screen_time_help_step2_body": string;
+          "screen_time_help_note": string;
+          "screen_time_help_recheck": string;
+          "screen_time_help_granted": string;
+          "screen_time_help_still_denied": string;
           "blocks": string;
           "blocks_hint": string;
           "protection_footnote": string;
@@ -856,20 +1053,13 @@ declare module 'i18next' {
         "onboarding": {
           "headline": string;
           "tagline": string;
+          "get_started": string;
           "feature_1_title": string;
           "feature_1_body": string;
           "feature_2_title": string;
           "feature_2_body": string;
           "feature_3_title": string;
           "feature_3_body": string;
-          "get_started": string;
-        };
-        "uikit": {
-          "title": string;
-          "section_buttons": string;
-          "section_typography": string;
-          "section_icons": string;
-          "section_surfaces": string;
         };
         "app": {
           "title": string;
@@ -1121,6 +1311,593 @@ declare module 'i18next' {
           "soft_ask_body": string;
           "soft_ask_decline": string;
           "soft_ask_accept": string;
+        };
+        "onboarding_plan": {
+          "list": {
+            "separator": string;
+            "and": string;
+            "and_alt": string;
+          };
+          "moment": {
+            "bed": string;
+            "wake": string;
+            "work": string;
+            "break": string;
+            "transport": string;
+            "meals": string;
+            "weekend": string;
+            "always": string;
+          };
+          "feeling": {
+            "guilt": string;
+            "empty": string;
+            "anxious": string;
+            "wasted": string;
+            "drained": string;
+            "overwhelmed": string;
+            "foggy": string;
+            "regret": string;
+            "unproductive": string;
+            "disconnected": string;
+            "angry": string;
+            "hopeless": string;
+            "ashamed": string;
+            "lonely": string;
+            "restless": string;
+            "numb": string;
+          };
+          "stolen": {
+            "nights": string;
+            "people": string;
+            "becoming": string;
+            "focus": string;
+            "presence": string;
+            "energy": string;
+            "mornings": string;
+            "sport": string;
+            "projects": string;
+            "calm": string;
+            "pride": string;
+          };
+          "attempt": {
+            "deleted": string;
+            "limit": string;
+            "willpower": string;
+            "distance": string;
+            "hidden": string;
+            "grayscale": string;
+            "notifications": string;
+            "blocker": string;
+            "detox": string;
+            "logout": string;
+          };
+          "aspiration": {
+            "sleep": string;
+            "move": string;
+            "read": string;
+            "people": string;
+            "project": string;
+            "hobby": string;
+            "breathe": string;
+            "cook": string;
+            "work": string;
+            "morning": string;
+            "study": string;
+            "present": string;
+            "family": string;
+            "nature": string;
+            "learn": string;
+            "create": string;
+            "music": string;
+            "silence": string;
+          };
+          "aspiration_word": {
+            "sleep": string;
+            "move": string;
+            "read": string;
+            "people": string;
+            "project": string;
+            "hobby": string;
+            "breathe": string;
+            "cook": string;
+            "work": string;
+            "morning": string;
+            "study": string;
+            "present": string;
+            "family": string;
+            "nature": string;
+            "learn": string;
+            "create": string;
+            "music": string;
+            "silence": string;
+          };
+          "default_word": {
+            "presence": string;
+            "sleep": string;
+            "calm": string;
+            "freedom": string;
+            "life": string;
+          };
+          "intention": {
+            "bed": string;
+            "sleep": string;
+            "focus": string;
+            "goals": string;
+            "presence": string;
+            "mood": string;
+            "habit": string;
+            "time": string;
+            "control": string;
+          };
+          "intention_default": string;
+          "recap": {
+            "named_apps_moment": string;
+            "named_apps": string;
+            "named_moment": string;
+            "apps_moment": string;
+            "apps": string;
+            "moment": string;
+            "fallback_named": string;
+            "fallback": string;
+          };
+          "feeling_sentence": string;
+          "loss_sentence": string;
+          "defense_never": string;
+          "defense_tried": string;
+        };
+        "add_rule": {
+          "type_question": string;
+          "types": {
+            "block_now": {
+              "title": string;
+              "desc": string;
+            };
+            "schedule": {
+              "title": string;
+              "desc": string;
+            };
+            "daily_limit": {
+              "title": string;
+              "desc": string;
+            };
+          };
+          "days": {
+            "every_day": string;
+            "weekdays": string;
+            "weekend": string;
+          };
+          "name_placeholder": string;
+          "start": string;
+          "end": string;
+          "limit_per_day": string;
+          "duration_a11y": string;
+          "limit_a11y": string;
+          "pick_apps": string;
+          "apple_picker": string;
+          "tap_to_edit": string;
+          "activated": string;
+          "strict_explain": string;
+          "warn_same_bounds": string;
+          "warn_too_short": string;
+          "summary_timed_one": string;
+          "summary_timed_other": string;
+          "summary_strict_suffix": string;
+          "summary_schedule": string;
+          "summary_limit": string;
+          "summary_limit_note": string;
+          "strict_hint": string;
+          "warn_title": string;
+        };
+        "onboarding_survey": {
+          "trigger": {
+            "title": string;
+            "title_named": string;
+            "sub": string;
+            "time": string;
+            "bed": string;
+            "focus": string;
+            "control": string;
+            "sleep": string;
+            "habit": string;
+            "mood": string;
+            "presence": string;
+            "goals": string;
+          };
+          "apps": {
+            "title": string;
+            "sub": string;
+            "study": string;
+          };
+          "moment": {
+            "title": string;
+            "sub": string;
+            "bed": string;
+            "wake": string;
+            "work": string;
+            "break": string;
+            "transport": string;
+            "meals": string;
+            "weekend": string;
+            "always": string;
+          };
+          "feelings": {
+            "title": string;
+            "sub": string;
+            "study": string;
+            "guilt": string;
+            "empty": string;
+            "anxious": string;
+            "wasted": string;
+            "drained": string;
+            "overwhelmed": string;
+            "foggy": string;
+            "regret": string;
+            "unproductive": string;
+            "disconnected": string;
+            "angry": string;
+            "hopeless": string;
+            "ashamed": string;
+            "lonely": string;
+            "restless": string;
+            "numb": string;
+          };
+          "stolen": {
+            "title": string;
+            "sub": string;
+            "hint": string;
+            "nights": string;
+            "people": string;
+            "becoming": string;
+            "focus": string;
+            "presence": string;
+            "energy": string;
+            "mornings": string;
+            "sport": string;
+            "projects": string;
+            "calm": string;
+            "pride": string;
+          };
+          "attempts": {
+            "title": string;
+            "sub": string;
+            "hint": string;
+            "hint_never": string;
+            "deleted": string;
+            "limit": string;
+            "willpower": string;
+            "distance": string;
+            "hidden": string;
+            "grayscale": string;
+            "notifications": string;
+            "blocker": string;
+            "detox": string;
+            "logout": string;
+            "never": string;
+          };
+          "aspiration": {
+            "title": string;
+            "title_time": string;
+            "sub": string;
+            "hint": string;
+            "sleep": string;
+            "move": string;
+            "read": string;
+            "people": string;
+            "project": string;
+            "hobby": string;
+            "breathe": string;
+            "cook": string;
+            "work": string;
+            "morning": string;
+            "study": string;
+            "present": string;
+            "family": string;
+            "nature": string;
+            "learn": string;
+            "create": string;
+            "music": string;
+            "silence": string;
+          };
+          "screen_time": {
+            "title": string;
+            "sub": string;
+            "lt2": string;
+            "2to4": string;
+            "4to6": string;
+            "6to8": string;
+            "gt8": string;
+          };
+        };
+        "onboarding_intro": {
+          "welcome": {
+            "hero_before": string;
+            "hero_gain": string;
+            "hero_middle": string;
+            "hero_span": string;
+            "hero_after": string;
+          };
+          "demo": {
+            "feed_tab": string;
+            "shield_sub": string;
+            "title": string;
+            "title_accent": string;
+            "sub": string;
+            "cta": string;
+          };
+          "name": {
+            "title": string;
+            "sub": string;
+            "placeholder": string;
+          };
+          "hours": {
+            "title": string;
+            "sub": string;
+            "unit": string;
+            "less": string;
+            "more": string;
+            "unknown": string;
+          };
+          "proof": {
+            "title_before": string;
+            "title_accent": string;
+            "title_after": string;
+            "tag_without": string;
+            "tag_with": string;
+            "axis_future": string;
+            "benefit": {
+              "focus": {
+                "lead": string;
+                "rest": string;
+              };
+              "time": {
+                "lead": string;
+                "rest": string;
+              };
+              "presence": {
+                "lead": string;
+                "rest": string;
+              };
+            };
+            "study": string;
+            "footnote": string;
+          };
+          "science": {
+            "badge": string;
+            "open_a11y": string;
+            "close_a11y": string;
+            "title": string;
+            "lede": string;
+            "friction_title": string;
+            "friction_body": string;
+            "habit_title": string;
+            "habit_body": string;
+            "focus_title": string;
+            "focus_body": string;
+            "caveat": string;
+            "close": string;
+          };
+        };
+        "onboarding_tutorial": {
+          "ground": {
+            "title": string;
+          };
+          "lock": {
+            "title": string;
+          };
+          "hard": {
+            "badge": string;
+            "switch": string;
+            "title": string;
+            "sub": string;
+            "footnote": string;
+          };
+          "picker_demo": {
+            "title": string;
+            "sub": string;
+            "understood": string;
+            "watch": string;
+          };
+          "pick_apps": {
+            "title": string;
+            "sub": string;
+            "open_picker": string;
+            "how_to": string;
+            "selected_one": string;
+            "selected_other": string;
+            "edit_selection": string;
+            "empty": string;
+          };
+          "rules": {
+            "applies_to_one": string;
+            "applies_to_other": string;
+            "applies_future": string;
+            "sub_one": string;
+            "sub_other": string;
+            "sub_generic": string;
+            "title": string;
+            "title_named": string;
+            "activating": string;
+            "activate_one": string;
+            "activate_other": string;
+            "footnote_one": string;
+            "footnote_other": string;
+          };
+        };
+        "errors": {
+          "preset_not_found": string;
+          "screen_time_missing": string;
+          "not_signed_in": string;
+          "birth_date_unavailable": string;
+          "reauth_required": string;
+          "sign_in_cancelled": string;
+          "apple_unavailable": string;
+          "reset_failed": string;
+          "family_controls_unavailable": string;
+          "upload_denied": string;
+          "upload_failed": string;
+        };
+        "onboarding_recognition": {
+          "intro": string;
+          "look_up": string;
+          "elapsed": string;
+          "question": string;
+          "cta": string;
+        };
+        "onboarding_victory": {
+          "title": string;
+          "body": string;
+          "status": string;
+          "note": string;
+          "cta": string;
+        };
+        "onboarding_auth": {
+          "title_1": string;
+          "title_2": string;
+          "sub": string;
+          "apple": string;
+          "google": string;
+          "privacy": string;
+        };
+        "onboarding_plan_actions": {
+          "block": {
+            "title": string;
+            "detail": string;
+            "preparing": string;
+          };
+          "pause": {
+            "title": string;
+            "detail": string;
+            "preparing": string;
+          };
+          "progress": {
+            "title": string;
+            "detail": string;
+            "preparing": string;
+          };
+          "preparing_title": string;
+          "progress_a11y": string;
+          "ready": string;
+          "card_title": string;
+          "state_done": string;
+          "state_current": string;
+          "state_todo": string;
+          "note": string;
+          "goal_note": string;
+        };
+        "onboarding_plan_summary": {
+          "annual_goal": string;
+          "days_one": string;
+          "days_other": string;
+          "for": string;
+          "yourself": string;
+          "less_per_day": string;
+          "cap_generic": string;
+          "cap_goal": string;
+          "next_step": string;
+          "cta": string;
+          "what_you_said": string;
+        };
+        "onboarding_verdict": {
+          "beat_1": string;
+          "beat_2": string;
+          "beat_cta": string;
+          "mirror_lead": string;
+          "per_year": string;
+          "mirror_a11y": string;
+          "mirror_body": string;
+          "mirror_cta": string;
+          "mirror_footnote": string;
+          "good_lead": string;
+          "good_a11y_one": string;
+          "good_a11y_other": string;
+          "press": {
+            "meta": {
+              "quote": string;
+              "source": string;
+              "context": string;
+            };
+            "trial": {
+              "quote": string;
+              "source": string;
+              "context": string;
+            };
+            "tiktok": {
+              "quote": string;
+              "source": string;
+              "context": string;
+            };
+          };
+          "reversal_title": string;
+          "reversal_body": string;
+          "reversal_verdict": string;
+          "reversal_cta": string;
+        };
+        "onboarding_power": {
+          "dont_allow": string;
+          "learn_more": string;
+          "screen_time": {
+            "card_body": string;
+            "card_title": string;
+            "continue_without": string;
+            "denied": string;
+            "denied_final": string;
+            "hero": string;
+            "privacy": string;
+          };
+          "notifs": {
+            "hero": string;
+            "card_title": string;
+            "card_body": string;
+          };
+        };
+        "onboarding_ritual": {
+          "idle": {
+            "title": string;
+            "sub": string;
+          };
+          "hold": {
+            "title": string;
+            "sub": string;
+          };
+          "paused": {
+            "title": string;
+            "sub": string;
+          };
+          "sealed": {
+            "title": string;
+            "sub": string;
+          };
+          "seal_a11y": string;
+          "seal_hint_assistive": string;
+          "seal_hint": string;
+        };
+        "onboarding_rule_info": {
+          "scope_one": string;
+          "scope_other": string;
+          "scope_empty": string;
+          "close_a11y": string;
+          "lede": string;
+          "when": string;
+          "which_apps": string;
+          "what_happens": string;
+          "what_happens_body": string;
+          "footnote": string;
+          "select_hint": string;
+          "deselect_hint": string;
+          "what_rule_does": string;
+          "open_explanation": string;
+        };
+        "onboarding_picker": {
+          "category": {
+            "all": string;
+            "social": string;
+            "games": string;
+            "fun": string;
+            "creative": string;
+            "reading": string;
+            "shopping": string;
+            "work": string;
+          };
         };
       };
     };

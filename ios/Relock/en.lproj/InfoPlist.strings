@@ -1,0 +1,5 @@
+/* Permission prompts shown by iOS. They must follow the language of the
+   phone, not the one hard-coded in Info.plist — a Spanish iPhone was being
+   asked for its photo library in French. */
+"NSPhotoLibraryUsageDescription" = "Pick a photo from your library to use as your profile picture. Relock accesses no other image.";
+"NSLocalNetworkUsageDescription" = "Relock connects to the development server on your local network. App blocking does not depend on it.";

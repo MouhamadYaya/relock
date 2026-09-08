@@ -74,65 +74,65 @@
     "restore": "Restore",
     "terms": "Terms",
     "privacy": "Privacy",
-    "before": "AVANT",
-    "with_relock": "AVEC RELOCK",
-    "before_title": "Encore un scroll.",
-    "after_title": "Enfin une pause.",
-    "benefits_title": "Moins de scroll.",
-    "benefits_accent": "Plus de vie.",
-    "benefit_block_title": "Tes distractions, à distance.",
-    "benefit_block_body": "Bloque les apps qui te font perdre le fil.",
-    "benefit_pause_title": "Un réflexe en moins.",
-    "benefit_pause_body": "Une pause avant de rouvrir, pour choisir vraiment.",
-    "benefit_life_title": "Du temps qui t’appartient.",
-    "benefit_life_body": "Pour avancer, souffler ou être avec les autres.",
-    "benefits_note": "Tu choisis les apps. Tu choisis les moments.",
-    "discover_plans": "Découvrir mon accès Relock",
-    "plans_title": "Choisis ton accès",
+    "before": "BEFORE",
+    "with_relock": "WITH RELOCK",
+    "before_title": "One more scroll.",
+    "after_title": "A pause at last.",
+    "benefits_title": "Less scrolling.",
+    "benefits_accent": "More living.",
+    "benefit_block_title": "Your distractions, out of reach.",
+    "benefit_block_body": "Block the apps that keep pulling you away.",
+    "benefit_pause_title": "One reflex less.",
+    "benefit_pause_body": "A pause before you reopen, so you really choose.",
+    "benefit_life_title": "Time that belongs to you.",
+    "benefit_life_body": "To move forward, to breathe, or to be with others.",
+    "benefits_note": "You choose the apps. You choose the moments.",
+    "discover_plans": "See my Relock access",
+    "plans_title": "Choose your access",
     "plans_accent": "Relock.",
     "choose_plan": "Choose a plan",
-    "annual": "Annuel",
-    "monthly": "Mensuel",
-    "annual_badge": "LE MEILLEUR TARIF SUR L’ANNÉE",
-    "offer_badge": "TON TARIF PRIVILÉGIÉ",
-    "billed_year": "{{price}} facturés par an",
-    "billed_month": "{{price}} facturés par mois",
-    "price_year": "{{price}} / an",
-    "price_month": "{{price}} / mois",
-    "per_month": "par mois",
-    "per_year_short": " / an",
-    "month_equivalent": "Soit {{price}} par mois",
-    "included_title": "Tout pour reprendre la main.",
-    "included_block": "Tes apps bloquées aux moments choisis",
-    "included_pause": "Une pause pour casser le scroll automatique",
-    "included_progress": "Ton temps d’écran et tes progrès, au même endroit",
-    "promise": "Résiliable depuis les réglages de l’App Store.",
-    "start_trial_one": "Essayer {{count}} jour gratuitement",
-    "start_trial_other": "Essayer {{count}} jours gratuitement",
-    "subscribe": "Choisir cette formule",
-    "trial_billing_one": "{{count}} jour offert, puis {{billing}}. Renouvellement automatique, sauf résiliation.",
-    "trial_billing_other": "{{count}} jours offerts, puis {{billing}}. Renouvellement automatique, sauf résiliation.",
-    "regular_billing": "{{billing}}. Renouvellement automatique, sauf résiliation.",
-    "offer_eyebrow": "OFFRE SPÉCIALE · APERÇU",
-    "discount": "−{{percent}} %",
-    "offer_forever": "SUR TON ABONNEMENT ANNUEL",
-    "offer_banner": "−{{percent}} % · TOUS LES ANS",
-    "offer_title": "Ton temps mérite ça.",
-    "offer_subtitle": "Tout Relock. Un tarif plus doux.",
-    "offer_renewal": "{{price}} facturés chaque année. Tarif conservé tant que ton abonnement reste actif. Résiliable à tout moment.",
-    "claim_offer": "Profiter de mon offre",
-    "decline_offer": "Non merci, continuer sans l’offre",
-    "preview_title": "Aperçu du paywall",
-    "preview_label": "DEV · Tarifs provisoires",
+    "annual": "Yearly",
+    "monthly": "Monthly",
+    "annual_badge": "BEST VALUE OVER A YEAR",
+    "offer_badge": "YOUR SPECIAL RATE",
+    "billed_year": "{{price}} billed yearly",
+    "billed_month": "{{price}} billed monthly",
+    "price_year": "{{price}} / year",
+    "price_month": "{{price}} / month",
+    "per_month": "per month",
+    "per_year_short": " / yr",
+    "month_equivalent": "That's {{price}} per month",
+    "included_title": "Everything you need to take back control.",
+    "included_block": "Your apps blocked at the moments you choose",
+    "included_pause": "A pause that breaks the automatic scroll",
+    "included_progress": "Your screen time and your progress, in one place",
+    "promise": "Cancel any time from your App Store settings.",
+    "start_trial_one": "Try {{count}} day free",
+    "start_trial_other": "Try {{count}} days free",
+    "subscribe": "Choose this plan",
+    "trial_billing_one": "{{count}} day free, then {{billing}}. Renews automatically unless cancelled.",
+    "trial_billing_other": "{{count}} days free, then {{billing}}. Renews automatically unless cancelled.",
+    "regular_billing": "{{billing}}. Renews automatically unless cancelled.",
+    "offer_eyebrow": "SPECIAL OFFER · PREVIEW",
+    "discount": "−{{percent}}%",
+    "offer_forever": "ON YOUR YEARLY PLAN",
+    "offer_banner": "−{{percent}}% · EVERY YEAR",
+    "offer_title": "Your time deserves this.",
+    "offer_subtitle": "All of Relock. A gentler price.",
+    "offer_renewal": "{{price}} billed every year. You keep this rate for as long as your subscription stays active. Cancel any time.",
+    "claim_offer": "Claim my offer",
+    "decline_offer": "No thanks, continue without the offer",
+    "preview_title": "Paywall preview",
+    "preview_label": "DEV · Provisional pricing",
     "purchase_unavailable": "Subscriptions aren’t available right now. Please try again in a moment.",
     "restore_unavailable": "Restoring isn’t available right now. Please try again in a moment.",
     "restore_none": "No purchases to restore on this account. Check that you’re signed in with the right Apple Account.",
-    "legal_unavailable": "Les liens définitifs des conditions et de confidentialité seront ajoutés avant l’activation des achats.",
+    "legal_unavailable": "The final terms and privacy links will be added before purchases go live.",
     "understood": "Got it",
-    "dev_benefits": "Bénéfices",
-    "dev_plans": "Formules",
-    "dev_offer": "Offre",
-    "dev_full": "Plein écran",
+    "dev_benefits": "Benefits",
+    "dev_plans": "Plans",
+    "dev_offer": "Offer",
+    "dev_full": "Full screen",
     "coming_soon": "Subscriptions are coming soon.",
     "coming_soon_body": "Purchases aren’t available in this version yet. You won’t be charged.",
     "continue": "Continue",
@@ -478,7 +478,8 @@
     "rule_types": {
       "schedule": "Time slot",
       "limit": "Daily limit",
-      "timed": "Timed block"
+      "timed": "Timed block",
+      "daily_limit": "Daily limit"
     },
     "resume_sheet": {
       "title": "Rule paused",
@@ -495,7 +496,188 @@
       "cancel": "Keep it paused"
     },
     "preset_recap": {
-      "activate": "Activate this rule"
+      "activate": "Activate this rule",
+      "done_title": "It's set up.",
+      "done_body_one": "“{{title}}” is now blocking {{count}} app. You'll find it in the Rules tab —",
+      "done_body_other": "“{{title}}” is now blocking {{count}} apps. You'll find it in the Rules tab —",
+      "done_strict": "in strict mode: there is no way to stop it before each session ends.",
+      "done_soft": "to pause it or remove it whenever you like.",
+      "finish": "Done",
+      "apps_todo": "To choose",
+      "apps_note": "Apple lets no app choose yours for you: you pick them yourself, once.",
+      "not_now": "Not now"
+    },
+    "days": {
+      "every_day": "Every day",
+      "weekdays": "Monday to Friday",
+      "weekend": "Saturday and Sunday",
+      "separator": ", ",
+      "short": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      }
+    },
+    "preset_detail": {
+      "limit": "{{minutes}} min a day",
+      "timed": "{{minutes}} min blocked right now",
+      "schedule": "{{start}} → {{end}} · {{days}}"
+    },
+    "preset_lines": {
+      "type": "Type",
+      "limit": "Limit",
+      "limit_value": "{{minutes}} minutes a day",
+      "days": "Days",
+      "once_spent": "Once used up",
+      "once_spent_value": "Blocked until midnight",
+      "duration": "Duration",
+      "duration_value": "{{minutes}} minutes",
+      "starts": "Starts",
+      "starts_now": "Right away",
+      "slot": "Time slot",
+      "strict": "Strict mode",
+      "strict_yes": "Yes — no way to stop before the end"
+    },
+    "presets": {
+      "focus": {
+        "title": "Focus",
+        "pitch": "A push, right now — nothing to set up."
+      },
+      "nuit": {
+        "title": "Rest",
+        "pitch": "Evening scrolling is what costs you the most sleep."
+      },
+      "reveil": {
+        "title": "First thing",
+        "pitch": "What you look at first sets your mood."
+      },
+      "matin": {
+        "title": "Focused morning",
+        "pitch": "The first hours decide the rest of the day."
+      },
+      "aprem": {
+        "title": "Afternoon dip",
+        "pitch": "It's in the slow hours that your hand reaches out on its own."
+      },
+      "repas": {
+        "title": "At the table",
+        "pitch": "A meal without a phone is a meal you remember."
+      },
+      "weekend": {
+        "title": "Weekend outside",
+        "pitch": "Two days a week when nobody is waiting for you online."
+      },
+      "dose": {
+        "title": "Limited social",
+        "pitch": "You keep your apps. You take back control of the dose."
+      },
+      "micro": {
+        "title": "15 minutes a day",
+        "pitch": "The emergency dose, for weeks that get out of hand."
+      },
+      "new-rule-work": {
+        "title": "Work",
+        "pitch": "Block distractions during your working hours."
+      },
+      "new-rule-focus": {
+        "title": "Laser focus",
+        "pitch": "One uninterrupted hour to move the important thing forward."
+      },
+      "new-rule-study": {
+        "title": "Study",
+        "pitch": "Protect your morning so you can learn without interruption."
+      },
+      "new-rule-creative": {
+        "title": "Deep creating",
+        "pitch": "Keep your creative momentum away from notifications."
+      },
+      "new-rule-decompression": {
+        "title": "Wind down",
+        "pitch": "Let your mind slow down before the day ends."
+      },
+      "new-rule-sleep": {
+        "title": "Deep sleep",
+        "pitch": "Protect your night from late-night scrolling."
+      },
+      "new-rule-evening": {
+        "title": "Quiet evening",
+        "pitch": "Slow down without a screen before sleep."
+      },
+      "new-rule-weekend": {
+        "title": "Easy weekend",
+        "pitch": "Start your weekend away from automatic scrolling."
+      },
+      "new-rule-morning": {
+        "title": "Screen-free morning",
+        "pitch": "Start the day before you open your feeds."
+      },
+      "new-rule-social": {
+        "title": "Social break",
+        "pitch": "Give your evenings back to the people around you."
+      },
+      "new-rule-doomscroll": {
+        "title": "Anti-doomscroll",
+        "pitch": "Keep your feeds without giving them your whole day."
+      },
+      "new-rule-family": {
+        "title": "Family time",
+        "pitch": "Enjoy the people you love without digital interruptions."
+      }
+    },
+    "rule_type_label": {
+      "progressive_delay": "Block now",
+      "schedule": "Time slot",
+      "daily_limit": "Time limit / day"
+    },
+    "apps_subtitle": {
+      "blocked_one": "1 app blocked",
+      "blocked_other": "{{count}} apps blocked",
+      "none": "No app"
+    },
+    "status_line": {
+      "schedule": "{{apps}} · every day {{start}} → {{end}}",
+      "limit_started": "{{apps}} · limit {{limit}} · started at {{time}}",
+      "limit": "{{apps}} · limit {{limit}} / day",
+      "done": "{{apps}} · finished",
+      "remaining": "{{apps}} · {{remaining}} left"
+    },
+    "duration": {
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h",
+      "hours_minutes": "{{hours}} h {{minutes}}"
+    },
+    "app_count_one": "{{count}} app",
+    "app_count_other": "{{count}} apps",
+    "per_day": "{{duration}} a day",
+    "state_line": {
+      "suspended_indefinite": "Paused until you resume it",
+      "resumes_in": "Resumes in ",
+      "ends_at": "Ends at ",
+      "limit_reached": "Limit reached · reopens at midnight",
+      "limit_of": "Limit of {{duration}} a day",
+      "left_today": " left today",
+      "until": "Until ",
+      "still_left": " · {{duration}} left",
+      "starts_at": "Starts at ",
+      "tomorrow_at": "Tomorrow at ",
+      "in_duration": " · in {{duration}}"
+    },
+    "list": {
+      "title": "Blocks",
+      "none_running": "No block running right now",
+      "running_count_one": "{{count}} block running right now",
+      "running_count_other": "{{count}} blocks running right now",
+      "new": "New block",
+      "create": "Create a block",
+      "empty_title": "Nothing is protecting your time",
+      "empty_body": "Your phone is wide open. Pick a first moment to protect.",
+      "section_running": "RUNNING",
+      "section_upcoming": "UPCOMING",
+      "section_suspended": "PAUSED"
     }
   },
   "home": {
@@ -520,20 +702,7 @@
       "title": "{{count}} days for you",
       "body": "You’re making time for what matters. Keep going at your own pace."
     },
-    "stat_done": "Done",
-    "stat_active": "Active",
-    "stat_streak": "Streak",
-    "featured_title": "Daily goal",
-    "featured_subtitle": "You're doing great — keep your streak alive.",
-    "quick_actions": "Quick actions",
-    "overview": "Overview",
-    "recent_activity": "Top Stories",
     "title": "Home",
-    "quick_action_task": "New task",
-    "quick_action_message": "Message",
-    "quick_action_schedule": "Schedule",
-    "quick_action_report": "Report",
-    "quick_action_upload": "Upload",
     "resisted_lead": "Today, you resisted",
     "openings": "openings",
     "streak_current": "Current streak",
@@ -592,9 +761,6 @@
     "new_user_body": "Choose a few apps and protect your first moment of the day.",
     "new_user_action": "Create a block",
     "data_error": "Some data could not be refreshed. Relock will try again automatically.",
-    "permission_title": "Permission required",
-    "permission_settings_body": "Open Settings > Screen Time and allow Relock to manage Screen Time.",
-    "permission_later": "Later",
     "permission_open_settings": "Open Settings",
     "close": "Close",
     "score_footer_provisional": "Still approximate — the score sharpens every day.",
@@ -630,7 +796,19 @@
     "openings": "Opens",
     "interceptions": "Interceptions",
     "per_hour": "Screen time per hour",
-    "top_apps": "Most screen time"
+    "top_apps": "Most screen time",
+    "state": {
+      "report_unavailable_title": "Report unavailable",
+      "report_unavailable_body": "The Screen Time report could not be displayed.",
+      "denied_title": "Allow Screen Time",
+      "denied_body": "iOS shares no usage data until Relock is allowed to read it.",
+      "allow": "Allow",
+      "error_title": "Data temporarily unavailable",
+      "error_body": "Relock could not check Screen Time access.",
+      "device_title": "Available on iPhone",
+      "device_body": "Real per-app screen time is provided by iOS on a physical iPhone.",
+      "loading": "Preparing your Screen Time data…"
+    }
   },
   "add": {
     "title": "Add",
@@ -655,8 +833,16 @@
       "label": "Language",
       "french": "French",
       "english": "English",
-      "russian": "Russian",
-      "german": "German"
+      "spanish": "Spanish"
+    },
+    "logo": {
+      "label": "App icon",
+      "hint": "The mark on your home screen",
+      "classic": "Original",
+      "orb": "Orb",
+      "phases": "Phases",
+      "footnote": "The “Relock” wordmark never changes: it stays at the top of Home and on the launch screen. iOS confirms every icon change itself.",
+      "error": "iOS refused to change the icon. Try again in a moment."
     },
     "theme": "Theme",
     "theme_light": "Light",
@@ -707,6 +893,7 @@
       "restore": "Restore purchases",
       "restore_done": "Subscription restored",
       "restore_none": "No purchase to restore on this account.",
+      "restore_failed": "Couldn’t reach the store. Please try again in a moment.",
       "unavailable": "Billing isn’t enabled in this build.",
       "footnote": "Cancellation always goes through your App Store account — Relock can’t do it for you."
     },
@@ -731,6 +918,16 @@
     "screen_time_missing": "Turn on",
     "screen_time_unavailable_title": "Screen Time",
     "screen_time_unavailable_body": "Available on iPhone only (Family Controls).",
+    "screen_time_help_title": "Relock can't block anything",
+    "screen_time_help_intro": "Screen Time access was denied. Without it, iOS won't let Relock act on your apps: your rules are still saved, but none of them apply. And iOS won't ask again — the permission dialog only appears once.",
+    "screen_time_help_step1_title": "Settings, then Screen Time",
+    "screen_time_help_step1_body": "Open “Apps with Screen Time Access” and turn Relock on, if it is listed there.",
+    "screen_time_help_step2_title": "Otherwise, reinstall Relock",
+    "screen_time_help_step2_body": "A denied app is not always listed there. Deleting it and installing it again resets the authorisation: the request comes back on first launch.",
+    "screen_time_help_note": "Nothing is lost: your rules, your streak and your subscription belong to your account, not to the installed app.",
+    "screen_time_help_recheck": "Check again",
+    "screen_time_help_granted": "Screen Time access granted.",
+    "screen_time_help_still_denied": "Still denied for now.",
     "blocks": "My blocks",
     "blocks_hint": "Rules, schedules and protected apps",
     "protection_footnote": "Your usage measurements never leave your iPhone: Apple doesn’t hand them to Relock — only an aggregate score is computed on device.",
@@ -855,13 +1052,6 @@
     "feature_3_title": "Your numbers, honestly",
     "feature_3_body": "Interceptions, time saved and streak, day by day",
     "get_started": "Get started"
-  },
-  "uikit": {
-    "title": "Components",
-    "section_buttons": "Buttons",
-    "section_typography": "Typography",
-    "section_icons": "Icons",
-    "section_surfaces": "Surfaces & States"
   },
   "app": {
     "title": "App"
@@ -1113,5 +1303,592 @@
     "soft_ask_body": "Relock can warn you when your streak is at risk, or when a protection stops applying. Never promotional, and you stay in control from Settings.",
     "soft_ask_decline": "No thanks",
     "soft_ask_accept": "Turn on reminders"
+  },
+  "onboarding_plan": {
+    "list": {
+      "separator": ", ",
+      "and": " and ",
+      "and_alt": " and "
+    },
+    "moment": {
+      "bed": "mostly at night, in bed",
+      "wake": "the moment you wake up",
+      "work": "during work or class",
+      "break": "during your breaks",
+      "transport": "on your commute",
+      "meals": "during meals",
+      "weekend": "at weekends, for hours on end",
+      "always": "pretty much all the time"
+    },
+    "feeling": {
+      "guilt": "guilt",
+      "empty": "a feeling of emptiness",
+      "anxious": "anxiety",
+      "wasted": "the sense of wasting your time",
+      "drained": "a lack of energy",
+      "overwhelmed": "the feeling that everything is piling up",
+      "foggy": "fog in your head",
+      "regret": "regret",
+      "unproductive": "the sense of getting nowhere",
+      "disconnected": "a distance from real life",
+      "angry": "irritation",
+      "hopeless": "discouragement",
+      "ashamed": "shame",
+      "lonely": "loneliness",
+      "restless": "restlessness",
+      "numb": "a kind of numbness"
+    },
+    "stolen": {
+      "nights": "nights of sleep",
+      "people": "moments with the people you love",
+      "becoming": "time to become who you want to be",
+      "focus": "your focus",
+      "presence": "moments you wish you had been present for",
+      "energy": "your energy",
+      "mornings": "your mornings",
+      "sport": "the urge to move",
+      "projects": "projects you never started",
+      "calm": "the quiet in your head",
+      "pride": "the pride of a day well spent"
+    },
+    "attempt": {
+      "deleted": "reinstalling an app takes ten seconds",
+      "limit": "a screen time limit is one tap away from being pushed back",
+      "willpower": "willpower alone lasts until the first hard evening",
+      "distance": "a phone left further away is ten steps away",
+      "hidden": "a hidden app still opens",
+      "grayscale": "a grayscale screen goes back to colour in three taps",
+      "notifications": "muting notifications doesn't stop you opening the app yourself",
+      "blocker": "a block you can switch off blocks nothing",
+      "detox": "a detox has an end date, and the habit is waiting behind it",
+      "logout": "signing back in takes as long as a saved password"
+    },
+    "aspiration": {
+      "sleep": "sleep",
+      "move": "move",
+      "read": "read",
+      "people": "see the people you care about",
+      "project": "make progress on a project",
+      "hobby": "pick a hobby back up",
+      "breathe": "breathe",
+      "cook": "cook",
+      "work": "work better",
+      "morning": "get your mornings back",
+      "study": "do well in your studies",
+      "present": "be present",
+      "family": "be with your family",
+      "nature": "get outside",
+      "learn": "learn",
+      "create": "create",
+      "music": "play music",
+      "silence": "do nothing, really nothing"
+    },
+    "aspiration_word": {
+      "sleep": "of Sleep",
+      "move": "of Movement",
+      "read": "of Reading",
+      "people": "with your people",
+      "project": "of Projects",
+      "hobby": "of Enjoyment",
+      "breathe": "of Calm",
+      "cook": "of Cooking",
+      "work": "of Clarity",
+      "morning": "of Mornings",
+      "study": "of Success",
+      "present": "of Presence",
+      "family": "with Family",
+      "nature": "Outdoors",
+      "learn": "of Learning",
+      "create": "of Creating",
+      "music": "of Music",
+      "silence": "of Silence"
+    },
+    "default_word": {
+      "presence": "of Presence",
+      "sleep": "of Sleep",
+      "calm": "of Calm",
+      "freedom": "of Freedom",
+      "life": "of Life"
+    },
+    "intention": {
+      "bed": "Your goal: get your nights back.",
+      "sleep": "Your goal: sleep properly again.",
+      "focus": "Your goal: get your focus back.",
+      "goals": "Your goal: hold your days together.",
+      "presence": "Your goal: really be there.",
+      "mood": "Your goal: a lighter head.",
+      "habit": "Your goal: break the reflex.",
+      "time": "Your goal: find time for yourself again.",
+      "control": "Your goal: take back control."
+    },
+    "intention_default": "A first step towards finding time for yourself again.",
+    "recap": {
+      "named_apps_moment": "{{name}}, you scroll on {{apps}} {{moment}}.",
+      "named_apps": "{{name}}, you scroll on {{apps}}.",
+      "named_moment": "{{name}}, you scroll {{moment}}.",
+      "apps_moment": "You scroll on {{apps}} {{moment}}.",
+      "apps": "You scroll on {{apps}}.",
+      "moment": "You scroll {{moment}}.",
+      "fallback_named": "{{name}}, here is a starting point to adapt to your own days.",
+      "fallback": "Here is a starting point to adapt to your own days."
+    },
+    "feeling_sentence": "Afterwards, you describe {{feelings}}.",
+    "loss_sentence": "And it has already cost you {{stolen}}.",
+    "defense_never": "You haven't really tried yet. So start with something that holds on its own.",
+    "defense_tried": "You have tried before, but {{tried}}. Your plan is set while you are clear-headed — and it doesn't back down in the heat of the moment."
+  },
+  "add_rule": {
+    "type_question": "What kind of block?",
+    "types": {
+      "block_now": {
+        "title": "Block now",
+        "desc": "Once, for a length you choose"
+      },
+      "schedule": {
+        "title": "Time slot",
+        "desc": "Blocked every day over a time range"
+      },
+      "daily_limit": {
+        "title": "Time limit",
+        "desc": "A daily quota, then blocked"
+      }
+    },
+    "days": {
+      "every_day": "Every day",
+      "weekdays": "Mon → Fri",
+      "weekend": "Weekend"
+    },
+    "name_placeholder": "Name (optional)",
+    "start": "Start",
+    "end": "End",
+    "limit_per_day": "Limit / day",
+    "duration_a11y": "Block duration",
+    "limit_a11y": "Daily limit",
+    "pick_apps": "Choose the apps",
+    "apple_picker": "Apple picker",
+    "tap_to_edit": "Tap to edit",
+    "activated": "It's live",
+    "strict_explain": "Once it starts, you can't stop the block before it ends — not even by reopening Relock. Ideal for keeping a commitment.",
+    "warn_same_bounds": "Start and end must be different (otherwise the range lasts 24 h).",
+    "warn_too_short": "Your range is too short. Pick a slot of at least 15 minutes.",
+    "summary_timed_one": "{{apps}} · blocked for {{duration}}",
+    "summary_timed_other": "{{apps}} · blocked for {{duration}}",
+    "summary_strict_suffix": " · strict mode",
+    "summary_schedule": "{{apps}} · {{days}} {{start}} → {{end}}",
+    "summary_limit": "{{apps}} · limit {{limit}} / day",
+    "summary_limit_note": "The time you already spent today isn't counted: the limit starts now, then from midnight on the following days.",
+    "strict_hint": "No way to stop it before the end, not even by closing Relock.",
+    "warn_title": "Time range too short"
+  },
+  "onboarding_survey": {
+    "trigger": {
+      "title": "What brings you here?",
+      "title_named": "What brings you here, {{name}}?",
+      "sub": "Be honest. Tick everything that's true.",
+      "time": "I lose too much time",
+      "bed": "I scroll in bed",
+      "focus": "I can't focus any more",
+      "control": "I want to take back control",
+      "sleep": "I sleep badly",
+      "habit": "I open the apps without even thinking",
+      "mood": "It affects my mood",
+      "presence": "I want to be more present",
+      "goals": "My studies or my work are suffering"
+    },
+    "apps": {
+      "title": "Which apps hold you the most?",
+      "sub": "Pick as many as you like.",
+      "study": "Evening scrolling is the hardest to let go of. You are not alone."
+    },
+    "moment": {
+      "title": "When do you drift off?",
+      "sub": "Your plan will protect these moments first.",
+      "bed": "In the evening, in bed",
+      "wake": "The moment I wake up",
+      "work": "During work or class",
+      "break": "During my breaks",
+      "transport": "On my commute",
+      "meals": "During meals",
+      "weekend": "At weekends, for hours on end",
+      "always": "Pretty much all the time"
+    },
+    "feelings": {
+      "title": "And after scrolling, how do you feel?",
+      "sub": "Tick everything that rings true.",
+      "study": "It isn't a failure of willpower. It's how these apps are designed.",
+      "guilt": "Guilty",
+      "empty": "Empty",
+      "anxious": "Anxious",
+      "wasted": "Like I'm wasting my life",
+      "drained": "Drained",
+      "overwhelmed": "Overwhelmed",
+      "foggy": "Foggy-headed",
+      "regret": "Full of regret",
+      "unproductive": "Unproductive",
+      "disconnected": "Cut off from real life",
+      "angry": "Irritated",
+      "hopeless": "Hopeless",
+      "ashamed": "Ashamed",
+      "lonely": "Lonely",
+      "restless": "Restless",
+      "numb": "Numb"
+    },
+    "stolen": {
+      "title": "What has scrolling already taken from you?",
+      "sub": "Tick everything that rings true, especially what hurts most.",
+      "hint": "What you tick here is what your plan will try to give back.",
+      "nights": "Nights I will never get back",
+      "people": "Moments with the people I love",
+      "becoming": "Time to become who I want to be",
+      "focus": "My ability to concentrate",
+      "presence": "Moments I wish I had been present for",
+      "energy": "The energy I no longer have for anything else",
+      "mornings": "My mornings, before I even get up",
+      "sport": "The urge to move",
+      "projects": "Projects I never started",
+      "calm": "The quiet in my head",
+      "pride": "The pride of a day well spent"
+    },
+    "attempts": {
+      "title": "Have you tried to stop before?",
+      "sub": "Tick everything you've tried. There is no wrong answer.",
+      "hint": "All these methods have one thing in common: they can be switched off in three seconds.",
+      "hint_never": "Then you may as well start with a method that holds on its own.",
+      "deleted": "I deleted the app… then reinstalled it",
+      "limit": "I set a limit… then hit “15 more minutes”",
+      "willpower": "I held on through willpower. It didn't last",
+      "distance": "I put the phone far away. I went back to it",
+      "hidden": "I hid the apps in a folder",
+      "grayscale": "I switched my screen to black and white",
+      "notifications": "I turned off notifications",
+      "blocker": "I tried another blocking app",
+      "detox": "I did a detox. Then I relapsed",
+      "logout": "I signed out of my accounts",
+      "never": "Never really tried"
+    },
+    "aspiration": {
+      "title": "And what would you do with that time?",
+      "title_time": "If you got {{time}} back every day, what would you do with it?",
+      "sub": "Tick everything you want back. That becomes your plan's goal.",
+      "hint": "That's what we're going to protect.",
+      "sleep": "Sleep",
+      "move": "Move",
+      "read": "Read",
+      "people": "My people",
+      "project": "A project",
+      "hobby": "A hobby",
+      "breathe": "Breathe",
+      "cook": "Cook",
+      "work": "Work better",
+      "morning": "My mornings",
+      "study": "My studies",
+      "present": "Be present",
+      "family": "My family",
+      "nature": "Get outside",
+      "learn": "Learn",
+      "create": "Create",
+      "music": "Music",
+      "silence": "Do nothing"
+    },
+    "screen_time": {
+      "title": "How long do you scroll each day?",
+      "sub": "One answer only — an honest estimate is enough.",
+      "lt2": "Less than 2 hours",
+      "2to4": "2 to 4 hours",
+      "4to6": "4 to 6 hours",
+      "6to8": "6 to 8 hours",
+      "gt8": "More than 8 hours"
+    }
+  },
+  "onboarding_intro": {
+    "welcome": {
+      "hero_before": "With Relock, win back ",
+      "hero_gain": "2 hours",
+      "hero_middle": " every day — that's ",
+      "hero_span": "4 weeks",
+      "hero_after": " a year!"
+    },
+    "demo": {
+      "feed_tab": "For You",
+      "shield_sub": "Take your evening back.",
+      "title": "The block steps in",
+      "title_accent": "at the right moment.",
+      "sub": "Relock steps in. You get your evening back.",
+      "cta": "I want that"
+    },
+    "name": {
+      "title": "What's your name?",
+      "sub": "So your plan speaks to you, personally.",
+      "placeholder": "Your first name"
+    },
+    "hours": {
+      "title": "How many hours a day, would you say?",
+      "sub": "An honest estimate is enough.",
+      "unit": "hours a day",
+      "less": "Less",
+      "more": "More",
+      "unknown": "I don't know"
+    },
+    "proof": {
+      "title_before": "Two weeks to win back ",
+      "title_accent": "+ 2 hours",
+      "title_after": " a day",
+      "tag_without": "Without it",
+      "tag_with": "With Relock",
+      "axis_future": "Your screen in 2 weeks",
+      "benefit": {
+        "focus": {
+          "lead": "Work without interruption.",
+          "rest": " Give the best of yourself."
+        },
+        "time": {
+          "lead": "Take back control of your time.",
+          "rest": " Live each day fully."
+        },
+        "presence": {
+          "lead": "Be present in the moment.",
+          "rest": " Life doesn't happen on a screen."
+        }
+      },
+      "study": "On average, people check their phone more than 140 times a day.",
+      "footnote": "Projection based on your scheduled blocks. Not a magic promise."
+    },
+    "science": {
+      "badge": "Backed by science",
+      "open_a11y": "Open the scientific detail",
+      "close_a11y": "Close the scientific detail",
+      "title": "Why this works",
+      "lede": "Three attention mechanisms. None of them asks for willpower.",
+      "friction_title": "A delay is enough",
+      "friction_body": "The hand moves on its own. A pause before the content stops many of those openings.",
+      "habit_title": "The loop breaks",
+      "habit_body": "Cue, gesture, reward. Take the reward away and the habit stops reinforcing itself.",
+      "focus_title": "What a break really costs",
+      "focus_body": "Attention doesn't snap back: two minutes of scrolling cost far more than two minutes.",
+      "caveat": "General attention mechanisms. Relock hasn't been measured yet: what you win back depends on your own blocks.",
+      "close": "Got it"
+    }
+  },
+  "onboarding_tutorial": {
+    "ground": {
+      "title": "Great. Now let's set\na few ground rules."
+    },
+    "lock": {
+      "title": "Rules block apps\nat specific times."
+    },
+    "hard": {
+      "badge": "IN THE APP",
+      "switch": "Hard Mode",
+      "title": "And if you want to let yourself get away with nothing…",
+      "sub": "Hard Mode locks a block: no temporary unlock for an app, no stopping the rule before it ends.",
+      "footnote": "Nothing to set up now. You'll turn it on yourself in the app, block by block, the day you need it."
+    },
+    "picker_demo": {
+      "title": "Choose your biggest distractions",
+      "sub": "Apps are grouped by category.",
+      "understood": "Got it",
+      "watch": "Watch the demo"
+    },
+    "pick_apps": {
+      "title": "Choose your distractions",
+      "sub": "Expand a category in Apple's picker, then tick the apps to block.",
+      "open_picker": "Open the picker",
+      "how_to": "See how it works",
+      "selected_one": "{{count}} item selected",
+      "selected_other": "{{count}} items selected",
+      "edit_selection": "Edit the selection.",
+      "empty": "Relock has nothing to block until you pick an app. Choose at least one to continue."
+    },
+    "rules": {
+      "applies_to_one": "Applies to the app you just chose.",
+      "applies_to_other": "Applies to the {{count}} apps you just chose.",
+      "applies_future": "Applies to the apps you will choose.",
+      "sub_one": "Each one protects a moment of the day by blocking the app you just chose. Keep the ones that speak to you, untick the rest.",
+      "sub_other": "Each one protects a moment of the day by blocking the {{count}} apps you just chose. Keep the ones that speak to you, untick the rest.",
+      "sub_generic": "Each one protects a moment of the day by blocking the apps you chose. Keep the ones that speak to you, untick the rest.",
+      "title": "Here are the rules I suggest",
+      "title_named": "{{name}}, here are the rules I suggest",
+      "activating": "Activating…",
+      "activate_one": "Activate this rule",
+      "activate_other": "Activate these {{count}} rules",
+      "footnote_one": "It will be live as soon as you enter the app.",
+      "footnote_other": "They will be live as soon as you enter the app."
+    }
+  },
+  "errors": {
+    "preset_not_found": "Preset not found",
+    "screen_time_missing": "Screen Time permission missing",
+    "not_signed_in": "Not signed in",
+    "birth_date_unavailable": "Date of birth is not enabled on the server yet (the `profiles.birth_date` migration still has to be applied).",
+    "reauth_required": "Please sign in again before deleting your account.",
+    "sign_in_cancelled": "Sign-in cancelled",
+    "apple_unavailable": "Sign in with Apple is not available on this device",
+    "reset_failed": "The reset could not be completed.",
+    "family_controls_unavailable": "Family Controls unavailable (simulator, or the module is not linked).",
+    "upload_denied": "ImageKit: upload authorisation refused",
+    "upload_failed": "ImageKit: upload failed"
+  },
+  "onboarding_recognition": {
+    "intro": "You open TikTok for two minutes.",
+    "look_up": "You look up.",
+    "elapsed": "Two hours have gone.",
+    "question": "Do you know that moment?",
+    "cta": "That's me"
+  },
+  "onboarding_victory": {
+    "title": "It's running.",
+    "body": "Less scrolling.\nMore room for you.",
+    "status": "Your rules are set up",
+    "note": "Blocking will follow the settings you chose.",
+    "cta": "Open Relock"
+  },
+  "onboarding_auth": {
+    "title_1": "Save your",
+    "title_2": "progress.",
+    "sub": "Get your habits, your blocks\nand your stats back, synced\nsecurely across all your devices.",
+    "apple": "Continue with Apple",
+    "google": "Continue with Google",
+    "privacy": "Your activity data stays private."
+  },
+  "onboarding_plan_actions": {
+    "block": {
+      "title": "Block the distractions",
+      "detail": "The apps that pull you off track.",
+      "preparing": "Preparing your blocks…"
+    },
+    "pause": {
+      "title": "Break the reflex",
+      "detail": "A pause before you dive back in.",
+      "preparing": "Setting up the pauses…"
+    },
+    "progress": {
+      "title": "See your progress",
+      "detail": "Your screen time, day after day.",
+      "preparing": "Preparing daily tracking…"
+    },
+    "preparing_title": "Preparing your\nanti-scroll plan.",
+    "progress_a11y": "Plan preparation",
+    "ready": "Everything is ready.",
+    "card_title": "What your plan will help you do",
+    "state_done": "ready",
+    "state_current": "in preparation",
+    "state_todo": "coming up",
+    "note": "No new block is activated here.",
+    "goal_note": "≈ {{time}}/day less. A goal to adapt to your own use, not a guaranteed gain."
+  },
+  "onboarding_plan_summary": {
+    "annual_goal": "Yearly goal",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "for": "for {{what}}",
+    "yourself": "yourself",
+    "less_per_day": "≈ {{time}} less per day.",
+    "cap_generic": "A generic cap, to adapt to your own use.",
+    "cap_goal": "A goal, not a guaranteed gain.",
+    "next_step": "You'll choose your apps and your blocks next.",
+    "cta": "Let's go",
+    "what_you_said": "What you said"
+  },
+  "onboarding_verdict": {
+    "beat_1": "Some bad news.",
+    "beat_2": "And some good news.",
+    "beat_cta": "See the truth",
+    "mirror_lead": "Your phone takes about",
+    "per_year": "a year",
+    "mirror_a11y": "Your phone takes about {{label}} a year",
+    "mirror_body": "Whole days, spent looking down.",
+    "mirror_cta": "See the good news",
+    "mirror_footnote": "Estimate for your range: {{hours}} h/day × 365 ÷ 24. Rounded into 24-hour days.",
+    "good_lead": "Relock will help you win back\ntime for yourself.",
+    "good_a11y_one": "Goal: {{count}} day a year, to adapt to your own use",
+    "good_a11y_other": "Goal: {{count}} days a year, to adapt to your own use",
+    "press": {
+      "meta": {
+        "quote": "“Facebook knows Instagram is toxic for teen girls.”",
+        "source": "The Wall Street Journal",
+        "context": "Internal documents, revealed by a whistleblower."
+      },
+      "trial": {
+        "quote": "“41 states sue Meta for designing addictive features.”",
+        "source": "Federal complaint by attorneys general",
+        "context": "Targeted: notifications, infinite scroll, likes."
+      },
+      "tiktok": {
+        "quote": "“About 260 videos, and the habit is formed.”",
+        "source": "TikTok internal documents",
+        "context": "Under 35 minutes. Their figure, not ours."
+      }
+    },
+    "reversal_title": "You are not the problem.",
+    "reversal_body": "These apps are tuned by thousands of engineers to keep you there.",
+    "reversal_verdict": "Relock rebalances the rules,\nin your favour.",
+    "reversal_cta": "Build my plan"
+  },
+  "onboarding_power": {
+    "dont_allow": "Don't Allow",
+    "learn_more": "Learn more",
+    "screen_time": {
+      "card_body": "Screen Time access lets Relock limit the apps you choose and help you stay focused. Your data stays on your device.",
+      "card_title": "“Relock” would like to access Screen Time",
+      "continue_without": "Continue without blocking",
+      "denied": "Relock cannot work without this permission. Nothing leaves your phone, nothing is sent to us.",
+      "denied_final": "Without this permission, Relock cannot block anything. You can still go in: blocking stays dormant until you grant it in Settings.",
+      "hero": "Let's give Relock access to\nScreen Time. In full confidence.",
+      "privacy": "Your information stays protected by Apple and stored only on your phone."
+    },
+    "notifs": {
+      "hero": "Get your Relock summaries\nand celebrate every step.",
+      "card_title": "“Relock” would like to send you notifications",
+      "card_body": "Notifications may include alerts, sounds and badges. You can configure them in Settings."
+    }
+  },
+  "onboarding_ritual": {
+    "idle": {
+      "title": "Let's seal your commitment.",
+      "sub": "Put your finger on the mark and hold."
+    },
+    "hold": {
+      "title": "Let's seal your commitment.",
+      "sub": "Don't let go. The seal is rising."
+    },
+    "paused": {
+      "title": "Let's seal your commitment.",
+      "sub": "Your progress is saved. Put your finger back."
+    },
+    "sealed": {
+      "title": "Commitment sealed.",
+      "sub": "Your word is locked in with your plan."
+    },
+    "seal_a11y": "Seal my commitment",
+    "seal_hint_assistive": "Double tap to seal your commitment",
+    "seal_hint": "Hold your finger on the mark until the ring closes"
+  },
+  "onboarding_rule_info": {
+    "scope_one": "The app you just chose. The same one for every rule on this screen.",
+    "scope_other": "The {{count}} apps you just chose. The same ones for every rule on this screen.",
+    "scope_empty": "The apps you will choose. No rule blocks anything while the list is empty.",
+    "close_a11y": "Close the explanation",
+    "lede": "A rule is a moment of the day that Relock protects for you. This one switches on by itself, with nothing for you to do.",
+    "when": "When",
+    "which_apps": "Which apps",
+    "what_happens": "What happens",
+    "what_happens_body": "During that window, opening one of these apps shows a Relock wall instead. To get past it, you first go through the pause ritual — long enough to ask yourself whether you really wanted to.",
+    "footnote": "Nothing is set in stone: times, days and apps can be changed any time in the Rules tab.",
+    "select_hint": "Tap to select",
+    "deselect_hint": "Tap to deselect",
+    "what_rule_does": "What the {{title}} rule does",
+    "open_explanation": "Opens the explanation of this rule"
+  },
+  "onboarding_picker": {
+    "category": {
+      "all": "All Apps & Categories",
+      "social": "Social",
+      "games": "Games",
+      "fun": "Entertainment",
+      "creative": "Creativity",
+      "reading": "Information & Reading",
+      "shopping": "Shopping & Food",
+      "work": "Productivity & Finance"
+    }
   }
 }

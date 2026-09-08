@@ -1,7 +1,1 @@
-export {
-  currentLocale,
-  fallbackLng,
-  i18n,
-  LanguageKey,
-  resources,
-} from './i18n'
+export { currentLocale, fallbackLng, i18n, LanguageKey } from './i18n'

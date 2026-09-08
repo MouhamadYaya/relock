@@ -1,0 +1,1894 @@
+{
+  "common": {
+    "error_title": "Se ha producido un problema",
+    "error_hint": "Ha ocurrido un error inesperado. Vuelve a intentarlo.",
+    "retry": "Reintentar",
+    "offline_banner": "Estás sin conexión. Se muestran los datos en caché.",
+    "loading": "Cargando…",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "close": "Cerrar"
+  },
+  "navigation": {
+    "tabs": {
+      "home": "Inicio",
+      "blocks": "Reglas",
+      "activity": "Actividad"
+    }
+  },
+  "blockType": {
+    "progressive_delay": "Retardo progresivo",
+    "schedule": "Franjas horarias",
+    "daily_limit": "Límite de aperturas",
+    "progressive_delay_desc": "Una espera que crece con cada apertura",
+    "schedule_desc": "Bloquea a ciertas horas (p. ej. 22:00–8:00)",
+    "daily_limit_desc": "Un número máximo de aperturas al día"
+  },
+  "activity": {
+    "title": "Actividad",
+    "seg_month": "Mes",
+    "seg_week": "Semana",
+    "seg_day": "Día",
+    "summary_today": "Hoy",
+    "regained": "de scroll",
+    "openings": "Aperturas",
+    "interceptions": "Intercepciones",
+    "per_hour": "Tiempo de pantalla por hora",
+    "top_apps": "Mayor tiempo de pantalla",
+    "state": {
+      "report_unavailable_title": "Informe no disponible",
+      "report_unavailable_body": "No se ha podido mostrar el informe de Tiempo de uso.",
+      "denied_title": "Autoriza Tiempo de uso",
+      "denied_body": "iOS no comparte ningún dato de uso mientras Relock no tenga permiso.",
+      "allow": "Autorizar",
+      "error_title": "Datos no disponibles por el momento",
+      "error_body": "Relock no ha podido comprobar el acceso a Tiempo de uso.",
+      "device_title": "Disponible en iPhone",
+      "device_body": "El tiempo de pantalla real por app lo proporciona iOS en un iPhone físico.",
+      "loading": "Preparando tus datos de Tiempo de uso…"
+    }
+  },
+  "add": {
+    "title": "Añadir",
+    "new_block": "Nuevo bloqueo",
+    "type_section": "Tipo de bloqueo",
+    "apps_section": "Aplicaciones",
+    "apps_hint": "Redes de feed corto sugeridas — podrás añadir otras.",
+    "activate": "Activar el bloqueo",
+    "placeholder": "Pronto: crea un bloqueo y elige tus apps."
+  },
+  "pause": {
+    "title": "Respira un momento",
+    "question": "¿Qué estás buscando, de verdad?",
+    "go_back": "Volver atrás",
+    "open_anyway": "Abrir de todos modos",
+    "opening": "Se abre en"
+  },
+  "onboarding": {
+    "headline": "Recupera el control\nde tu atención.",
+    "tagline": "Menos scroll compulsivo. Más de ti.",
+    "get_started": "Empezar",
+    "feature_1_title": "Bloqueo real",
+    "feature_1_body": "El escudo de iOS se aplica incluso con la app cerrada",
+    "feature_2_title": "Fricción consciente",
+    "feature_2_body": "Una pantalla te detiene antes de que empiece el scroll",
+    "feature_3_title": "Tus cifras de frente",
+    "feature_3_body": "Intercepciones, tiempo recuperado y racha, día tras día"
+  },
+  "app": {
+    "title": "Relock"
+  },
+  "paywall_reference": {
+    "brand": "Relock",
+    "skip": "Omitir",
+    "plans_title": "Menos pantalla,",
+    "annual": "Anual",
+    "weekly": "Semanal",
+    "lowest": "MEJOR PRECIO",
+    "annual_billing": "12 meses · {{price}}",
+    "per_week": "{{price}}/semana",
+    "per_week_unit": "/semana",
+    "per_year": "{{price}}/año",
+    "per_month_unit": "/mes",
+    "testimonial": "Hacer scroll en Instagram y TikTok se había vuelto un reflejo. Relock me funciona porque la pausa llega antes de que abra la app, y la mayoría de las veces la cierro.",
+    "rating": "Valoración de 5 sobre 5 estrellas",
+    "author": "Alex R.",
+    "author_2": "Marion T.",
+    "testimonial_2": "Dejé de coger el móvil nada más despertarme. Tres semanas después, sigue funcionando.",
+    "author_3": "Sam K.",
+    "testimonial_3": "La pausa lo cambia todo. Me deja un segundo para decidir, y casi siempre cierro la app.",
+    "cancel": "Cancela cuando quieras",
+    "continue": "Continuar",
+    "processing": "Procesando…",
+    "before": "Antes",
+    "after": "Después",
+    "daily": "Media diaria",
+    "before_time": "6h 32m",
+    "after_time": "1h 49m",
+    "chart_days": "L M X J",
+    "benefits_title": "Recupera",
+    "benefits_accent": "más de 2 horas",
+    "benefits_end": " al día",
+    "benefit_focus_title": "Concéntrate en lo que importa.",
+    "benefit_focus_body": "Haz sitio para un trabajo realmente concentrado.",
+    "benefit_time_title": "Recupera tu atención.",
+    "benefit_time_body": "Elige qué merece tu tiempo, no tu feed.",
+    "benefit_presence_title": "Está plenamente presente.",
+    "benefit_presence_body": "Levanta la vista y vuelve a la vida real.",
+    "benefits_cta": "Recuperar mi tiempo",
+    "reviews": "Más de 10 000 opiniones",
+    "users": "Ya lo usan más de 250 000 personas",
+    "trust": "Oxford · Harvard · Cambridge",
+    "offer_title": "Oferta limitada",
+    "offer_billed": "Se factura {{price}} al año",
+    "offer_cta": "Aprovechar la oferta",
+    "offer_warning": "Esta oferta desaparece en cuanto la cierres",
+    "exclusive": "OFERTA ÚNICA",
+    "discount": "−{{percent}} %",
+    "forever": "DE POR VIDA",
+    "exit_subtitle": "Una mente más tranquila.\nMás tiempo para lo esencial.",
+    "exit_cta": "Aprovechar mi oferta única",
+    "exit_decline": "Prefiero pagar el precio completo",
+    "exit_footer": "Cancela cuando quieras en la App Store",
+    "payment_failed": "El pago no se ha completado. Puedes volver a intentarlo.",
+    "payment_pending": "El pago está pendiente de validación. No se muestra ninguna otra oferta.",
+    "plans_title_accent": "más vida",
+    "intent_sleep": "Dormir mejor",
+    "intent_focus": "Concentrarme",
+    "intent_time": "Tomarme mi tiempo",
+    "intent_breathe": "Respirar",
+    "intent_present": "Estar de verdad",
+    "intent_create": "Crear",
+    "intent_reconnect": "Reencontrarme",
+    "intent_move": "Avanzar",
+    "intent_learn": "Aprender",
+    "intent_wake": "Levantarme temprano",
+    "intent_out": "Salir más",
+    "plans_subtitle": "Acceso ilimitado a Relock Premium",
+    "intent_write": "Escribir"
+  },
+  "paywall": {
+    "brand": "RELOCK",
+    "close": "Cerrar",
+    "restore": "Restaurar",
+    "terms": "Condiciones",
+    "privacy": "Privacidad",
+    "before": "ANTES",
+    "with_relock": "CON RELOCK",
+    "before_title": "Otro scroll más.",
+    "after_title": "Por fin una pausa.",
+    "benefits_title": "Menos scroll.",
+    "benefits_accent": "Más vida.",
+    "benefit_block_title": "Tus distracciones, a distancia.",
+    "benefit_block_body": "Bloquea las apps que te hacen perder el hilo.",
+    "benefit_pause_title": "Un reflejo menos.",
+    "benefit_pause_body": "Una pausa antes de volver a abrir, para elegir de verdad.",
+    "benefit_life_title": "Tiempo que te pertenece.",
+    "benefit_life_body": "Para avanzar, respirar o estar con los demás.",
+    "benefits_note": "Tú eliges las apps. Tú eliges los momentos.",
+    "discover_plans": "Descubrir mi acceso a Relock",
+    "plans_title": "Elige tu acceso",
+    "plans_accent": "Relock.",
+    "choose_plan": "Elegir un plan",
+    "annual": "Anual",
+    "monthly": "Mensual",
+    "annual_badge": "EL MEJOR PRECIO DEL AÑO",
+    "offer_badge": "TU PRECIO ESPECIAL",
+    "billed_year": "{{price}} facturados al año",
+    "billed_month": "{{price}} facturados al mes",
+    "price_year": "{{price}} / año",
+    "price_month": "{{price}} / mes",
+    "per_month": "al mes",
+    "per_year_short": " / año",
+    "month_equivalent": "Es decir, {{price}} al mes",
+    "included_title": "Todo para recuperar el control.",
+    "included_block": "Tus apps bloqueadas en los momentos que elijas",
+    "included_pause": "Una pausa para romper el scroll automático",
+    "included_progress": "Tu tiempo de pantalla y tus progresos, en un solo sitio",
+    "promise": "Cancelable desde los ajustes de la App Store.",
+    "start_trial_one": "Probar {{count}} día gratis",
+    "start_trial_other": "Probar {{count}} días gratis",
+    "subscribe": "Elegir este plan",
+    "trial_billing_one": "{{count}} día gratis y después {{billing}}. Renovación automática, salvo cancelación.",
+    "trial_billing_other": "{{count}} días gratis y después {{billing}}. Renovación automática, salvo cancelación.",
+    "regular_billing": "{{billing}}. Renovación automática, salvo cancelación.",
+    "offer_eyebrow": "OFERTA ESPECIAL · VISTA PREVIA",
+    "discount": "−{{percent}} %",
+    "offer_forever": "EN TU SUSCRIPCIÓN ANUAL",
+    "offer_banner": "−{{percent}} % · CADA AÑO",
+    "offer_title": "Tu tiempo se lo merece.",
+    "offer_subtitle": "Todo Relock. Un precio más suave.",
+    "offer_renewal": "{{price}} facturados cada año. Mantienes este precio mientras tu suscripción siga activa. Cancelable en cualquier momento.",
+    "claim_offer": "Aprovechar mi oferta",
+    "decline_offer": "No, gracias, continuar sin la oferta",
+    "preview_title": "Vista previa del paywall",
+    "preview_label": "DEV · Precios provisionales",
+    "purchase_unavailable": "La suscripción no está disponible ahora mismo. Inténtalo de nuevo en un momento.",
+    "restore_unavailable": "La restauración no está disponible ahora mismo. Inténtalo de nuevo en un momento.",
+    "restore_none": "No hay compras que restaurar en esta cuenta. Comprueba que has iniciado sesión con el ID de Apple correcto.",
+    "legal_unavailable": "Los enlaces definitivos de las condiciones y la privacidad se añadirán antes de activar las compras.",
+    "understood": "Entendido",
+    "dev_benefits": "Ventajas",
+    "dev_plans": "Planes",
+    "dev_offer": "Oferta",
+    "dev_full": "Pantalla completa",
+    "coming_soon": "Las suscripciones llegan pronto.",
+    "coming_soon_body": "Las compras aún no están disponibles en esta versión. No se te cobrará nada.",
+    "continue": "Continuar",
+    "notice_title": "Relock",
+    "sign_in": "Ya tengo una cuenta",
+    "no_subscription_found": "No hay ninguna suscripción activa en esta cuenta.",
+    "retry": "Reintentar",
+    "unavailable_body": "No se han podido cargar los precios. Comprueba tu conexión y vuelve a intentarlo."
+  },
+  "blocking": {
+    "title": "Reglas",
+    "add_rule": "Nueva regla",
+    "blocked_apps": "Apps bloqueadas",
+    "unlock_all": "Desbloquear todo",
+    "unlock": "Desbloquear",
+    "unlock_x": "Desbloquear X",
+    "rules_title": "Mis reglas",
+    "empty_rules": {
+      "no_apps_blocked": "Todas las apps están disponibles.",
+      "trouble_hint": "¿No funciona?",
+      "restart_cta": "Recarga Relock."
+    },
+    "rules": {
+      "clean_time": {
+        "title": "Hora limpia",
+        "description": "Bloquear X",
+        "status": "Quedan 31 min"
+      },
+      "sport": {
+        "title": "Deporte",
+        "description": "Bloquear",
+        "status": "Empieza en 1 d"
+      },
+      "work": {
+        "title": "Trabajo",
+        "description": "Bloquear las distracciones",
+        "status": "09:00 – 17:00"
+      },
+      "sleep": {
+        "title": "Sueño",
+        "description": "Descanso sin distracciones",
+        "status": "22:00 – 06:00"
+      },
+      "social_break": {
+        "title": "Pausa de redes",
+        "description": "Bloquear las redes",
+        "status": "18:00 – 20:00"
+      },
+      "calm_morning": {
+        "title": "Mañana tranquila",
+        "description": "Empezar sin scroll",
+        "status": "07:00 – 09:00"
+      }
+    },
+    "new_rule": {
+      "title": "Nueva regla",
+      "close": "Cerrar",
+      "types": {
+        "session": {
+          "title": "Bloquear ahora",
+          "description": "Ahora mismo, durante el tiempo que elijas"
+        },
+        "schedule": {
+          "title": "Franja horaria",
+          "description": "Todos los días, a las mismas horas"
+        },
+        "limit": {
+          "title": "Límite diario",
+          "description": "Una cuota de tiempo y después se bloquea"
+        }
+      },
+      "productive": {
+        "title": "Sé más productivo",
+        "description": "Mejora tu productividad con equilibrio."
+      },
+      "rest": {
+        "title": "Dormir, relajarte y volver con fuerza",
+        "description": "Duerme mejor y despierta fresco."
+      },
+      "balance": {
+        "title": "Recupera el control de tus redes",
+        "description": "Protege los momentos que de verdad importan."
+      },
+      "templates": {
+        "work": {
+          "time": "09:00 – 17:00",
+          "title": "Trabajo",
+          "description": "Bloquear las distracciones",
+          "add": "Añadir la regla Trabajo"
+        },
+        "focus": {
+          "time": "14:00 – 15:00",
+          "title": "Foco láser",
+          "description": "Concentración intensa",
+          "add": "Añadir la regla Foco láser"
+        },
+        "study": {
+          "time": "08:00 – 12:00",
+          "title": "Estudio",
+          "description": "Aprende sin interrupciones",
+          "add": "Añadir la regla Estudio"
+        },
+        "creative": {
+          "time": "19:00 – 21:00",
+          "title": "Creación profunda",
+          "description": "Mantén tu impulso creativo",
+          "add": "Añadir la regla Creación profunda"
+        },
+        "decompression": {
+          "time": "20:00 – 22:00",
+          "title": "Desconexión",
+          "description": "Relájate",
+          "add": "Añadir la regla Desconexión"
+        },
+        "sleep": {
+          "time": "22:00 – 06:00",
+          "title": "Sueño profundo",
+          "description": "Descansa la mente",
+          "add": "Añadir la regla Sueño profundo"
+        },
+        "evening": {
+          "time": "19:30 – 22:00",
+          "title": "Noche tranquila",
+          "description": "Baja el ritmo sin pantalla",
+          "add": "Añadir la regla Noche tranquila"
+        },
+        "weekend": {
+          "time": "09:00 – 12:00",
+          "title": "Finde zen",
+          "description": "Desconecta para respirar",
+          "add": "Añadir la regla Finde zen"
+        },
+        "morning": {
+          "time": "07:00 – 09:00",
+          "title": "Mañana sin pantalla",
+          "description": "Empieza sin hacer scroll",
+          "add": "Añadir la regla Mañana sin pantalla"
+        },
+        "social": {
+          "time": "18:00 – 20:00",
+          "title": "Pausa de redes",
+          "description": "Reencuéntrate con los tuyos",
+          "add": "Añadir la regla Pausa de redes"
+        },
+        "doomscroll": {
+          "time": "20 min / día",
+          "title": "Anti-doomscroll",
+          "description": "Corta el scroll infinito",
+          "add": "Añadir la regla Anti-doomscroll"
+        },
+        "family": {
+          "time": "18:30 – 21:00",
+          "title": "Tiempo en familia",
+          "description": "Disfruta de los tuyos",
+          "add": "Añadir la regla Tiempo en familia"
+        }
+      }
+    },
+    "unlock_app": {
+      "title": "Desbloquear esta app",
+      "picker_title": "Durante…",
+      "subtitle": "Elige entre 5 y 30 minutos.",
+      "minutes": "{{count}} min",
+      "cancel": "Cancelar",
+      "unlocked": "Desbloqueada durante {{count}} min",
+      "unit": "min",
+      "open": "Abierta",
+      "unlock_all_title": "Desbloquear todo",
+      "unlock_all_subtitle": "Elige entre 5 y 30 minutos."
+    },
+    "breathing": {
+      "cancel": "Cancelar",
+      "all_apps": "Todas las apps",
+      "one_app": "Aplicación elegida",
+      "slowly": "Respira despacio",
+      "inhale": "Inspira",
+      "exhale": "Espira",
+      "prompt": "Una respiración antes de decidir. Este momento es tuyo.",
+      "sound_off": "Silenciar",
+      "sound_on": "Activar el sonido",
+      "continue": "Continuar",
+      "wait": "Espera {{count}} s"
+    },
+    "reblock_app": {
+      "action": "Volver a bloquear",
+      "title": "Aplicación abierta",
+      "remaining": "Se vuelve a bloquear en {{time}}",
+      "rules_title": "Protecciones afectadas",
+      "empty_rules": "No se ha encontrado ninguna protección activa.",
+      "confirm": "Bloquear ahora",
+      "cancel": "Dejarla abierta",
+      "countdown_hours_minutes": "{{hours}}h {{minutes}}m",
+      "countdown_minutes_seconds": "{{minutes}}m {{seconds}}s",
+      "countdown_seconds": "{{seconds}}s"
+    },
+    "session_sheet": {
+      "edit": "Editar",
+      "close": "Cerrar",
+      "blocked_title": "Bloqueadas",
+      "during": "Durante",
+      "unlocks_allowed": "Desbloqueos permitidos",
+      "allowed_yes": "Sí",
+      "allowed_no": "No",
+      "unlock_apps": "Desbloquear apps",
+      "quit_early": "Terminar antes",
+      "strict_notice": "Modo estricto: no se puede abrir nada antes de que acabe el bloqueo.",
+      "headline_session": "Sesión, quedan {{time}}",
+      "headline_schedule": "Franja horaria, hasta las {{time}}",
+      "headline_limit": "Límite del día, {{time}} al día",
+      "headline_upcoming": "Empieza a las {{time}}",
+      "headline_paused": "En pausa",
+      "every_day": "todos los días",
+      "no_apps": "Ninguna app que abrir por ahora."
+    },
+    "unlock_picker": {
+      "title": "¿Qué apps?",
+      "subtitle": "Se volverán a bloquear solas al acabar la prórroga.",
+      "continue": "Continuar",
+      "cancel": "Cancelar",
+      "select_all": "Seleccionar todo",
+      "clear_all": "Deseleccionar todo",
+      "selected": "{{count}} seleccionada(s)",
+      "app_position": "App {{index}}"
+    },
+    "pause_sheet": {
+      "title": "Definir la duración de la pausa",
+      "subtitle_indefinite": "Esta regla queda en pausa hasta que la reanudes.",
+      "subtitle_until": "Esta regla se reanuda sola {{when}}.",
+      "confirm": "Poner en pausa",
+      "delete": "Eliminar la regla",
+      "back": "Volver",
+      "option_15min": "15 minutos",
+      "option_1h": "1 hora",
+      "option_today": "Por hoy",
+      "option_1day": "1 día",
+      "option_indefinite": "Indefinidamente",
+      "when_time": "a las {{time}}",
+      "when_tomorrow": "mañana a las {{time}}",
+      "when_midnight": "a medianoche"
+    },
+    "delete_sheet": {
+      "title": "¿Eliminar esta regla?",
+      "body": "Se eliminará la regla de forma definitiva. No podrás deshacerlo.",
+      "hold": "Mantén pulsado para eliminar",
+      "holding": "Sigue manteniendo",
+      "cancel": "Cancelar"
+    },
+    "edit_rule": {
+      "title": "Editar el bloqueo",
+      "save": "Guardar",
+      "change_apps": "Cambiar las apps",
+      "saved": "Bloqueo actualizado",
+      "saving": "Guardando…"
+    },
+    "hold": {
+      "activate": "Mantén pulsado para activar",
+      "keep_holding": "Sigue manteniendo…",
+      "commit": "Mantén pulsado para comprometerte",
+      "save": "Mantén pulsado para guardar"
+    },
+    "strict_lock": {
+      "title": "Bloqueo estricto",
+      "body_rule": "Este bloqueo no se puede detener antes de que acabe. Es exactamente lo que elegiste al activarlo.",
+      "body_app": "Esta app no se puede abrir antes de que acabe el bloqueo. Es exactamente lo que elegiste al activarlo.",
+      "until": "Hasta las {{time}}",
+      "remaining": "quedan {{time}}",
+      "no_end": "Hasta el final del bloqueo",
+      "action": "Entendido"
+    },
+    "strict_commit": {
+      "title": "Modo estricto: te comprometes",
+      "body": "Una vez activado, ya no podrás detener este bloqueo antes de las {{time}}: ni pausarlo, ni eliminarlo, ni abrir una app, aunque cierres Relock.",
+      "irreversible": "Esta decisión es irreversible.",
+      "reassure": "Ese es el objetivo: eres tú, ahora, quien decide por ti dentro de un rato.",
+      "confirm": "Me comprometo",
+      "cancel": "Cancelar"
+    },
+    "pause_ritual": {
+      "change": "Cambiar de pantalla",
+      "sheet_title": "Elige tu pantalla",
+      "sheet_body": "Lo que Relock mostrará antes de abrir una app bloqueada.",
+      "applies_next": "Tu elección se aplica a la próxima pausa.",
+      "confirmed": "{{ritual}}: pantalla definida para la próxima pausa.",
+      "breathing": {
+        "title": "Respiración",
+        "description": "Seis segundos de respiración guiada, sin hacer nada."
+      },
+      "math": {
+        "title": "Cálculo mental",
+        "description": "Tres operaciones para resolver de cabeza."
+      },
+      "transcribe": {
+        "title": "Copiar un texto",
+        "description": "Una frase para volver a escribir, palabra por palabra."
+      }
+    },
+    "math": {
+      "prompt": "Resuelve tres cálculos para continuar.",
+      "done": "Hecho. La puerta se abre.",
+      "hint": "Escribe tu respuesta y valida.",
+      "wrong": "Fallaste. Aquí tienes otro cálculo.",
+      "remaining": "Queda {{count}} cálculo",
+      "remaining_plural": "Quedan {{count}} cálculos",
+      "progress": "{{done}} cálculo de {{total}}",
+      "erase": "Borrar",
+      "check": "Validar"
+    },
+    "transcribe": {
+      "prompt": "Copia esta frase, exactamente igual.",
+      "done": "Frase copiada. La puerta se abre.",
+      "placeholder": "Escribe la frase aquí",
+      "field": "Frase que copiar",
+      "incomplete": "Copia la frase",
+      "match": "La frase es correcta.",
+      "mismatch": "Se desvía: retoma donde empieza el gris.",
+      "progress": "{{done}} / {{total}} caracteres",
+      "line_1": "Elijo abrir esta aplicación ahora, con plena conciencia.",
+      "line_2": "Lo que busco aquí, la pantalla no me lo va a dar; ya lo sé.",
+      "line_3": "Treinta segundos de atención valen más que una hora de scroll.",
+      "line_4": "Nadie me ha pedido que abra esto: es la costumbre la que habla.",
+      "line_5": "Mañana no recordaré nada de lo que vea esta noche.",
+      "line_6": "Puse este límite yo mismo, en un momento en que pensaba mejor."
+    },
+    "locked": "Bloqueado",
+    "rule_types": {
+      "schedule": "Franja horaria",
+      "limit": "Límite de tiempo",
+      "timed": "Bloqueo temporizado",
+      "daily_limit": "Límite del día"
+    },
+    "resume_sheet": {
+      "title": "Regla en pausa",
+      "body": "Ahora mismo no protege nada. Mantén pulsado para reanudarla donde se quedó.",
+      "apps": "Apps",
+      "apps_single": "{{n}} app",
+      "apps_plural": "{{n}} apps",
+      "type": "Tipo",
+      "per_day": "{{time}} al día",
+      "strict": "Modo estricto",
+      "strict_on": "Sí",
+      "paused": "Estado",
+      "confirm": "Mantén pulsado para reactivar",
+      "cancel": "Dejar en pausa"
+    },
+    "preset_recap": {
+      "activate": "Activar esta regla",
+      "done_title": "Ya está en marcha.",
+      "done_body_one": "«{{title}}» bloquea ahora {{count}} app. La encontrarás en la pestaña Reglas:",
+      "done_body_other": "«{{title}}» bloquea ahora {{count}} apps. La encontrarás en la pestaña Reglas:",
+      "done_strict": "en modo estricto: imposible pararla antes de que acabe cada sesión.",
+      "done_soft": "para pausarla o quitarla cuando quieras.",
+      "finish": "Listo",
+      "apps_todo": "Por elegir",
+      "apps_note": "Apple no deja que ninguna app elija las tuyas por ti: las designas tú mismo, una vez.",
+      "not_now": "Ahora no"
+    },
+    "days": {
+      "every_day": "Todos los días",
+      "weekdays": "De lunes a viernes",
+      "weekend": "Sábado y domingo",
+      "separator": ", ",
+      "short": {
+        "0": "dom",
+        "1": "lun",
+        "2": "mar",
+        "3": "mié",
+        "4": "jue",
+        "5": "vie",
+        "6": "sáb"
+      }
+    },
+    "preset_detail": {
+      "limit": "{{minutes}} min al día",
+      "timed": "{{minutes}} min de bloqueo inmediato",
+      "schedule": "{{start}} → {{end}} · {{days}}"
+    },
+    "preset_lines": {
+      "type": "Tipo",
+      "limit": "Límite",
+      "limit_value": "{{minutes}} minutos al día",
+      "days": "Días",
+      "once_spent": "Una vez agotado",
+      "once_spent_value": "Bloqueado hasta medianoche",
+      "duration": "Duración",
+      "duration_value": "{{minutes}} minutos",
+      "starts": "Empieza",
+      "starts_now": "Inmediatamente",
+      "slot": "Franja",
+      "strict": "Modo estricto",
+      "strict_yes": "Sí — imposible pararlo antes del final"
+    },
+    "presets": {
+      "focus": {
+        "title": "Foco",
+        "pitch": "Un empujón, ahora mismo, sin ajustes."
+      },
+      "nuit": {
+        "title": "Descanso",
+        "pitch": "El scroll de la noche es el que más sueño te cuesta."
+      },
+      "reveil": {
+        "title": "Primer despertar",
+        "pitch": "Lo que miras primero decide tu humor."
+      },
+      "matin": {
+        "title": "Mañana concentrada",
+        "pitch": "Las primeras horas deciden el resto del día."
+      },
+      "aprem": {
+        "title": "Bajón de la tarde",
+        "pitch": "Es en la hora floja cuando la mano va sola."
+      },
+      "repas": {
+        "title": "A la mesa",
+        "pitch": "Una comida sin móvil es una comida que recuerdas."
+      },
+      "weekend": {
+        "title": "Finde fuera",
+        "pitch": "Dos días a la semana en los que nadie te espera en línea."
+      },
+      "dose": {
+        "title": "Redes limitadas",
+        "pitch": "Conservas tus apps. Recuperas el control de la dosis."
+      },
+      "micro": {
+        "title": "15 minutos al día",
+        "pitch": "La dosis de emergencia, para las semanas que se desmadran."
+      },
+      "new-rule-work": {
+        "title": "Trabajo",
+        "pitch": "Bloquea las distracciones durante tus horas de trabajo."
+      },
+      "new-rule-focus": {
+        "title": "Foco láser",
+        "pitch": "Una hora sin interrupciones para avanzar en lo esencial."
+      },
+      "new-rule-study": {
+        "title": "Estudio",
+        "pitch": "Protege tu mañana para aprender sin interrupciones."
+      },
+      "new-rule-creative": {
+        "title": "Creación profunda",
+        "pitch": "Mantén tu impulso creativo lejos de las notificaciones."
+      },
+      "new-rule-decompression": {
+        "title": "Desconexión",
+        "pitch": "Deja que tu mente baje el ritmo antes de acabar el día."
+      },
+      "new-rule-sleep": {
+        "title": "Sueño profundo",
+        "pitch": "Protege tu noche del scroll de madrugada."
+      },
+      "new-rule-evening": {
+        "title": "Noche tranquila",
+        "pitch": "Baja el ritmo sin pantalla antes de dormir."
+      },
+      "new-rule-weekend": {
+        "title": "Finde zen",
+        "pitch": "Empieza el fin de semana lejos del scroll automático."
+      },
+      "new-rule-morning": {
+        "title": "Mañana sin pantalla",
+        "pitch": "Empieza el día antes de abrir tus redes."
+      },
+      "new-rule-social": {
+        "title": "Pausa de redes",
+        "pitch": "Devuelve tus noches a los tuyos."
+      },
+      "new-rule-doomscroll": {
+        "title": "Anti-doomscroll",
+        "pitch": "Conserva tus redes sin darles todo el día."
+      },
+      "new-rule-family": {
+        "title": "Tiempo en familia",
+        "pitch": "Disfruta de los tuyos sin interrupciones digitales."
+      }
+    },
+    "rule_type_label": {
+      "progressive_delay": "Bloquear ahora",
+      "schedule": "Franja horaria",
+      "daily_limit": "Límite de tiempo / día"
+    },
+    "apps_subtitle": {
+      "blocked_one": "1 app bloqueada",
+      "blocked_other": "{{count}} apps bloqueadas",
+      "none": "Ninguna app"
+    },
+    "status_line": {
+      "schedule": "{{apps}} · cada día {{start}} → {{end}}",
+      "limit_started": "{{apps}} · límite {{limit}} · iniciado a las {{time}}",
+      "limit": "{{apps}} · límite {{limit}} / día",
+      "done": "{{apps}} · terminado",
+      "remaining": "{{apps}} · quedan {{remaining}}"
+    },
+    "duration": {
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h",
+      "hours_minutes": "{{hours}} h {{minutes}}"
+    },
+    "app_count_one": "{{count}} app",
+    "app_count_other": "{{count}} apps",
+    "per_day": "{{duration}} al día",
+    "state_line": {
+      "suspended_indefinite": "En pausa hasta que la reanudes",
+      "resumes_in": "Se reanuda en ",
+      "ends_at": "Termina a las ",
+      "limit_reached": "Límite alcanzado · se reabre a medianoche",
+      "limit_of": "Límite de {{duration}} al día",
+      "left_today": " restantes hoy",
+      "until": "Hasta las ",
+      "still_left": " · quedan {{duration}}",
+      "starts_at": "Empieza a las ",
+      "tomorrow_at": "Mañana a las ",
+      "in_duration": " · en {{duration}}"
+    },
+    "list": {
+      "title": "Bloqueos",
+      "none_running": "Ningún bloqueo activo ahora mismo",
+      "running_count_one": "{{count}} bloqueo activo ahora mismo",
+      "running_count_other": "{{count}} bloqueos activos ahora mismo",
+      "new": "Nuevo bloqueo",
+      "create": "Crear un bloqueo",
+      "empty_title": "Nada protege tu tiempo",
+      "empty_body": "Tu móvil está abierto de par en par. Elige un primer momento que proteger.",
+      "section_running": "EN CURSO",
+      "section_upcoming": "PRÓXIMOS",
+      "section_suspended": "EN PAUSA"
+    }
+  },
+  "home": {
+    "my_apps": {
+      "hours_one": "{{count}} hora",
+      "hours_other": "{{count}} horas",
+      "title": "Mis apps",
+      "open": "Gestionar mis apps y mis bloqueos",
+      "active_protection": "Protección en curso",
+      "starts_in": "{{name}} empieza en {{duration}}",
+      "resumes_in": "{{name}} se reanuda en {{duration}}",
+      "blocked_count_one": "{{count}} app bloqueada",
+      "blocked_count_other": "{{count}} apps bloqueadas",
+      "blocked": "Bloqueado",
+      "unlock": "Desbloquear apps",
+      "none_blocked": "Ninguna app bloqueada ahora mismo",
+      "checking": "Comprobando las apps…"
+    },
+    "progress": {
+      "first_title": "Primer paso dado",
+      "first_body": "Has empezado. Eso es lo más difícil. Tu yo futuro ya te lo agradece.",
+      "title": "{{count}} días para ti",
+      "body": "Estás dedicando tiempo a lo esencial. Sigue a tu ritmo."
+    },
+    "title": "Inicio",
+    "resisted_lead": "Hoy has resistido a",
+    "openings": "aperturas",
+    "streak_current": "Racha actual",
+    "streak_record": "Récord {{days}} d",
+    "streak_unit": "días de control",
+    "time_regained": "Tiempo recuperado",
+    "today": "hoy",
+    "interceptions": "Intercepciones",
+    "scrolls_stopped": "scrolls detenidos",
+    "active_blocks": "Bloqueos activos",
+    "manage": "Gestionar",
+    "streak_accessibility": "Racha actual: {{days}} días",
+    "settings_accessibility": "Abrir los ajustes",
+    "screen_time_today": "Tiempo de pantalla hoy",
+    "screen_time_open_activity": "Abrir el detalle del tiempo de pantalla",
+    "screen_time_permission": "Autoriza Tiempo de uso para mostrar tus datos reales.",
+    "screen_time_unavailable": "Los datos de Tiempo de uso están disponibles en iPhone.",
+    "top_apps": "Top 3 aplicaciones de hoy",
+    "top_apps_open_activity": "Abrir la clasificación completa de apps",
+    "usage_missing": "Los datos reales aparecerán aquí en cuanto iOS los haya calculado.",
+    "global_score": "Puntuación global",
+    "score_today": "Hoy",
+    "focus_score": "Foco",
+    "rest_score": "Descanso",
+    "score_calculating": "Calculando",
+    "score_accessibility": "Abrir el detalle de la puntuación global",
+    "score_detail_title": "Tu puntuación global",
+    "score_detail_unavailable": "Aún no hay días suficientes medidos. Crea un bloqueo: tu puntuación llega mañana.",
+    "score_subtitle": "Comparado con tu hábito de los últimos 14 días.",
+    "score_caption": "Puntuación global",
+    "score_band_excellent": "Excelente equilibrio",
+    "score_band_good": "Buen equilibrio",
+    "score_band_fair": "Equilibrio medio",
+    "score_band_poor": "Equilibrio frágil",
+    "score_footer_excellent": "Día bajo control. ¡Mantén este ritmo!",
+    "score_improve_title": "Trucos para subir la puntuación",
+    "score_tip_block": "Bloquea las apps que más abres.",
+    "score_tip_focus": "Ante el muro, confirma «Cerrar».",
+    "score_tip_rest": "Programa una franja sin pantalla.",
+    "blocked_apps_title": "Apps bloqueadas",
+    "blocked_apps_summary": "{{count}} aplicaciones bloqueadas",
+    "blocked_apps_none": "Crear un primer bloqueo",
+    "blocked_apps_accessibility": "Gestionar las apps bloqueadas",
+    "streak_detail_title": "Tu racha",
+    "streak_detail_current": "Racha actual",
+    "streak_detail_record": "Mejor récord",
+    "streak_detail_days": "{{count}} días",
+    "streak_detail_protected": "El día de hoy está protegido.",
+    "streak_detail_waiting": "Activa una protección hoy para que la racha avance.",
+    "streak_detail_next": "Próximo día en {{duration}}",
+    "duration_minutes": "{{minutes}} min",
+    "duration_hours": "{{hours}} h",
+    "duration_hours_minutes": "{{hours}} h {{minutes}} min",
+    "streak_detail_rule": "Un día cuenta cuando al menos una protección de Relock está activa. No hace falta abrir la app.",
+    "new_user_title": "Empieza con calma",
+    "new_user_body": "Elige unas cuantas apps y protege un primer momento de tu día.",
+    "new_user_action": "Crear un bloqueo",
+    "data_error": "Algunos datos no se han podido actualizar. Relock lo reintentará automáticamente.",
+    "permission_open_settings": "Abrir Ajustes",
+    "close": "Cerrar",
+    "score_footer_provisional": "Puntuación aún aproximada: se afina cada día.",
+    "score_weak_pressure": "Abres tus apps bloqueadas más a menudo que de costumbre.",
+    "score_weak_resistance": "Ante el muro, insistes más veces de las que renuncias.",
+    "score_weak_breaches": "Hay apps reabiertas con prórroga: tu protección se está esquivando.",
+    "score_weak_coverage": "Poca parte de tu día está protegida. Una franja más marcaría la diferencia.",
+    "score_weak_regularity": "Tu semana es irregular: hay días sin ninguna protección.",
+    "score_weak_quota": "Tu cuota del día se va rápido. Tiene que llegar hasta esta noche.",
+    "score_delta_suffix": "vs ayer",
+    "score_delta_same": "Como ayer",
+    "score_trend_title": "Tus últimos 7 días",
+    "score_lowers_title": "Las trampas que evitar",
+    "score_lower_pressure": "Volver una y otra vez.",
+    "score_lower_breach": "Reabrir una app con prórroga.",
+    "score_lower_gap": "Un día sin ninguna protección."
+  },
+  "settings": {
+    "title": "Ajustes",
+    "back": "Volver",
+    "language": {
+      "label": "Idioma",
+      "french": "Francés",
+      "english": "Inglés",
+      "spanish": "Español"
+    },
+    "logo": {
+      "label": "Icono de la app",
+      "hint": "La marca en tu pantalla de inicio",
+      "classic": "Original",
+      "orb": "Orbe",
+      "phases": "Fases",
+      "footnote": "El logotipo «Relock» no cambia: sigue arriba en Inicio y en la pantalla de lanzamiento. iOS confirma cada cambio de icono por su cuenta.",
+      "error": "iOS rechazó el cambio de icono. Vuelve a intentarlo en un momento."
+    },
+    "theme": "Tema",
+    "theme_light": "Claro",
+    "theme_dark": "Oscuro",
+    "theme_system": "Sistema",
+    "sections": {
+      "subscription": "Suscripción",
+      "personalization": "Personalización",
+      "notifications": "Notificaciones",
+      "protection": "Protección",
+      "privacy": "Privacidad",
+      "support": "Asistencia",
+      "account": "Cuenta",
+      "developer": "Desarrollo",
+      "danger": "Zona sensible",
+      "about": "Acerca de"
+    },
+    "profile": {
+      "open": "Abrir mis datos personales",
+      "card_hint": "Foto, nombre, fecha de nacimiento",
+      "title": "Datos personales",
+      "photo_action": "Cambiar mi foto de perfil",
+      "photo_hint": "Toca la foto para reemplazarla",
+      "photo_updated": "Foto de perfil actualizada",
+      "photo_unavailable": "El envío de fotos no está disponible en esta versión.",
+      "photo_error": "No se ha podido abrir tu galería.",
+      "name": "Nombre",
+      "name_placeholder": "Tu nombre",
+      "birth_date": "Fecha de nacimiento",
+      "birth_date_empty": "Sin indicar",
+      "birth_date_clear": "Borrar la fecha",
+      "email": "Correo electrónico",
+      "email_empty": "Ninguno",
+      "identity_footnote": "Tu nombre se usa en los mensajes de la app. Tu fecha de nacimiento es privada: solo sirve para situar tus balances, nunca para segmentarte.",
+      "email_footnote": "La dirección viene de tu método de inicio de sesión y no se modifica aquí.",
+      "member_since": "Miembro desde {{date}}",
+      "saved": "Datos guardados",
+      "unchanged": "Ningún cambio"
+    },
+    "pro": {
+      "badge": "PRO",
+      "title": "Relock Pro",
+      "status_active": "Activo",
+      "status_inactive": "Inactivo",
+      "manage": "Gestionar mi suscripción",
+      "manage_hint": "Facturación, cambio de plan, cancelación",
+      "manage_error": "No se ha podido abrir el centro de gestión.",
+      "restore": "Restaurar mis compras",
+      "restore_done": "Suscripción restaurada",
+      "restore_none": "No hay compras que restaurar en esta cuenta.",
+      "restore_failed": "No se ha podido contactar con la tienda. Inténtalo de nuevo en un momento.",
+      "unavailable": "La facturación no está activada en esta versión.",
+      "footnote": "La cancelación siempre pasa por tu cuenta de la App Store: Relock no puede hacerlo por ti."
+    },
+    "appearance": "Apariencia",
+    "haptics": "Vibraciones",
+    "haptics_hint": "Vibraciones ligeras durante las acciones",
+    "pause_sound": "Sonido del ritual de pausa",
+    "pause_sound_hint": "Fondo sonoro durante la respiración",
+    "notifications_master": "Permitir las notificaciones",
+    "notifications_reminders": "Recordatorios",
+    "notifications_reminders_hint": "Racha en peligro, regreso tras una ausencia",
+    "notifications_progression": "Progreso",
+    "notifications_progression_hint": "Balance semanal y metas alcanzadas",
+    "notifications_permission": "Autorización de iOS",
+    "notifications_granted": "Concedida",
+    "notifications_denied": "Denegada",
+    "notifications_pending": "Por solicitar",
+    "notifications_footnote": "Relock nunca envía notificaciones promocionales. Una notificación denegada en iOS solo se puede restablecer desde los ajustes del sistema.",
+    "screen_time": "Acceso a Tiempo de uso",
+    "screen_time_hint": "Imprescindible para bloquear las aplicaciones",
+    "screen_time_granted": "Autorizado",
+    "screen_time_missing": "Por activar",
+    "screen_time_unavailable_title": "Tiempo de uso",
+    "screen_time_unavailable_body": "Solo disponible en iPhone (Family Controls).",
+    "screen_time_help_title": "Relock no puede bloquear nada",
+    "screen_time_help_intro": "Se denegó el acceso a Tiempo de uso. Sin él, iOS no permite que Relock actúe sobre tus aplicaciones: tus reglas siguen guardadas, pero ninguna se aplica. Y iOS no volverá a preguntar: la ventana de autorización solo aparece una vez.",
+    "screen_time_help_step1_title": "Ajustes y luego Tiempo de uso",
+    "screen_time_help_step1_body": "Abre «Apps con acceso a Tiempo de uso» y activa Relock, si aparece en la lista.",
+    "screen_time_help_step2_title": "Si no, reinstala Relock",
+    "screen_time_help_step2_body": "Una app denegada no siempre aparece en esa lista. Eliminarla y volver a instalarla reinicia la autorización: la solicitud vuelve en el primer inicio.",
+    "screen_time_help_note": "No se pierde nada: tus reglas, tu racha y tu suscripción están ligadas a tu cuenta, no a la app instalada.",
+    "screen_time_help_recheck": "Comprobar de nuevo",
+    "screen_time_help_granted": "Acceso a Tiempo de uso concedido.",
+    "screen_time_help_still_denied": "Todavía denegado.",
+    "blocks": "Mis bloqueos",
+    "blocks_hint": "Reglas, horarios y aplicaciones protegidas",
+    "protection_footnote": "Tus mediciones de uso nunca salen de tu iPhone: Apple no se las transmite a Relock, y solo se calcula una puntuación agregada en el dispositivo.",
+    "crash_reports": "Informes de errores",
+    "crash_reports_hint": "Envío anónimo de los errores, para corregirlos",
+    "privacy_policy": "Política de privacidad",
+    "privacy_footnote": "Ningún dato de navegación, ningún perfil publicitario, ninguna reventa. Los informes de errores no contienen ni tu correo ni el contenido de tu pantalla.",
+    "terms": "Condiciones de uso",
+    "help": "Centro de ayuda",
+    "contact": "Escríbenos",
+    "contact_subject": "Relock — necesito ayuda",
+    "rate": "Valorar Relock",
+    "share": "Compartir Relock",
+    "share_message": "Relock me ayuda a recuperar el control de mi tiempo de pantalla. Pruébalo:",
+    "link_error": "No se ha podido abrir este enlace.",
+    "logout": "Cerrar sesión",
+    "logout_title": "¿Cerrar sesión?",
+    "logout_body": "Tus bloqueos siguen protegiendo este iPhone. Recuperarás tu cuenta al volver a iniciar sesión.",
+    "logout_error": "No se ha podido cerrar la sesión. Inténtalo de nuevo.",
+    "delete_account": "Eliminar mi cuenta",
+    "delete_title": "¿Eliminar tu cuenta de forma definitiva?",
+    "delete_body": "Tu perfil, tus reglas y todo tu historial se borrarán sin vuelta atrás. Tu suscripción, en cambio, debe cancelarse desde tu cuenta de la App Store.",
+    "delete_cta": "Eliminar definitivamente",
+    "delete_done": "Cuenta eliminada",
+    "account_footnote": "La eliminación borra la cuenta y sus datos del servidor. No cancela la suscripción: esa se gestiona desde tu cuenta de la App Store.",
+    "version": "Versión {{version}}",
+    "version_build": "Versión {{version}} ({{build}})",
+    "diagnostics": "Diagnóstico nativo",
+    "diagnostics_title": "Diagnóstico nativo",
+    "diagnostics_unavailable": "Módulo nativo no disponible (¿simulador?).",
+    "replay_onboarding": "Repetir el onboarding",
+    "sentry_test_sent": "Evento de prueba enviado a Sentry",
+    "sentry_off_title": "Sentry inactivo",
+    "sentry_off_body": "No se envía ningún evento. Comprueba SENTRY_DSN en .env (y SENTRY_ENABLE_IN_DEV=1 en desarrollo) y vuelve a compilar: react-native-config lee .env EN LA COMPILACIÓN.",
+    "delete_intro": "Esta acción borra tu cuenta de Relock y todo lo que contiene, tanto en nuestros servidores como en este iPhone.",
+    "delete_item_profile": "Tu perfil: nombre, foto, fecha de nacimiento",
+    "delete_item_rules": "Tus reglas de bloqueo y tus aplicaciones protegidas",
+    "delete_item_history": "Tu historial, tus estadísticas y tu racha",
+    "delete_keep_subscription": "Tu suscripción NO se cancela: solo Apple puede hacerlo, desde los ajustes de tu cuenta de la App Store. Hazlo antes de eliminar la cuenta o se te seguirá cobrando.",
+    "delete_error": "No se ha podido eliminar. Inténtalo de nuevo o escríbenos.",
+    "delete_reauth": "Por seguridad, vuelve a iniciar sesión para eliminar tu cuenta.",
+    "duration_minutes": "{{minutes}} min",
+    "duration_hours": "{{hours}} h",
+    "duration_hours_minutes": "{{hours}} h {{minutes}}",
+    "emergency": "Desbloqueo de emergencia",
+    "emergency_hint": "Lo levanta todo, ahora mismo, sin ritual ni espera",
+    "emergency_title": "¿Desbloquear todo ahora?",
+    "emergency_body": "Tus {{count}} bloqueo(s) se ELIMINARÁN y todas tus aplicaciones volverán a estar accesibles al instante. Ni respiración, ni espera, ni modo estricto. Después tendrás que volver a crear tus reglas.",
+    "emergency_cta": "Desbloquear todo",
+    "emergency_none": "No hay ningún bloqueo que levantar.",
+    "emergency_done": "Todo está desbloqueado",
+    "emergency_partial": "Aplicaciones desbloqueadas, pero {{count}} regla(s) no se han podido borrar de la cuenta. Inténtalo de nuevo con conexión.",
+    "emergency_footnote": "Esta salida de emergencia existe para urgencias reales: una entrevista, un viaje, un imprevisto médico. Ignora deliberadamente todas las protecciones: eso es lo que garantiza que Relock nunca secuestre tu teléfono.",
+    "uninstall_protection": "Protección contra la desinstalación",
+    "uninstall_protection_hint": "Durante un bloqueo activo, iOS impide eliminar apps",
+    "uninstall_active": "Activa",
+    "uninstall_armed": "En vigor",
+    "uninstall_explain_title": "Antes de activar",
+    "uninstall_explain_body": "Mientras un bloqueo esté protegiendo de verdad, iOS impide eliminar aplicaciones. Dos cosas que debes saber:\n\n• La restricción es GLOBAL. Apple no permite proteger una sola app: durante un bloqueo, ninguna aplicación se puede eliminar de este iPhone.\n• Se levanta sola en cuanto no hay ningún bloqueo activo, y el desbloqueo de emergencia, justo arriba, la levanta al instante.",
+    "uninstall_explain_cta": "Entendido, activar",
+    "uninstall_unavailable": "Solo disponible en iPhone (Family Controls).",
+    "daily_limit": "Límite diario",
+    "daily_limit_hint": "Tope diario de tus aplicaciones protegidas",
+    "daily_limit_none": "Sin definir",
+    "daily_limit_sheet_title": "Límite diario",
+    "daily_limit_sheet_hint": "Superado este tope, iOS cierra tus aplicaciones protegidas hasta el día siguiente.",
+    "daily_limit_updated": "Tope diario actualizado",
+    "daily_limit_missing_title": "Ningún límite diario",
+    "daily_limit_missing_body": "Este ajuste modifica una regla de «límite / día» ya existente. Crea una para elegir qué aplicaciones limita.",
+    "daily_limit_missing_cta": "Crear un bloqueo",
+    "reminder_time": "Hora de los recordatorios",
+    "reminder_time_hint": "Cuándo puede llegar el recordatorio de la noche",
+    "export": "Exportar mis datos",
+    "export_hint": "Perfil, reglas e historial, en JSON",
+    "export_error": "La exportación ha fallado. Inténtalo de nuevo con conexión.",
+    "export_subject": "Mis datos de Relock",
+    "feedback_feature": "Proponer una función",
+    "feedback_feature_subject": "Relock — idea de función",
+    "feedback_bug": "Informar de un error",
+    "feedback_bug_subject": "Relock — informe de error",
+    "feedback_bug_body": "Cuéntanos qué estabas haciendo y qué ha pasado. Esta información técnica nos ayuda a localizar el problema:",
+    "reset": "Restablecer la aplicación",
+    "reset_hint": "Empezar de cero, sin perder tu cuenta",
+    "reset_title": "¿Ponerlo todo a cero?",
+    "reset_intro": "Tus contadores vuelven a cero y tus bloqueos se levantan. Es inmediato y no tiene vuelta atrás.",
+    "reset_item_rules": "Todos tus bloqueos y sus aplicaciones",
+    "reset_item_history": "Tu historial y tus estadísticas",
+    "reset_item_streak": "Tu racha y tu puntuación",
+    "reset_keeps": "Lo que conservas: tu cuenta (sigues con la sesión iniciada), tu suscripción, tu idioma, tu tema y tus preferencias de notificaciones.",
+    "reset_cta": "Restablecer",
+    "reset_done": "Aplicación restablecida",
+    "reset_partial": "Bloqueos levantados, pero el borrado en la cuenta ha fallado. Inténtalo de nuevo con conexión.",
+    "emergency_quota": "Tienes derecho a un desbloqueo de emergencia por semana.",
+    "emergency_locked_title": "Ya usado esta semana",
+    "emergency_locked_body": "Tienes derecho a un desbloqueo de emergencia por semana. El próximo estará disponible el {{date}}.",
+    "pause_ritual": {
+      "label": "Pantalla de bloqueo",
+      "hint": "Lo que Relock muestra antes de un desbloqueo",
+      "footnote": "La nueva pantalla se aplica a partir de tu próxima pausa: la que esté en curso llega siempre hasta el final."
+    },
+    "notifications_master_hint": "Las alertas de protección siguen activas: avisan cuando un bloqueo deja de aplicarse.",
+    "notifications_protection": "Alertas de protección",
+    "notifications_protection_hint": "Siempre activas. Avisan cuando Relock ya no bloquea nada: sin ellas, un fallo sería invisible.",
+    "notifications_always_on": "Siempre activas",
+    "notifications_account": "Suscripción",
+    "notifications_account_hint": "Fin de la prueba, fallo de pago, caducidad. Nunca promociones.",
+    "notifications_offers": "Ofertas y descuentos",
+    "notifications_offers_hint": "Desactivado por defecto. No se envía nada sin tu permiso.",
+    "notifications_ritual": "Cita diaria",
+    "notifications_ritual_hint": "Un recordatorio a la hora que elijas.",
+    "notifications_quiet_start": "Silencio a partir de",
+    "notifications_quiet_end": "Hasta",
+    "notifications_quiet_hint": "Ninguna notificación durante esta franja. Tu ajuste sustituye al valor por defecto (22:00 – 8:00)."
+  },
+  "notifications": {
+    "activation": {
+      "screen_time_missing": {
+        "title": "Relock aún no bloquea nada",
+        "body": "Falta la autorización de Tiempo de uso. Sin ella, ninguna app puede protegerse."
+      },
+      "selection_empty": {
+        "title": "Un bloqueo sin apps",
+        "body": "Una de tus protecciones está activa pero no apunta a ninguna app. Elige una o dos y empezará a servir."
+      },
+      "no_rule_d1": {
+        "title": "Tu primer bloqueo te espera",
+        "body": "Una app, una duración, y Relock se ocupa del resto. Menos de un minuto."
+      },
+      "rule_never_armed": {
+        "title": "Tu regla no se ha usado nunca",
+        "body": "Está lista, solo falta activarla. Un gesto y tu noche queda cubierta."
+      },
+      "tutorial_incomplete": {
+        "title": "¿Seguimos donde lo dejaste?",
+        "body": "Queda un paso para que Relock sea de verdad operativo."
+      }
+    },
+    "blocking": {
+      "all_rules_expired": {
+        "title": "Ya no hay ninguna protección activa",
+        "body": "Todos tus bloqueos han llegado al final. ¿Quieres relanzar uno?"
+      },
+      "nothing_armed_tonight": {
+        "title_a": "No hay nada activado para esta noche",
+        "body_a": "Es el momento que has señalado como difícil. Un bloqueo rápido y queda cubierto.",
+        "title_b": "Se acerca tu hora sensible",
+        "body_b": "Aún no hay nada que te proteja. Treinta segundos ahora valen más que una hora perdida luego."
+      },
+      "session_ending_soon": {
+        "title": "Tu protección termina pronto",
+        "body": "Diez minutos para el final. Puedes prolongarla si prefieres aguantar un poco más."
+      },
+      "session_ended": {
+        "title": "Protección terminada",
+        "body": "Abre Relock para ver lo que has evitado durante esta sesión."
+      },
+      "schedule_starts_soon": {
+        "title": "Franja horaria en un cuarto de hora",
+        "body": "Tus apps van a bloquearse. Termina lo que tengas entre manos."
+      },
+      "extend_suggested": {
+        "title": "Prolongas a menudo",
+        "body": "Tres prórrogas esta semana. Una franja horaria fija te ahorraría tener que pensarlo."
+      }
+    },
+    "strict": {
+      "attempt_burst": {
+        "title": "Es un momento difícil",
+        "body": "Llevas unos minutos chocando con el muro. Para eso está justamente el modo estricto."
+      },
+      "first_completed": {
+        "title": "Primera sesión estricta completada",
+        "body": "Has llegado al final sin puerta de salida. Era lo más difícil, y ya está hecho."
+      },
+      "locked_confirmation": {
+        "title": "Cierre estricto activo",
+        "body": "Hasta las {{until}} no podrás dar marcha atrás. Es lo que has elegido."
+      },
+      "unlock_available": {
+        "title": "El cierre se ha levantado",
+        "body": "Tu protección estricta ha terminado. Vuelves a tener el control."
+      },
+      "midpoint": {
+        "title": "A mitad de camino",
+        "body": "Ya has dejado atrás la mitad del cierre. Lo que viene es más fácil de lo que crees."
+      }
+    },
+    "score": {
+      "first_ready": {
+        "title": "Tu puntuación está lista",
+        "body": "Ya hay suficiente historial para decirte dónde estás: {{score}} sobre 100."
+      },
+      "band_up": {
+        "title": "Cambias de nivel",
+        "body": "Tu puntuación sube a {{score}}. No es casualidad: es lo que has hecho esta semana."
+      },
+      "dropped": {
+        "title": "Tu puntuación ha bajado",
+        "body": "Pasa. Abre Relock para ver qué ha cambiado."
+      },
+      "improved": {
+        "title": "Tu puntuación mejora",
+        "body": "Tu puntuación: +{{delta}} respecto a la semana pasada."
+      },
+      "weakest_axis_tip_focus": {
+        "title": "Tu punto débil: la concentración",
+        "body": "Tus días están muy fragmentados. Un bloqueo en tus horas de trabajo sería lo que más cambiaría."
+      },
+      "weakest_axis_tip_rest": {
+        "title": "Tu punto débil: el descanso",
+        "body": "Las noches se te alargan. Una franja horaria a partir de las 22:00 sería lo que más cambiaría."
+      }
+    },
+    "progress": {
+      "first_resist": {
+        "title": "Primera victoria",
+        "body": "Acabas de resistir. Así es exactamente como se recupera el control."
+      },
+      "milestone_resists": {
+        "title": "{{total}} resistencias",
+        "body": "{{total}} veces en las que has elegido tu tiempo antes que el scroll. Sigue así."
+      },
+      "streak_milestone": {
+        "title_one": "{{days}} día seguido",
+        "title_other": "{{days}} días seguidos",
+        "title": "{{days}} días seguidos",
+        "body_one": "Tu racha aguanta. Lo que marca la diferencia es la constancia, no los días heroicos.",
+        "body_other": "Tu racha aguanta. Lo que marca la diferencia es la constancia, no los días heroicos.",
+        "body": "Tu racha aguanta. Lo que marca la diferencia es la constancia, no los días heroicos."
+      },
+      "challenge_completed": {
+        "title_one": "{{days}} día completado",
+        "title_other": "{{days}} días completados",
+        "title": "{{days}} días completados",
+        "body_one": "Tu reto ha llegado hasta el final. Abre Relock para ver lo que te ha devuelto.",
+        "body_other": "Tu reto ha llegado hasta el final. Abre Relock para ver lo que te ha devuelto.",
+        "body": "Tu reto ha llegado hasta el final. Abre Relock para ver lo que te ha devuelto."
+      },
+      "personal_best": {
+        "title": "Tu mejor semana",
+        "body": "{{minutes}} min recuperados: nunca habías llegado tan lejos."
+      },
+      "weekly_recap": {
+        "title": "Tu balance de la semana está listo",
+        "body": "Abre Relock para ver el tiempo que has recuperado esta semana."
+      },
+      "monthly_recap": {
+        "title": "Tu mes de un vistazo",
+        "body": "Abre Relock para ver qué tal ha ido el mes."
+      }
+    },
+    "retention": {
+      "streak_at_risk": {
+        "title": "Tu racha pende de un gesto",
+        "body": "Activa un bloqueo esta noche para no romperla."
+      },
+      "streak_broken_recover": {
+        "title": "Se empieza desde 1, no desde 0",
+        "body": "La racha se cortó ayer. Lo que ganaste antes sigue siendo tuyo."
+      },
+      "absent_14d": {
+        "title": "Lo dejamos aquí",
+        "body": "Relock no volverá a insistir. La app sigue ahí si quieres retomarlo, cuando quieras."
+      },
+      "absent_5d": {
+        "title": "Tu tiempo sigue esperándote",
+        "body": "Tenías un motivo para empezar. No ha cambiado."
+      },
+      "win_back_offer": {
+        "title": "Te espera una oferta",
+        "body": "Retoma donde lo dejaste, a precio reducido."
+      },
+      "absent_2d": {
+        "title_a": "Tus apps pueden esperar",
+        "body_a": "Un bloqueo rápido y recuperas tu tiempo.",
+        "title_b": "¿Recuperamos el control?",
+        "body_b": "Dos días sin ningún bloqueo. Con un minuto basta para relanzarlo."
+      }
+    },
+    "billing": {
+      "renewal_failed": {
+        "title": "Tu pago no se ha completado",
+        "body": "Tu suscripción se va a interrumpir. Actualiza tu método de pago para conservar tus protecciones."
+      },
+      "entitlement_lost": {
+        "title": "Tus protecciones se han reducido",
+        "body": "Tu suscripción ha caducado. Los bloqueos en curso continúan, pero ya no puedes crear otros."
+      },
+      "trial_ends_2d": {
+        "title": "Tu prueba termina en 2 días",
+        "body": "No tienes que hacer nada si quieres continuar. Puedes cancelar cuando quieras desde Ajustes."
+      },
+      "trial_ends_1d": {
+        "title": "Último día de prueba",
+        "body": "El cobro se realiza mañana. Todavía puedes cancelar desde Ajustes."
+      },
+      "offer_expires_2h": {
+        "title": "Tu oferta termina en 2 horas",
+        "body": "Después de eso, desaparece."
+      },
+      "offer_expires_24h": {
+        "title": "A tu oferta le quedan 24 horas",
+        "body": "Luego desaparece y el precio vuelve a la normalidad."
+      },
+      "offer_available": {
+        "title": "Hay una oferta abierta para ti",
+        "body": "Precio reducido en Relock, por tiempo limitado."
+      },
+      "paywall_abandoned_d1": {
+        "title": "Estabas a punto",
+        "body": "Tu oferta de bienvenida sigue ahí."
+      },
+      "paywall_abandoned_1h": {
+        "title": "¿Alguna duda sobre la suscripción?",
+        "body": "Tu oferta sigue abierta si quieres volver."
+      }
+    },
+    "health": {
+      "screen_time_revoked": {
+        "title": "Relock ya no protege tus apps",
+        "body": "Se ha retirado la autorización de Tiempo de uso. Tus bloqueos ya no se aplican."
+      },
+      "rules_desync": {
+        "title": "Un bloqueo no se está aplicando",
+        "body": "Una de tus reglas está activa en Relock pero no en tu iPhone. Abre la app para reactivarla."
+      },
+      "extension_silent": {
+        "title": "Comprueba tus protecciones",
+        "body": "Relock no sabe nada de sus protecciones desde hace dos días. Abre la app para comprobarlo."
+      },
+      "selection_drift": {
+        "title": "Un bloqueo ha perdido sus apps",
+        "body": "La selección de una de tus reglas está vacía: ya no bloquea nada."
+      },
+      "sync_stalled": {
+        "title": "Tus estadísticas van con retraso",
+        "body": "No se pierde nada, pero las cifras que ves están anticuadas. Abre la app para actualizarlas."
+      },
+      "incident": {
+        "title": "Relock ya no protege tus apps",
+        "body": "Varias protecciones han dejado de aplicarse. Abre la app para restablecer la situación."
+      }
+    },
+    "ritual": {
+      "bedtime": {
+        "title": "Es hora de cortar",
+        "body": "Tu noche es tuya. Un bloqueo, y la pantalla se queda ahí."
+      },
+      "my_moment": {
+        "title": "Tu momento sin pantalla",
+        "body": "Es la hora que elegiste. Activa tu bloqueo."
+      },
+      "morning_no_scroll": {
+        "title": "Empieza el día por ti",
+        "body": "Antes del primer scroll: activa tu bloqueo."
+      }
+    },
+    "soft_ask_title": "¿Un empujón discreto?",
+    "soft_ask_body": "Relock puede avisarte si tu racha está en peligro o si una protección deja de aplicarse. Nunca promociones, y mantienes el control desde Ajustes.",
+    "soft_ask_decline": "No, gracias",
+    "soft_ask_accept": "Activar los recordatorios"
+  },
+  "onboarding_plan": {
+    "list": {
+      "separator": ", ",
+      "and": " y ",
+      "and_alt": " e "
+    },
+    "moment": {
+      "bed": "sobre todo por la noche, en la cama",
+      "wake": "nada más despertarte",
+      "work": "durante el trabajo o las clases",
+      "break": "durante tus descansos",
+      "transport": "en los desplazamientos",
+      "meals": "durante las comidas",
+      "weekend": "el fin de semana, horas enteras",
+      "always": "un poco todo el rato"
+    },
+    "feeling": {
+      "guilt": "culpa",
+      "empty": "una sensación de vacío",
+      "anxious": "ansiedad",
+      "wasted": "la sensación de perder el tiempo",
+      "drained": "falta de energía",
+      "overwhelmed": "la sensación de que todo se desborda",
+      "foggy": "niebla en la cabeza",
+      "regret": "arrepentimiento",
+      "unproductive": "la sensación de no avanzar",
+      "disconnected": "distancia con lo real",
+      "angry": "irritación",
+      "hopeless": "desánimo",
+      "ashamed": "vergüenza",
+      "lonely": "soledad",
+      "restless": "inquietud",
+      "numb": "una especie de anestesia"
+    },
+    "stolen": {
+      "nights": "noches de sueño",
+      "people": "momentos con la gente que quieres",
+      "becoming": "tiempo para llegar a ser quien quieres ser",
+      "focus": "tu concentración",
+      "presence": "momentos en los que te habría gustado estar",
+      "energy": "tu energía",
+      "mornings": "tus mañanas",
+      "sport": "las ganas de moverte",
+      "projects": "proyectos que nunca empezaste",
+      "calm": "la calma en tu cabeza",
+      "pride": "el orgullo de tus días"
+    },
+    "attempt": {
+      "deleted": "reinstalar una app lleva diez segundos",
+      "limit": "un límite de pantalla se aplaza con un toque",
+      "willpower": "la fuerza de voluntad sola aguanta hasta la primera noche difícil",
+      "distance": "un móvil dejado lejos se recupera en diez pasos",
+      "hidden": "una app escondida se abre igualmente",
+      "grayscale": "una pantalla en gris vuelve al color en tres toques",
+      "notifications": "silenciar las notificaciones no impide abrir la app tú mismo",
+      "blocker": "un bloqueo que se desactiva solo no bloquea nada",
+      "detox": "un detox tiene fecha de fin, y el hábito espera detrás",
+      "logout": "volver a entrar cuesta lo que tarda una contraseña guardada"
+    },
+    "aspiration": {
+      "sleep": "dormir",
+      "move": "moverte",
+      "read": "leer",
+      "people": "ver a los tuyos",
+      "project": "avanzar en un proyecto",
+      "hobby": "retomar una afición",
+      "breathe": "respirar",
+      "cook": "cocinar",
+      "work": "trabajar mejor",
+      "morning": "recuperar tus mañanas",
+      "study": "que te vayan bien los estudios",
+      "present": "estar presente",
+      "family": "estar con tu familia",
+      "nature": "salir fuera",
+      "learn": "aprender",
+      "create": "crear",
+      "music": "hacer música",
+      "silence": "no hacer nada, de verdad"
+    },
+    "aspiration_word": {
+      "sleep": "de Sueño",
+      "move": "de Deporte",
+      "read": "de Lectura",
+      "people": "con los tuyos",
+      "project": "de Proyectos",
+      "hobby": "de Disfrute",
+      "breathe": "de Calma",
+      "cook": "de Cocina",
+      "work": "de Claridad",
+      "morning": "de Mañanas",
+      "study": "de Éxito",
+      "present": "de Presencia",
+      "family": "en Familia",
+      "nature": "Fuera",
+      "learn": "de Aprendizaje",
+      "create": "de Creación",
+      "music": "de Música",
+      "silence": "de Silencio"
+    },
+    "default_word": {
+      "presence": "de Presencia",
+      "sleep": "de Sueño",
+      "calm": "de Calma",
+      "freedom": "de Libertad",
+      "life": "de Vida"
+    },
+    "intention": {
+      "bed": "Tu objetivo: recuperar tus noches.",
+      "sleep": "Tu objetivo: volver a dormir de verdad.",
+      "focus": "Tu objetivo: recuperar tu concentración.",
+      "goals": "Tu objetivo: sostener tus días.",
+      "presence": "Tu objetivo: estar de verdad.",
+      "mood": "Tu objetivo: tener la cabeza más ligera.",
+      "habit": "Tu objetivo: romper el reflejo.",
+      "time": "Tu objetivo: recuperar tiempo para ti.",
+      "control": "Tu objetivo: retomar el control."
+    },
+    "intention_default": "Un primer paso para recuperar tiempo para ti.",
+    "recap": {
+      "named_apps_moment": "{{name}}, haces scroll en {{apps}} {{moment}}.",
+      "named_apps": "{{name}}, haces scroll en {{apps}}.",
+      "named_moment": "{{name}}, haces scroll {{moment}}.",
+      "apps_moment": "Haces scroll en {{apps}} {{moment}}.",
+      "apps": "Haces scroll en {{apps}}.",
+      "moment": "Haces scroll {{moment}}.",
+      "fallback_named": "{{name}}, aquí tienes un punto de partida para adaptarlo a tu día a día.",
+      "fallback": "Aquí tienes un punto de partida para adaptarlo a tu día a día."
+    },
+    "feeling_sentence": "Después describes {{feelings}}.",
+    "loss_sentence": "Y ya te ha quitado {{stolen}}.",
+    "defense_never": "Todavía no lo has intentado de verdad. Mejor empezar por algo que se sostenga solo.",
+    "defense_tried": "Ya lo has intentado, pero {{tried}}. Tu plan, en cambio, se configura en frío —cuando lo ves claro— y no se retira en caliente."
+  },
+  "add_rule": {
+    "type_question": "¿Qué tipo de bloqueo?",
+    "types": {
+      "block_now": {
+        "title": "Bloquear ahora",
+        "desc": "Una vez, durante el tiempo que elijas"
+      },
+      "schedule": {
+        "title": "Franja horaria",
+        "desc": "Bloqueado todos los días en una franja"
+      },
+      "daily_limit": {
+        "title": "Límite de tiempo",
+        "desc": "Una cuota al día y después bloqueado"
+      }
+    },
+    "days": {
+      "every_day": "Todos los días",
+      "weekdays": "Lun → Vie",
+      "weekend": "Fin de semana"
+    },
+    "name_placeholder": "Nombre (opcional)",
+    "start": "Inicio",
+    "end": "Fin",
+    "limit_per_day": "Límite / día",
+    "duration_a11y": "Duración del bloqueo",
+    "limit_a11y": "Límite diario",
+    "pick_apps": "Elegir las apps",
+    "apple_picker": "Selector de Apple",
+    "tap_to_edit": "Toca para modificar",
+    "activated": "Ya está activo",
+    "strict_explain": "Una vez activado, no puedes parar el bloqueo antes de que acabe, ni siquiera reabriendo Relock. Ideal para mantener un compromiso.",
+    "warn_same_bounds": "El inicio y el fin deben ser distintos (si no, la franja dura 24 h).",
+    "warn_too_short": "Tu franja es demasiado corta. Elige un tramo de al menos 15 minutos.",
+    "summary_timed_one": "{{apps}} · bloqueada {{duration}}",
+    "summary_timed_other": "{{apps}} · bloqueadas {{duration}}",
+    "summary_strict_suffix": " · modo estricto",
+    "summary_schedule": "{{apps}} · {{days}} {{start}} → {{end}}",
+    "summary_limit": "{{apps}} · límite {{limit}} / día",
+    "summary_limit_note": "El tiempo que ya has usado hoy no cuenta: el límite empieza ahora y, los días siguientes, a partir de medianoche.",
+    "strict_hint": "Imposible pararlo antes del final, ni siquiera cerrando Relock.",
+    "warn_title": "Franja demasiado corta"
+  },
+  "onboarding_survey": {
+    "trigger": {
+      "title": "¿Qué te trae por aquí?",
+      "title_named": "¿Qué te trae por aquí, {{name}}?",
+      "sub": "Sé sincero. Marca todo lo que sea cierto.",
+      "time": "Pierdo demasiado tiempo",
+      "bed": "Hago scroll en la cama",
+      "focus": "Ya no consigo concentrarme",
+      "control": "Quiero recuperar el control",
+      "sleep": "Duermo mal",
+      "habit": "Abro las apps sin ni siquiera pensarlo",
+      "mood": "Me afecta al ánimo",
+      "presence": "Quiero estar más presente",
+      "goals": "Mis estudios o mi trabajo lo están sufriendo"
+    },
+    "apps": {
+      "title": "¿Qué apps te enganchan más?",
+      "sub": "Elige todas las que quieras.",
+      "study": "El scroll de la noche es el más difícil de soltar. No eres el único."
+    },
+    "moment": {
+      "title": "¿Cuándo te desconectas del mundo?",
+      "sub": "Tu plan protegerá primero estos momentos.",
+      "bed": "Por la noche, en la cama",
+      "wake": "Nada más despertarme",
+      "work": "Durante el trabajo o las clases",
+      "break": "Durante mis descansos",
+      "transport": "En los desplazamientos",
+      "meals": "Durante las comidas",
+      "weekend": "El fin de semana, horas enteras",
+      "always": "Un poco todo el rato"
+    },
+    "feelings": {
+      "title": "Y después de hacer scroll, ¿cómo te sientes?",
+      "sub": "Marca todo lo que te suene.",
+      "study": "No es falta de voluntad. Es el diseño de estas apps.",
+      "guilt": "Culpable",
+      "empty": "Vacío",
+      "anxious": "Ansioso",
+      "wasted": "Estoy perdiendo la vida",
+      "drained": "Sin energía",
+      "overwhelmed": "Desbordado",
+      "foggy": "Con la mente nublada",
+      "regret": "Con arrepentimiento",
+      "unproductive": "Improductivo",
+      "disconnected": "Desconectado de lo real",
+      "angry": "Irritado",
+      "hopeless": "Sin esperanza",
+      "ashamed": "Avergonzado",
+      "lonely": "Solo",
+      "restless": "Inquieto",
+      "numb": "Anestesiado"
+    },
+    "stolen": {
+      "title": "¿Qué te ha quitado ya el scroll?",
+      "sub": "Marca todo lo que te suene, sobre todo lo que más duele.",
+      "hint": "Lo que marques aquí es lo que tu plan intentará devolverte.",
+      "nights": "Noches que no recuperaré jamás",
+      "people": "Momentos con la gente que quiero",
+      "becoming": "Tiempo para llegar a ser quien quiero ser",
+      "focus": "Mi capacidad de concentrarme",
+      "presence": "Momentos en los que me habría gustado estar",
+      "energy": "La energía que ya no me queda para lo demás",
+      "mornings": "Mis mañanas, antes incluso de levantarme",
+      "sport": "Las ganas de moverme",
+      "projects": "Proyectos que nunca empecé",
+      "calm": "La calma en mi cabeza",
+      "pride": "El orgullo de un día bien aprovechado"
+    },
+    "attempts": {
+      "title": "¿Ya has intentado dejarlo?",
+      "sub": "Marca todo lo que hayas probado. No hay respuestas incorrectas.",
+      "hint": "Todos esos métodos tienen algo en común: se desactivan en tres segundos.",
+      "hint_never": "Entonces mejor empezar por un método que se sostenga solo.",
+      "deleted": "Borré la app… y la reinstalé",
+      "limit": "Puse un límite… y luego «15 minutos más»",
+      "willpower": "Aguanté a fuerza de voluntad. No duró",
+      "distance": "Dejé el móvil lejos. Volví a por él",
+      "hidden": "Escondí las apps en una carpeta",
+      "grayscale": "Puse la pantalla en blanco y negro",
+      "notifications": "Silencié las notificaciones",
+      "blocker": "Probé otra app de bloqueo",
+      "detox": "Hice un detox. Y recaí",
+      "logout": "Cerré sesión en mis cuentas",
+      "never": "Nunca lo he intentado de verdad"
+    },
+    "aspiration": {
+      "title": "Y ese tiempo, ¿en qué lo emplearías?",
+      "title_time": "Si recuperaras {{time}} al día, ¿en qué lo emplearías?",
+      "sub": "Marca todo lo que quieras recuperar. Ese será el objetivo de tu plan.",
+      "hint": "Eso es lo que vamos a proteger.",
+      "sleep": "Dormir",
+      "move": "Moverme",
+      "read": "Leer",
+      "people": "Los míos",
+      "project": "Un proyecto",
+      "hobby": "Una afición",
+      "breathe": "Respirar",
+      "cook": "Cocinar",
+      "work": "Trabajar mejor",
+      "morning": "Mis mañanas",
+      "study": "Mis estudios",
+      "present": "Estar presente",
+      "family": "Mi familia",
+      "nature": "Salir fuera",
+      "learn": "Aprender",
+      "create": "Crear",
+      "music": "La música",
+      "silence": "No hacer nada"
+    },
+    "screen_time": {
+      "title": "¿Cuánto tiempo haces scroll al día?",
+      "sub": "Una sola respuesta: basta con una estimación sincera.",
+      "lt2": "Menos de 2 horas",
+      "2to4": "2 a 4 horas",
+      "4to6": "4 a 6 horas",
+      "6to8": "6 a 8 horas",
+      "gt8": "Más de 8 horas"
+    }
+  },
+  "onboarding_intro": {
+    "welcome": {
+      "hero_before": "Con Relock, recupera ",
+      "hero_gain": "2 horas",
+      "hero_middle": " cada día: ¡son ",
+      "hero_span": "4 semanas",
+      "hero_after": " al año!"
+    },
+    "demo": {
+      "feed_tab": "Para ti",
+      "shield_sub": "Recupera tu noche.",
+      "title": "El bloqueo interviene",
+      "title_accent": "en el momento justo.",
+      "sub": "Relock se interpone. Tú recuperas tu noche.",
+      "cta": "Quiero eso"
+    },
+    "name": {
+      "title": "¿Cómo te llamas?",
+      "sub": "Para que tu plan te hable a ti.",
+      "placeholder": "Tu nombre"
+    },
+    "hours": {
+      "title": "¿Cuántas horas al día, dirías?",
+      "sub": "Basta con una estimación sincera.",
+      "unit": "horas al día",
+      "less": "Menos",
+      "more": "Más",
+      "unknown": "No lo sé"
+    },
+    "proof": {
+      "title_before": "Dos semanas para recuperar ",
+      "title_accent": "+ 2 horas",
+      "title_after": " al día",
+      "tag_without": "Sin nada",
+      "tag_with": "Con Relock",
+      "axis_future": "Tu pantalla en 2 semanas",
+      "benefit": {
+        "focus": {
+          "lead": "Trabaja sin interrupciones.",
+          "rest": " Da lo mejor de ti."
+        },
+        "time": {
+          "lead": "Recupera el control de tu tiempo.",
+          "rest": " Vive cada día plenamente."
+        },
+        "presence": {
+          "lead": "Está presente en el momento.",
+          "rest": " La vida no ocurre en una pantalla."
+        }
+      },
+      "study": "De media, la gente mira el móvil más de 140 veces al día.",
+      "footnote": "Proyección basada en tus bloqueos programados. No es una promesa mágica."
+    },
+    "science": {
+      "badge": "Respaldado por la ciencia",
+      "open_a11y": "Abrir el detalle científico",
+      "close_a11y": "Cerrar el detalle científico",
+      "title": "Por qué funciona",
+      "lede": "Tres mecanismos de atención. Ninguno pide fuerza de voluntad.",
+      "friction_title": "Basta con un retraso",
+      "friction_body": "La mano va sola. Una pausa antes del contenido detiene muchas de esas aperturas.",
+      "habit_title": "El bucle se rompe",
+      "habit_body": "Señal, gesto, recompensa. Quita la recompensa y el hábito deja de reforzarse.",
+      "focus_title": "El coste real de un corte",
+      "focus_body": "La atención no vuelve de golpe: dos minutos de scroll cuestan mucho más que dos minutos.",
+      "caveat": "Mecanismos generales de la atención. Relock aún no se ha medido: lo que recuperes depende de tus bloqueos.",
+      "close": "Entendido"
+    }
+  },
+  "onboarding_tutorial": {
+    "ground": {
+      "title": "Genial. Ahora fijemos\nunas reglas básicas."
+    },
+    "lock": {
+      "title": "Las reglas bloquean apps\na horas concretas."
+    },
+    "hard": {
+      "badge": "EN LA APP",
+      "switch": "Hard Mode",
+      "title": "¿Y si no quieres perdonarte nada?",
+      "sub": "El Hard Mode cierra un bloqueo: ni desbloqueo temporal de una app, ni parada de la regla antes de tiempo.",
+      "footnote": "Nada que ajustar ahora. Lo activarás tú en la app, bloqueo a bloqueo, el día que lo necesites."
+    },
+    "picker_demo": {
+      "title": "Elige tus mayores distracciones",
+      "sub": "Las apps están agrupadas por categoría.",
+      "understood": "Entendido",
+      "watch": "Mira la demostración"
+    },
+    "pick_apps": {
+      "title": "Elige tus distracciones",
+      "sub": "Despliega una categoría en el selector de Apple y marca las apps que bloquear.",
+      "open_picker": "Abrir el selector",
+      "how_to": "Ver cómo se hace",
+      "selected_one": "{{count}} elemento seleccionado",
+      "selected_other": "{{count}} elementos seleccionados",
+      "edit_selection": "Modificar la selección.",
+      "empty": "Relock no tiene nada que bloquear mientras no elijas ninguna app. Elige al menos una para continuar."
+    },
+    "rules": {
+      "applies_to_one": "Se aplica a la app que acabas de elegir.",
+      "applies_to_other": "Se aplica a las {{count}} apps que acabas de elegir.",
+      "applies_future": "Se aplica a las apps que elijas.",
+      "sub_one": "Cada una protege un momento del día bloqueando la app que acabas de elegir. Quédate con las que te encajen y desmarca el resto.",
+      "sub_other": "Cada una protege un momento del día bloqueando las {{count}} apps que acabas de elegir. Quédate con las que te encajen y desmarca el resto.",
+      "sub_generic": "Cada una protege un momento del día bloqueando las apps que has elegido. Quédate con las que te encajen y desmarca el resto.",
+      "title": "Estas son las reglas que te propongo",
+      "title_named": "{{name}}, estas son las reglas que te propongo",
+      "activating": "Activando…",
+      "activate_one": "Activar esta regla",
+      "activate_other": "Activar estas {{count}} reglas",
+      "footnote_one": "Estará activa en cuanto entres en la app.",
+      "footnote_other": "Estarán activas en cuanto entres en la app."
+    }
+  },
+  "errors": {
+    "preset_not_found": "Preajuste no encontrado",
+    "screen_time_missing": "Falta la autorización de Tiempo de uso",
+    "not_signed_in": "Sin sesión iniciada",
+    "birth_date_unavailable": "La fecha de nacimiento aún no está activada en el servidor (falta aplicar la migración `profiles.birth_date`).",
+    "reauth_required": "Vuelve a iniciar sesión antes de eliminar tu cuenta.",
+    "sign_in_cancelled": "Inicio de sesión cancelado",
+    "apple_unavailable": "Iniciar sesión con Apple no está disponible en este dispositivo",
+    "reset_failed": "No se ha podido completar el restablecimiento.",
+    "family_controls_unavailable": "Family Controls no disponible (simulador o módulo sin enlazar).",
+    "upload_denied": "ImageKit: autorización de subida denegada",
+    "upload_failed": "ImageKit: subida fallida"
+  },
+  "onboarding_recognition": {
+    "intro": "Abres TikTok dos minutos.",
+    "look_up": "Levantas la cabeza.",
+    "elapsed": "Han pasado dos horas.",
+    "question": "¿Te suena ese momento?",
+    "cta": "Me identifico"
+  },
+  "onboarding_victory": {
+    "title": "Ya está en marcha.",
+    "body": "Menos scroll.\nMás espacio para ti.",
+    "status": "Tus reglas están configuradas",
+    "note": "El bloqueo seguirá los ajustes que has elegido.",
+    "cta": "Abrir Relock"
+  },
+  "onboarding_auth": {
+    "title_1": "Guarda tu",
+    "title_2": "progreso.",
+    "sub": "Recupera tus hábitos, tus bloqueos\ny tus estadísticas, sincronizados\ncon seguridad en todos tus dispositivos.",
+    "apple": "Continuar con Apple",
+    "google": "Continuar con Google",
+    "privacy": "Tus datos de actividad son privados."
+  },
+  "onboarding_plan_actions": {
+    "block": {
+      "title": "Bloquea las distracciones",
+      "detail": "Las apps que te hacen perder el hilo.",
+      "preparing": "Preparando tus bloqueos…"
+    },
+    "pause": {
+      "title": "Rompe el reflejo",
+      "detail": "Una pausa antes de volver a caer.",
+      "preparing": "Configurando las pausas…"
+    },
+    "progress": {
+      "title": "Mira tu progreso",
+      "detail": "Tu tiempo de pantalla, día a día.",
+      "preparing": "Preparando el seguimiento diario…"
+    },
+    "preparing_title": "Preparando tu\nplan anti-scroll.",
+    "progress_a11y": "Preparación del plan",
+    "ready": "Todo listo.",
+    "card_title": "Lo que tu plan te ayudará a hacer",
+    "state_done": "listo",
+    "state_current": "en preparación",
+    "state_todo": "pendiente",
+    "note": "Aquí no se activa ningún bloqueo nuevo.",
+    "goal_note": "≈ {{time}}/día menos. Un objetivo para adaptar a tu uso, no una ganancia garantizada."
+  },
+  "onboarding_plan_summary": {
+    "annual_goal": "Objetivo anual",
+    "days_one": "{{count}} día",
+    "days_other": "{{count}} días",
+    "for": "para {{what}}",
+    "yourself": "ti",
+    "less_per_day": "≈ {{time}} menos al día.",
+    "cap_generic": "Tope genérico, para adaptar a tu uso.",
+    "cap_goal": "Un objetivo, no una ganancia garantizada.",
+    "next_step": "Después elegirás tus apps y tus bloqueos.",
+    "cta": "Vamos allá",
+    "what_you_said": "Lo que has dicho"
+  },
+  "onboarding_verdict": {
+    "beat_1": "Una noticia difícil.",
+    "beat_2": "Y una buena.",
+    "beat_cta": "Ver la verdad",
+    "mirror_lead": "Tu móvil te quita unos",
+    "per_year": "al año",
+    "mirror_a11y": "Tu móvil te quita unos {{label}} al año",
+    "mirror_body": "Días enteros, pasados con la mirada baja.",
+    "mirror_cta": "Ver la buena noticia",
+    "mirror_footnote": "Estimación para tu tramo: {{hours}} h/día × 365 ÷ 24. Redondeado en días de 24 h.",
+    "good_lead": "Relock te ayudará a recuperar\ntiempo para ti.",
+    "good_a11y_one": "Objetivo: {{count}} día al año, para adaptar a tu uso",
+    "good_a11y_other": "Objetivo: {{count}} días al año, para adaptar a tu uso",
+    "press": {
+      "meta": {
+        "quote": "«Facebook sabe que Instagram es tóxico para las adolescentes.»",
+        "source": "The Wall Street Journal",
+        "context": "Documentos internos, revelados por una denunciante."
+      },
+      "trial": {
+        "quote": "«41 estados demandan a Meta por diseñar funciones adictivas.»",
+        "source": "Demanda federal de los fiscales generales",
+        "context": "En el punto de mira: la notificación, el scroll infinito, los «me gusta»."
+      },
+      "tiktok": {
+        "quote": "«Unos 260 vídeos, y el hábito está formado.»",
+        "source": "Documentos internos de TikTok",
+        "context": "Menos de 35 minutos. Su cifra, no la nuestra."
+      }
+    },
+    "reversal_title": "Tú no eres el problema.",
+    "reversal_body": "Estas apps las ajustan miles de ingenieros para retenerte.",
+    "reversal_verdict": "Relock reequilibra las reglas,\na tu favor.",
+    "reversal_cta": "Construir mi plan"
+  },
+  "onboarding_power": {
+    "dont_allow": "No permitir",
+    "learn_more": "Más información",
+    "screen_time": {
+      "card_body": "El acceso a Tiempo de uso permite a Relock limitar las apps que elijas y ayudarte a mantener la concentración. Tus datos se quedan en tu dispositivo.",
+      "card_title": "«Relock» quiere acceder a Tiempo de uso",
+      "continue_without": "Continuar sin el bloqueo",
+      "denied": "Relock no puede funcionar sin esta autorización. Nada sale de tu móvil, nada se nos envía.",
+      "denied_final": "Sin este permiso, Relock no puede bloquear nada. Aun así puedes entrar: el bloqueo quedará en reposo hasta que lo concedas en Ajustes.",
+      "hero": "Demos a Relock acceso a\nTiempo de uso. Con total confianza.",
+      "privacy": "Tu información sigue protegida por Apple y guardada únicamente en tu móvil."
+    },
+    "notifs": {
+      "hero": "Recibe tus balances de Relock\ny celebra cada avance.",
+      "card_title": "«Relock» quiere enviarte notificaciones",
+      "card_body": "Las notificaciones pueden incluir avisos, sonidos y globos. Puedes configurarlas en Ajustes."
+    }
+  },
+  "onboarding_ritual": {
+    "idle": {
+      "title": "Sellemos tu compromiso.",
+      "sub": "Pon el dedo en la huella y mantén."
+    },
+    "hold": {
+      "title": "Sellemos tu compromiso.",
+      "sub": "No sueltes. El sello está subiendo."
+    },
+    "paused": {
+      "title": "Sellemos tu compromiso.",
+      "sub": "Tu progreso está guardado. Vuelve a poner el dedo."
+    },
+    "sealed": {
+      "title": "Compromiso sellado.",
+      "sub": "Tu palabra queda cerrada junto a tu plan."
+    },
+    "seal_a11y": "Sellar mi compromiso",
+    "seal_hint_assistive": "Toca dos veces para sellar tu compromiso",
+    "seal_hint": "Mantén el dedo en la huella hasta que el anillo se cierre"
+  },
+  "onboarding_rule_info": {
+    "scope_one": "La app que acabas de elegir. La misma para todas las reglas de esta pantalla.",
+    "scope_other": "Las {{count}} apps que acabas de elegir. Las mismas para todas las reglas de esta pantalla.",
+    "scope_empty": "Las apps que elijas. Ninguna regla bloquea nada mientras la lista esté vacía.",
+    "close_a11y": "Cerrar la explicación",
+    "lede": "Una regla es un momento del día que Relock protege por ti. Esta se activa sola, sin que tengas que hacer nada.",
+    "when": "Cuándo",
+    "which_apps": "En qué apps",
+    "what_happens": "Qué pasa",
+    "what_happens_body": "Durante esa franja, abrir una de estas apps muestra un muro de Relock en su lugar. Para saltártelo, primero hay que pasar por el ritual de pausa: el tiempo justo para preguntarte si de verdad querías.",
+    "footnote": "Nada es definitivo: horarios, días y apps se cambian cuando quieras en la pestaña Reglas.",
+    "select_hint": "Toca para seleccionar",
+    "deselect_hint": "Toca para deseleccionar",
+    "what_rule_does": "Qué hace la regla {{title}}",
+    "open_explanation": "Abre la explicación de esta regla"
+  },
+  "onboarding_picker": {
+    "category": {
+      "all": "Todas las apps y categorías",
+      "social": "Social",
+      "games": "Juegos",
+      "fun": "Entretenimiento",
+      "creative": "Creatividad",
+      "reading": "Información y lectura",
+      "shopping": "Compras y comida",
+      "work": "Productividad y finanzas"
+    }
+  }
+}

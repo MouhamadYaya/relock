@@ -1,0 +1,3 @@
+/* Ver en.lproj/InfoPlist.strings. */
+"NSPhotoLibraryUsageDescription" = "Elige una foto de tu galería para usarla como foto de perfil. Relock no accede a ninguna otra imagen.";
+"NSLocalNetworkUsageDescription" = "Relock se conecta al servidor de desarrollo en tu red local. El bloqueo de apps no depende de ello.";
