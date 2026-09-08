@@ -44,9 +44,14 @@ local.properties
 .kotlin/
 
 # Environment variables
-.env
-.env.local
-.env.*.local
+#
+# Tout `.env*` est ignoré SAUF `.env.example` (le gabarit, à valeurs bidon).
+# La liste nominative d'avant (`.env`, `.env.local`, `.env.*.local`) laissait
+# passer `.env.production` — le fichier même avec lequel on construit la
+# release, donc celui qui porte les vraies clés. Une règle par défaut plutôt
+# qu'une énumération : le prochain `.env.staging` est couvert d'office.
+.env*
+!.env.example
 
 # node.js
 #

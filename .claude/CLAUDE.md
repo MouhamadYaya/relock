@@ -75,6 +75,7 @@ npm run check:icons
 
 # Guards
 npm run check:imports
+npm run check:i18n
 
 # Build
 npm run android:build:release   # Android

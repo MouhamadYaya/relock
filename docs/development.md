@@ -169,7 +169,8 @@ src/features/<feature-name>/
 
 2. **Build screens** using `ScreenWrapper` as the root and theme-driven components — not raw RN views.
 
-3. **Add translations** in `src/i18n/locales/en.json` (and `de.json`, `ru.json`). Run `npm run i18n:all` after.
+3. **Add translations** in `src/i18n/locales/fr.json` (and `en.json`, `es.json`). Run `npm run i18n:all` after.
+   Le français est la source ; `npm run check:i18n` (pre-commit + CI) refuse un texte en dur ou une langue en retard, et `npm run i18n:missing` sort exactement ce qui reste à traduire. Dans Claude Code : `/i18n`.
 
 4. **Types & service layer** — Domain types in `src/features/<name>/types/` with a barrel `index.ts` (import via `@/features/<name>/types`); API logic in `src/features/<name>/services/` (Zod schema, mapper, service module). Screens use feature services only — not the shared HTTP layer directly.
 

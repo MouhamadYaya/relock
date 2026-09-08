@@ -42,7 +42,7 @@ src/features/<name>/
 - Query keys must be defined in `api/keys.ts` using the format `[feature, entity, id?, params?]` — for features that fetch or mutate server data.
 - Mutations must include `meta.tags` for targeted React Query invalidation.
 - Features with screens: route constants must be added to `src/navigation/routes.ts`; ParamList entries to this feature's `navigation/param-list.ts`.
-- i18n: add translations under the feature-named section in `src/i18n/locales/en.json` (and `de.json`, `ru.json`). The section name matches the feature directory name, lowercase. Use `t('auth.key')` — not `useT('auth')`. Run `npm run i18n:all` after.
+- i18n: add translations under the feature-named section in `src/i18n/locales/fr.json` (and `en.json`, `es.json`). The section name matches the feature directory name, lowercase. Use `t('auth.key')` — not `useT('auth')`. Run `npm run i18n:all` after.
 
 ## Must not
 - **Features must never import from other features** (`src/features/auth` must not import `src/features/user`). Cross-feature data flows through shared services or React Query.

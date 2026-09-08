@@ -1,8 +1,12 @@
 /**
  * Generate iOS AppIcon.appiconset PNGs + Android mipmap launcher icons from one source.
- * Source: largest PNG under assets/bootsplash/ (logo@4x → … → logo.png), else
- * assets/app-icon.png, else assets/bootsplash-logo.svg (rasterized to temp).
- * Uses sharp (fit: cover, square). Flattens onto #111827 so marketing icon has no transparency.
+ * Source: assets/app-icon.png (source de vérité), sinon la plus grande PNG sous
+ * assets/bootsplash/ (logo@4x → … → logo.png), sinon assets/bootsplash-logo.svg
+ * (rasterisée en temp).
+ * app-icon.png passe en premier parce que l'icône et le splash ne veulent pas le même
+ * fond : le splash est sur du #000000 pur (un fond plus clair y ferait un carré visible),
+ * l'icône sur un noir adouci pour ne pas faire un trou sur l'écran d'accueil.
+ * Uses sharp (fit: cover, square). Flattens onto #0B0C10 so marketing icon has no transparency.
  */
 const fs = require('node:fs')
 const os = require('node:os')
@@ -23,7 +27,7 @@ const BOOTSPLASH_SOURCES = [
   'logo.png',
 ]
 
-const BG = { r: 17, g: 24, b: 39 }
+const BG = { r: 11, g: 12, b: 16 }
 const SVG_RASTER_PX = 1024
 
 /** @type {{ px: number; filename: string; idiom: string; size: string; scale: string }[]} */
@@ -114,6 +118,10 @@ function resolveBootsplashSource() {
  * @returns {{ path: string; cleanup: boolean; label: string } | null}
  */
 function resolveSourceSync() {
+  if (fs.existsSync(APP_ICON)) {
+    return { path: APP_ICON, cleanup: false, label: 'assets/app-icon.png' }
+  }
+
   const fromBootsplash = resolveBootsplashSource()
   if (fromBootsplash) {
     return {
@@ -121,10 +129,6 @@ function resolveSourceSync() {
       cleanup: false,
       label: path.relative(root, fromBootsplash),
     }
-  }
-
-  if (fs.existsSync(APP_ICON)) {
-    return { path: APP_ICON, cleanup: false, label: 'assets/app-icon.png' }
   }
 
   if (fs.existsSync(SVG_LOGO)) {
@@ -167,7 +171,7 @@ async function main() {
   const resolved = resolveSourceSync()
   if (!resolved) {
     console.error(
-      'app-icon: missing source. Add PNGs under assets/bootsplash/ (logo@4x.png … logo.png), assets/app-icon.png, or assets/bootsplash-logo.svg.',
+      'app-icon: missing source. Add assets/app-icon.png, PNGs under assets/bootsplash/ (logo@4x.png … logo.png), or assets/bootsplash-logo.svg.',
     )
     process.exit(1)
   }

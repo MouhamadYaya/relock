@@ -42,6 +42,18 @@ const FORBIDDEN_IN_RELEASE = [
   'IMAGEKIT_PRIVATE_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'SERVICE_ROLE_KEY',
+  // Clés de fournisseurs d'IA. Elles arrivent dans `.env` par les outils de
+  // développement (assistants, générateurs de contenu), jamais par l'app —
+  // Relock n'appelle aucun modèle. Une `GEMINI_API_KEY` s'est déjà retrouvée
+  // dans `.env.production` par ce chemin : recopiée dans le binaire par
+  // react-native-config, elle se lit avec `unzip` + `strings` sur l'ipa, et
+  // c'est une facture à l'usage qui part avec.
+  'GEMINI_API_KEY',
+  'GOOGLE_API_KEY',
+  'OPENAI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'CLAUDE_API_KEY',
+  'PERPLEXITY_API_KEY',
 ]
 
 /** Motifs de valeurs qui trahissent un secret, quel que soit le nom de la clé. */
@@ -49,6 +61,12 @@ const SECRET_VALUE_PATTERNS = [
   { re: /^sk_(live|test)_/, why: 'clé secrète Stripe' },
   { re: /^private_[A-Za-z0-9]{10,}/, why: 'clé privée ImageKit' },
   { re: /^AKIA[0-9A-Z]{16}$/, why: 'clé AWS' },
+  // `AIza…` = clé d'API Google (Gemini, Maps, …). À ne pas confondre avec les
+  // OAuth client IDs `…apps.googleusercontent.com` de Sign in with Google,
+  // eux publics par conception et nécessaires dans le binaire.
+  { re: /^AIza[0-9A-Za-z_-]{30,}$/, why: "clé d'API Google" },
+  { re: /^sk-(proj-)?[A-Za-z0-9_-]{20,}$/, why: 'clé OpenAI' },
+  { re: /^sk-ant-[A-Za-z0-9_-]{20,}$/, why: 'clé Anthropic' },
   { re: /^gh[pousr]_[A-Za-z0-9]{20,}/, why: 'jeton GitHub' },
   { re: /^-----BEGIN [A-Z ]*PRIVATE KEY-----/, why: 'clé privée PEM' },
   // JWT dont la charge utile annonce le rôle service_role (clé Supabase admin).

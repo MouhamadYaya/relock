@@ -37,7 +37,7 @@ const DENSITY_SUFFIXES = ['', '@2x', '@3x']
  * Jamais touchés : source de vérité du bootsplash (`bootsplash:generate` et
  * `gen:app-icon` en dérivent tout le reste) et sorties natives générées.
  */
-const NEVER_TOUCH = [/^logo\.png$/, /^bootsplash\//]
+const NEVER_TOUCH = [/^logo\.png$/, /^app-icon\.png$/, /^bootsplash\//]
 
 const dryRun = process.argv.includes('--dry-run')
 

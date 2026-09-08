@@ -55,6 +55,13 @@ jobs:
       - name: Check import paths
         run: npm run check:imports
 
+      # Relock s'écrit en français et se livre en trois langues. Un texte
+      # ajouté sans `t()`, ou une clé remplie en français seulement, ne casse
+      # rien à l'exécution : ça ne se voit qu'en changeant la langue de l'app
+      # et en rouvrant l'écran exact.
+      - name: Check i18n coverage
+        run: npm run check:i18n
+
       # Le site public getrelock.com est du HTML statique, mais ses métadonnées
       # (canonical, hreflang, JSON-LD, sitemap, llms.txt) et ses images sont
       # générées. Un commit qui touche une page sans régénérer laisserait un

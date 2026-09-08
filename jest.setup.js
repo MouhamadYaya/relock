@@ -137,6 +137,17 @@ jest.mock('react-native-reanimated', () => {
     ScrollView,
     FlatList: View,
     useSharedValue: jest.fn(value => ({ value })),
+    // La pluie du premier écran (`ShieldRain`) tient l'état de chaque bille
+    // dans un `makeMutable` et l'avance dans un `useFrameCallback`. Sous Jest
+    // il n'y a pas de thread UI : la valeur reste celle du départ, et la
+    // boucle ne tourne jamais. C'est exactement ce qu'on veut — la physique
+    // est vérifiée à part, sur ses fonctions pures (`shield-rain.test.ts`).
+    makeMutable: jest.fn(value => ({ value })),
+    useFrameCallback: jest.fn(() => ({
+      setActive: jest.fn(),
+      isActive: false,
+      callbackId: -1,
+    })),
     useAnimatedStyle: jest.fn(() => ({})),
     useAnimatedProps: jest.fn(() => ({})),
     useDerivedValue: jest.fn(fn => ({ value: fn() })),
@@ -166,6 +177,22 @@ jest.mock('react-native-reanimated', () => {
     },
   }
 })
+
+// `react-native-localize` fournit la langue du téléphone (`src/i18n/i18n.ts`).
+// Le module natif n'existe pas sous Jest : sans ce mock, chaque suite qui
+// importe i18n tomberait sur l'exception du `require` — et la langue de départ
+// des tests deviendrait celle du repli, pas celle attendue.
+jest.mock('react-native-localize', () => ({
+  getLocales: () => [
+    {
+      languageCode: 'fr',
+      languageTag: 'fr-FR',
+      countryCode: 'FR',
+      isRTL: false,
+    },
+  ],
+  findBestLanguageTag: () => ({ languageTag: 'fr-FR', isRTL: false }),
+}))
 
 // Mock gesture handler
 jest.mock('react-native-mmkv', () => {
@@ -278,3 +305,12 @@ console.info = (...args) => {
   }
   originalConsoleInfo(...args)
 }
+
+// i18n initialisé pour TOUTES les suites.
+//
+// `useT()` sans instance i18next renvoie la clé brute et journalise
+// `NO_I18NEXT_INSTANCE` : chaque écran localisé dont la suite n'importait pas
+// explicitement `@/i18n/i18n` échouait sur des libellés absents. Dans l'app,
+// cet import de bord de module est fait une fois par `app/_layout.tsx` ; ici
+// c'est le rôle du setup.
+require('./src/i18n/i18n')
