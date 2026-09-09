@@ -44,6 +44,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '@/shared/theme'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
@@ -64,7 +65,11 @@ export default function HalfSheet({ children, onClose }: Props) {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current
   const backdropOpacity = useRef(new Animated.Value(0)).current
 
-  /** Animate close then call onClose. */
+  /**
+   * Toucher le fond pour refermer est un geste à l'aveugle : le doigt part
+   * vers une zone vide, et rien à l'écran ne confirme qu'il a porté avant que
+   * la feuille ne se mette à glisser. L'effleurement arrive AVANT l'animation.
+   */
   const closeSheet = useCallback(() => {
     Animated.parallel([
       Animated.spring(translateY, {
@@ -139,7 +144,10 @@ export default function HalfSheet({ children, onClose }: Props) {
       >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={closeSheet}
+          onPress={() => {
+            haptics.graze()
+            closeSheet()
+          }}
           disabled={!interactable}
         />
       </Animated.View>

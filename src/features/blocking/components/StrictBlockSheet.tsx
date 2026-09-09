@@ -9,6 +9,7 @@ import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, layout, radius, shadow, typography } = relockMaterial
 
@@ -58,6 +59,20 @@ export function StrictBlockSheet({
 }) {
   const t = useT()
   const [now, setNow] = useState(() => Date.now())
+
+  /**
+   * La fin de non-recevoir se sent AVANT de se lire.
+   *
+   * Deux temps égaux, ni montée ni descente : rien ne s'est passé et rien ne
+   * va se passer. C'est exactement ce que dit la feuille, et c'est le signal
+   * que le doigt attendait — il venait de demander une ouverture.
+   *
+   * Posé ici plutôt que sur chacun des trois appels qui ouvrent la feuille :
+   * un refus doit se sentir pareil d'où qu'il vienne.
+   */
+  useEffect(() => {
+    if (visible) haptics.warning()
+  }, [visible])
 
   // Le temps restant se recalcule tant que la feuille est ouverte : personne
   // ne doit lire une échéance périmée sur l'écran qui la lui refuse.

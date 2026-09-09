@@ -18,6 +18,7 @@ import { getPreference } from '@/shared/services/storage/app-preferences'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { PauseRitualShell } from './PauseRitualShell'
 
 const { colors, layout, radius, typography } = relockMaterial
@@ -133,6 +134,22 @@ export function BreathingPauseModal({
     }
   }, [reduceMotion, visible])
 
+  /**
+   * Un souffle sourd et tenu à chaque bascule inspire / expire.
+   *
+   * C'est le seul retour haptique de l'app qui ne répond à AUCUN geste : il ne
+   * signale rien, il donne le rythme. L'écran demande de respirer six secondes
+   * avant d'ouvrir une app qu'on s'était interdite — le regard peut se
+   * détacher de l'orbe, la respiration continue de se sentir.
+   *
+   * Le SENS de la rampe porte toute l'information : elle enfle à
+   * l'inspiration, elle retombe à l'expiration. Sans ça, les deux phases se
+   * sentiraient pareil et le poignet ne saurait pas laquelle il accompagne.
+   */
+  useEffect(() => {
+    if (visible) haptics.breathe(inhaling)
+  }, [visible, inhaling])
+
   const orbStyle = useAnimatedStyle(() => ({
     opacity: 0.8 + breath.value * 0.2,
     transform: [
@@ -192,7 +209,12 @@ export function BreathingPauseModal({
                 ? t('blocking.breathing.sound_off')
                 : t('blocking.breathing.sound_on')
             }
-            onPress={toggleSound}
+            haptic="none"
+            onPress={() => {
+              // La nappe sonore s'allume et s'éteint : montée, descente.
+              haptics.toggle(!soundOn)
+              toggleSound()
+            }}
             style={styles.soundAction}
           >
             <Text style={styles.soundLabel}>
@@ -212,6 +234,7 @@ export function BreathingPauseModal({
             }
             accessibilityState={{ disabled: !ready }}
             disabled={!ready}
+            haptic="press"
             onPress={continueToDuration}
             style={[styles.continueAction, ready && styles.continueReady]}
           >
@@ -233,6 +256,7 @@ export function BreathingPauseModal({
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={t('blocking.breathing.cancel')}
+            haptic="graze"
             onPress={close}
             style={styles.cancelAction}
           >

@@ -79,6 +79,7 @@ export default function PauseRitualPickerModal() {
                 accessibilityLabel={t(RITUAL_COPY[ritual].title)}
                 accessibilityHint={t(RITUAL_COPY[ritual].description)}
                 accessibilityState={{ selected }}
+                haptic="select"
                 onPress={() => select(ritual)}
                 style={styles.option}
               >

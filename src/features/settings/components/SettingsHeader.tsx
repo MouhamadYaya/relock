@@ -35,6 +35,7 @@ export function SettingsHeader({ title, backLabel, onBack }: Props) {
         accessibilityRole="button"
         accessibilityLabel={backLabel}
         hitSlop={8}
+        haptic="graze"
         onPress={onBack}
         shadow
         style={styles.back}

@@ -148,7 +148,7 @@ export function PauseDurationSheet({
   const select = (next: PauseChoice, animated = true, withHaptic = true) => {
     if (next !== hapticChoiceRef.current) {
       hapticChoiceRef.current = next
-      if (withHaptic) haptics.selectionTick()
+      if (withHaptic) haptics.detent()
     }
     setChoice(next)
     listRef.current?.scrollTo({
@@ -162,7 +162,7 @@ export function PauseDurationSheet({
     if (next === hapticChoiceRef.current) return
     hapticChoiceRef.current = next
     setChoice(next)
-    haptics.selectionTick()
+    haptics.detent()
   }
 
   const settle = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

@@ -129,7 +129,7 @@ export function DangerScreen({
             // ensuite. Le coup est plus franc que le tic des lignes ordinaires.
             onPressIn={() => {
               setPressedCta(true)
-              if (!busy) haptics.impactLight()
+              if (!busy) haptics.press()
             }}
             onPressOut={() => setPressedCta(false)}
             style={pressedCta ? styles.destructivePressed : styles.destructive}
@@ -148,7 +148,7 @@ export function DangerScreen({
             onPress={() => router.back()}
             onPressIn={() => {
               setPressedCancel(true)
-              if (!busy) haptics.selectionTick()
+              if (!busy) haptics.tap()
             }}
             onPressOut={() => setPressedCancel(false)}
             style={pressedCancel ? styles.secondaryPressed : styles.secondary}

@@ -28,12 +28,34 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
  * avant que React ait commencé à travailler, donc l'attente est perçue comme
  * un chargement et non comme un bouton mort qu'on ré-appuie.
  */
-type HapticKind = 'selection' | 'light' | 'medium' | 'none'
+/**
+ * Le retour est nommé par le SENS de l'action, pas par sa force : c'est la
+ * partition de `shared/utils/platform/haptics` qui décide comment chaque sens
+ * se traduit en intensité et en netteté, et elle seule. Un écran qui écrirait
+ * « moyen » ici figerait un dosage que la partition doit pouvoir réaccorder
+ * partout d'un coup.
+ */
+type HapticKind =
+  | 'tap'
+  | 'graze'
+  | 'select'
+  | 'press'
+  | 'commit'
+  | 'none'
+  // Anciens noms, gardés le temps que les appels existants migrent.
+  | 'selection'
+  | 'light'
+  | 'medium'
 
 const HAPTIC: Record<Exclude<HapticKind, 'none'>, () => void> = {
-  selection: () => haptics.selectionTick(),
-  light: () => haptics.impactLight(),
-  medium: () => haptics.impactMedium(),
+  tap: () => haptics.tap(),
+  graze: () => haptics.graze(),
+  select: () => haptics.select(),
+  press: () => haptics.press(),
+  commit: () => haptics.commit(),
+  selection: () => haptics.select(),
+  light: () => haptics.graze(),
+  medium: () => haptics.press(),
 }
 
 /**
@@ -109,9 +131,15 @@ type Props = Omit<PressableProps, 'style'> & {
   /** Échelle au press (défaut 0.96, jamais < 0.95). */
   scaleTo?: number
   /**
-   * Retour haptique au toucher. `'selection'` par défaut — le tic sec des
-   * contrôles iOS. `'none'` pour les surfaces qui en déclenchent un
-   * elles-mêmes (maintiens, sélecteurs à crans).
+   * Retour haptique au toucher. `'tap'` par défaut — le toucher rond et franc
+   * de l'app. Ce défaut compte : presque toute surface pressable de Relock
+   * passe par ce composant, donc c'est lui qui donne le grain général.
+   *
+   * `'select'` pour un choix dans une liste, `'press'` pour un bouton qui
+   * lance quelque chose, `'commit'` pour un engagement, `'graze'` pour un
+   * élément secondaire. `'none'` pour les surfaces qui déclenchent leur propre
+   * retour (maintiens, sélecteurs à crans) — sinon deux signaux se
+   * chevauchent et il n'en reste qu'une bouillie.
    */
   haptic?: HapticKind
   /**
@@ -130,7 +158,7 @@ type Props = Omit<PressableProps, 'style'> & {
 export function PressableScale({
   style,
   scaleTo = 0.96,
-  haptic = 'selection',
+  haptic = 'tap',
   shadow,
   onPressIn,
   onPressOut,

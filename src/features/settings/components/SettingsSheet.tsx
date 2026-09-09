@@ -2,6 +2,7 @@ import React from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { settingsTheme } from '@/shared/theme'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, radius, size, spacing, type } = settingsTheme
 
@@ -34,6 +35,7 @@ export function SettingsSheet({ title, closeLabel, onClose, children }: Props) {
         accessibilityRole="button"
         accessibilityLabel={closeLabel}
         style={styles.scrim}
+        onPressIn={() => haptics.graze()}
         onPress={onClose}
       />
 

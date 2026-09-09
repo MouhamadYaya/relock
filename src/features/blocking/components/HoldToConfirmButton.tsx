@@ -64,12 +64,17 @@ export function rumbleTimings(holdMs = HOLD_MS): number[] {
   return times
 }
 
-/** Une secousse : plus le maintien avance, plus la frappe est doublée. */
+/**
+ * Une secousse du martèlement.
+ *
+ * L'intensité ET la netteté montent avec la progression : le geste commence
+ * sourd et finit sec, comme une matière qu'on force. Deux frappes superposées
+ * faisaient le même travail en moins bien — le moteur haptique n'a pas fini la
+ * première qu'il reçoit la seconde, et les deux se confondent en un seul coup
+ * plus mou que chacune prise à part.
+ */
 function strike(progress: number) {
-  haptics.impactHeavy()
-  // Dans le dernier tiers, on superpose une frappe sèche au coup lourd :
-  // la vibration cesse d'être un tic, elle devient un choc.
-  if (progress > 0.62) haptics.impactRigid()
+  haptics.rumble(progress)
 }
 
 type HoldTone = 'brand' | 'danger'
@@ -206,7 +211,8 @@ export function HoldToConfirmButton({
     if (disabled || pending) return
     setHolding(true)
     setFlooded(false)
-    haptics.impactHeavy()
+    // Le premier coup, au plus bas de la montée : le maintien vient de partir.
+    haptics.rumble(0)
     progress.value = 0
     progress.value = withTiming(1, { duration: holdMs, easing: Easing.linear })
     clearTimers()

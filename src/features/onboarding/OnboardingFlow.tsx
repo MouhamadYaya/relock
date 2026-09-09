@@ -33,6 +33,7 @@ import { DEV_EVENT_ONBOARDING_JUMP } from '@/session/dev-test-bridge'
 import { useSocialSignIn } from '@/session/useSocialSignIn'
 import { useAppGateStore } from '@/shared/stores/app-gate.store'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { showErrorToast } from '@/shared/utils/toast'
 import {
   BackBtn,
@@ -669,7 +670,11 @@ export default function OnboardingFlow() {
         presetIds: rulePresetIds,
         count: appCount,
       })
-      haptic.success()
+      // La toute première règle vient de prendre effet : c'est le verrou de
+      // l'app, pas un simple « c'est enregistré ». Le même geste qu'à chaque
+      // règle créée ensuite — la première fois doit se sentir comme les
+      // suivantes, sinon elle promet quelque chose que l'app ne tient pas.
+      haptics.lock()
       goStep('notifs')
     } catch (e) {
       showErrorToast(e)

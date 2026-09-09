@@ -51,7 +51,7 @@ export function ProfileCard({
       // se sentir avant qu'il ne commence à se monter.
       onPressIn={() => {
         setPressed(true)
-        haptics.selectionTick()
+        haptics.tap()
       }}
       onPressOut={() => setPressed(false)}
       style={pressed ? styles.cardPressed : styles.card}

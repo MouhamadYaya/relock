@@ -93,7 +93,8 @@ export function MathPauseModal({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reanimated garantit l'identité stable des SharedValue.
   const reject = useCallback(() => {
-    haptics.impactRigid()
+    // Faux : trois coups secs, le seul endroit de l'app qui claque.
+    haptics.error()
     setWrong(true)
     setEntry('')
     setChallenge(current => nextMathChallenge(current))
@@ -112,7 +113,8 @@ export function MathPauseModal({
       reject()
       return
     }
-    haptics.selectionTick()
+    // Une manche tombée juste : ça se félicite, ça ne se pointe pas.
+    haptics.success()
     setWrong(false)
     setEntry('')
     const done = solved + 1
@@ -124,14 +126,16 @@ export function MathPauseModal({
 
   const press = (key: string) => {
     if (ready || entry.length >= MATH_MAX_DIGITS) return
-    haptics.selectionTick()
+    // Un pavé numérique se tape vite : chaque touche doit répondre, même deux
+    // frappes à 30 ms d'écart — c'est un rythme, pas un doublon.
+    haptics.detent()
     setWrong(false)
     setEntry(current => current + key)
   }
 
   const erase = () => {
     if (ready || entry.length === 0) return
-    haptics.selectionTick()
+    haptics.detent()
     setWrong(false)
     setEntry(current => current.slice(0, -1))
   }

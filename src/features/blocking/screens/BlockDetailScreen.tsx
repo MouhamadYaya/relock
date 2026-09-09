@@ -61,6 +61,7 @@ import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { showErrorToast } from '@/shared/utils/toast'
 
 const { colors, layout, opacity, radius, shadow, typography } = relockMaterial
@@ -305,6 +306,7 @@ export default function BlockDetailScreen() {
       for (const key of targets) {
         await ScreenTime.unblockAppKey(key, minutes)
       }
+      haptics.unlock()
       setFlow(null)
       setTargets([])
       setShortcutKey(null)
@@ -326,6 +328,7 @@ export default function BlockDetailScreen() {
           showErrorToast(error)
         },
         onSuccess: () => {
+          haptics.success()
           setPending(false)
           setFlow(null)
           close()
@@ -352,6 +355,10 @@ export default function BlockDetailScreen() {
               () => {},
             )
           }
+          // Une protection vient de disparaître : le retour dit que l'action
+          // a porté, pas qu'elle est réussie — supprimer un garde-fou n'est
+          // pas une victoire, et le doigt n'a pas à l'entendre comme telle.
+          haptics.strike()
           setPending(false)
           setFlow(null)
           close()
@@ -373,6 +380,7 @@ export default function BlockDetailScreen() {
             <PressableScale
               accessibilityRole="button"
               accessibilityLabel={t('blocking.session_sheet.close')}
+              haptic="graze"
               onPress={() => closeSheet(close)}
               shadow
               style={styles.roundAction}
@@ -474,6 +482,7 @@ export default function BlockDetailScreen() {
             accessibilityLabel={t('blocking.session_sheet.unlock_apps')}
             accessibilityState={{ disabled: locked || lockedKeys.length === 0 }}
             disabled={locked || lockedKeys.length === 0 || pending}
+            haptic="press"
             onPress={startUnlock}
             style={[
               styles.primaryAction,
@@ -493,6 +502,7 @@ export default function BlockDetailScreen() {
             accessibilityLabel={t('blocking.session_sheet.quit_early')}
             accessibilityState={{ disabled: locked }}
             disabled={locked || pending}
+            haptic="press"
             onPress={startQuit}
             style={[styles.secondaryAction, locked && styles.actionDisabled]}
           >

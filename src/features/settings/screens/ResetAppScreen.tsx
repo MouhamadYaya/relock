@@ -24,7 +24,9 @@ export default function ResetAppScreen() {
   const [busy, setBusy] = React.useState(false)
 
   const confirm = () => {
-    haptics.impactMedium()
+    // Ce bouton ouvre la porte de l'irréversible : deux temps égaux, ni
+    // montée ni descente. Rien n'est encore fait, et ça doit s'entendre.
+    haptics.warning()
     Alert.alert(t('settings.reset_title'), t('settings.reset_intro'), [
       { text: t('common.cancel'), style: 'cancel' },
       {

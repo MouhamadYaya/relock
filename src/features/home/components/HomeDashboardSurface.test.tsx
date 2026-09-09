@@ -14,7 +14,7 @@ jest.mock('@/shared/native/ScreenTimeReport', () => {
 })
 
 jest.mock('@/shared/utils/platform/haptics', () => ({
-  haptics: { selectionTick: jest.fn() },
+  haptics: { tap: jest.fn(), press: jest.fn() },
 }))
 
 function skeletonCount(renderer: ReactTestRenderer): number {

@@ -11,8 +11,7 @@ describe('HoldToConfirmButton', () => {
 
   beforeEach(() => {
     jest.useFakeTimers()
-    jest.spyOn(haptics, 'impactHeavy').mockImplementation(() => {})
-    jest.spyOn(haptics, 'impactRigid').mockImplementation(() => {})
+    jest.spyOn(haptics, 'rumble').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -89,6 +88,6 @@ describe('HoldToConfirmButton', () => {
     })
 
     expect(onConfirm).not.toHaveBeenCalled()
-    expect(haptics.impactHeavy).not.toHaveBeenCalled()
+    expect(haptics.rumble).not.toHaveBeenCalled()
   })
 })

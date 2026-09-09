@@ -118,7 +118,7 @@ export function Button({
         isInactive
           ? undefined
           : e => {
-              haptics.selectionTick()
+              haptics.press()
               onPressIn?.(e)
             }
       }

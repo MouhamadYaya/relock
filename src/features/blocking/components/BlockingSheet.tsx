@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SheetBloom } from '@/features/blocking/components/BlockingSurfaces'
 import { relockMaterial } from '@/shared/theme'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, radius, shadow } = relockMaterial
 
@@ -40,7 +41,9 @@ export function BlockingSheet({
   const insets = useSafeAreaInsets()
 
   const close = () => {
-    if (dismissible) onClose()
+    if (!dismissible) return
+    haptics.graze()
+    onClose()
   }
 
   return (

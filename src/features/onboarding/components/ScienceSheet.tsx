@@ -9,6 +9,7 @@ import {
 } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { haptic } from '@/features/onboarding/tokens'
 import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { OB } from '../tokens'
@@ -73,6 +74,7 @@ export function ScienceSheet({
         <Pressable
           testID="science-backdrop"
           style={StyleSheet.absoluteFill}
+          onPressIn={() => haptic.tick()}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel={t('onboarding_intro.science.close_a11y')}
@@ -120,6 +122,7 @@ export function ScienceSheet({
 
           <Pressable
             accessibilityRole="button"
+            onPressIn={() => haptic.tick()}
             onPress={onClose}
             style={styles.close}
           >

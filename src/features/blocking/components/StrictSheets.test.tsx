@@ -98,8 +98,7 @@ describe('StrictCommitmentSheet', () => {
 
   beforeEach(() => {
     jest.useFakeTimers()
-    jest.spyOn(haptics, 'impactHeavy').mockImplementation(() => {})
-    jest.spyOn(haptics, 'impactRigid').mockImplementation(() => {})
+    jest.spyOn(haptics, 'rumble').mockImplementation(() => {})
   })
 
   afterEach(() => {

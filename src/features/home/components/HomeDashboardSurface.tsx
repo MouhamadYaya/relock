@@ -73,7 +73,7 @@ export function HomeDashboardSurface({
   const metrics = homeSurfaceMetrics(showsBlockedCard)
 
   const open = (action: () => void) => {
-    haptics.selectionTick()
+    haptics.press()
     action()
   }
   const heroDetailStyle = useAnimatedStyle(() => ({
@@ -84,7 +84,9 @@ export function HomeDashboardSurface({
   }))
 
   const pressHero = () => {
-    haptics.selectionTick()
+    // Le héros se DÉPLIE au premier appui et navigue au second : un seul et
+    // même toucher, deux issues — la vibration reste donc la même.
+    haptics.tap()
     if (heroExpanded) {
       onPressHero()
       return

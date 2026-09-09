@@ -28,6 +28,7 @@ import type { BlockRuleView } from '@/features/blocking/types'
 import { useT } from '@/i18n/useT'
 import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { showErrorToast } from '@/shared/utils/toast'
 import { genUUID } from '@/shared/utils/uuid'
 
@@ -126,6 +127,8 @@ export default function PresetRecapScreen() {
         count,
         config: preset.config,
       })
+      // Même geste que la création manuelle : le blocage vient de PRENDRE.
+      haptics.lock()
       setDone(true)
     } catch (e) {
       // La ligne DB a échoué : on désarme, sinon iOS bloquerait pour un
@@ -162,6 +165,7 @@ export default function PresetRecapScreen() {
                 : t('blocking.preset_recap.done_soft')}
             </Text>
             <Pressable
+              onPressIn={() => haptics.graze()}
               accessibilityRole="button"
               onPress={close}
               style={s.primary}
@@ -216,6 +220,7 @@ export default function PresetRecapScreen() {
           {needsApps ? (
             <Pressable
               accessibilityRole="button"
+              onPressIn={() => haptics.press()}
               onPress={pickApps}
               style={s.primary}
             >
@@ -234,7 +239,12 @@ export default function PresetRecapScreen() {
             />
           )}
 
-          <Pressable accessibilityRole="button" onPress={close} style={s.ghost}>
+          <Pressable
+            accessibilityRole="button"
+            onPressIn={() => haptics.graze()}
+            onPress={close}
+            style={s.ghost}
+          >
             <Text style={[f(500), s.ghostTxt]}>
               {t('blocking.preset_recap.not_now')}
             </Text>

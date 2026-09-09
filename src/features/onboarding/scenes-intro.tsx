@@ -100,6 +100,10 @@ export function SceneIgnition({ onDone }: { onDone: () => void }) {
       onPress={() => {
         if (!done.current) {
           done.current = true
+          // Le tout premier contact tactile entre quelqu'un et Relock. Il n'y
+          // a rien d'autre à l'écran qu'une lune : c'est la vibration, et elle
+          // seule, qui dit que l'app a répondu.
+          haptic.tap()
           onDone()
         }
       }}
@@ -219,6 +223,7 @@ function ScienceBadge({
       accessibilityLabel={label}
       accessibilityHint={translate('onboarding_intro.science.open_a11y')}
       hitSlop={10}
+      onPressIn={() => haptic.tick()}
       onPress={onPress}
       style={styles.scienceBadge}
     >
@@ -593,7 +598,10 @@ export function SceneHours({
   const pos = useSharedValue(((hours - MIN_H) / (MAX_H - MIN_H)) * trackW)
 
   const commit = (v: number) => {
-    haptic.tick()
+    // Un cran par heure franchie, même en glissant vite : sans le caractère
+    // rythmique, le doigt traverserait trois heures pour une seule vibration
+    // et le curseur se sentirait mou.
+    haptic.detent()
     setHours(v)
   }
 

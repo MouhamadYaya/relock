@@ -225,18 +225,18 @@ export default function ActivityScreen() {
         return
       }
       if (command === 'refresh') {
-        haptics.selectionTick()
+        haptics.press()
         reloadReport().catch(() => {})
         return
       }
       if (command === 'settings') {
-        haptics.selectionTick()
+        haptics.press()
         router.push('/settings')
         return
       }
       const selection = command.match(/^select\.day(\d)$/)
       if (selection) {
-        haptics.selectionTick()
+        haptics.select()
         selectDay(Number(selection[1]))
       }
     },
@@ -247,7 +247,7 @@ export default function ActivityScreen() {
     const settingsSub = DeviceEventEmitter.addListener(
       'relock-native-settings',
       () => {
-        haptics.selectionTick()
+        haptics.press()
         router.push('/settings')
       },
     )

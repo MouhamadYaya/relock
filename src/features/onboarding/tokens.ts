@@ -1,4 +1,4 @@
-import { trigger } from 'react-native-haptic-feedback'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 /**
  * Direction artistique de l'onboarding — validée écran par écran :
@@ -247,21 +247,24 @@ export const NATIVE_ALERT = {
   buttonCenterOffset: 74,
 } as const
 
-const opts = {
-  enableVibrateFallback: false,
-  ignoreAndroidSystemSettings: false,
-}
-
 /**
- * Carte haptique de l'onboarding — léger à la sélection, moyen sur les
- * CTA, succès aux validations, ticks sur les compteurs, lourd sur le
- * rituel. Les vibrations portent la charge sensorielle (pas de son :
- * aucune dépendance audio autorisée).
+ * Carte haptique de l'onboarding — léger à la sélection, franc sur les CTA,
+ * succès aux validations, ticks sur les compteurs, lourd sur le rituel. Les
+ * vibrations portent seules la charge sensorielle (pas de son : aucune
+ * dépendance audio autorisée).
+ *
+ * Ce ne sont que des NOMS DE SCÈNE posés sur la partition de l'app
+ * (`shared/utils/platform/haptics`) : le dosage réel — intensité, netteté,
+ * rythme — y est décidé une fois pour toutes. L'onboarding a longtemps appelé
+ * `trigger()` en direct, ce qui lui faisait ignorer Réglages → « Retours
+ * haptiques » : l'app se taisait, le parcours vibrait quand même.
  */
 export const haptic = {
-  select: () => trigger('impactLight', opts),
-  tap: () => trigger('impactMedium', opts),
-  heavy: () => trigger('impactHeavy', opts),
-  success: () => trigger('notificationSuccess', opts),
-  tick: () => trigger('selection', opts),
+  select: () => haptics.select(),
+  tap: () => haptics.press(),
+  heavy: () => haptics.strike(),
+  success: () => haptics.success(),
+  tick: () => haptics.graze(),
+  /** Un cran de curseur ou de molette qu'on fait défiler au doigt. */
+  detent: () => haptics.detent(),
 }

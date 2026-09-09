@@ -139,7 +139,7 @@ export default function LogoPickerModal() {
                 void select(logo)
               }}
               onPressIn={() => {
-                if (!locked) haptics.selectionTick()
+                if (!locked) haptics.select()
               }}
               style={({ pressed }) => [
                 styles.tile,

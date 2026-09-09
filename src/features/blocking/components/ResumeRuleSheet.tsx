@@ -198,6 +198,7 @@ export function ResumeRuleSheet({
         accessibilityRole="button"
         accessibilityLabel={t('blocking.resume_sheet.cancel')}
         disabled={pending}
+        haptic="graze"
         onPress={onCancel}
         style={styles.cancel}
       >

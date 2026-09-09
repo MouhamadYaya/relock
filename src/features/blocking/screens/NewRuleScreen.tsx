@@ -283,6 +283,7 @@ export default function NewRuleScreen() {
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t('blocking.new_rule.close')}
+        haptic="graze"
         onPress={close}
         style={styles.closeButton}
       >

@@ -28,7 +28,9 @@ export default function DeleteAccountScreen() {
   const deleteAccount = useDeleteAccount()
 
   const confirm = () => {
-    haptics.impactMedium()
+    // Ce bouton ouvre la porte de l'irréversible : deux temps égaux, ni
+    // montée ni descente. Rien n'est encore fait, et ça doit s'entendre.
+    haptics.warning()
     Alert.alert(t('settings.delete_title'), t('settings.delete_body'), [
       { text: t('common.cancel'), style: 'cancel' },
       {

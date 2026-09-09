@@ -19,6 +19,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { relockMaterial } from '@/shared/theme'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 // Flou natif chargé en douceur (repli sur assombrissement si absent).
 let BlurView: React.ComponentType<{
@@ -235,7 +236,12 @@ export function HalfSheet({
     <View style={styles.root}>
       <AnimatedPressable
         style={[StyleSheet.absoluteFill, backdropStyle]}
-        onPress={close}
+        // Un appui dans le vide qui ferme la feuille : sans retour, on ne sait
+        // pas si le doigt a porté tant que rien n'a bougé.
+        onPress={() => {
+          haptics.graze()
+          close()
+        }}
       >
         {BlurView ? (
           <BlurView

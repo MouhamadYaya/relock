@@ -89,7 +89,16 @@ export function SettingsRow({
 
   const toggle = (next: boolean) => {
     if (inert || !hasSwitch) return
+    // Le changement D'ABORD, le retour ensuite. L'ordre compte pour un seul
+    // interrupteur, mais c'est le plus important : celui des retours haptiques
+    // eux-mêmes. Le rallumer doit se SENTIR — c'est la seule preuve que ça
+    // remarche ; l'éteindre doit rester muet, puisque c'est ce qui vient
+    // d'être demandé.
+    //
+    // Allumer MONTE, éteindre DESCEND : les deux sens du même geste ne se
+    // sentent pas pareil, donc le doigt sait ce qu'il a fait sans regarder.
     onSwitchChange(next)
+    haptics.toggle(next)
   }
 
   const press = () => {
@@ -107,7 +116,7 @@ export function SettingsRow({
    * déclencher le `onPressIn` de la rangée.
    */
   const tick = () => {
-    if (!inert) haptics.selectionTick()
+    if (!inert) haptics.tap()
   }
 
   const body = (

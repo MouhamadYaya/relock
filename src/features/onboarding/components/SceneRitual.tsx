@@ -67,6 +67,7 @@ import { haptic, OB } from '@/features/onboarding/tokens'
 import { translate } from '@/i18n/translate'
 import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 // ─── Rythme ──────────────────────────────────────────────────────────────
 
@@ -278,8 +279,11 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
     decayAt.current = Date.now()
     setPhase('sealed')
 
-    haptic.heavy()
-    haptic.success()
+    // Un seul signal, celui de la porte qui se ferme : c'est littéralement ce
+    // que le geste vient de faire. Deux signaux collés (un choc PUIS un
+    // succès) ne s'entendent pas comme deux — le moteur n'a pas fini le
+    // premier que le second l'écrase, et il n'en reste qu'une bouillie tiède.
+    haptics.lock()
     progress.value = withTiming(1, { duration: 140 })
     press.value = withSpring(0, { damping: 18, stiffness: 260 })
     amp.value = withTiming(0, { duration: 220 })
@@ -320,11 +324,10 @@ export function SceneRitual({ onDone }: { onDone: () => void }) {
       if (mark <= from) continue
       const at = (mark - from) * HOLD_MS
       timers.current.push(
-        setTimeout(() => {
-          if (mark > 0.9) haptic.tap()
-          else if (mark > 0.55) haptic.select()
-          else haptic.tick()
-        }, at),
+        // Le martèlement monte AVEC la progression, en continu : trois
+        // paliers d'intensité se sentaient comme trois vibrations
+        // différentes, là où le geste, lui, est un seul effort qui se tend.
+        setTimeout(() => haptics.rumble(mark), at),
       )
     }
     timers.current.push(setTimeout(seal, remaining))

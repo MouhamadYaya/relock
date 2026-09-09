@@ -54,8 +54,7 @@ describe('HoldToDeleteSheet', () => {
 
   beforeEach(() => {
     jest.useFakeTimers()
-    jest.spyOn(haptics, 'impactHeavy').mockImplementation(() => {})
-    jest.spyOn(haptics, 'impactRigid').mockImplementation(() => {})
+    jest.spyOn(haptics, 'rumble').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -150,22 +149,24 @@ describe('HoldToDeleteSheet', () => {
   })
 
   it('shakes the device harder and harder while the finger holds', () => {
+    const rumble = haptics.rumble as jest.Mock
     render(jest.fn())
 
     act(() => holdButton()?.props.onPressIn())
     act(() => {
       jest.advanceTimersByTime(HOLD_MS * 0.5)
     })
-    const halfway = (haptics.impactHeavy as jest.Mock).mock.calls.length
-    // Rien de sec tant qu'on n'est pas dans la dernière ligne droite.
-    expect(haptics.impactRigid).not.toHaveBeenCalled()
+    const halfway = rumble.mock.calls.length
+    const lastEarly = rumble.mock.calls.at(-1)?.[0] as number
 
     act(() => {
       jest.advanceTimersByTime(HOLD_MS * 0.5)
     })
-    const total = (haptics.impactHeavy as jest.Mock).mock.calls.length
-    // La seconde moitié frappe plus souvent que la première.
+    const total = rumble.mock.calls.length
+    // La seconde moitié frappe plus souvent que la première…
     expect(total - halfway).toBeGreaterThan(halfway)
-    expect(haptics.impactRigid).toHaveBeenCalled()
+    // …et chaque coup est plus fort que le précédent : c'est la progression
+    // transmise au moteur qui porte le crescendo, plus un palier codé en dur.
+    expect(rumble.mock.calls.at(-1)?.[0]).toBeGreaterThan(lastEarly)
   })
 })

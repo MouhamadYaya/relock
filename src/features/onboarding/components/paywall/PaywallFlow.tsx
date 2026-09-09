@@ -33,6 +33,7 @@ import type {
 } from '@/features/onboarding/types/paywall'
 import { useT } from '@/i18n/useT'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 /**
  * Reference preview only. No fixtures, testimonials or unverified offer claims ship.
@@ -214,6 +215,9 @@ export function PaywallFlow({
       const result = await purchase(plan, source)
       if (!mounted.current || finished.current) return
       if (result.status === 'purchased') {
+        // Le seul remerciement que l'app puisse adresser à quelqu'un qui vient
+        // de payer. Une montée, pas un choc.
+        haptics.success()
         finished.current = true
         setSheetVisible(false)
         const continueOnboarding = onPurchaseSuccess ?? onSkip
@@ -232,8 +236,10 @@ export function PaywallFlow({
         notePaywallAbandoned(Date.now())
         cancellationOfferShown.current = true
         setSheetVisible(true)
-      } else if (result.status === 'failed')
+      } else if (result.status === 'failed') {
+        haptics.error()
         alert(t('paywall_reference.payment_failed'))
+      }
       // Une annulation n'est pas un échec : l'utilisateur a fermé la feuille
       // Apple exprès. Lui répondre « Le paiement n'a pas abouti, tu peux
       // réessayer » le sermonne pour un geste délibéré. On le ramène au

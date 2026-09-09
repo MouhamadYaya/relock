@@ -27,6 +27,7 @@ import {
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { findPreset, presetLines } from '@/features/blocking/presets'
+import { haptic } from '@/features/onboarding/tokens'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -94,6 +95,7 @@ export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
         <Pressable
           testID="rule-info-backdrop"
           style={StyleSheet.absoluteFill}
+          onPressIn={() => haptic.tick()}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel={t('onboarding_rule_info.close_a11y')}
@@ -155,6 +157,7 @@ export function RuleInfoSheet({ target, onClose, appKeys, appCount }: Props) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('onboarding_tutorial.picker_demo.understood')}
+            onPressIn={() => haptic.tick()}
             onPress={onClose}
             style={styles.cta}
           >

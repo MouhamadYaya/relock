@@ -97,6 +97,7 @@ export function StrictCommitmentSheet({
         testID="strict-commit-cancel"
         accessibilityRole="button"
         accessibilityLabel={t('blocking.strict_commit.cancel')}
+        haptic="graze"
         onPress={onCancel}
         style={styles.cancel}
       >

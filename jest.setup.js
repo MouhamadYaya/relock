@@ -47,8 +47,12 @@ jest.mock('react-native-bootsplash', () => ({
 // Module natif absent de l'environnement de test (TurboModule RNHapticFeedback)
 jest.mock('react-native-haptic-feedback', () => ({
   __esModule: true,
-  default: { trigger: jest.fn() },
+  default: { trigger: jest.fn(), triggerPattern: jest.fn() },
   trigger: jest.fn(),
+  triggerPattern: jest.fn(),
+  // Core Haptics : présent sur tout iPhone qui fait tourner iOS 16, donc
+  // c'est CE chemin que les tests doivent exercer.
+  isSupported: jest.fn(() => true),
   HapticFeedbackTypes: {},
 }))
 

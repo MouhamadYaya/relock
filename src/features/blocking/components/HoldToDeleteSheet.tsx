@@ -8,6 +8,7 @@ import { PressableScale } from '@/shared/components/ui/PressableScale'
 import { relockMaterial } from '@/shared/theme'
 import { fonts } from '@/shared/theme/tokens/fonts'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 const { colors, opacity, radius, shadow, typography } = relockMaterial
 
@@ -66,7 +67,14 @@ export function HoldToDeleteSheet({
       animationType="slide"
       onRequestClose={close}
     >
-      <Pressable accessible={false} onPress={close} style={styles.backdrop}>
+      <Pressable
+        accessible={false}
+        onPress={() => {
+          haptics.graze()
+          close()
+        }}
+        style={styles.backdrop}
+      >
         <Pressable
           testID="hold-delete-sheet"
           accessible={false}
@@ -132,6 +140,7 @@ export function HoldToDeleteSheet({
             accessibilityRole="button"
             accessibilityLabel={t('blocking.delete_sheet.cancel')}
             disabled={pending}
+            haptic="graze"
             onPress={close}
             style={styles.cancel}
           >

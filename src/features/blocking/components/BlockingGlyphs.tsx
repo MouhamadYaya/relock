@@ -466,6 +466,9 @@ export function PurplePlusButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       hitSlop={compact ? spacing.micro : undefined}
+      // Le bouton d'entrée du produit : tout commence par lui. Il mérite le
+      // cran au-dessus du toucher — on ouvre une porte, on n'effleure pas.
+      haptic="press"
       onPress={onPress}
       shadow
       style={[styles.plusButton, circle]}

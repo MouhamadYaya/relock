@@ -1,8 +1,8 @@
 import React from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
-import { trigger } from 'react-native-haptic-feedback'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { SceneRitual } from '@/features/onboarding/components/SceneRitual'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 jest.mock('@/features/onboarding/motion', () => ({ Reveal: 'Reveal' }))
 jest.mock('@/features/onboarding/bits', () => ({ Pill: 'Pill' }))
@@ -37,6 +37,8 @@ describe('seal ritual', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks()
+    jest.spyOn(haptics, 'lock').mockImplementation(() => {})
+    jest.spyOn(haptics, 'rumble').mockImplementation(() => {})
     jest.useFakeTimers()
     leaveForeground = undefined
     jest
@@ -63,7 +65,9 @@ describe('seal ritual', () => {
     wait(HOLD_MS)
 
     expect(said('Engagement scellé.')).toBe(true)
-    expect(trigger).toHaveBeenCalledWith('impactHeavy', expect.anything())
+    // Le sceau joue le verrou — pas un choc générique : c'est littéralement
+    // ce que le geste vient de faire.
+    expect(haptics.lock).toHaveBeenCalled()
     // Le CTA existe, mais la scène n'avance pas toute seule.
     expect(onDone).not.toHaveBeenCalled()
     act(() => cta()[0].props.onPress())
@@ -114,7 +118,7 @@ describe('seal ritual', () => {
     act(() => renderer.unmount())
     jest.advanceTimersByTime(HOLD_MS * 4)
 
-    expect(trigger).not.toHaveBeenCalledWith('impactHeavy', expect.anything())
+    expect(haptics.lock).not.toHaveBeenCalled()
     // Remonté pour que le démontage du `afterEach` reste inoffensif.
     act(() => {
       renderer = create(<SceneRitual onDone={onDone} />)

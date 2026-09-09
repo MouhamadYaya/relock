@@ -53,6 +53,7 @@ export function ScreenHeader({
           // Même relief que partout ailleurs : tic haptique au toucher, recul
           // d'échelle, halo à la couleur d'accent du thème courant.
           <PressableScale
+            haptic="graze"
             onPress={onBack}
             hitSlop={{ top: sp.xs, bottom: sp.xs, left: sp.xs, right: sp.xs }}
             accessibilityRole="button"

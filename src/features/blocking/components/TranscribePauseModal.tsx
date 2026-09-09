@@ -101,7 +101,8 @@ export function TranscribePauseModal({
   useEffect(() => {
     if (ready && !completed.current) {
       completed.current = true
-      haptics.impactLight()
+      // La phrase est recopiée juste : la friction est levée, ça se félicite.
+      haptics.success()
     } else if (!ready) {
       completed.current = false
     }

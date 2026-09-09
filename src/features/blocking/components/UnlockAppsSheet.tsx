@@ -133,7 +133,7 @@ export function UnlockAppsSheet({
   }, [visible])
 
   const toggle = (key: string) => {
-    haptics.selectionTick()
+    haptics.select()
     setSelected(current =>
       current.includes(key)
         ? current.filter(item => item !== key)
@@ -144,7 +144,8 @@ export function UnlockAppsSheet({
   const allSelected = selected.length === appKeys.length && appKeys.length > 0
 
   const toggleAll = () => {
-    haptics.selectionTick()
+    // Tout cocher d'un geste pèse plus qu'une case : ça se sent.
+    haptics.press()
     setSelected(allSelected ? [] : appKeys)
   }
 

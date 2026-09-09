@@ -1,9 +1,9 @@
 import React from 'react'
 import { Modal } from 'react-native'
-import { trigger } from 'react-native-haptic-feedback'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { UnlockDurationSheet } from '@/features/blocking/components/UnlockDurationSheet'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { haptics } from '@/shared/utils/platform/haptics'
 
 jest.mock('@/i18n/useT', () => ({
   useT: () => (key: string, values?: { count?: number }) =>
@@ -30,10 +30,14 @@ jest.mock('react-native-safe-area-context', () => ({
 describe('UnlockDurationSheet', () => {
   let renderer: ReactTestRenderer | undefined
 
+  beforeEach(() => {
+    jest.spyOn(haptics, 'detent').mockImplementation(() => {})
+  })
+
   afterEach(() => {
     act(() => renderer?.unmount())
     renderer = undefined
-    jest.clearAllMocks()
+    jest.restoreAllMocks()
   })
 
   it('uses a full-screen picker, ticks on selection and confirms that minute', () => {
@@ -64,17 +68,16 @@ describe('UnlockDurationSheet', () => {
         nativeEvent: { contentOffset: { y: spacing.xxxxl * 3 } },
       }),
     )
-    expect(trigger).toHaveBeenCalledWith(
-      'selection',
-      expect.objectContaining({ enableVibrateFallback: false }),
-    )
+    expect(haptics.detent).toHaveBeenCalledTimes(1)
 
     act(() =>
       picker?.props.onScroll({
         nativeEvent: { contentOffset: { y: spacing.xxxxl * 4 } },
       }),
     )
-    expect(trigger).toHaveBeenCalledTimes(2)
+    // Un cran franchi, un retour — même quand la molette défile vite : c'est
+    // un rythme, pas un doublon à fusionner.
+    expect(haptics.detent).toHaveBeenCalledTimes(2)
 
     const confirm = renderer?.root.findByProps({
       testID: 'unlock-duration-confirm',

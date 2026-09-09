@@ -37,7 +37,8 @@ export function HomeDetailSheet({
   const reduceMotion = useReducedMotion()
 
   const close = () => {
-    haptics.selectionTick()
+    // Refermer est un retrait : plus discret que l'ouverture, toujours.
+    haptics.graze()
     onClose()
   }
 

@@ -53,11 +53,12 @@ import { nativeKindOf, ScreenTime } from '@/shared/native/screen-time'
 import { requireScreenTime } from '@/shared/native/screen-time-gate'
 import type { BlockRuleType } from '@/shared/services/supabase/database.types'
 import { fonts } from '@/shared/theme/tokens/fonts'
+import { haptics } from '@/shared/utils/platform/haptics'
 import { showErrorToast } from '@/shared/utils/toast'
 import { genUUID } from '@/shared/utils/uuid'
 
-// Libs natives (flou + taptic) chargées en douceur : si le module natif n'est
-// pas encore lié, on retombe sur un fond assombri / pas de haptic.
+// Le flou natif est chargé en douceur : si le module n'est pas encore lié, on
+// retombe sur un fond assombri.
 let BlurView: React.ComponentType<{
   style?: unknown
   blurType?: string
@@ -67,18 +68,6 @@ let BlurView: React.ComponentType<{
 try {
   BlurView = require('@react-native-community/blur').BlurView
 } catch {}
-let HapticModule: { trigger: (t: string, o?: unknown) => void } | null = null
-try {
-  HapticModule = require('react-native-haptic-feedback').default
-} catch {}
-const tapHaptic = () => {
-  try {
-    HapticModule?.trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    })
-  } catch {}
-}
 
 const FW = {
   400: fonts.regular,
@@ -457,7 +446,7 @@ export default function AddScreen() {
     // Le strict n'existe que sur le timer : repartir d'un état propre évite
     // qu'un réglage invisible ne s'applique au type suivant.
     if (k !== 'block_now') setStrict(false)
-    tapHaptic()
+    haptics.press()
     setType(k)
     goStep(1)
   }
@@ -691,6 +680,7 @@ export default function AddScreen() {
         count,
         config: buildConfig(),
       })
+      haptics.success()
       setSuccessMsg(summary())
     } catch (e) {
       if (rearmed) {
@@ -701,6 +691,7 @@ export default function AddScreen() {
       }
       const msg = String((e as { message?: string })?.message ?? e ?? '')
       if (/too short|schedule/i.test(msg)) {
+        haptics.warning()
         setWarn(t('add_rule.warn_too_short'))
       } else {
         showErrorToast(e)
@@ -747,6 +738,10 @@ export default function AddScreen() {
         count,
         config: buildConfig(),
       })
+      // Pas un simple « c'est enregistré » : le blocage vient de PRENDRE.
+      // Une matière qui se resserre puis le pêne — c'est le nom du produit
+      // sous le doigt, et c'est le seul endroit de la création qui le joue.
+      haptics.lock()
       setSuccessMsg(summary())
       maybeAskNotifPermission()
     } catch (e) {
@@ -757,6 +752,7 @@ export default function AddScreen() {
       }
       const msg = String((e as { message?: string })?.message ?? e ?? '')
       if (/too short|schedule/i.test(msg)) {
+        haptics.warning()
         setWarn(t('add_rule.warn_too_short'))
       } else {
         showErrorToast(e)
@@ -949,7 +945,7 @@ export default function AddScreen() {
                         label={translate(`add_rule.days.${p.key}`)}
                         on={sameDays(days, p.days)}
                         onPress={() => {
-                          tapHaptic()
+                          haptics.select()
                           setDays(p.days)
                         }}
                       />
@@ -989,7 +985,10 @@ export default function AddScreen() {
                   <Switch
                     value={strict}
                     onValueChange={v => {
-                      tapHaptic()
+                      // Le seul interrupteur de l'app qui rend une règle
+                      // IRRÉVERSIBLE : il s'allume comme les autres, mais ce
+                      // qu'il engage se sentira au moment de valider.
+                      haptics.toggle(v)
                       setStrict(v)
                     }}
                     trackColor={{ false: C.surface2, true: C.accent }}

@@ -60,6 +60,9 @@ export const HomeHeader = React.memo(function HomeHeader({
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={settingsLabel}
+          // Un cran au-dessus du toucher : cette pastille QUITTE l'Accueil.
+          // Le doigt doit sentir qu'il ouvre quelque chose, pas qu'il effleure.
+          haptic="press"
           onPress={onPressSettings}
           shadow
           style={styles.settings}

@@ -93,6 +93,7 @@ export function PauseRitualShell({
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t('blocking.breathing.cancel')}
+          haptic="graze"
           onPress={onClose}
           style={styles.roundAction}
         >

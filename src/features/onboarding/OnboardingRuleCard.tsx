@@ -41,6 +41,7 @@ import {
   RuleTemplateFlowGlyph,
   type RuleTypeGlyphKind,
 } from '@/features/blocking/components/BlockingGlyphs'
+import { haptic } from '@/features/onboarding/tokens'
 import { useT } from '@/i18n/useT'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -130,6 +131,7 @@ export function OnboardingRuleCard({
           ? t('onboarding_rule_info.deselect_hint')
           : t('onboarding_rule_info.select_hint')
       }
+      onPressIn={() => haptic.select()}
       onPress={onToggle}
       style={[styles.card, selected && styles.cardSelected]}
     >
@@ -185,6 +187,7 @@ export function OnboardingRuleCard({
             // mais `onStartShouldSetResponder` verrouille aussi le survol.
             onStartShouldSetResponder={() => true}
             hitSlop={12}
+            onPressIn={() => haptic.tick()}
             onPress={onInfo}
             style={({ pressed }) => [
               styles.help,

@@ -77,7 +77,9 @@ export default function ScreenTimeHelpScreen() {
     setChecking(true)
     try {
       if ((await requireScreenTime()) === 'approved') {
-        haptics.impactLight()
+        // L'autorisation vient d'être accordée : c'est un déblocage, pas un
+        // simple appui — sans elle, Relock ne peut rien bloquer du tout.
+        haptics.success()
         showToast(t('settings.screen_time_help_granted'))
         router.back()
       } else {
@@ -153,7 +155,7 @@ export default function ScreenTimeHelpScreen() {
             onPress={() => Linking.openSettings().catch(() => {})}
             onPressIn={() => {
               setPressedPrimary(true)
-              haptics.impactLight()
+              haptics.press()
             }}
             onPressOut={() => setPressedPrimary(false)}
             style={pressedPrimary ? styles.primaryPressed : styles.primary}
@@ -173,7 +175,7 @@ export default function ScreenTimeHelpScreen() {
             }}
             onPressIn={() => {
               setPressedSecondary(true)
-              if (!checking) haptics.selectionTick()
+              if (!checking) haptics.press()
             }}
             onPressOut={() => setPressedSecondary(false)}
             style={

@@ -44,6 +44,9 @@ export function BlockingTypeCard({
       testID={`blocking-type-card-${kind}`}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${description}`}
+      // Le choix le plus structurant de l'app, et il ouvre l'éditeur : ni un
+      // effleurement de carte, ni un simple tic de liste.
+      haptic="press"
       onPress={onPress}
       style={[styles.card, style]}
     >

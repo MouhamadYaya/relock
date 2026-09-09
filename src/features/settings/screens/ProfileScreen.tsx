@@ -129,7 +129,7 @@ export default function ProfileScreen() {
   }
 
   const onPickAvatar = () => {
-    haptics.selectionTick()
+    haptics.press()
     if (!isImageKitConfigured()) {
       showErrorToast(t('settings.profile.photo_unavailable'))
       return
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
   }
 
   const toggleBirthPicker = () => {
-    haptics.selectionTick()
+    haptics.tap()
     setBirthOpen(open => !open)
   }
 
@@ -163,7 +163,7 @@ export default function ProfileScreen() {
    */
   const save = () => {
     if (!dirty || saving) return
-    haptics.impactLight()
+    haptics.commit()
     void (async () => {
       try {
         if (nameChanged) await updateName.mutateAsync(trimmedName)
@@ -295,7 +295,7 @@ export default function ProfileScreen() {
                 accessibilityLabel={t('settings.profile.birth_date_clear')}
                 hitSlop={12}
                 onPress={() => {
-                  haptics.selectionTick()
+                  haptics.select()
                   setDraftBirth(null)
                   setBirthOpen(false)
                 }}

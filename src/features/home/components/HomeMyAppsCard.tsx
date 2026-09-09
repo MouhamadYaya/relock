@@ -86,6 +86,9 @@ export const HomeMyAppsCard = React.memo(function HomeMyAppsCard({
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t('home.my_apps.open')}
+        // L'en-tête n'est qu'un raccourci de lecture, pas l'action de la
+        // carte : il s'efface derrière le bouton « déverrouiller » en bas.
+        haptic="graze"
         onPress={onPress}
         style={styles.heading}
       >
@@ -156,6 +159,7 @@ export const HomeMyAppsCard = React.memo(function HomeMyAppsCard({
             testID="home-unlock-apps"
             accessibilityRole="button"
             accessibilityLabel={t('home.my_apps.unlock')}
+            haptic="press"
             onPress={onUnlock}
             style={styles.unlock}
           >

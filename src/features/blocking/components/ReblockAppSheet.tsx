@@ -172,6 +172,7 @@ export function ReblockAppSheet({
             accessibilityLabel={t('blocking.reblock_app.action')}
             accessibilityState={{ disabled: pending }}
             disabled={pending}
+            haptic="press"
             onPress={onConfirm}
             style={[styles.confirm, pending && styles.pending]}
           >
@@ -195,6 +196,7 @@ export function ReblockAppSheet({
             accessibilityRole="button"
             accessibilityLabel={t('blocking.reblock_app.cancel')}
             disabled={pending}
+            haptic="graze"
             onPress={onCancel}
             style={styles.cancel}
           >

@@ -93,7 +93,7 @@ export function UnlockDurationSheet({
     const bounded = clampUnlockMinutes(nextMinutes)
     if (bounded !== hapticMinuteRef.current) {
       hapticMinuteRef.current = bounded
-      if (withHaptic) haptics.selectionTick()
+      if (withHaptic) haptics.detent()
     }
     setMinutes(bounded)
     pickerRef.current?.scrollTo({
@@ -109,7 +109,7 @@ export function UnlockDurationSheet({
     if (nextMinutes === hapticMinuteRef.current) return
     hapticMinuteRef.current = nextMinutes
     setMinutes(nextMinutes)
-    haptics.selectionTick()
+    haptics.detent()
   }
 
   const settlePicker = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

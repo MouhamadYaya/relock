@@ -228,7 +228,7 @@ function EmptyBlockedAppsPanel({
                 // Un lien reste un bouton : il vibre au toucher comme les
                 // autres, sans quoi le seul retour est le rouet qui arrive
                 // deux dixièmes de seconde plus tard.
-                onPressIn={() => haptics.selectionTick()}
+                onPressIn={() => haptics.press()}
                 onPress={onRestart}
                 style={styles.emptyHintLink}
               >
@@ -465,6 +465,10 @@ export default function BlocagesV2Screen() {
           continue
         await ScreenTime.unblockAppKey(key, minutes)
       }
+      // Le pêne, puis le relâchement : la porte vient de s'ouvrir. C'est le
+      // seul retour qui arrive APRÈS le rituel de respiration — il récompense
+      // la friction qu'on vient d'imposer.
+      haptics.unlock()
       setUnlocking(null)
     } catch (error) {
       showErrorToast(error)
@@ -479,6 +483,9 @@ export default function BlocagesV2Screen() {
     setReblockPending(true)
     try {
       await ScreenTime.reblockAppKey(reblocking)
+      // On se re-verrouille volontairement : ça doit se sentir comme un
+      // engagement tenu, pas comme un simple bouton pressé.
+      haptics.lock()
       setReblocking(null)
     } catch (error) {
       showErrorToast(error)

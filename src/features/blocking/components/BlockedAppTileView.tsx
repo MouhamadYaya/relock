@@ -192,6 +192,8 @@ export const BlockedAppTileView = React.memo(function BlockedAppTileView({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
+      // La tuile n'ouvre pas une fiche : elle lance le rituel de déblocage.
+      haptic="press"
       onPress={onPress}
       style={styles.slot}
     >

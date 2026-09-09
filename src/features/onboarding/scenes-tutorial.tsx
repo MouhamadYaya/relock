@@ -520,6 +520,7 @@ export function ScenePickApps({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`${t('onboarding_tutorial.pick_apps.selected', { count })}. ${t('onboarding_tutorial.pick_apps.edit_selection')}`}
+              onPressIn={() => haptic.select()}
               onPress={pick}
               disabled={busy}
               style={[styles.pickCard, styles.pickCardDone]}

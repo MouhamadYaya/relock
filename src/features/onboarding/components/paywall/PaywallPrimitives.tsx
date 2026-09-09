@@ -164,6 +164,7 @@ export function PaywallOutlineButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
+      haptic="tap"
       onPress={onPress}
       style={[
         styles.outline,
@@ -209,6 +210,7 @@ export function PaywallTextButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
+      haptic="graze"
       onPress={onPress}
       style={styles.textButton}
     >
@@ -242,6 +244,7 @@ export function PaywallClose({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={t('paywall.close')}
+      haptic="graze"
       onPress={onPress}
       style={styles.close}
     >

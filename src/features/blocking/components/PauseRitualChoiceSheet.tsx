@@ -76,7 +76,7 @@ export function PauseRitualChoiceSheet({
   )
 
   const select = (ritual: PauseRitual) => {
-    haptics.selectionTick()
+    haptics.select()
     onPick(ritual)
     // Retoucher l'écran déjà retenu n'annonce rien de neuf : on referme.
     if (ritual === picked) {
