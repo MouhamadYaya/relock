@@ -51,6 +51,17 @@ private struct TokenIcon: View {
     SystemTokenIcon(
       token: token,
       pointSize: min(side * Self.iconToTileRatio, Self.systemPointSizeCap))
+      // ⚠️ Boîte de mise en page FIXE, posée AVANT l'agrandissement.
+      // `Label(token)` ne rend pas la même chose selon que l'agent système a
+      // déjà résolu le jeton ou non, et sa taille intrinsèque bouge avec lui.
+      // Sans cette boîte, le centre autour duquel `scaleEffect` tourne suivait
+      // cette taille — et le moindre point d'écart ressortait multiplié par
+      // l'agrandissement (×7 sur une grande tuile), ce qui projetait l'icône
+      // hors de son cadre, presque toujours vers le haut. La boîte fige ce
+      // centre sur celui de la tuile : une résolution tardive ne peut plus
+      // déplacer l'icône. Elle propose exactement la même taille qu'avant, la
+      // vue système continue donc de se dessiner à l'identique.
+      .frame(width: side, height: side)
       // La vue du jeton est un contenu XPC protégé : elle ne peut pas être
       // copiée dans un UIImage. On demande sa composition à une densité
       // supérieure, puis on compense la réduction points/pixels induite par
@@ -135,16 +146,32 @@ final class BlockedAppIconsView: UIView {
   /// l'ordre d'itération n'est pas garanti : deux vignettes pouvaient tomber
   /// sur le même jeton et afficher deux fois la même app.
   @objc var tokenKey: NSString = "" {
-    didSet { if oldValue != tokenKey { setNeedsRebuild() } }
+    didSet {
+      guard oldValue != tokenKey else { return }
+      cachedToken = nil
+      setNeedsRebuild()
+    }
   }
   /// Force une nouvelle résolution sans démonter la vue (après un bind).
   @objc var reloadToken: NSNumber = 0 {
-    didSet { if oldValue != reloadToken { setNeedsRebuild() } }
+    didSet {
+      guard oldValue != reloadToken else { return }
+      cachedToken = nil
+      setNeedsRebuild()
+    }
   }
 
   private var hosting: UIHostingController<AnyView>?
   private var rebuildWorkItem: DispatchWorkItem?
-  private var renderedSide: CGFloat = 0
+  /// Bornes pour lesquelles le rendu courant a été calculé. On garde la taille
+  /// ENTIÈRE et plus le seul côté : une tuile qui change de largeur gardait
+  /// sinon une icône centrée sur l'ancienne boîte.
+  private var renderedSize: CGSize = .zero
+  /// Jeton déjà résolu pour `tokenKey`. La résolution décode TOUTES les
+  /// sélections de l'App Group : on ne la rejoue pas pour un simple
+  /// changement de taille.
+  private var cachedToken: Token?
+  private var cachedTokenKey: String = ""
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -159,6 +186,10 @@ final class BlockedAppIconsView: UIView {
   private func commonInit() {
     isUserInteractionEnabled = false
     backgroundColor = .clear
+    // Dernier rempart : même mal placé, le calque système ne peut pas sortir
+    // de la tuile. Le `overflow: 'hidden'` posé côté JS ne suffit pas — c'est
+    // la vue hôte, ici, qui doit borner le contenu qu'elle héberge.
+    clipsToBounds = true
     // L'autorisation peut être accordée APRÈS le premier rendu, et une
     // sélection peut être liée pendant que l'écran est déjà affiché.
     NotificationCenter.default.addObserver(
@@ -171,6 +202,9 @@ final class BlockedAppIconsView: UIView {
   }
 
   @objc private func appDidBecomeActive() {
+    // L'autorisation a pu être accordée, ou la sélection re-liée : le jeton en
+    // cache n'est plus une réponse fiable.
+    cachedToken = nil
     setNeedsRebuild()
   }
 
@@ -229,6 +263,17 @@ final class BlockedAppIconsView: UIView {
     return nil
   }
 
+  /// Le jeton de `tokenKey`, résolu UNE seule fois par identité.
+  @available(iOS 16.0, *)
+  private func resolvedToken() -> Token? {
+    let wanted = tokenKey as String
+    if let cachedToken, cachedTokenKey == wanted { return cachedToken }
+    guard let token = loadToken() else { return nil }
+    cachedToken = token
+    cachedTokenKey = wanted
+    return token
+  }
+
   /// ⚠️ Miroir de `BlocusScreenTime.tokenKey` — garder les deux en phase.
   static func encodedKey<T: Codable>(_ token: T) -> String? {
     guard let data = try? JSONEncoder().encode(token) else { return nil }
@@ -236,7 +281,7 @@ final class BlockedAppIconsView: UIView {
   }
 
   private func detachHosting() {
-    renderedSide = 0
+    renderedSize = .zero
     guard let hosting else { return }
     hosting.willMove(toParent: nil)
     hosting.view.removeFromSuperview()
@@ -255,28 +300,62 @@ final class BlockedAppIconsView: UIView {
     return nil
   }
 
+  /// La vue SwiftUI pour la taille courante. Ne parle à l'agent Family
+  /// Controls que la première fois : ensuite le jeton est en cache.
+  @available(iOS 16.0, *)
+  private func makeRoot(side: CGFloat) -> AnyView? {
+    #if targetEnvironment(simulator)
+      let icon = AnyView(SimulatorIcon(key: tokenKey as String, side: side))
+    #else
+      guard let token = resolvedToken() else { return nil }
+      let displayScale = window?.screen.scale ?? UIScreen.main.scale
+      let icon = AnyView(
+        TokenIcon(token: token, side: side, displayScale: displayScale))
+    #endif
+    // ⚠️ `ignoresSafeArea` n'est pas cosmétique ici. Un `UIHostingController`
+    // centre sa racine dans ses bornes MOINS la zone sûre, et cette zone est
+    // transitoirement non nulle pendant un changement d'onglet — la tuile
+    // traverse alors le bas de l'écran. L'icône se calait trop haut, et le
+    // calque système, une fois posé, ne se recentrait plus.
+    return AnyView(
+      icon
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea())
+  }
+
   private func rebuild() {
     guard window != nil, #available(iOS 16.0, *) else { return }
-    detachHosting()
 
     // Ne jamais figer la taille de secours de 24 pt avant le layout RN. C'était
     // invisible dans les cartes de 24 pt, mais la grande tuile restait ensuite
     // rendue à 24 pt au centre d'un conteneur de 72 pt.
     let side = min(bounds.width, bounds.height)
-    guard side > 0, tokenKey.length > 0 else { return }
-    renderedSide = side
-    #if targetEnvironment(simulator)
-      let root = AnyView(SimulatorIcon(key: tokenKey as String, side: side))
-    #else
-      guard let token = loadToken() else { return }
-      let displayScale = window?.screen.scale ?? UIScreen.main.scale
-      let root = AnyView(
-        TokenIcon(token: token, side: side, displayScale: displayScale))
-    #endif
+    guard side > 0, tokenKey.length > 0, let root = makeRoot(side: side) else {
+      detachHosting()
+      return
+    }
+
+    // Le contrôleur déjà en place est réutilisé : le recréer à chaque passe
+    // faisait clignoter la tuile et relançait une résolution par XPC.
+    // `parent != nil` n'est pas redondant : une vue construite sans
+    // containment (branche d'erreur ci-dessous) ne dessine pas le contenu
+    // système, il faut la refaire et non la réutiliser.
+    if let hosting, let parent = hosting.parent, parent === nearestViewController()
+    {
+      hosting.rootView = root
+      hosting.view.frame = bounds
+      renderedSize = bounds.size
+      return
+    }
+
+    detachHosting()
     let vc = UIHostingController(rootView: root)
     vc.view.backgroundColor = .clear
     vc.view.frame = bounds
     vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    vc.view.clipsToBounds = true
+    vc.view.insetsLayoutMarginsFromSafeArea = false
+    if #available(iOS 16.4, *) { vc.safeAreaRegions = [] }
 
     // ⚠️ Containment obligatoire (voir l'en-tête) : sans parent, la vue
     // SwiftUI adossée à FamilyControlsAgent reste vide.
@@ -289,14 +368,20 @@ final class BlockedAppIconsView: UIView {
       Self.log.error("no parent view controller — icon may not render")
     }
     hosting = vc
+    renderedSize = bounds.size
   }
 
   override func layoutSubviews() {
     super.layoutSubviews()
+    // Le recadrage est immédiat : l'icône se recentre dans la tuile au même
+    // cycle que le layout, sans attendre le débounce.
     hosting?.view.frame = bounds
-    let side = min(bounds.width, bounds.height)
-    if window != nil, side > 0, abs(side - renderedSide) > 0.5 {
-      setNeedsRebuild()
+    guard window != nil, bounds.size != renderedSize else { return }
+    guard min(bounds.width, bounds.height) > 0, tokenKey.length > 0 else {
+      return
     }
+    // La taille pilote l'agrandissement du calque système : elle doit être
+    // celle des bornes FINALES, pas celle d'une passe intermédiaire.
+    setNeedsRebuild()
   }
 }
