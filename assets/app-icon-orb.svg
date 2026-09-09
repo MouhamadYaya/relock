@@ -2,75 +2,76 @@
   <!--
     Icône alternative « Orbe » — source de vérité.
 
-    Une lune de verre PLEINE, violette, sur un fond mauve. Aucun terminateur,
-    aucun croissant : c'est tout l'objet du dessin. La version précédente
-    reprenait la construction de l'icône d'origine (moitié éclairée à gauche,
-    moitié dans l'ombre) et ne s'en distinguait, sur l'écran d'accueil, que
-    par un détail de dégradé.
+    Une lune de verre PLEINE, dans le violet de Relock, sur une nuit violette
+    très sombre. Aucun terminateur, aucun croissant : c'est ce qui la sépare
+    de l'icône d'origine, dont elle reprend en revanche exactement les
+    couleurs — celles de l'app (`relock-material.ts` : accentViolet #A78BFA,
+    moonHaloSolid #9279F4, accentVioletDeep #7357DC, accentBlue #7C89F8).
 
-    Ce qui la sépare maintenant, dans l'ordre de ce qu'on voit à 40 px :
-    le FOND (mauve clair, quand les deux autres sont sur du noir), puis la
-    silhouette (un disque plein, pas un disque coupé).
+    Une version précédente posait une lune claire sur un fond mauve pâle.
+    C'était joli et hors sujet : Relock est une app nocturne, et une icône
+    rose sur l'écran d'accueil n'appartenait plus à la même application.
 
-    Rendu par scripts/generate-alt-icon-orb.cjs vers :
+    Rendu par scripts/generate-alt-icons.cjs vers :
       ios/Relock/Images.xcassets/AppIcon-Orb.appiconset/*.png
       assets/logo-orb{,@2x,@3x}.png  (l'aperçu du sélecteur)
   -->
   <defs>
-    <!-- Le fond mauve, éclairé du même côté que la sphère. -->
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#E9DAFC"/>
-      <stop offset="0.46" stop-color="#CBAEF3"/>
-      <stop offset="1" stop-color="#9575DC"/>
-    </linearGradient>
-
-    <!-- Assombrit les angles : sans ça, la sphère flotte sans se détacher. -->
-    <radialGradient id="vignette" cx="0.5" cy="0.46" r="0.78">
-      <stop offset="0.42" stop-color="#2E1857" stop-opacity="0"/>
-      <stop offset="1" stop-color="#2E1857" stop-opacity="0.34"/>
+    <!--
+      La nuit. Violette, jamais noire : le noir pur ferait un trou sur
+      l'écran d'accueil, et c'est déjà la règle du fond de l'Accueil.
+    -->
+    <radialGradient id="night" cx="0.5" cy="0.44" r="0.78">
+      <stop offset="0" stop-color="#1A1440"/>
+      <stop offset="0.55" stop-color="#100C28"/>
+      <stop offset="1" stop-color="#07050F"/>
     </radialGradient>
 
-    <!-- Le halo que le verre projette sur le fond. -->
+    <!-- Le halo de la lune, repris de `moonHalo` : le violet de la marque. -->
     <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0.63" stop-color="#F4ECFF" stop-opacity="0.5"/>
-      <stop offset="0.8" stop-color="#F4ECFF" stop-opacity="0.14"/>
-      <stop offset="1" stop-color="#F4ECFF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#9279F4" stop-opacity="0.42"/>
+      <stop offset="0.72" stop-color="#9279F4" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#9279F4" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- Le corps : lumière en haut à gauche, profondeur vers le bas droit. -->
-    <radialGradient id="glass" cx="0.33" cy="0.27" r="0.94">
-      <stop offset="0" stop-color="#A98CFF"/>
-      <stop offset="0.28" stop-color="#8262F0"/>
-      <stop offset="0.6" stop-color="#5233C8"/>
-      <stop offset="0.86" stop-color="#301B8A"/>
-      <stop offset="1" stop-color="#21125F"/>
+    <!--
+      Le corps. Lumière en haut à gauche, profondeur vers le bas droit — mais
+      le bord ne tombe JAMAIS dans le noir : une lune pleine reste pleine,
+      sinon le croissant revient par la bande.
+    -->
+    <radialGradient id="glass" cx="0.34" cy="0.28" r="0.94">
+      <stop offset="0" stop-color="#D6D3FF"/>
+      <stop offset="0.26" stop-color="#A9A7FA"/>
+      <stop offset="0.52" stop-color="#9279F4"/>
+      <stop offset="0.78" stop-color="#7357DC"/>
+      <stop offset="1" stop-color="#4E3AA8"/>
     </radialGradient>
 
-    <!-- Lumière traversante, ramassée sur le bord bas-droit. -->
+    <!-- Lumière traversante, ramassée sur le bord bas-droit. Bleu de marque. -->
     <radialGradient id="through" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#F0E4FF" stop-opacity="0.72"/>
-      <stop offset="0.5" stop-color="#B695FF" stop-opacity="0.26"/>
-      <stop offset="1" stop-color="#B695FF" stop-opacity="0"/>
+      <stop offset="0" stop-color="#7C89F8" stop-opacity="0.42"/>
+      <stop offset="0.5" stop-color="#7C89F8" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#7C89F8" stop-opacity="0"/>
     </radialGradient>
 
     <!-- Les deux reflets spéculaires. -->
     <radialGradient id="spec" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.92"/>
-      <stop offset="0.45" stop-color="#F1E8FF" stop-opacity="0.42"/>
-      <stop offset="1" stop-color="#F1E8FF" stop-opacity="0"/>
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="0.45" stop-color="#EFEDFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#EFEDFF" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="specSmall" cx="0.5" cy="0.5" r="0.5">
       <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
-      <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0.28"/>
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
 
     <!-- La paroi de verre : allumée en bas-droite, éteinte en haut-gauche. -->
     <linearGradient id="shell" x1="0.15" y1="0.1" x2="0.85" y2="0.92">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
-      <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0.05"/>
-      <stop offset="0.78" stop-color="#F3E8FF" stop-opacity="0.5"/>
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.72"/>
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.20"/>
+      <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0.04"/>
+      <stop offset="0.78" stop-color="#C9C6FF" stop-opacity="0.40"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.62"/>
     </linearGradient>
 
     <!--
@@ -81,9 +82,9 @@
       voulu : de près une lune, de loin un disque net.
     -->
     <radialGradient id="mare" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#1B0D50" stop-opacity="0.20"/>
-      <stop offset="0.55" stop-color="#1B0D50" stop-opacity="0.12"/>
-      <stop offset="1" stop-color="#1B0D50" stop-opacity="0"/>
+      <stop offset="0" stop-color="#4A3B8F" stop-opacity="0.16"/>
+      <stop offset="0.55" stop-color="#4A3B8F" stop-opacity="0.09"/>
+      <stop offset="1" stop-color="#3A2E7A" stop-opacity="0"/>
     </radialGradient>
 
     <clipPath id="sphere">
@@ -91,10 +92,9 @@
     </clipPath>
   </defs>
 
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <rect width="1024" height="1024" fill="url(#vignette)"/>
+  <rect width="1024" height="1024" fill="url(#night)"/>
 
-  <circle cx="512" cy="512" r="452" fill="url(#halo)"/>
+  <circle cx="512" cy="512" r="470" fill="url(#halo)"/>
   <circle cx="512" cy="512" r="360" fill="url(#glass)"/>
 
   <g clip-path="url(#sphere)">
@@ -108,8 +108,8 @@
                transform="rotate(-14 576 712)" fill="url(#mare)"/>
     </g>
 
-    <ellipse cx="694" cy="768" rx="268" ry="150"
-             transform="rotate(-40 694 768)" fill="url(#through)"/>
+    <ellipse cx="706" cy="778" rx="232" ry="126"
+             transform="rotate(-40 706 778)" fill="url(#through)"/>
 
     <ellipse cx="404" cy="360" rx="150" ry="106"
              transform="rotate(-30 404 360)" fill="url(#spec)"/>
