@@ -136,8 +136,13 @@ export function wavePace(elapsed: number): number {
  * Une bille neuve, au-dessus de la zone visible.
  *
  * `staggered` sert au tout premier remplissage : les billes sont réparties
- * très haut au-dessus de l'écran, si bien que l'averse ARRIVE au lieu d'être
- * déjà là. L'écran s'ouvre propre, comme chez la référence.
+ * au-dessus de l'écran, si bien que l'averse ARRIVE au lieu d'être déjà là.
+ *
+ * L'étalement reste COURT (0,55 hauteur d'écran, contre 1,9 avant le
+ * 2026-09-08) : plus haut, les billes des derniers rangs mettaient plusieurs
+ * secondes à entrer dans le cadre et l'écran s'ouvrait quasi vide — un temps
+ * mort là où la promesse doit se lire tout de suite. À 0,55, les premières
+ * billes tombent dès la première image et l'averse est pleine en ~2 s.
  */
 export function spawnParticle(
   field: RainField,
@@ -149,7 +154,7 @@ export function spawnParticle(
   return {
     x: field.width * (0.04 + random() * 0.92),
     y: staggered
-      ? -20 - random() * field.height * 1.9
+      ? -20 - random() * field.height * 0.55
       : -20 - random() * field.height * 0.35,
     vx: (random() - 0.5) * 26,
     vy: (24 + random() * 46) * pace,

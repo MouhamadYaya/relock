@@ -219,11 +219,22 @@ describe('shield-rain', () => {
       }
     })
 
-    it('étale le premier remplissage bien plus haut que le suivant', () => {
-      // C'est ce qui fait ARRIVER l'averse au lieu de l'afficher déjà pleine.
+    it('étale le premier remplissage plus haut que le suivant, sans excès', () => {
+      // Deux exigences opposées, et c'est leur ÉCART qui est testé :
+      // l'averse doit ARRIVER (donc plus haut que le régime permanent) mais
+      // vite (donc pas des hauteurs d'écran au-dessus du cadre, sinon la
+      // scène s'ouvre vide — le défaut corrigé le 2026-09-08).
       const first = spawnParticle(field, () => 0.99, true, 1)
       const later = spawnParticle(field, () => 0.99, false, 1)
-      expect(first.y).toBeLessThan(later.y - field.height)
+      expect(first.y).toBeLessThan(later.y - field.height * 0.15)
+      expect(first.y).toBeGreaterThan(-field.height)
+    })
+
+    it('fait entrer les toutes premières billes sans attendre', () => {
+      // `random() → 0` est le rang le plus bas du remplissage : il doit être
+      // juste au-dessus du cadre, pas quelque part dans le vide.
+      const first = spawnParticle(field, () => 0, true, 1)
+      expect(first.y).toBeGreaterThan(-40)
     })
   })
 })
