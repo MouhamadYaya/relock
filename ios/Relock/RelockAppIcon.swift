@@ -29,8 +29,8 @@ final class RelockAppIcon: NSObject {
 
   @objc static func requiresMainQueueSetup() -> Bool { true }
 
-  /// L'appareil accepte-t-il les icônes alternatives ? (Faux sur iPad en
-  /// Slide Over, sur certaines configurations gérées par un MDM.)
+  /// L'appareil accepte-t-il les icônes alternatives ? (Faux sur certaines
+  /// configurations gérées par un MDM.)
   @objc(isSupported:rejecter:)
   func isSupported(
     _ resolve: @escaping RCTPromiseResolveBlock,

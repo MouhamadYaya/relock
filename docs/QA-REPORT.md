@@ -94,7 +94,7 @@
 
 ### 🟠 P1 — Majeurs (avant soumission ou 1ʳᵉ mise à jour)
 
-**B7 — Réinstallation / nouvel appareil = destruction silencieuse de l'historique du compte.** `resetIfFreshInstall` (drapeau `UserDefaults.standard`, effacé à la désinstallation) déclenche `wipeCloudIfPending` → suppression de **toutes** les règles, stats et événements du compte au premier login. Installer l'app sur un iPad ou un nouvel iPhone efface le compte, même si l'ancien téléphone marche encore. → Purger le **système/local** (bien), mais demander confirmation avant tout wipe **cloud**.
+**B7 — Réinstallation / nouvel appareil = destruction silencieuse de l'historique du compte.** `resetIfFreshInstall` (drapeau `UserDefaults.standard`, effacé à la désinstallation) déclenche `wipeCloudIfPending` → suppression de **toutes** les règles, stats et événements du compte au premier login. Installer l'app sur un nouvel iPhone efface le compte, même si l'ancien téléphone marche encore. → Purger le **système/local** (bien), mais demander confirmation avant tout wipe **cloud**.
 
 **B8 — La « série » mesure l'inverse du contrôle.** `streak_respected=true` uniquement les jours avec ≥1 résistance : un jour parfait (aucune tentative d'ouverture) **casse la série** ; un jour à 15 tentatives la « respecte ». → Redéfinir « jour de contrôle » (ex. : ≥1 blocage actif ce jour-là, indépendamment des tentatives), calculé par jour.
 

@@ -88,9 +88,9 @@ export function ScreenWrapper({
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  // Colonne de contenu bornée + centrée sur grand écran (iPad). Sans effet
-  // sur iPhone (largeur écran < maxWidth).
-  container: { flex: 1, width: '100%', maxWidth: 540, alignSelf: 'center' },
+  // Relock est une app iPhone uniquement : la colonne occupe toute la largeur,
+  // sans borne pensée pour un grand écran.
+  container: { flex: 1, width: '100%' },
   header: { width: '100%' },
   footer: { width: '100%' },
   scrollContent: { flexGrow: 1 },

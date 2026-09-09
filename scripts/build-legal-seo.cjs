@@ -43,11 +43,11 @@ const CHECK = process.argv.slice(2).includes('--check')
  */
 const ENTITY = {
   en:
-    'Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you ' +
+    'Relock is an iPhone app that puts one intentional pause between you and the apps you ' +
     'open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the ' +
     'apps you choose, following rules you set yourself.',
   fr:
-    'Relock est une application iPhone et iPad qui place une pause intentionnelle entre vous et ' +
+    'Relock est une application iPhone qui place une pause intentionnelle entre vous et ' +
     'les applications que vous ouvrez par réflexe. Elle s’appuie sur Family Controls et le Temps ' +
     'd’écran d’Apple pour bloquer, retarder ou limiter les applications que vous choisissez, ' +
     'selon des règles que vous définissez vous-même.',
@@ -477,7 +477,7 @@ function graphFor(page, faq, pages) {
     name: 'Relock',
     applicationCategory: 'LifestyleApplication',
     applicationSubCategory: 'Digital wellbeing',
-    operatingSystem: 'iOS, iPadOS',
+    operatingSystem: 'iOS',
     description: ENTITY[page.lang],
     url: `${SITE}/`,
     image: OG_IMAGE,
@@ -739,7 +739,7 @@ function buildLlms(pages) {
 > ${ENTITY.en}
 
 Relock is published by ${ORG.name}, a sole proprietorship registered in Quebec, Canada.
-The app is built on Apple Family Controls, so it runs on iPhone and iPad only; there is no
+The app is built on Apple Family Controls, so it runs on iPhone only; there is no
 Android version and no browser extension. It is in pre-launch: the site collects early access
 requests by email and there is no App Store listing yet.
 

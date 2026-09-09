@@ -1,7 +1,7 @@
 {
   "name": "Relock",
   "short_name": "Relock",
-  "description": "Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.",
+  "description": "Relock is an iPhone app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

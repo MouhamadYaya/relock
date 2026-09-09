@@ -138,7 +138,7 @@ No in-app workflow was identified for downloading all local/provider data, delet
 | Medium | MMKV has no app-level encryption key | Tokens and local personal data should not be described as encrypted by Relock | Threat-model platform protection and add encrypted storage where appropriate. [mmkv.ts:105](../shared/services/storage/mmkv.ts#L105) |
 | Medium | Sentry crash reporting defaults on | Consent/legal-basis and disclosure may differ by jurisdiction | Confirm launch markets, lawful basis, first-run notice, deployed sampling, replay, profiling, and retention. [app-preferences.ts:26](../shared/services/storage/app-preferences.ts#L26) |
 | Medium | RevenueCat receives behavioral onboarding attributes | “Subscription processing only” disclosure would be incomplete | Confirm necessity, lawful basis, retention, and deletion handling. [revenuecat.ts:329](../features/onboarding/services/revenuecat.ts#L329) |
-| ~~Medium~~ **Closed 2026-09-07** | ~~Platform availability is ambiguous~~ | — | Terms §4 now state iPhone/iPad through the App Store, Canada and the United States, and scope the Google/Google Play wording to a future Android release. |
+| ~~Medium~~ **Closed 2026-09-07** | ~~Platform availability is ambiguous~~ | — | Terms §4 now state iPhone through the App Store, Canada and the United States, and scope the Google/Google Play wording to a future Android release. |
 | ~~Medium~~ **Closed 2026-09-07** | ~~Legal URLs/contact values were placeholder product configuration~~ | — | The site is live on `getrelock.com` (Cloudflare Workers, see `wrangler.jsonc`) and `links` in [app-config.ts](../config/app-config.ts) points at it. |
 | Medium | The paywall had no Terms/Privacy links | App Store Guideline 3.1.2 rejection | Closed 2026-09-07 — `PaywallLegalLinks` renders on the plans screen and the exit offer, covered by a test. [PaywallPrimitives.tsx](../features/onboarding/components/paywall/PaywallPrimitives.tsx) |
 | Medium | The exit offer promised a “money-back guarantee” | Refunds are Apple’s to grant; the claim contradicted Terms §6 and consumer law | Closed 2026-09-07 — replaced by “Cancel anytime in the App Store” in all four locales. |
@@ -156,7 +156,7 @@ Every bracketed placeholder in the English and French policy and terms has been 
 | Effective / last updated | September 7, 2026 |
 | Minimum age | 16 |
 | Launch markets | Canada and the United States |
-| Platform | iPhone and iPad via the App Store; Android wording is conditional |
+| Platform | iPhone via the App Store; Android wording is conditional |
 | Governing law and courts | Province of Quebec, Canada |
 | Dispute process | 30-day informal resolution by email, expressly non-blocking. **No arbitration clause and no class-action waiver** — both are unenforceable against Quebec consumers |
 | Liability cap | CAD $100, or the amount paid in the previous 12 months, whichever is greater |

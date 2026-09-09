@@ -1,6 +1,6 @@
 # Relock, full text
 
-> Relock is an iPhone and iPad app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.
+> Relock is an iPhone app that puts one intentional pause between you and the apps you open on autopilot. It uses Apple Family Controls and Screen Time to block, delay or limit the apps you choose, following rules you set yourself.
 
 Every public page of getrelock.com, navigation and footer removed.
 Generated from the site sources. Canonical index: https://getrelock.com/llms.txt
@@ -8,7 +8,7 @@ Generated from the site sources. Canonical index: https://getrelock.com/llms.txt
 # Relock | Make your attention yours again
 URL: https://getrelock.com/
 Language: en
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Your attention, back in your hands
 
@@ -16,7 +16,7 @@ Your attention, back in your hands
 
 Relock puts one intentional pause between you and the scroll. Build boundaries around the apps that pull you away, then return to the day you meant to have.
 
-Built around Apple Screen Time controls. Coming to the App Store for iPhone and iPad, in Canada and the United States.
+Built around Apple Screen Time controls. Coming to the App Store for iPhone, in Canada and the United States.
 
 Made for real life
 
@@ -127,7 +127,7 @@ Start with the app that steals five minutes. Build the pause that gives those mi
 # Help Centre | Relock
 URL: https://getrelock.com/help/
 Language: en
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Support
 
@@ -137,7 +137,7 @@ Nothing here is a workaround for the blocks you set. If you are looking for a wa
 
 ## 1. What does Relock need before it can block anything?
 
-Relock runs on iPhone and iPad. The blocking itself is performed by Apple's Family Controls framework, which exists on iOS and iPadOS and has no equivalent Relock can use elsewhere.
+Relock runs on iPhone. The blocking itself is performed by Apple's Family Controls framework, which exists on iOS and has no equivalent Relock can use elsewhere.
 
 One permission does all the work: Screen Time access. Without it Relock can display your rules but cannot enforce a single one. You are asked for it during onboarding, and you can check it at any time in Settings → Protection → Screen Time access. If it reads anything other than Granted, tap it and accept the iOS prompt.
 
@@ -329,7 +329,7 @@ Person in charge of the protection of personal information. Under Quebec law thi
 # Terms of Service | Relock
 URL: https://getrelock.com/terms/
 Language: en
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Legal
 
@@ -353,7 +353,7 @@ Relock supports account access through Sign in with Apple and Google Sign-In. Yo
 
 Relock lets users create app-blocking rules, use supported device controls, receive local reminders, review aggregate activity statistics, and manage related account and subscription features. Features may differ by device, operating-system version, permission status, subscription tier, region, or store.
 
-Relock is offered on iPhone and iPad through the Apple App Store, to people located in Canada and the United States. Its blocking features are built on Apple Screen Time (Family Controls) and are available only on Apple devices that support it. Where an Android version is offered, references in these Terms to Google and Google Play apply to it; until then they do not.
+Relock is offered on iPhone through the Apple App Store, to people located in Canada and the United States. Its blocking features are built on Apple Screen Time (Family Controls) and are available only on Apple devices that support it. Where an Android version is offered, references in these Terms to Google and Google Play apply to it; until then they do not.
 
 We may improve, add, suspend, or remove Service features, and we may change the countries or platforms where Relock is offered. Where required by law, we will provide notice of material changes.
 
@@ -454,7 +454,7 @@ If any provision is unenforceable, the remaining provisions stay effective. Our 
 # Relock | Reprenez possession de votre attention
 URL: https://getrelock.com/fr/
 Language: fr
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Votre attention vous appartient
 
@@ -462,7 +462,7 @@ Votre attention vous appartient
 
 Relock place une pause intentionnelle entre vous et le défilement. Protégez-vous des apps qui vous éloignent, puis revenez à la journée que vous vouliez vraiment vivre.
 
-Conçu autour des contrôles Temps d’écran d’Apple. Bientôt sur l’App Store, pour iPhone et iPad, au Canada et aux États-Unis.
+Conçu autour des contrôles Temps d’écran d’Apple. Bientôt sur l’App Store, pour iPhone, au Canada et aux États-Unis.
 
 Pensé pour la vraie vie
 
@@ -573,7 +573,7 @@ Commencez par l’app qui vole cinq minutes. Construisez la pause qui vous les r
 # Centre d’aide | Relock
 URL: https://getrelock.com/fr/help/
 Language: fr
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Assistance
 
@@ -583,7 +583,7 @@ Rien ici n’est un moyen de contourner les blocages que vous avez posés. Si vo
 
 ## 1. De quoi Relock a-t-il besoin avant de pouvoir bloquer ?
 
-Relock fonctionne sur iPhone et iPad. Le blocage lui-même est assuré par le framework Family Controls d’Apple, qui n’existe que sur iOS et iPadOS et dont Relock n’a pas d’équivalent ailleurs.
+Relock fonctionne sur iPhone. Le blocage lui-même est assuré par le framework Family Controls d’Apple, qui n’existe que sur iOS et dont Relock n’a pas d’équivalent ailleurs.
 
 Une seule autorisation fait tout le travail : l’accès au Temps d’écran. Sans elle, Relock affiche vos règles mais n’en applique aucune. Elle vous est demandée pendant l’intégration, et vous pouvez la vérifier à tout moment dans Réglages → Protection → Accès au Temps d’écran. Si autre chose que Accordé s’affiche, touchez la ligne et acceptez la demande iOS.
 
@@ -773,7 +773,7 @@ Personne responsable de la protection des renseignements personnels. Au Québec,
 # Conditions d’utilisation | Relock
 URL: https://getrelock.com/fr/terms/
 Language: fr
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Mentions juridiques
 
@@ -797,7 +797,7 @@ Relock permet l’accès par Connexion avec Apple et Google. Vous devez protége
 
 Relock permet de créer des règles de blocage, d’utiliser des contrôles compatibles de l’appareil, de recevoir des rappels locaux, de consulter des statistiques agrégées et de gérer le compte et l’abonnement. Les fonctionnalités peuvent varier selon l’appareil, le système, les autorisations, l’offre, la région ou la boutique.
 
-Relock est offert sur iPhone et iPad par l’App Store d’Apple, aux personnes situées au Canada et aux États-Unis. Ses fonctions de blocage reposent sur Temps d’écran d’Apple (Family Controls) et ne sont disponibles que sur les appareils Apple qui les prennent en charge. Si une version Android est offerte, les mentions de Google et de Google Play dans les présentes Conditions s’y appliquent; d’ici là, elles ne s’appliquent pas.
+Relock est offert sur iPhone par l’App Store d’Apple, aux personnes situées au Canada et aux États-Unis. Ses fonctions de blocage reposent sur Temps d’écran d’Apple (Family Controls) et ne sont disponibles que sur les appareils Apple qui les prennent en charge. Si une version Android est offerte, les mentions de Google et de Google Play dans les présentes Conditions s’y appliquent; d’ici là, elles ne s’appliquent pas.
 
 Nous pouvons améliorer, ajouter, suspendre ou retirer des fonctionnalités, et modifier les pays ou les plateformes où Relock est offert. Nous donnerons l’avis exigé par la loi pour les changements importants.
 
@@ -898,7 +898,7 @@ Si une clause est inexécutable, les autres restent valides. Le défaut d’appl
 # Guides on blocking apps on iPhone | Relock
 URL: https://getrelock.com/blog/
 Language: en
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Blog
 
@@ -915,7 +915,7 @@ Three ways to block an app on iPhone, what each one really enforces, and the one
 # Guides pour bloquer des applications sur iPhone | Relock
 URL: https://getrelock.com/fr/blog/
 Language: fr
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 Blog
 

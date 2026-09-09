@@ -67,7 +67,7 @@ Ordre de contraste : titre ou action principale, contenu principal, description,
 
 Utiliser d'abord `theme.spacing`, puis les rôles de `relockMaterial.layout` pour la composition Home. Les marges extérieures, l'espace entre sections et les paddings internes doivent former un rythme visible; ne pas combler chaque espace libre.
 
-Pour les écrans : respecter la safe area, conserver des marges latérales cohérentes, laisser respirer le header, séparer clairement le message introductif, le hero et les actions secondaires. Les composants doivent rester fluides : largeur relative, `maxWidth` sur iPad et peu de positionnement absolu hors illustrations décoratives.
+Pour les écrans : respecter la safe area, conserver des marges latérales cohérentes, laisser respirer le header, séparer clairement le message introductif, le hero et les actions secondaires. Les composants doivent rester fluides : largeur relative, `maxWidth` sur les grands iPhone et peu de positionnement absolu hors illustrations décoratives.
 
 ### Rayons
 
