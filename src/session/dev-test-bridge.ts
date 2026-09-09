@@ -325,8 +325,10 @@ async function run(cmd: string): Promise<void> {
       await report('fixtures', payload)
       return
     }
-    // Miroir du bouton « skip onboarding » du premier écran du parcours :
-    // les trois portes d'un coup, atterrissage sur l'Accueil.
+    // Le saut du parcours complet : les trois portes d'un coup (abonnement,
+    // récit, activation), atterrissage sur l'Accueil. Depuis le 2026-09-08,
+    // ce pont est la SEULE entrée — le bouton visible du premier écran a été
+    // retiré, il vivait dans toutes les builds de dev qu'on fait essayer.
     case 'skip-onboarding':
       devSkipOnboarding()
       console.log(`${TAG} parcours sauté → Accueil`)

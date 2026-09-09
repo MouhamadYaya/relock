@@ -110,9 +110,8 @@ export const constants = {
    * suppression faite pendant un test survive au rechargement de Metro. La
    * version de la clé monte quand le semis change : un jeu déjà écrit sur un
    * simulateur garderait sinon les anciens noms pour toujours.
-   * `DEV_SKIP_PAYWALL` : porte de l'abonnement court-circuitée, posée par le
-   * bouton « skip onboarding » du premier écran du parcours
-   * (`src/session/dev-skip-paywall.ts`).
+   * `DEV_SKIP_PAYWALL` : porte de l'abonnement court-circuitée, posée par la
+   * commande `relock://dev/skip-onboarding` (`src/session/dev-skip-paywall.ts`).
    */
   DEV_FIXTURES: 'dev.fixtures.v1',
   DEV_FIXTURE_RULES: 'dev.fixtures.rules.v2',

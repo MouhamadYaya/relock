@@ -41,7 +41,6 @@ import { ShieldRain } from '@/features/onboarding/components/ShieldRain'
 import type { RainField } from '@/features/onboarding/shield-rain'
 import { translate } from '@/i18n/translate'
 import { useT } from '@/i18n/useT'
-import { devSkipOnboarding } from '@/session/bootstrap'
 import { IconSvg } from '@/shared/components/ui/IconSvg'
 import { RelockWordmark } from '@/shared/components/ui/RelockWordmark'
 import { fonts } from '@/shared/theme/tokens/fonts'
@@ -169,38 +168,6 @@ const HERO_WIDTH_RATIO = 0.72
 const HERO = require('@assets/onboarding-welcome-hero.png')
 
 /**
- * DEV uniquement — « skip onboarding ».
- *
- * Le seul raccourci de dev VISIBLE de l'app (tous les autres passent par le
- * pont `relock://dev/…`), et il est ici parce que c'est ici qu'on relance un
- * test : rejouer trente écrans de récit pour vérifier un détail de l'Accueil
- * n'apprend rien. Il franchit les trois portes d'un coup — abonnement, récit,
- * activation — et atterrit sur l'Accueil.
- *
- * Rien de tout ça n'existe en Release : `__DEV__` retire le rendu ici, et
- * l'effet du drapeau dans `dev-skip-paywall.ts`.
- */
-function DevSkipOnboarding({ top }: { top: number }) {
-  return (
-    <Pressable
-      testID="dev-skip-onboarding"
-      accessibilityRole="button"
-      // i18n-ignore — raccourci de dev, retiré du binaire par `__DEV__`.
-      accessibilityLabel="skip onboarding (dev)"
-      hitSlop={12}
-      onPress={() => {
-        haptic.select()
-        devSkipOnboarding()
-      }}
-      style={[styles.devSkip, { top }]}
-    >
-      {/* i18n-ignore — même raison. */}
-      <Text style={styles.devSkipText}>skip onboarding · dev</Text>
-    </Pressable>
-  )
-}
-
-/**
  * « Soutenu par la science », et la porte derrière.
  *
  * Il ne réutilise pas `StudyLine` (la pilule discrète du reste du parcours)
@@ -300,7 +267,7 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
       <View
         style={{
           flex: 1,
-          paddingTop: insets.top + 34,
+          paddingTop: insets.top + 58,
           paddingBottom: insets.bottom + 14,
         }}
       >
@@ -359,8 +326,6 @@ export function SceneWelcome({ onNext }: { onNext: () => void }) {
           />
         </Reveal>
       ) : null}
-
-      {__DEV__ ? <DevSkipOnboarding top={insets.top + 6} /> : null}
 
       <ScienceSheet
         visible={scienceOpen}
@@ -1058,23 +1023,6 @@ function IconStar() {
 // ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  // Raccourci de dev : posé hors flux pour ne pas décaler d'un pixel la
-  // composition de la promesse, et pointillé pour qu'on ne le confonde
-  // jamais avec un vrai bouton du produit.
-  devSkip: {
-    position: 'absolute',
-    right: 20,
-    zIndex: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: OB.ink28,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  devSkipText: { ...fonts.medium, fontSize: 11, color: OB.ink55 },
-
   welcome: { flex: 1, backgroundColor: OB.bg },
   welcomeCopy: { paddingHorizontal: 22 },
   welcomeHero: {
@@ -1083,11 +1031,17 @@ const styles = StyleSheet.create({
     lineHeight: 38,
     letterSpacing: -0.8,
     color: OB.ink,
+    textAlign: 'center',
   },
   welcomeHeroAccent: { color: OB.grad[0] },
-  welcomeProof: { flexDirection: 'row', paddingHorizontal: 22, marginTop: 16 },
-  // `alignSelf` plutôt qu'un parent qui centre : posé dans une rangée, le
-  // badge ne prend que sa largeur de texte et reste calé à gauche du titre.
+  welcomeProof: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+    marginTop: 16,
+  },
+  // `alignSelf` plutôt qu'une largeur : posé dans une rangée centrée, le
+  // badge ne prend que sa largeur de texte et reste sur l'axe du titre.
   scienceBadge: {
     flexDirection: 'row',
     alignItems: 'center',

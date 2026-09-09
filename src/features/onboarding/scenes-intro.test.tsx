@@ -1,7 +1,6 @@
 import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { SceneName, SceneWelcome } from '@/features/onboarding/scenes-intro'
-import { devSkipOnboarding } from '@/session/bootstrap'
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
@@ -22,22 +21,16 @@ jest.mock('@/features/onboarding/bits', () => ({
   StudyLine: 'StudyLine',
   HaloBackdrop: 'HaloBackdrop',
 }))
-// `@/session/bootstrap` importe `expo-router`, que Jest ne transforme pas.
-jest.mock('@/session/bootstrap', () => ({
-  devSkipOnboarding: jest.fn(),
-}))
-
 /**
- * Les raccourcis de développement ont été RETIRÉS du parcours (2026-09-07) :
- * « Passer (dev) » et « Paywall (dev) » vivaient sous `__DEV__`, donc absents
- * du binaire livré — mais présents dans toute build de dev, y compris celles
- * qu'on fait essayer autour de soi.
+ * Le premier écran n'a plus AUCUN raccourci de développement (2026-09-08) :
+ * « Passer (dev) », « Paywall (dev) » puis « skip onboarding » vivaient sous
+ * `__DEV__`, donc absents du binaire livré — mais présents dans toute build
+ * de dev, y compris celles qu'on fait essayer autour de soi. Le saut du
+ * parcours reste accessible, sans pixel à l'écran, par
+ * `relock://dev/skip-onboarding` (`src/session/dev-test-bridge.ts`).
  *
- * Un seul est revenu depuis, demandé explicitement : « skip onboarding »,
- * qui franchit les trois portes d'un coup pour atterrir dans l'app. Ces tests
- * tiennent les trois bouts qui comptent : il n'existe QUE sous `__DEV__`, il
- * ne fait PAS avancer le parcours écran par écran (« Continuer » reste la
- * seule issue normale), et les deux anciens raccourcis restent partis.
+ * Ce test tient le bout qui compte : même dans une build de dev, « Continuer »
+ * est la seule issue de l'écran.
  */
 describe('Welcome step', () => {
   let renderer: ReactTestRenderer | undefined
@@ -69,29 +62,12 @@ describe('Welcome step', () => {
     expect(onNext).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps the retired shortcuts out, even in a dev build', () => {
+  it('keeps every dev shortcut out, even in a dev build', () => {
     runtime.__DEV__ = true
     render()
     for (const label of ['Passer (dev)', 'Paywall (dev)']) {
       expect(renderer!.root.findAllByProps({ label })).toHaveLength(0)
     }
-  })
-
-  it('offers the onboarding skip in a dev build, without stepping the flow', () => {
-    runtime.__DEV__ = true
-    const onNext = render()
-    const skip = renderer!.root.findAllByProps({
-      testID: 'dev-skip-onboarding',
-    })
-    expect(skip.length).toBeGreaterThan(0)
-    act(() => skip[0].props.onPress())
-    expect(devSkipOnboarding).toHaveBeenCalledTimes(1)
-    expect(onNext).not.toHaveBeenCalled()
-  })
-
-  it('hides the onboarding skip outside a dev build', () => {
-    runtime.__DEV__ = false
-    render()
     expect(
       renderer!.root.findAllByProps({ testID: 'dev-skip-onboarding' }),
     ).toHaveLength(0)
